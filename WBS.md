@@ -1,0 +1,1077 @@
+# Scanipy v3.2 — Work Breakdown Structure (WBS)
+
+**Document status:** Mechanically-derived WBS for Scanipy v3.2.
+**Sources of truth:** `PLAN.md` (architecture; wins on disagreement) and `SDD.md` (component specs, IDs, acceptance criteria).
+**Intended consumer:** A planning agent that will schedule work, plus a code-writing agent that will execute work packages against the documentation produced in Phase 0 and the test specs produced in Phase 1.
+**This document is standalone.** It carries no dependency on, and makes no reference to, any other system or codebase. Every claim below is sourced from `PLAN.md` or `SDD.md`. Where those documents do not pin a detail, the gap is registered in §17 (`CLARIFICATION-NEEDED`) instead of being designed inline.
+
+---
+
+## 0. How to use this document
+
+1. **Phase 0 (Docs) comes first.** Every implementation work package downstream of Phase 0 reads the per-component reference documentation it produced. Code-writing agents are expected to load the matching `DOC-CMP-*` artifact as their primary specification for the work.
+2. **Phase 1 (QA / test cases) comes second.** Every `AC-*` in `SDD.md` is converted to one or more concrete test specs (`TST-AC-*`). Code-writing agents are expected to make those tests pass. A work package is not "done" until every test under its `TST-AC-*` set is green.
+3. **Phases 2–9 are the implementation phases**, ordered by `PLAN.md` §"Concrete refactor map" (Phase 1–9 in PLAN). Each implementation work package follows the inner cycle **Docs → Tests → Code → Verification** within itself.
+4. **Phase 10 (Per-language staging, §13)** is an overlay constraint over Phases 2–9, not a separate workstream. A `(class, language)` pair may not enter the implementation track until its CPG-fidelity gate (`CMP-CP-06`) is green for that language. Where the dependency DAG (from `Depends-On`) suggests an order that violates per-language staging, **staging wins**.
+5. **Phase 11 (Multi-tenant control plane) and Phase 12 (Research mode)** map to `PLAN.md` Phase 6 and Phase 8 respectively; their numbering here reflects `PLAN.md`'s grouping order, not their execution order — `CMP-CP-02` / `CMP-CP-03` are wave-1 eligible per §20.2 and must land early.
+6. **Phase 13 carries cross-cutting deliverables** — test corpora as work packages (`SDD.md` §12), CI gates (`CMP-CI-01`), and provenance threading verification.
+7. **§17 (CLARIFICATION-NEEDED) and §18 (OUT-OF-SCOPE) are open registers**, not phases. Anything that would extend scope beyond `SDD.md` §12 "Out of scope" is filed in §18; anything that requires a decision not pinned by `PLAN.md` or `SDD.md` is filed in §17. **§19 holds the risk-mitigation matrix**; **§20 governs scheduling** via the dependency DAG; **§21 is the Definition of Done**.
+8. **Phase numbers reflect `PLAN.md` / `SDD.md` groupings, not strict execution order.** §20 (the dependency DAG, gated by §10 per-language staging) is the authoritative scheduler.
+9. **A work package may not start until every package in its `Depends-On` set has every `AC-*` green.** Eligibility-to-start is computed from the dependency DAG (§20), gated by the Phase 10 per-language staging overlay (§13).
+
+---
+
+## 1. Conventions
+
+### 1.1 Identifier scheme
+
+| Prefix | Meaning | Source |
+|---|---|---|
+| `CMP-*` | Component work package | Carried verbatim from `SDD.md`. **Stable; never renumbered.** |
+| `CMP-CORP-*` | Test-corpus work package | Derived from `SDD.md` §12 (corpora named as work packages). |
+| `CMP-CI-*` | CI-pipeline work package | Derived from `SDD.md` §12 (CI gates). |
+| `CMP-DOC-*` | Documentation work package | Phase 0 outputs. |
+| `CMP-DEPLOY-*` | Deployment / runtime substrate work package | Derived from inferred substrate (§2). |
+| `T-CMP-*-NN` | Implementation task under a `CMP-*` | Two-digit running number per component. |
+| `TST-AC-*` | Test spec corresponding to an `AC-*` from `SDD.md` | One-to-one with `SDD.md` acceptance criteria. |
+| `DOC-CMP-*` | Reference doc deliverable under Phase 0 | One per `CMP-*`. |
+| `INV-N` | Invariant from `SDD.md` §2 | Verbatim. |
+| `R-N` | Risk from `SDD.md` §13 | Verbatim. |
+| `CLAR-*` | A `CLARIFICATION-NEEDED` register item | §17. |
+| `OOS-*` | An `OUT-OF-SCOPE` register item | §18. |
+| `WORKING-ASSUMPTION-*` | A working assumption labelled as such | Used in §2 only, where the substrate is inferred rather than pinned. |
+
+### 1.2 Status codes (for downstream scheduling)
+
+- `BLOCKED` — has unmet `Depends-On`.
+- `READY` — all deps green, eligible to start.
+- `IN-PROGRESS` — implementation has begun, ACs not all green.
+- `DONE` — every `TST-AC-*` under the package is green and every `INV-*` verification task has fired.
+- `STAGE-GATED` — implementation could otherwise start but is blocked by a per-language staging gate (§11 / `CMP-CP-06`).
+
+### 1.3 What this WBS is not allowed to do
+
+- **Invent scope.** Where `PLAN.md` / `SDD.md` are silent, a `CLAR-*` item is emitted in §17. The document never paper-cracks a missing decision with a design choice.
+- **Renumber `CMP-*` IDs.** `SDD.md` §0 forbids this.
+- **Drift into `OUT-OF-SCOPE`.** `SDD.md` §12 enumerates the forbidden derivations (CI-agent / on-prem runner, container-image scanning, binary-only analysis, IDE plugin). Any task that implies one of these is emitted as `OOS-*` in §18 instead.
+- **Collapse invariants into a single global task.** Per `SDD.md` §12 ("Provenance threading"), every emitting component carries its own invariant-verification task.
+
+### 1.4 Inner cycle of an implementation work package
+
+For every `CMP-*` work package in Phases 2–10:
+
+```
+1. DOCS        — produce / refresh DOC-CMP-<id>  (interfaces, types, error contracts,
+                                                  data schemas, persistence keys)
+2. TESTS       — produce TST-AC-<id>-<n> for every AC-<id>-<n> in SDD.md
+                 (fixtures, inputs, expected outputs, framework, kind tag)
+3. CODE        — implement the component to make the tests pass; honour every
+                 INV-* the component touches
+4. VERIFICATION— run the AC tests + the cross-cutting INV-* verification tasks
+                 attached to this component; record provenance threading
+```
+
+A package is not `DONE` until step 4 is green for **every** AC.
+
+---
+
+## 2. Deployment architecture map
+
+### 2.1 What the source documents commit to
+
+The following deployment-shape elements are stated or directly implied by `PLAN.md` / `SDD.md`:
+
+| Element | Source |
+|---|---|
+| Multi-tenant SaaS, customer-facing | `PLAN.md` §"Context and the objective"; `SDD.md` §1 |
+| Multi-SCM connectors (GitHub/GHE, GitLab, Bitbucket, Azure DevOps) | `SDD.md` §3 (CMP-SCM-01..03) |
+| Container-orchestrated workers, "fanout"-style | `PLAN.md` §"Context and the objective" (legacy ECS Fargate fanout cited) |
+| Worker contract: env-var contract, `report_status` callback, argument allowlist, secure `subprocess.run` | `SDD.md` CMP-SNAP-05 |
+| Container image as the **authoritative `env_digest`** with `joern`, `codeql`, `git` pinned by digest | `SDD.md` CMP-SNAP-05 (AC-SNAP-05b) |
+| Snapshot artifacts persisted at deterministic blob-store keys (CPG tarball, reverse-symbol index, dynamic call graph, ΔG, precondition-status record) | `SDD.md` CMP-SNAP-01 |
+| HMAC-bearer pattern on worker callbacks | `SDD.md` CMP-ORCH-01 (AC-ORCH-01b) |
+| Credential encryption service for at-rest SCM credentials, with rotation | `SDD.md` CMP-CP-02 |
+| OIDC / SAML federation for the customer dashboard | `SDD.md` CMP-CP-04 |
+| Relational store with migrations (`orgs`, `projects`, `codebases`, `scm_credentials`, `org_policies`, `memberships`, `snapshots`, `proposed_specs`, `spec_versions`, `attestations`, `findings`) | `SDD.md` CMP-CP-03; CMP-FND-02 |
+| Differential reflection oracle running asynchronously, off the critical path | `SDD.md` CMP-SNAP-04 |
+| Determinism Attestor as a partitioned CI pipeline (core: byte-identical hard-fail; oracle: digest-stability + measured rate) | `SDD.md` CMP-CP-05 |
+| LLM use confined to **triage and gated spec inference**, default-off feature flag, never on the deterministic-core detection path | `SDD.md` §1, INV-3; CMP-TRI-01..03 |
+
+### 2.2 The working assumption
+
+The source documents do not pin a cloud vendor, region strategy, queue technology, RDBMS engine, blob store implementation, OIDC IdP, secrets vendor, or observability stack. The legacy reference to "ECS Fargate" plus the explicit "S3 keys" and "container image digest" framing imply an AWS-flavoured target, but the source documents stop short of mandating it.
+
+> **WORKING-ASSUMPTION-DEPLOY-01.** The runtime substrate is a public cloud whose primitives include: container orchestration with pinned-image workers, an object store with content-addressable keys, a managed relational database, a managed KMS or equivalent envelope-encryption service, a managed work-queue service, and an OIDC/SAML-compatible IdP integration point. The selection of specific managed services is filed in §17 (`CLAR-DEPLOY-*`) and resolved by `CMP-DEPLOY-01` before Phase 4 (Snapshotter) starts; Phase 4 is the first phase that materially exercises every substrate primitive.
+
+### 2.3 ASCII deployment map (inferred)
+
+```
+                           ┌───────────────────────────────┐
+                           │ SCM providers                 │
+                           │ GH / GHE / GL / BB / ADO      │
+                           └───┬───────────────────────┬───┘
+                       webhooks│                       │clone + REST
+                               ▼                       ▼
+   ┌─────────────────┐    ┌────────────────────────────────┐
+   │ Customer users  │    │ Control Plane API              │
+   │ + dashboard     │◀──▶│   /api/v1/scans  (CMP-ORCH-01) │
+   │ (CMP-CP-04)     │OIDC│   tenancy + RBAC (CMP-CP-01)   │
+   │  - findings UI  │SAML│   worker callback (HMAC)       │
+   │  - origin /     │    │   webhook ingest (per-SCM)     │
+   │    S_version /  │    └─────┬────────────┬─────────────┘
+   │    env_digest   │          │            │
+   │    visible      │          │ enqueue    │ enqueue
+   └─────────────────┘          ▼            ▼
+                            ┌─────────────────────────┐
+                            │ Job queues              │
+                            │ (per-stage, retries,    │
+                            │  per-queue DLQ)         │
+                            └────────┬────────────────┘
+                                     │
+                  ┌──────────────────┼──────────────────────┐
+                  ▼                  ▼                      ▼
+       ┌─────────────────┐   ┌─────────────────┐   ┌────────────────────┐
+       │ Snapshot worker │   │ Detector worker │   │ Triage / spec      │
+       │ (CMP-SNAP-05)   │   │ (CMP-ORCH-03)   │   │ inference worker   │
+       │  - clone        │   │  - load CPG     │   │ (CMP-TRI-01..03)   │
+       │  - CPG build    │   │  - IFDS (core)  │   │  - LLM ranking     │
+       │  - CW-DETECT    │   │    OR           │   │  - e-process gate  │
+       │  - env_digest   │   │  - oracle adptr │   │  - default OFF     │
+       │  - argv allowl. │   │  - stamp origin │   │                    │
+       │  - report_status│   │  - emit SARIF   │   │                    │
+       └────────┬────────┘   └────────┬────────┘   └─────────┬──────────┘
+                │                     │                       │
+                └─────────────┬───────┴───────────────────────┘
+                              ▼
+                ┌─────────────────────────────────────┐
+                │ Object store (CMP-DEPLOY-01)        │
+                │  - CPG tarballs                     │
+                │  - reverse-symbol index             │
+                │  - dynamic call graph               │
+                │  - ΔG                               │
+                │  - precondition-status record       │
+                │  - witness_blob_uri (per finding)   │
+                │  - SARIF artifacts                  │
+                │  - signed provenance record        │
+                └─────────────────┬───────────────────┘
+                                  │
+                                  ▼
+                ┌─────────────────────────────────────┐
+                │ Relational store (CMP-CP-03)        │
+                │  - orgs, projects, codebases        │
+                │  - scm_credentials (encrypted)      │
+                │  - org_policies, memberships        │
+                │  - snapshots (+ precondition-status)│
+                │  - findings                          │
+                │  - proposed_specs, spec_versions    │
+                │  - attestations                     │
+                └─────────────────────────────────────┘
+
+       Asynchronous / off-critical-path:
+       ┌─────────────────────────────────┐    ┌─────────────────────────────┐
+       │ Differential reflection oracle  │    │ Determinism Attestor        │
+       │ (CMP-SNAP-04)                   │    │ (CMP-CP-05)                 │
+       │  - whole-program scan           │    │  - core: byte-identical SARIF│
+       │  - re-partition on disagreement │    │    hard-fail on diff        │
+       │  - log to provenance            │    │  - oracle: digest-stability │
+       └─────────────────────────────────┘    │    + measured rate          │
+                                              └─────────────────────────────┘
+
+       Cross-cutting:
+       ┌─────────────────────────────────────────────────────────────────┐
+       │ Credential encryption / KMS (CMP-CP-02)                          │
+       │   - encrypts scm_credentials at rest; supports rotation          │
+       │ Identity (CMP-CP-04)                                             │
+       │   - OIDC/SAML; first-admin provisioning on SSO sign-up           │
+       │ CI gates (CMP-CI-01)                                             │
+       │   - AC-DET-01a, AC-SNAP-03a, AC-CP-05c, AC-TRI-02b               │
+       └─────────────────────────────────────────────────────────────────┘
+```
+
+### 2.4 Deployment work packages
+
+#### CMP-DEPLOY-01 — Runtime substrate selection
+**Depends-On:** none · **Staging:** cross-cutting (must complete before Phase 4)
+**Purpose:** Resolve every `CLAR-DEPLOY-*` item in §17 and commit one substrate per primitive (compute, queue, blob store, RDBMS, KMS, secrets, IdP, observability stack, region strategy, network model). Output is a written substrate decision record plus the IaC scaffolding needed by every later phase. The decision record is the input to `CMP-DEPLOY-02..04`.
+**Acceptance criteria:**
+- AC-DEPLOY-01a: Every `CLAR-DEPLOY-*` in §17 has a recorded decision with a one-paragraph rationale referenced back to `PLAN.md` / `SDD.md` constraints.
+- AC-DEPLOY-01b: The chosen object-store primitive supports content-addressable, deterministic keys for the artifacts named in `SDD.md` CMP-SNAP-01 (`AC-SNAP-01a`).
+- AC-DEPLOY-01c: The chosen queue primitive supports per-queue dead-letter routing and at-least-once delivery, with idempotent worker contracts.
+- AC-DEPLOY-01d: The chosen relational primitive supports forward + rollback migrations on a fresh database (cf. `AC-CP-03a`).
+- AC-DEPLOY-01e: The chosen KMS-equivalent supports envelope encryption and key rotation (cf. `AC-CP-02a`).
+
+#### CMP-DEPLOY-02 — Worker container baseline
+**Depends-On:** CMP-DEPLOY-01 · **Staging:** Stage A
+**Purpose:** Produce the base container image that bundles `joern`, `codeql`, `git` and pins each by digest; bake the environment-variable contract, the argument allowlist machinery, and the `report_status` callback affordances into the image. The image digest **is** `env_digest` (per `AC-SNAP-05b`); changing any bundled tool changes the digest.
+**Acceptance criteria:**
+- AC-DEPLOY-02a: `joern`, `codeql`, `git` are present at pinned digests inside the image.
+- AC-DEPLOY-02b: Mutating any bundled tool changes the image digest, and that digest is the authoritative `env_digest` exposed to the snapshot worker.
+- AC-DEPLOY-02c: The image-build process refuses to publish if any pinned digest is unspecified.
+
+#### CMP-DEPLOY-03 — Observability surfaces
+**Depends-On:** CMP-DEPLOY-01 · **Staging:** cross-cutting
+**Purpose:** Structured logs, metrics, and traces for every worker and API surface. Carries the per-scan correlation fields needed for cross-component triage (scan id, snapshot id, org id, codebase id, detector id, `S_version`, `env_digest`, `fingerprint_class`, `origin`).
+**Acceptance criteria:**
+- AC-DEPLOY-03a: A single scan id resolves to a chronological cross-component trace covering at least: webhook ingest, snapshot worker, every detector worker, normalizer, attestor verdict, callback delivery.
+- AC-DEPLOY-03b: Every emitted log line carries a service name, build commit, and `env_digest`.
+- AC-DEPLOY-03c: Alarms exist for: snapshot-worker failure rate, detector-worker failure rate, callback HMAC rejection rate, Attestor core-partition diff (any non-zero rate is a hard incident), `CW-DETECT` differential-oracle disagreement rate, e-process martingale-unit-test failure.
+
+#### CMP-DEPLOY-04 — CI/CD pipeline (build, test, deploy)
+**Depends-On:** CMP-DEPLOY-01, CMP-DEPLOY-02 · **Staging:** cross-cutting
+**Purpose:** Pipelines for building worker images, running every CI gate enumerated under `CMP-CI-01`, deploying behind controlled gates, and registering signed image digests as the active `env_digest` for the next snapshot run. Pinned-image discipline is enforced here so it cannot be bypassed at deploy time.
+**Acceptance criteria:**
+- AC-DEPLOY-04a: A merge to the main branch cannot deploy a worker image whose tool digests differ from those committed in the substrate decision record without an explicit `env_digest` rollover ceremony.
+- AC-DEPLOY-04b: The CI gates in `CMP-CI-01` are enforced as hard pipeline failures, not advisory checks.
+- AC-DEPLOY-04c: Image provenance (build commit, build inputs, tool digests) is signed and published with the artifact.
+
+#### CMP-DEPLOY-05 — Tenant data isolation
+**Depends-On:** CMP-DEPLOY-01, CMP-CP-01, CMP-CP-03 · **Staging:** cross-cutting
+**Purpose:** Enforce that no worker, query path, or object-store access can cross an org boundary. Backstop for `AC-CP-01a` at the runtime layer rather than only in application code.
+**Acceptance criteria:**
+- AC-DEPLOY-05a: A parameterised negative test that drives a cross-org access attempt at every API surface and every worker callback fails with a 4xx and emits an audit log line.
+- AC-DEPLOY-05b: Blob-store paths are namespaced by org id; a path traversal in a request parameter cannot resolve to another org's artifact.
+
+---
+
+## 3. Phase 0 — Documentation
+
+**Purpose.** Phase 0 produces the per-component reference documentation that a code-writing agent will consume as the primary specification of the work. This phase comes **before** any production code is written so that downstream agents are not reading the `SDD.md` directly and re-deriving the same interpretation each time. The Phase 0 outputs are normative; the SDD remains the source of truth that they faithfully transcribe.
+
+**Output format for every `DOC-CMP-*` artifact.** Each one mirrors the same sections so that an agent can index into them mechanically:
+
+1. **Component identity** — `CMP-ID`, subsystem, staging, owning subsystem maintainer (named in `CLAR-OWNER-*` until assigned).
+2. **Mandate** — verbatim copy of the SDD `Purpose:` field, plus an expanded paragraph describing the operational role.
+3. **Interface contract** — fully typed signatures for every public method / handler / message, including error types. For data interfaces, the schema (column types, nullability, indices, constraints, foreign keys) is written out explicitly.
+4. **Inputs and outputs** — for every interface method, name every required input, every produced output, every side effect, and every persisted artifact (with the storage key shape where applicable).
+5. **Invariants touched** — enumerate which of `INV-1..INV-6` this component touches and exactly how it discharges each one (e.g., "stamps `origin` on every emitted finding", "rejects a non-DSL spec at registration"). Each entry cross-references a `TST-INV-*` test.
+6. **Dependency contract** — what this component assumes about each of its `Depends-On` entries (e.g., "assumes CMP-SNAP-01 has persisted the precondition-status record at the documented S3 key shape").
+7. **Failure modes and error contracts** — every error type, every retry policy, every fallback path (closed-world → degraded → full-reparse, etc.). For undecidable-property approximators (`CW-DETECT`, the combinator DSL closure check), the safe direction is written here per `INV-4`.
+8. **Provenance threading** — every field this component writes to a provenance record or finding row, named explicitly (`S_version`, `env_digest`, `origin`, `cpg_order_hash` with its conditional-canonicality annotation where applicable).
+9. **Acceptance criteria cross-reference** — table of every `AC-*` from `SDD.md` for this component, paired with its `TST-AC-*` test spec in Phase 1.
+10. **Open questions** — every `CLAR-*` item that bears on this component.
+
+The Phase 0 outputs are the work-package inputs for Phases 2–10. A code-writing agent that has not loaded the relevant `DOC-CMP-*` is operating outside contract.
+
+### 3.1 Per-component documentation work packages
+
+A `DOC-CMP-<id>` exists for every `CMP-*` work package in §4 through §13, including the deployment packages and the test-corpus packages. Tabular index:
+
+| Doc package | Documents component |
+|---|---|
+| DOC-CMP-DEPLOY-01..05 | §2.4 deployment work packages |
+| DOC-CMP-SCM-01 | SCMConnector abstract base |
+| DOC-CMP-SCM-02 | GitHub connector |
+| DOC-CMP-SCM-03 | GitLab / Bitbucket / Azure DevOps connectors |
+| DOC-CMP-SCM-05 | Shared HTTP retry/backoff |
+| DOC-CMP-DET-01 | Combinator DSL for taint specs |
+| DOC-CMP-DET-02 | Detector registry + closure check |
+| DOC-CMP-DET-03 | Class plugin scaffolding + content migration |
+| DOC-CMP-SNAP-01 | Snapshot service API |
+| DOC-CMP-SNAP-02 | Incremental CPG maintenance (Algorithm 1) |
+| DOC-CMP-SNAP-03 | CW-DETECT closed-world precondition detector |
+| DOC-CMP-SNAP-04 | Differential reflection oracle |
+| DOC-CMP-SNAP-05 | Snapshot worker + environment pinning |
+| DOC-CMP-CORE-01 | IFDS/IDE tabulation solver (Algorithm 2) |
+| DOC-CMP-CORE-02 | Slice fingerprint (Algorithm 3) |
+| DOC-CMP-CORE-03 | Canonical CPG ordering (Algorithm 5) |
+| DOC-CMP-FND-01 | Findings normalizer |
+| DOC-CMP-FND-02 | Findings store schema |
+| DOC-CMP-FND-03 | Signed provenance record |
+| DOC-CMP-ORCH-01 | Scan API |
+| DOC-CMP-ORCH-02 | Heuristic scheduler SNAP-SCHED-H |
+| DOC-CMP-ORCH-03 | Detector-agnostic worker |
+| DOC-CMP-TRI-01 | LLM triage ranking |
+| DOC-CMP-TRI-02 | Anytime-valid e-process spec gate |
+| DOC-CMP-TRI-03 | Per-customer revalidation + drift monitor |
+| DOC-CMP-CP-01 | Multi-tenant scan API guard |
+| DOC-CMP-CP-02 | Credential encryption service |
+| DOC-CMP-CP-03 | Tenancy schema + migrations |
+| DOC-CMP-CP-04 | Authentication (OIDC/SAML) + dashboard |
+| DOC-CMP-CP-05 | Determinism Attestor (partitioned) |
+| DOC-CMP-CP-06 | CPG-fidelity gate harness |
+| DOC-CMP-CORP-* | Each test-corpus work package (§16) |
+| DOC-CMP-CI-01 | CI pipeline enforcing the four named gates |
+
+### 3.2 Cross-cutting reference documents
+
+In addition to the per-component artifacts, Phase 0 produces these cross-cutting reference documents. They are read by every code-writing agent regardless of which `CMP-*` is being implemented:
+
+- **DOC-INV — Invariants catalog.** Restatement of `INV-1..INV-6` with examples and counter-examples, plus the master cross-reference of which components carry which invariant verification tasks.
+- **DOC-GLOSSARY — Vocabulary.** `S_version`, `env_digest`, `origin`, `determinism_partition`, `cpg_order_hash`, `fingerprint_class` (`strong` / `weak`), `slice_fingerprint`, `precondition-status` (`closed-world | degraded | full-reparse`), `spec_provenance` (`global-unrevalidated | …`), `engine` (`ifds | ide | semgrep | cpg-query | external`).
+- **DOC-API — External API contract.** OpenAPI-equivalent reference of every public API surface enumerated in `SDD.md` (`POST /api/v1/scans`, `GET /api/v1/scans/{id}`, `GET …/findings`, `POST /api/v1/jobs/{job_id}/status`, `POST /snapshots`), including the HMAC-bearer worker callback contract.
+- **DOC-DB — Persistence schema reference.** Every table from `SDD.md` CMP-CP-03 and CMP-FND-02, with column types, nullability, indices, constraints, foreign keys, and the migration order in which they must apply.
+- **DOC-SARIF — SARIF emission contract.** Every required field on emitted SARIF results, including the conditional-canonicality annotation on `cpg_order_hash`, the per-finding `origin`, `S_version`, `env_digest`, `slice_fingerprint`, `fingerprint_class`, `witness_blob_uri`.
+- **DOC-DSL — Combinator-DSL grammar reference.** Grammar for `source`, `sink`, `sanitize`, `propagate`, and sanctioned compositions; explicit non-grammar (escape hatches that must be rejected at registration per `AC-DET-01b`); the proof-obligation template for adding a combinator (`f(X ∪ Y) = f(X) ∪ f(Y)` exhaustively over the bounded domain).
+- **DOC-PROVENANCE — Provenance record reference.** Full schema of the signed chain `source commit → snapshot digest → S_version → env_digest → cpg_order_hash (canonical iff strong) → taint witness → rule/spec id → SARIF hash → per-finding origin`, including the differential-oracle re-partition log records.
+- **DOC-ALGS — Algorithm reference suite.** One reference per algorithm: Algorithm 1 (incremental CPG maintenance), Algorithm 2 (IFDS/IDE tabulation), Algorithm 3 (slice fingerprint), Algorithm 4 (heuristic scheduler `SNAP-SCHED-H`), Algorithm 5 (canonical CPG ordering, with explicit canonicality annotation), Algorithm 6 (anytime-valid e-process spec gate).
+- **DOC-PARTITION — Determinism partition reference.** How `origin` is determined per detector engine (`ifds`, `ide` → `deterministic-core`; `semgrep`, `cpg-query`, `external` → `oracle-passthrough`), and the rules for `mixed` detectors that emit per-finding `origin`.
+- **DOC-STAGING — Per-language staging reference.** Verbatim restatement of `SDD.md` §11, with the gate criteria for `CMP-CP-06` enumerated explicitly per language (`parse success ≥ 99.5%`, call-edge precision/recall thresholds, PDG dependence-edge recall threshold), and the list of `(class, language)` pairs in each stage.
+- **DOC-RUNBOOK — Operations runbook.** Worker lifecycle, scan lifecycle (queued → snapshotting → analysing → normalising → attested → callback-delivered), failure recovery, manual re-attestation, key rotation, the differential-oracle disagreement-incident procedure (raise determinism incident → retroactively re-partition → notify affected customer → log to provenance).
+
+### 3.3 Phase 0 acceptance criteria
+
+- AC-DOC-01: Every `CMP-*` in this WBS has a corresponding `DOC-CMP-*` artifact that follows the §3 §3.1 format.
+- AC-DOC-02: Every cross-cutting reference in §3.2 exists and is internally consistent with the per-component artifacts.
+- AC-DOC-03: Every `INV-1..INV-6` is named in `DOC-INV` with at least one component owner per invariant.
+- AC-DOC-04: A code-writing agent given only `DOC-CMP-<id>` for any single `CMP-*` (plus the cross-cutting refs in §3.2) can produce a passing implementation for that component without re-reading the SDD.
+
+---
+
+## 4. Phase 1 — QA / test cases
+
+**Purpose.** Phase 1 converts every `AC-*` in `SDD.md` into one or more concrete, executable test specifications. The test specs are the "done" contract for every implementation work package downstream. A code-writing agent in Phases 2–10 makes these tests pass.
+
+### 4.1 Test-spec format
+
+Every `TST-AC-*` artifact carries:
+
+- **Test id** — `TST-AC-<CMP-tail>-<ac-letter>[-N]` (where `N` disambiguates if the SDD AC expands to multiple tests).
+- **Maps to AC** — verbatim cross-reference of the `SDD.md` AC.
+- **Kind tag** — one of:
+  - `[CONDITIONAL THEOREM]` — covers a precondition-conditional theorem claim.
+  - `[EMPIRICAL]` — measures and asserts against a published threshold.
+  - `[FALSIFIER]` — adversarial corpus or mutation-injected test that closes an undecidable-precondition risk.
+  - `[INVARIANT]` — verifies one of `INV-1..INV-6` is held by the component under test.
+  - `[NEGATIVE]` — drives a rejected input and asserts the rejection diagnostic.
+  - `[REGRESSION]` — locks behaviour against a named legacy finding.
+  - `[UNIT]` — pure-function unit test.
+  - `[INTEGRATION]` — multi-component end-to-end exercise.
+  - `[CONFORMANCE]` — a connector-level conformance suite (CMP-SCM-01).
+- **Inputs** — required fixtures (corpus path, repo commit, seed values, env-digest pin).
+- **Outputs** — expected results expressed in normalised form (SARIF blob hash, e-process realised rate, parse success percentage, etc.).
+- **Pass criteria** — concrete and unambiguous; no judgement calls.
+- **Frequency** — `every CI run`, `nightly`, `pre-release`, `pre-customer-enablement`.
+- **Hard gate?** — yes/no; if yes, identifies which CI gate (CMP-CI-01) it backs.
+
+### 4.2 Comprehensive `TST-AC-*` index (one row per SDD AC)
+
+| Test id | Maps to | Kind | Hard gate? |
+|---|---|---|---|
+| TST-AC-SCM-01a | AC-SCM-01a — ABC defines all six methods with typed signatures and documented contracts | [UNIT] | yes |
+| TST-AC-SCM-01b | AC-SCM-01b — SCMCredentials round-trips all four auth modes through encryption at rest | [UNIT] | yes |
+| TST-AC-SCM-01c | AC-SCM-01c — Conformance test suite for concrete connectors | [CONFORMANCE] | yes |
+| TST-AC-SCM-02a | AC-SCM-02a — GitHub connector passes the conformance suite | [CONFORMANCE] | yes |
+| TST-AC-SCM-02b | AC-SCM-02b — Existing retry, rate-limit, and tiered-star behaviour byte-for-byte preserved | [REGRESSION] | yes |
+| TST-AC-SCM-02c | AC-SCM-02c — `integrations/github/__init__.py` exports `search_repositories` as a caller-transparent shim | [REGRESSION] | yes |
+| TST-AC-SCM-03a | AC-SCM-03a — GL/BB/ADO each pass the conformance suite | [CONFORMANCE] | yes |
+| TST-AC-SCM-03b | AC-SCM-03b — Webhook signature verification rejects forged payloads per provider | [NEGATIVE] | yes |
+| TST-AC-SCM-03c | AC-SCM-03c — Canary repo mirrored across four SCMs produces identical commit resolution | [INTEGRATION] | yes |
+| TST-AC-SCM-05a | AC-SCM-05a — Exponential backoff with jitter; provider-specific rate-limit honouring | [UNIT] | yes |
+| TST-AC-SNAP-01a | AC-SNAP-01a — Snapshot request produces all five persisted artifacts at deterministic keys | [INTEGRATION] | yes |
+| TST-AC-SNAP-01b | AC-SNAP-01b — Precondition-status record records exactly one of three values | [UNIT] | yes |
+| TST-AC-SNAP-01c | AC-SNAP-01c — env_digest computed from pinned container image digest and recorded on snapshot | [UNIT] | yes |
+| TST-AC-SNAP-02a | AC-SNAP-02a — Closed-world κ-bound regression on ≥1,000 commits | [CONDITIONAL THEOREM] | yes |
+| TST-AC-SNAP-02b | AC-SNAP-02b — Open-world median ≥ 5×, p95 ≥ 2×, fallback ≤ 15% | [EMPIRICAL] | yes |
+| TST-AC-SNAP-02c | AC-SNAP-02c — Function-granularity reparse preserves node IDs for unchanged declarations | [UNIT] | yes |
+| TST-AC-SNAP-03a | AC-SNAP-03a — Falsifier CW: zero false negatives on the curated reflection corpus | [FALSIFIER] | yes (release blocker) |
+| TST-AC-SNAP-03b | AC-SNAP-03b — Combined TP+FP routing rate measured and reported | [EMPIRICAL] | no |
+| TST-AC-SNAP-04a | AC-SNAP-04a — Seeded CW-DETECT FN is detected by the oracle; triggers exact re-partitioning | [FALSIFIER] | yes |
+| TST-AC-SNAP-04b | AC-SNAP-04b — Labeling-correction window measured; contractual SLA published | [EMPIRICAL] | yes |
+| TST-AC-SNAP-04c | AC-SNAP-04c — Every re-partition event written to provenance | [INVARIANT] | yes |
+| TST-AC-SNAP-05a | AC-SNAP-05a — Argument allowlist rejects any non-sanctioned flag | [NEGATIVE] | yes |
+| TST-AC-SNAP-05b | AC-SNAP-05b — Container image digest is authoritative env_digest; tool change changes digest | [UNIT] | yes |
+| TST-AC-DET-01a | AC-DET-01a — Each combinator carries a machine-checked distributivity proof obligation | [UNIT] | yes (CI gate) |
+| TST-AC-DET-01b | AC-DET-01b — DSL grammar rejects specs embedding arbitrary code | [NEGATIVE] | yes |
+| TST-AC-DET-02a | AC-DET-02a — Registration rejects out-of-DSL specs with precise diagnostic | [NEGATIVE] | yes |
+| TST-AC-DET-02b | AC-DET-02b — Manifest records all required fields plus derived determinism_partition | [UNIT] | yes |
+| TST-AC-DET-02c | AC-DET-02c — engine→determinism_partition mapping is correct for every engine value | [UNIT] | yes |
+| TST-AC-DET-03a | AC-DET-03a — All ten class directories register without error (stubs permitted) | [UNIT] | yes |
+| TST-AC-DET-03b | AC-DET-03b — Migrated path-traversal spec produces historical CVE-2025-61765 finding | [REGRESSION] | yes |
+| TST-AC-CORE-01a | AC-CORE-01a — 100 canary repos × 5 re-runs produce identical pre-serialisation hashes | [CONDITIONAL THEOREM] | yes (release blocker) |
+| TST-AC-CORE-01b | AC-CORE-01b — On CPG-fidelity-gate-passing pairs: recall ≥ Semgrep-default + 10pp at equal precision | [EMPIRICAL] | yes (per stage) |
+| TST-AC-CORE-01c | AC-CORE-01c — Incremental retabulation visits only AFFECTED entry points and their callers | [UNIT] | yes |
+| TST-AC-CORE-02a | AC-CORE-02a — Fingerprint invariant under each named refactor on 50 seeded findings | [FALSIFIER] | yes |
+| TST-AC-CORE-02b | AC-CORE-02b — Fingerprint changes on genuine fix and on aliasing-changing extract | [FALSIFIER] | yes |
+| TST-AC-CORE-02c | AC-CORE-02c — weak-fallback rate measured and <5%; weak never auto-suppressed | [EMPIRICAL] + [INVARIANT] | yes |
+| TST-AC-CORE-03a | AC-CORE-03a — CFI-style symmetric inputs terminate within (B,T) with deterministic order | [UNIT] | yes |
+| TST-AC-CORE-03b | AC-CORE-03b — Budget-exhaustion rate on real code <1% | [EMPIRICAL] | yes |
+| TST-AC-CORE-03c | AC-CORE-03c — Persisted hash field named cpg_order_hash; conditional annotation everywhere | [INVARIANT] | yes |
+| TST-AC-ORCH-01a | AC-ORCH-01a — A scan creates a snapshot if absent, then fans one job per detector | [INTEGRATION] | yes |
+| TST-AC-ORCH-01b | AC-ORCH-01b — Worker callback rejects invalid-HMAC payload | [NEGATIVE] | yes |
+| TST-AC-ORCH-01c | AC-ORCH-01c — Backwards-compat: scanipy --query extractall --run-semgrep yields CVE-2025-61765 with origin=deterministic-core on Stage-A language | [REGRESSION] | yes |
+| TST-AC-ORCH-02a | AC-ORCH-02a — Production-shaped replay p95 end-to-end scan latency <30 min | [EMPIRICAL] | yes |
+| TST-AC-ORCH-02b | AC-ORCH-02b — Different schedules produce identical deterministic-core findings | [INVARIANT] | yes |
+| TST-AC-ORCH-02c | AC-ORCH-02c — ρ≈2 appears in documentation only as relaxation bound, never as guarantee | [UNIT] (doc-link grep test) | yes |
+| TST-AC-ORCH-03a | AC-ORCH-03a — Every emitted finding has a correct origin | [INVARIANT] | yes |
+| TST-AC-ORCH-03b | AC-ORCH-03b — Mixed-class detector emits per-finding origin without blurring | [INVARIANT] | yes |
+| TST-AC-FND-01a | AC-FND-01a — All detector outputs validate against SARIF 2.1.0 | [UNIT] | yes |
+| TST-AC-FND-01b | AC-FND-01b — Result ordering is canonical CPG order from CORE-03 | [UNIT] | yes |
+| TST-AC-FND-02a | AC-FND-02a — Cross-scan baseline lookup correct; never auto-suppresses weak or oracle-passthrough across refactor | [INVARIANT] | yes |
+| TST-AC-FND-02b | AC-FND-02b — Every row carries non-null origin, S_version, env_digest | [INVARIANT] | yes |
+| TST-AC-FND-03a | AC-FND-03a — Record independently verifiable from stored artifacts without re-running analysis | [INTEGRATION] | yes |
+| TST-AC-FND-03b | AC-FND-03b — cpg_order_hash carries conditional-canonicality annotation in auditor export | [INVARIANT] | yes |
+| TST-AC-FND-03c | AC-FND-03c — Differential-oracle re-partition events appear in the record | [INVARIANT] | yes |
+| TST-AC-TRI-01a | AC-TRI-01a — Triage flag off: no row's origin or detection content affected | [INVARIANT] | yes |
+| TST-AC-TRI-01b | AC-TRI-01b — Ranking writes only triage_* columns | [INVARIANT] | yes |
+| TST-AC-TRI-02a | AC-TRI-02a — Adversarial unbounded continuation: realised ever-false-acceptance rate ≤ α | [FALSIFIER] | yes (pre-customer-enablement) |
+| TST-AC-TRI-02b | AC-TRI-02b — e-process martingale-property unit test passes | [UNIT] | yes (pre-customer-enablement) |
+| TST-AC-TRI-02c | AC-TRI-02c — Accepted spec written version-pinned; core only ever consumes pinned specs | [INVARIANT] | yes |
+| TST-AC-TRI-03a | AC-TRI-03a — Global-accepted spec on adversarial customer distribution is quarantined | [FALSIFIER] | yes |
+| TST-AC-TRI-03b | AC-TRI-03b — Findings dependent on an unrevalidated global spec carry global-unrevalidated | [INVARIANT] | yes |
+| TST-AC-CP-01a | AC-CP-01a — Cross-org access attempt is denied | [NEGATIVE] | yes |
+| TST-AC-CP-02a | AC-CP-02a — Credentials unreadable at rest without managed key; rotation supported | [INTEGRATION] | yes |
+| TST-AC-CP-03a | AC-CP-03a — Migrations apply forward and roll back cleanly on a fresh DB | [INTEGRATION] | yes |
+| TST-AC-CP-04a | AC-CP-04a — SSO sign-up provisions org row plus first-admin membership | [INTEGRATION] | yes |
+| TST-AC-CP-04b | AC-CP-04b — Findings view never visually blurs deterministic-core and oracle-passthrough | [UNIT] (snapshot test) | yes |
+| TST-AC-CP-05a | AC-CP-05a — Deliberately introduced core-path nondeterminism fails the core pipeline | [FALSIFIER] | yes (release blocker) |
+| TST-AC-CP-05b | AC-CP-05b — Oracle pipeline reports numeric reproduction rate; never asserts theorem | [INVARIANT] | yes |
+| TST-AC-CP-05c | AC-CP-05c — CI runs both pipelines on canary corpus on every detector/engine/Env change | [INTEGRATION] | yes (CI gate) |
+| TST-AC-CP-06a | AC-CP-06a — Failing language reported front-end-blocked, not recall failure | [INVARIANT] | yes |
+| TST-AC-CP-06b | AC-CP-06b — Gate results recorded per language and consulted by staging logic | [UNIT] | yes |
+| TST-AC-DEPLOY-01a..e | AC-DEPLOY-01a..e — substrate decision record discharges every CLAR-DEPLOY-* | [INTEGRATION] | yes |
+| TST-AC-DEPLOY-02a..c | AC-DEPLOY-02a..c — Worker base image bundles pinned tools as authoritative env_digest | [UNIT] | yes |
+| TST-AC-DEPLOY-03a..c | AC-DEPLOY-03a..c — End-to-end correlation trace; alarms exist for the named events | [INTEGRATION] | yes |
+| TST-AC-DEPLOY-04a..c | AC-DEPLOY-04a..c — Main-branch deploy enforces pinned digests; CI gates are hard fails | [INTEGRATION] | yes (CI gate) |
+| TST-AC-DEPLOY-05a..b | AC-DEPLOY-05a..b — Cross-org access denied at every surface; namespaced blob paths | [NEGATIVE] | yes |
+
+### 4.3 Invariant-verification test specs (one per emitting component)
+
+`SDD.md` §12 mandates a per-component invariant-verification task rather than a single global task. These supplement (do not replace) the AC tests above.
+
+| Invariant | Component(s) carrying explicit verification |
+|---|---|
+| INV-1 (origin partition) | CMP-ORCH-03 (TST-INV-1-ORCH-03), CMP-FND-01 (TST-INV-1-FND-01), CMP-FND-02 (TST-INV-1-FND-02), CMP-FND-03 (TST-INV-1-FND-03), CMP-SNAP-04 (TST-INV-1-SNAP-04 for re-partitioning correctness), CMP-TRI-01 (TST-INV-1-TRI-01 — no triage-induced origin flips) |
+| INV-2 (versioned parameters) | CMP-SNAP-01 (TST-INV-2-SNAP-01), CMP-ORCH-03 (TST-INV-2-ORCH-03), CMP-FND-01..03, CMP-TRI-02 (TST-INV-2-TRI-02 — accepted specs are version-pinned) |
+| INV-3 (LLM off detection path) | CMP-TRI-01 (TST-INV-3-TRI-01), CMP-TRI-02 (TST-INV-3-TRI-02), CMP-CP-05 (TST-INV-3-CP-05 — Attestor runs with LLM_TRIAGE=off) |
+| INV-4 (one-sided approximations) | CMP-SNAP-03 (TST-INV-4-SNAP-03 — falsifier CW), CMP-DET-01 (TST-INV-4-DET-01 — DSL closure check) |
+| INV-5 (conditional labels self-describing) | CMP-CORE-03 (TST-INV-5-CORE-03 — cpg_order_hash annotation), CMP-FND-03 (TST-INV-5-FND-03 — annotation present in auditor export), CMP-CORE-02 (TST-INV-5-CORE-02 — weak-classed findings never auto-suppressed) |
+| INV-6 (per-language honesty) | CMP-CP-06 (TST-INV-6-CP-06), CMP-CORE-01 (TST-INV-6-CORE-01 — recall claim only on gate-passing pairs) |
+
+### 4.4 Phase 1 acceptance criteria
+
+- AC-QA-01: Every `AC-*` in `SDD.md` has at least one `TST-AC-*` artifact in the WBS-managed test inventory.
+- AC-QA-02: Every `INV-1..INV-6` has at least one explicit `TST-INV-*` per emitting component.
+- AC-QA-03: Every test spec carries a kind tag from §4.1.
+- AC-QA-04: Hard-gate test specs are wired to the CI pipeline (`CMP-CI-01`) such that failure of any one fails the pipeline.
+- AC-QA-05: A code-writing agent given only the `TST-AC-*` set for a `CMP-*` plus `DOC-CMP-<id>` can decide unambiguously whether its implementation is `DONE` for that component.
+
+---
+
+## 5. Phase 2 — Generalise SCM (PLAN Phase 1)
+
+**Goal.** Replace the GitHub-only ingest path with a provider-neutral abstraction whose four concrete connectors all satisfy the same conformance suite. Preserve the existing GitHub retry/backoff and tiered-star behaviour verbatim. Research-mode `search_code()` is GitHub-only.
+
+### CMP-SCM-01 — SCMConnector abstract base
+**Depends-On:** none (CMP-CP-02 mockable until available) · **Staging:** cross-cutting
+**Tasks:**
+- T-CMP-SCM-01-01: Author the ABC for `list_repos`, `clone`, `register_webhook`, `verify_webhook`, `get_default_branch`, `resolve_commit`.
+- T-CMP-SCM-01-02: Define `SCMCredentials` covering PAT, app installation, OAuth, SSH key with a single round-trip-encryptable representation.
+- T-CMP-SCM-01-03: Build the conformance suite that any concrete connector must satisfy.
+- T-CMP-SCM-01-04: Wire `SCMCredentials` through a mock encryption-at-rest layer until `CMP-CP-02` is available.
+**Tests:** TST-AC-SCM-01a, TST-AC-SCM-01b, TST-AC-SCM-01c.
+**Invariants threaded:** none direct.
+
+### CMP-SCM-05 — Shared HTTP retry/backoff
+**Depends-On:** none · **Staging:** cross-cutting
+**Tasks:**
+- T-CMP-SCM-05-01: Lift the existing GitHub retry/backoff/rate-limit pattern into a provider-agnostic module.
+- T-CMP-SCM-05-02: Wire each per-provider rate-limit response shape (429, secondary limits) into the shared module with provider-specific honoring policies.
+**Tests:** TST-AC-SCM-05a.
+
+### CMP-SCM-02 — GitHub connector
+**Depends-On:** CMP-SCM-01 · **Staging:** cross-cutting
+**Tasks:**
+- T-CMP-SCM-02-01: Subsume the existing `integrations/github/github.py` behind the ABC; preserve retry/backoff and tiered-star helpers byte-for-byte.
+- T-CMP-SCM-02-02: Expose `search_code()` for Research mode only; reject Research-mode helpers on non-GitHub connectors at the type system.
+- T-CMP-SCM-02-03: Keep `integrations/github/__init__.py` exporting `search_repositories` as a caller-transparent shim.
+**Tests:** TST-AC-SCM-02a, TST-AC-SCM-02b, TST-AC-SCM-02c.
+
+### CMP-SCM-03 — GitLab / Bitbucket / Azure DevOps connectors
+**Depends-On:** CMP-SCM-01, CMP-SCM-05 · **Staging:** cross-cutting
+**Tasks:**
+- T-CMP-SCM-03-01: Implement the GitLab connector against the REST API and webhook signature scheme.
+- T-CMP-SCM-03-02: Implement the Bitbucket connector against the REST API and webhook signature scheme.
+- T-CMP-SCM-03-03: Implement the Azure DevOps connector against the REST API and webhook signature scheme.
+- T-CMP-SCM-03-04: Mirror the canary repo to all four providers; assert identical commit resolution.
+**Tests:** TST-AC-SCM-03a, TST-AC-SCM-03b, TST-AC-SCM-03c.
+**Invariants threaded:** none direct.
+
+---
+
+## 6. Phase 3 — Detector catalog + combinator DSL + closure check (PLAN Phase 2)
+
+**Goal.** Replace bespoke detector code with a declarative combinator DSL whose closure check discharges the IFDS distributivity hypothesis. Stand up the registry, the manifest, and the ten class directories. Migrate the legacy path-traversal spec and the CodeQL queries to their detector homes.
+
+### CMP-DET-01 — Combinator DSL for taint specs
+**Depends-On:** none · **Staging:** cross-cutting
+**Tasks:**
+- T-CMP-DET-01-01: Implement the primitive set `source(access-path-pattern)`, `sink(...)`, `sanitize(...)`, `propagate(arg→ret | field)` and the sanctioned composition operators.
+- T-CMP-DET-01-02: For every primitive and every sanctioned composition, encode the machine-checked distributivity proof obligation (`f(X ∪ Y) = f(X) ∪ f(Y)`, exhaustively over the bounded finite domain).
+- T-CMP-DET-01-03: Reject any spec embedding non-DSL code at parse time with a precise diagnostic.
+**Tests:** TST-AC-DET-01a, TST-AC-DET-01b, TST-INV-4-DET-01.
+**Invariants threaded:** INV-4 (owner of Algorithm 2's distributivity precondition).
+
+### CMP-DET-02 — Detector registry + closure check
+**Depends-On:** CMP-DET-01 · **Staging:** cross-cutting
+**Tasks:**
+- T-CMP-DET-02-01: Discover `detectors/<class>/` directories and load `manifest.yaml`.
+- T-CMP-DET-02-02: Run the grammar/closure check on every loaded spec; reject out-of-DSL with a precise diagnostic.
+- T-CMP-DET-02-03: Derive `determinism_partition` from `engine` (`ifds | ide` → `deterministic-core`; `semgrep | cpg-query | external` → `oracle-passthrough`).
+- T-CMP-DET-02-04: Persist manifest records (`id`, `cwes`, `languages`, `frameworks`, `engine`, `severity_default`, `determinism_partition`, per-language readiness).
+**Tests:** TST-AC-DET-02a, TST-AC-DET-02b, TST-AC-DET-02c.
+
+### CMP-DET-03 — Class plugin scaffolding + content migration
+**Depends-On:** CMP-DET-02 · **Staging:** per class (see §13)
+**Tasks:**
+- T-CMP-DET-03-01: Scaffold the ten class directories `detectors/{injection,path-traversal,ssrf,deserialization,xss,crypto-misuse,authn-authz,memory-safety,secrets,dep-cve}/` with `specs/` skeletons.
+- T-CMP-DET-03-02: Migrate `tarslip.yaml` → `detectors/path-traversal/specs/`.
+- T-CMP-DET-03-03: Migrate the existing CodeQL queries → `detectors/memory-safety/codeql/` tagged `oracle`.
+- T-CMP-DET-03-04: Verify that the migrated path-traversal spec reproduces the CVE-2025-61765 finding on the appropriate Stage-A language.
+**Tests:** TST-AC-DET-03a, TST-AC-DET-03b.
+
+---
+
+## 7. Phase 4 — Snapshotter + CW-DETECT + differential oracle (PLAN Phase 3)
+
+**Goal.** Stand up the snapshot service, the incremental CPG maintenance pipeline, and the two precondition-soundness mechanisms that make Theorems (a) and 1 reliable: `CW-DETECT` (zero-FN release gate) and the async differential reflection oracle (bounded-latency re-partitioning of mislabelled findings).
+
+### CMP-SNAP-03 — CW-DETECT closed-world precondition detector
+**Depends-On:** none · **Staging:** Stage A
+**Tasks:**
+- T-CMP-SNAP-03-01: Implement the conservative over-approximating detector for reachable reflection / dynamic dispatch / open-hierarchy dispatch.
+- T-CMP-SNAP-03-02: Document the safe direction explicitly: any reachable reflection construct must drive a `not-closed-world` verdict (false negatives forbidden; false positives merely cost performance).
+**Tests:** TST-AC-SNAP-03a (release blocker), TST-AC-SNAP-03b, TST-INV-4-SNAP-03.
+**Invariants threaded:** INV-4 (owner of Algorithm 1's precondition).
+**Risk owned:** R-1.
+
+### CMP-SNAP-01 — Snapshot service API
+**Depends-On:** CMP-SCM-01, CMP-FND-03 · **Staging:** Stage A
+**Tasks:**
+- T-CMP-SNAP-01-01: Implement `POST /snapshots {codebase_id, commit_sha}` to enqueue a snapshot job.
+- T-CMP-SNAP-01-02: Persist the five artifacts (CPG tarball, reverse-symbol index, dynamic call graph, ΔG, precondition-status record) at deterministic object-store keys.
+- T-CMP-SNAP-01-03: Stamp `env_digest` from the worker's container image digest and record it on the snapshot row.
+**Tests:** TST-AC-SNAP-01a, TST-AC-SNAP-01b, TST-AC-SNAP-01c, TST-INV-2-SNAP-01.
+
+### CMP-SNAP-05 — Snapshot worker + environment pinning
+**Depends-On:** CMP-SNAP-01, CMP-DEPLOY-02 · **Staging:** Stage A
+**Tasks:**
+- T-CMP-SNAP-05-01: Implement the worker against the existing env-var / `report_status` / argv-allowlist / secure-`subprocess.run` contract.
+- T-CMP-SNAP-05-02: Mount the worker base image (CMP-DEPLOY-02) such that the container image digest is the authoritative `env_digest`.
+- T-CMP-SNAP-05-03: Reject any invocation flag not on the sanctioned argument allowlist.
+**Tests:** TST-AC-SNAP-05a, TST-AC-SNAP-05b.
+
+### CMP-SNAP-02 — Incremental CPG maintenance (Algorithm 1)
+**Depends-On:** CMP-SNAP-01, CMP-SNAP-03 · **Staging:** Stage A
+**Tasks:**
+- T-CMP-SNAP-02-01: Implement the closed-world incremental path: compute `AFFECTED = changed-decls ∪ reverse-symbol-closure(changed-decls) ∪ direct-callers(changed-signatures) ∪ CHA-cone(changed-types)`; visit only `AFFECTED + frontier` summary edges.
+- T-CMP-SNAP-02-02: Implement the points-to-bounded cone fallback under `CW-DETECT`'s not-closed-world verdict.
+- T-CMP-SNAP-02-03: Implement the `θ_cone` (default 0.25) and `θ_files` (default 0.4) full-reparse fallback.
+- T-CMP-SNAP-02-04: Function-granularity reparse must preserve node IDs for unchanged declarations (key on enclosing-declaration content hash).
+**Tests:** TST-AC-SNAP-02a (conditional theorem), TST-AC-SNAP-02b (empirical), TST-AC-SNAP-02c.
+
+### CMP-SNAP-04 — Differential reflection oracle
+**Depends-On:** CMP-SNAP-03, CMP-FND-02 · **Staging:** Stage A (must ship alongside CMP-SNAP-02, not later — see R-1)
+**Tasks:**
+- T-CMP-SNAP-04-01: Implement the asynchronous whole-program reflection scanner that runs off the critical path.
+- T-CMP-SNAP-04-02: On disagreement with `CW-DETECT`, raise a determinism incident, retroactively re-partition the affected findings from `deterministic-core` to `oracle-passthrough`, and notify the affected customer.
+- T-CMP-SNAP-04-03: Log every re-partition event to provenance.
+- T-CMP-SNAP-04-04: Measure and publish the labeling-correction window as a contractual SLA.
+**Tests:** TST-AC-SNAP-04a, TST-AC-SNAP-04b, TST-AC-SNAP-04c, TST-INV-1-SNAP-04.
+**Risk owned:** R-1 (mitigates Closed-world FN leak).
+
+---
+
+## 8. Phase 5 — Analysis Core (PLAN draws from §6 + Algorithm 2/3/5)
+
+**Goal.** The IFDS/IDE tabulation solver, the slice fingerprint, and the canonical CPG ordering. This is the principal engineering deliverable; per-language staging (§13) governs its rollout per language.
+
+### CMP-CORE-03 — Canonical CPG ordering (Algorithm 5)
+**Depends-On:** none · **Staging:** Stage A
+**Tasks:**
+- T-CMP-CORE-03-01: Implement 2-WL refinement.
+- T-CMP-CORE-03-02: Implement bounded individualisation-refinement under hard `(B, T)` budget (defaults: `B = 2^16` search-tree nodes, `T = 200 ms`).
+- T-CMP-CORE-03-03: Implement the stable-order fallback keyed on `(declaration-hash, structural-path-from-declaration-root, edge-kind)` on budget exhaustion.
+- T-CMP-CORE-03-04: Name the persisted hash field `cpg_order_hash` and stamp the `canonical iff fingerprint_class = strong` annotation everywhere it appears (provenance record, SARIF properties, auditor export).
+**Tests:** TST-AC-CORE-03a, TST-AC-CORE-03b, TST-AC-CORE-03c, TST-INV-5-CORE-03.
+**Invariants threaded:** INV-5.
+
+### CMP-CORE-01 — IFDS/IDE tabulation solver (Algorithm 2)
+**Depends-On:** CMP-DET-01, CMP-SNAP-02, CMP-CORE-03 · **Staging:** Stage A (then per-language per §13)
+**Tasks:**
+- T-CMP-CORE-01-01: Build the exploded supergraph from the CPG and the loaded detector spec.
+- T-CMP-CORE-01-02: Implement the RHS Tabulation algorithm with reusable procedure summaries.
+- T-CMP-CORE-01-03: Implement the IDE extension for lattice-valued classes (crypto key-size, race windows, etc.).
+- T-CMP-CORE-01-04: Implement incremental mode invalidating only `AFFECTED` summaries.
+**Tests:** TST-AC-CORE-01a (release blocker), TST-AC-CORE-01b (per stage), TST-AC-CORE-01c, TST-INV-6-CORE-01.
+**Invariants threaded:** INV-6.
+
+### CMP-CORE-02 — Slice fingerprint (Algorithm 3)
+**Depends-On:** CMP-CORE-01, CMP-CORE-03 · **Staging:** Stage A
+**Tasks:**
+- T-CMP-CORE-02-01: Compute the backward interprocedural slice along the witness.
+- T-CMP-CORE-02-02: Implement the named normalisation passes: α-renaming for locals; PDG-only formatting; canonical topological sort for independent reordering; summary-inlining for extract/inline-method (pure-extract proven only); FQN normalisation for file-move / package-rename.
+- T-CMP-CORE-02-03: Implement the bounded canonicalisation under the shared `(B, T)` budget with the `weak` fallback (witness-edge-sequence hash, `O(|witness|)` capped).
+- T-CMP-CORE-02-04: Stamp `fingerprint_class` (`strong` | `weak`) on every emitted finding; ensure the baseline never auto-suppresses a `weak` finding across a refactor.
+**Tests:** TST-AC-CORE-02a, TST-AC-CORE-02b, TST-AC-CORE-02c, TST-INV-5-CORE-02.
+
+---
+
+## 9. Phase 6 — Orchestration + scheduler (PLAN Phase 4)
+
+**Goal.** Stand up the scan API, the heuristic scheduler `SNAP-SCHED-H`, and the detector-agnostic worker that loads a CPG once and runs IFDS or an oracle adapter per detector.
+
+### CMP-ORCH-01 — Scan API
+**Depends-On:** CMP-SNAP-01, CMP-FND-01, CMP-CP-01 · **Staging:** Stage A
+**Tasks:**
+- T-CMP-ORCH-01-01: Implement `POST /api/v1/scans {codebase_id, commit_sha, detector_ids[]}` to enqueue a scan job.
+- T-CMP-ORCH-01-02: Implement `GET /api/v1/scans/{id}` and `GET /api/v1/scans/{id}/findings`.
+- T-CMP-ORCH-01-03: Implement the worker callback `POST /api/v1/jobs/{job_id}/status` with HMAC-bearer verification.
+- T-CMP-ORCH-01-04: On a scan submission, create the snapshot if absent, then fan one job per detector.
+- T-CMP-ORCH-01-05: Backwards-compat: `scanipy --query extractall --run-semgrep` (Research mode) yields the historical CVE-2025-61765 finding with `origin=deterministic-core` on a Stage-A language.
+**Tests:** TST-AC-ORCH-01a, TST-AC-ORCH-01b, TST-AC-ORCH-01c.
+
+### CMP-ORCH-02 — Heuristic scheduler SNAP-SCHED-H (Algorithm 4)
+**Depends-On:** CMP-ORCH-01 · **Staging:** cross-cutting
+**Tasks:**
+- T-CMP-ORCH-02-01: Implement snapshot-affinity grouping to amortise CPG load `L`.
+- T-CMP-ORCH-02-02: Implement the independent-moldable 2-approx allotment as a heuristic seed (no constant-factor guarantee claimed).
+- T-CMP-ORCH-02-03: Implement LPT list-scheduling with dependence-aware deferral.
+- T-CMP-ORCH-02-04: Policy-gate the classes that customer policy elevates first.
+- T-CMP-ORCH-02-05: Ensure documentation reads ρ≈2 strictly as a relaxation bound, never a guarantee.
+**Tests:** TST-AC-ORCH-02a (empirical p95), TST-AC-ORCH-02b (schedule-invariance), TST-AC-ORCH-02c.
+**Invariants threaded:** INV-1 (via schedule-invariance check).
+
+### CMP-ORCH-03 — Detector-agnostic worker
+**Depends-On:** CMP-CORE-01, CMP-DET-02, CMP-FND-01 · **Staging:** Stage A
+**Tasks:**
+- T-CMP-ORCH-03-01: Load the snapshot CPG once and resolve the detector via the registry.
+- T-CMP-ORCH-03-02: Run IFDS for `engine ∈ {ifds, ide}`; run the oracle adapter for `engine ∈ {semgrep, cpg-query, external}`.
+- T-CMP-ORCH-03-03: Stamp `origin` and `determinism_partition` on every emitted finding.
+- T-CMP-ORCH-03-04: For `mixed`-class detectors, emit per-finding `origin` without blurring.
+- T-CMP-ORCH-03-05: Emit SARIF in canonical CPG order (delegates to CMP-FND-01).
+**Tests:** TST-AC-ORCH-03a, TST-AC-ORCH-03b, TST-INV-1-ORCH-03, TST-INV-2-ORCH-03.
+
+---
+
+## 10. Phase 7 — Findings & Provenance (PLAN Phase 5)
+
+**Goal.** Normalise every detector output to SARIF, persist with the full provenance surface, and produce the signed audit chain.
+
+### CMP-FND-02 — Findings store schema
+**Depends-On:** CMP-CP-03 · **Staging:** cross-cutting
+**Tasks:**
+- T-CMP-FND-02-01: Create the `findings` table with columns `slice_fingerprint`, `fingerprint_class`, `origin`, `determinism_partition`, `witness_blob_uri`, `S_version`, `env_digest`, `cpg_order_hash`, `triage_score`, `triage_reason`, `status`.
+- T-CMP-FND-02-02: Index `(codebase_id, slice_fingerprint)` for cross-scan baseline lookup.
+- T-CMP-FND-02-03: Enforce non-null `origin`, `S_version`, `env_digest` at the schema level (INV-1, INV-2).
+**Tests:** TST-AC-FND-02a, TST-AC-FND-02b, TST-INV-1-FND-02, TST-INV-2-FND-02.
+
+### CMP-FND-01 — Findings normalizer
+**Depends-On:** CMP-CORE-02, CMP-CORE-03 · **Staging:** Stage A
+**Tasks:**
+- T-CMP-FND-01-01: Normalise every detector output to SARIF 2.1.0.
+- T-CMP-FND-01-02: Attach the slice fingerprint and `fingerprint_class` to every result.
+- T-CMP-FND-01-03: Emit results in canonical CPG order from `CMP-CORE-03`.
+**Tests:** TST-AC-FND-01a, TST-AC-FND-01b, TST-INV-1-FND-01.
+
+### CMP-FND-03 — Signed provenance record
+**Depends-On:** CMP-FND-02 · **Staging:** Stage A
+**Tasks:**
+- T-CMP-FND-03-01: Construct the audit chain `source commit → snapshot digest → S_version → env_digest → cpg_order_hash (canonical iff strong) → taint witness → rule/spec id → SARIF hash → per-finding origin`.
+- T-CMP-FND-03-02: Sign the record.
+- T-CMP-FND-03-03: Stamp the conditional-canonicality annotation on `cpg_order_hash` in the auditor export.
+- T-CMP-FND-03-04: Append every differential-oracle re-partition event to the record.
+**Tests:** TST-AC-FND-03a, TST-AC-FND-03b, TST-AC-FND-03c, TST-INV-1-FND-03, TST-INV-5-FND-03.
+
+---
+
+## 11. Phase 8 — Triage + spec inference with the e-process gate (PLAN Phase 7)
+
+**Goal.** Stand up the LLM triage ranker (default off; never deletes findings), the anytime-valid e-process spec gate, and the per-customer revalidation and drift monitor. The acceptance gate and the drift monitor share one mathematical instrument.
+
+### CMP-TRI-01 — LLM triage ranking
+**Depends-On:** CMP-FND-02 · **Staging:** post-core (after Stage A)
+**Tasks:**
+- T-CMP-TRI-01-01: Score `(likely_exploitable, likely_test_code, likely_fp)` from the SARIF blob plus a bounded code window.
+- T-CMP-TRI-01-02: Write `triage_score` and `triage_reason` only; never touch `origin` or detection content.
+- T-CMP-TRI-01-03: Default the feature flag to off.
+- T-CMP-TRI-01-04: Make ranking strictly additive — never delete a finding.
+**Tests:** TST-AC-TRI-01a, TST-AC-TRI-01b, TST-INV-1-TRI-01, TST-INV-3-TRI-01.
+**Invariants threaded:** INV-3.
+
+### CMP-TRI-02 — Anytime-valid e-process spec gate (Algorithm 6)
+**Depends-On:** CMP-DET-02, CMP-FND-02 · **Staging:** post-core (after Stage A)
+**Tasks:**
+- T-CMP-TRI-02-01: For each candidate spec `σ`, maintain an e-process `E_t(σ)` for the precision-floor null `H0(σ) : true precision of σ < π₀`.
+- T-CMP-TRI-02-02: Use a betting confidence sequence for the bounded mean (per `PLAN.md` Algorithm 6).
+- T-CMP-TRI-02-03: Accept `σ` when `E_t(σ) ≥ 1/α`; write the accepted spec version-pinned as a new `S_version`.
+- T-CMP-TRI-02-04: Combine multiplicity over selected specs by e-process averaging (closed under averaging).
+- T-CMP-TRI-02-05: Implement the martingale-property unit test as a pre-customer-enablement gate.
+**Tests:** TST-AC-TRI-02a (falsifier — adversarial unbounded continuation), TST-AC-TRI-02b (release-blocking unit test), TST-AC-TRI-02c, TST-INV-2-TRI-02, TST-INV-3-TRI-02.
+**Risk owned:** R-3.
+
+### CMP-TRI-03 — Per-customer revalidation + drift monitor
+**Depends-On:** CMP-TRI-02 · **Staging:** post-core
+**Tasks:**
+- T-CMP-TRI-03-01: Maintain `S = S_global ∪ S_customer` per scan; pin both per scan.
+- T-CMP-TRI-03-02: Run the same e-process instrument on the customer's adjudicated stream.
+- T-CMP-TRI-03-03: Auto-quarantine `σ` for a customer on a floor breach.
+- T-CMP-TRI-03-04: Label findings dependent on an unrevalidated global spec as `spec_provenance = global-unrevalidated` until revalidation.
+**Tests:** TST-AC-TRI-03a, TST-AC-TRI-03b.
+
+---
+
+## 12. Phase 9 — Determinism Attestor + CPG-fidelity gate (PLAN Phase 9)
+
+**Goal.** The partitioned Attestor (core: byte-identical SARIF hard-fail; oracle: digest-stability + measured rate) and the per-language CPG-fidelity gate that decides which `(class, language)` pairs are eligible for Algorithm 2 benchmarking.
+
+### CMP-CP-05 — Determinism Attestor (partitioned)
+**Depends-On:** CMP-ORCH-01, CMP-FND-03 · **Staging:** Stage A
+**Tasks:**
+- T-CMP-CP-05-01: Core pipeline — re-run `F` under fixed `(S_version, env_digest, LLM_TRIAGE=off)` and assert byte-identical SARIF over the `deterministic-core` partition. Any diff hard-fails CI.
+- T-CMP-CP-05-02: Oracle pipeline — record oracle digests and report a measured reproduction rate; never assert the reproducibility theorem.
+- T-CMP-CP-05-03: Run both pipelines on the canary corpus on every detector / engine / `Env` change.
+- T-CMP-CP-05-04: Deliberately introduce a core-path nondeterminism in a scoped harness; verify the core pipeline fails (release gate self-test).
+**Tests:** TST-AC-CP-05a, TST-AC-CP-05b, TST-AC-CP-05c, TST-INV-3-CP-05.
+**Risk owned:** R-4 (alongside CMP-SNAP-04).
+
+### CMP-CP-06 — CPG-fidelity gate harness
+**Depends-On:** CMP-SNAP-05 · **Staging:** per language
+**Tasks:**
+- T-CMP-CP-06-01: For each target language, curate the fidelity corpus with ground-truth ASTs/CFGs/call-edges (corpus is itself a work package; see CMP-CORP-CPG-*).
+- T-CMP-CP-06-02: Implement the gate thresholds: parse success ≥ 99.5% of files; call-edge precision/recall ≥ stated thresholds; PDG dependence-edge recall ≥ threshold.
+- T-CMP-CP-06-03: A `(class, language)` pair enters Algorithm 2 benchmarking only after passing.
+- T-CMP-CP-06-04: Record gate results per language; the staging logic consumes this record.
+- T-CMP-CP-06-05: Report failing languages as `front-end-blocked`, never as recall failures.
+**Tests:** TST-AC-CP-06a, TST-AC-CP-06b, TST-INV-6-CP-06.
+**Invariants threaded:** INV-6.
+**Risk owned:** R-2.
+
+---
+
+## 13. Phase 10 — Per-language staging (overlay, §11 of SDD)
+
+**Goal.** Sequence Phase 2–9 work per language. A stage may not begin until the prior stage's core components have passed every AC **and** the relevant CPG-fidelity gate is green for that language. Stages leave the system runnable and independently shippable.
+
+### Stage A — Java + Python
+- Languages with the strongest Joern front-ends.
+- Detector classes promoted to core: `injection`, `path-traversal`, `ssrf`, `deserialization`.
+- Algorithm 2 falsifier (TST-AC-CORE-01b) is first meaningful here.
+- Other detector classes ship `oracle-passthrough` until later stages.
+
+### Stage B — JS/TS
+- Begins only after Stage A is determinism-attested (`CMP-CP-05` green for Stage A).
+- JS/TS front-end fidelity validated via `CMP-CP-06` before any class falsifier counts.
+
+### Stage C — Go
+- Front-end fidelity gate first.
+- Carries an explicit points-to / interface-dispatch investment work package as a prerequisite (`T-STAGE-C-FE-01`).
+- Algorithm 2 benchmarking only after the gate passes.
+
+### Stage D — Ruby, PHP
+- Lowest front-end maturity.
+- Until the fidelity gate passes, these languages ship `oracle-passthrough` only.
+- Likely requires a proprietary front-end work package (`T-STAGE-D-FE-01` — filed as `CLAR-FE-01`).
+
+### C/C++ (memory-safety)
+- Remains `oracle-passthrough` (CodeQL) throughout v3.2.
+- Port to core is tracked but explicitly **out of v3 scope** (see `OOS-CC-01`).
+
+### Always `oracle-passthrough` throughout v3.2
+- `secrets`, `dep-cve` — deterministic in practice, attested, not theorem-covered.
+- `crypto-misuse`, `authn-authz` — `mixed`. The IDE/IFDS portion follows its language's staging; the pattern portion ships `oracle-passthrough`.
+
+### Staging tasks (one per stage)
+- T-STAGE-A-01: Promote Java + Python to core for `{injection, path-traversal, ssrf, deserialization}`. Gate on `CMP-CP-05` green and `CMP-CP-06` green for both languages.
+- T-STAGE-B-01: Promote JS/TS to core. Gate on Stage A determinism-attested and `CMP-CP-06` green for JS/TS.
+- T-STAGE-C-01: Promote Go to core. Gate on `CMP-CP-06` green for Go (which gates on `T-STAGE-C-FE-01` — points-to / interface-dispatch investment).
+- T-STAGE-D-01: Promote Ruby and PHP to core. Gate on `CMP-CP-06` green for both (likely requires `T-STAGE-D-FE-01` — proprietary front-end work).
+
+---
+
+## 14. Phase 11 — Multi-tenant control plane (PLAN Phase 6)
+
+**Goal.** Tenancy schema, RBAC, credential encryption, authentication, dashboard.
+
+### CMP-CP-03 — Tenancy schema + migrations
+**Depends-On:** none · **Staging:** cross-cutting
+**Tasks:**
+- T-CMP-CP-03-01: Tables `orgs`, `projects`, `codebases`, `scm_credentials`, `org_policies`, `memberships`, `snapshots` (+ precondition-status), `proposed_specs`, `spec_versions`, `attestations`. Reuse the existing `BaseDatabase`.
+- T-CMP-CP-03-02: Author forward + rollback migrations that apply cleanly on a fresh database.
+**Tests:** TST-AC-CP-03a.
+
+### CMP-CP-02 — Credential encryption service
+**Depends-On:** none · **Staging:** cross-cutting
+**Tasks:**
+- T-CMP-CP-02-01: Encrypt `scm_credentials` at rest with a managed key.
+- T-CMP-CP-02-02: Support key rotation.
+- T-CMP-CP-02-03: Expose the key service consumed by CMP-SCM-01.
+**Tests:** TST-AC-CP-02a.
+
+### CMP-CP-01 — Multi-tenant scan API guard
+**Depends-On:** CMP-CP-03 · **Staging:** cross-cutting
+**Tasks:**
+- T-CMP-CP-01-01: Require `X-Scanipy-Org-Id` and `X-Scanipy-User-Id` on every API call.
+- T-CMP-CP-01-02: Scope every query by org id; enforce RBAC in the API layer.
+- T-CMP-CP-01-03: Parameterise the cross-org-access negative test (TST-AC-CP-01a).
+**Tests:** TST-AC-CP-01a.
+
+### CMP-CP-04 — Authentication (OIDC/SAML) + dashboard
+**Depends-On:** CMP-CP-01, CMP-FND-03 · **Staging:** cross-cutting
+**Tasks:**
+- T-CMP-CP-04-01: Implement OIDC/SAML federation in `web/auth.ts` / `web/middleware.ts`.
+- T-CMP-CP-04-02: First-admin provisioning on SSO sign-up — creates org row and admin membership.
+- T-CMP-CP-04-03: Build the dashboard tree orgs → projects → codebases → scans → findings grouped by class.
+- T-CMP-CP-04-04: Per-finding render: witness, `origin`, `S_version`, `env_digest`, and the conditional-canonicality annotation.
+- T-CMP-CP-04-05: Visual partition — `deterministic-core` and `oracle-passthrough` are never blurred in the UI.
+**Tests:** TST-AC-CP-04a, TST-AC-CP-04b.
+
+---
+
+## 15. Phase 12 — Research mode reattached (PLAN Phase 8)
+
+**Goal.** Preserve the GitHub-search-driven Research mode that feeds synthetic codebases and labelled CVE findings into the same pool; route labelled CVE findings to the e-process evaluation stream.
+
+### CMP-RES-01 — Research mode service
+**Depends-On:** CMP-SCM-02 (GitHub-only `search_code()`), CMP-TRI-02 (e-process evaluation stream) · **Staging:** post-core
+**Tasks:**
+- T-CMP-RES-01-01: Implement `services/research/api.py` to feed synthetic codebases into the shared scan pool.
+- T-CMP-RES-01-02: Route labelled CVE findings into the e-process evaluation stream with explicit covariate-shift handling.
+- T-CMP-RES-01-03: Preserve the v2-era `scanipy --query` CLI entry points as caller-transparent shims (covered by TST-AC-ORCH-01c).
+**Tests:** Recall-claim-per-language tests of Algorithm 2 use Research-mode-curated corpora; coverage rolled into TST-AC-CORE-01b per stage. No new top-level AC; the feature is exercised through CMP-ORCH-01 and CMP-TRI-02 ACs.
+
+---
+
+## 16. Phase 13 — Cross-cutting concerns (SDD §12)
+
+Each item below is a discrete work package; not a metadata field on another package.
+
+### CMP-CORP-REFL-01 — Reflection corpus
+**Depends-On:** none · **Staging:** Stage A (must precede `TST-AC-SNAP-03a`).
+**Purpose.** Curated labelled reflection corpus driving Falsifier CW: Spring dynamic proxies, Python `__import__` / `getattr` dispatch, Ruby `send` / `method_missing`, PHP variable functions, Java `Class.forName`, plus mutation-injected reflection in otherwise-closed-world repos with ground-truth labels.
+**Acceptance criteria:**
+- AC-CORP-REFL-01a: Corpus covers every category listed above with ≥ N labelled examples per category (`N` filed as `CLAR-CORP-01`).
+- AC-CORP-REFL-01b: Mutation-injection pipeline reproducibly generates labelled reflection scenarios from clean closed-world repos.
+- AC-CORP-REFL-01c: Corpus is versioned; a corpus change is part of the release ledger.
+
+### CMP-CORP-CPG-{java,python,js,go,ruby,php} — CPG-fidelity corpora
+**Depends-On:** none · **Staging:** per language (must precede that language's entry into `CMP-CP-06` / Algorithm 2 benchmarking).
+**Purpose.** Per-language fidelity corpus with ground-truth ASTs, CFGs, and call-edges. One corpus per language; six total.
+**Acceptance criteria:**
+- AC-CORP-CPG-*a: Corpus carries ground-truth AST/CFG/call-edge annotations and a documented annotation methodology.
+- AC-CORP-CPG-*b: Corpus is versioned; gate thresholds are evaluated against the pinned corpus version.
+
+### CMP-CORP-CANARY-01 — Canary repo set across four SCMs
+**Depends-On:** CMP-SCM-02, CMP-SCM-03 · **Staging:** Stage A.
+**Purpose.** 100 canary repos mirrored to GitHub, GitLab, Bitbucket, Azure DevOps; used by `TST-AC-CORE-01a` (determinism) and `TST-AC-SCM-03c` (identical commit resolution).
+**Acceptance criteria:**
+- AC-CORP-CANARY-01a: 100 repos, each mirrored to all four providers with identical commit history.
+- AC-CORP-CANARY-01b: Re-mirroring is automated and reproducible.
+
+### CMP-CORP-REFAC-01 — Seeded-refactor set
+**Depends-On:** none · **Staging:** Stage A (must precede `TST-AC-CORE-02a/b`).
+**Purpose.** 50 seeded findings paired with each named refactor (α-renaming, formatting, independent reordering, pure extract, file-move / package-rename) and with a genuine fix and an aliasing-changing extract.
+**Acceptance criteria:**
+- AC-CORP-REFAC-01a: 50 seeded findings × each refactor; ground-truth labels (`should-flip` vs `should-stay`).
+- AC-CORP-REFAC-01b: Adding a new refactor is a documented procedure with a regression-impact assessment.
+
+### CMP-CORP-VULN-01 — OWASP / Juliet / BigVul slices
+**Depends-On:** none · **Staging:** Stage A.
+**Purpose.** Evaluation slices used by Algorithm 2's per-(class, language) recall claim. Held-out portion of BigVul is preserved across releases.
+**Acceptance criteria:**
+- AC-CORP-VULN-01a: OWASP Benchmark + Juliet integrated; BigVul held-out split is versioned and never used for training.
+- AC-CORP-VULN-01b: Per-(class, language) slicing supports the per-stage benchmark in `TST-AC-CORE-01b`.
+
+### CMP-CI-01 — Continuous-integration gate pipeline
+**Depends-On:** CMP-DEPLOY-04 · **Staging:** cross-cutting (lit up in Stage A; extended per stage).
+**Purpose.** Enforce the four named gates as continuous, hard-failing CI gates rather than periodic checks. Wire them so a failure of any one fails the pipeline.
+**Tasks:**
+- T-CMP-CI-01-01: Wire `AC-DET-01a` (combinator distributivity-proof obligations) as a hard CI gate on the `analysis/ifds/dsl/` directory.
+- T-CMP-CI-01-02: Wire `AC-SNAP-03a` (Falsifier CW zero-FN gate) as a release-blocking job.
+- T-CMP-CI-01-03: Wire `AC-CP-05c` (Attestor runs core + oracle pipelines on canary corpus on every detector/engine/Env change) as a hard CI gate.
+- T-CMP-CI-01-04: Wire `AC-TRI-02b` (e-process martingale-property unit test) as a pre-customer-enablement gate that blocks the customer-enablement deploy stage.
+- T-CMP-CI-01-05: Document the gate failure-response procedure (who is paged, how to roll back, how to re-attest).
+
+### Provenance threading (SDD §12)
+Per-component verification tasks rather than a single global task. Already enumerated:
+- TST-INV-2-SNAP-01 (snapshot writes `env_digest`).
+- TST-INV-2-ORCH-03 (every emitted finding carries `S_version` and `env_digest`).
+- TST-INV-2-FND-02 (schema-level non-null check).
+- TST-INV-2-TRI-02 (accepted spec is version-pinned).
+- TST-INV-1-{ORCH-03, FND-01, FND-02, FND-03, SNAP-04, TRI-01}.
+- TST-INV-5-{CORE-03, FND-03, CORE-02}.
+- TST-INV-6-{CP-06, CORE-01}.
+- TST-INV-3-{TRI-01, TRI-02, CP-05}.
+- TST-INV-4-{SNAP-03, DET-01}.
+
+---
+
+## 17. CLARIFICATION-NEEDED register
+
+These items must be resolved before the work that depends on them can begin. Each carries an owner and a target resolution phase.
+
+| Id | Question | Blocks | Target resolution |
+|---|---|---|---|
+| CLAR-DEPLOY-01 | Cloud / compute service selection (container-orchestration primitive) | CMP-DEPLOY-01..05; everything dependent | Before Phase 4 |
+| CLAR-DEPLOY-02 | Object-store choice (must support content-addressable, deterministic keys) | CMP-SNAP-01 | Before Phase 4 |
+| CLAR-DEPLOY-03 | Relational-DB engine + version | CMP-CP-03; CMP-FND-02 | Before Phase 7 (Findings) |
+| CLAR-DEPLOY-04 | KMS / envelope-encryption vendor + rotation primitive | CMP-CP-02 | Before Phase 11 (Control plane) |
+| CLAR-DEPLOY-05 | Secrets vendor + injection path into workers | CMP-DEPLOY-02..04 | Before Phase 4 |
+| CLAR-DEPLOY-06 | Queue technology + DLQ + visibility-timeout / retry semantics | CMP-ORCH-01..03 | Before Phase 6 (Orchestration) |
+| CLAR-DEPLOY-07 | Observability stack — logs, metrics, traces, alarms | CMP-DEPLOY-03 | Before Phase 4 |
+| CLAR-DEPLOY-08 | Region strategy — per-env, per-tenant, single-region | CMP-DEPLOY-01 | Before Phase 4 |
+| CLAR-DEPLOY-09 | Network model — VPC, private subnets, ingress / egress controls | CMP-DEPLOY-01 | Before Phase 4 |
+| CLAR-DEPLOY-10 | OIDC / SAML IdP integration target — preferred IdP, federation pattern | CMP-CP-04 | Before Phase 11 |
+| CLAR-DEPLOY-11 | CI/CD provider + OIDC-to-cloud trust pattern | CMP-DEPLOY-04 | Before Phase 4 |
+| CLAR-DEPLOY-12 | RBAC model surface — which roles exist (admin, viewer, scanner, …), default role on first-admin provisioning | CMP-CP-01, CMP-CP-04 | Before Phase 11 |
+| CLAR-DEPLOY-13 | Image registry + signing/attestation surface | CMP-DEPLOY-02, CMP-DEPLOY-04 | Before Phase 4 |
+| CLAR-DEPLOY-14 | LLM provider for triage and spec inference, plus pricing/quota controls | CMP-TRI-01, CMP-TRI-02 | Before Phase 8 enable |
+| CLAR-DEPLOY-15 | Data retention policy per artifact class (CPG tarball, witness blob, SARIF, provenance record); legal hold and export | CMP-DEPLOY-01, CMP-FND-03 | Before Phase 7 |
+| CLAR-DEPLOY-16 | Per-tenant data-isolation backstop at the substrate layer (e.g. per-tenant blob namespace; per-tenant DB row-level security) | CMP-DEPLOY-05 | Before Phase 11 |
+| CLAR-CORP-01 | Reflection corpus minimum sample size per category (Spring proxies, Python `__import__`/`getattr`, Ruby `send`/`method_missing`, PHP variable functions, Java `Class.forName`, mutation-injected) | CMP-CORP-REFL-01 | Before Phase 4 |
+| CLAR-CORP-02 | CPG-fidelity gate exact thresholds per language (parse success ≥ 99.5% is given; call-edge precision/recall and PDG dependence-edge recall floors are not pinned) | CMP-CP-06 | Per stage |
+| CLAR-PARAM-01 | Default values for `κ` (closed-world κ-bound regression threshold), `θ_cone` (default 0.25 stated; confirm), `θ_files` (default 0.4 stated; confirm), `(B, T)` budget (defaults `2^16` nodes / 200 ms stated; confirm) | CMP-SNAP-02, CMP-CORE-02, CMP-CORE-03 | Before relevant stage |
+| CLAR-PARAM-02 | Default values for the e-process gate: `π₀` per detector class, `α`, and the per-class evaluation-stream definition | CMP-TRI-02 | Before Phase 8 enable |
+| CLAR-PARAM-03 | Default value for the `weak`-fallback-rate publish threshold (5% target stated; confirm operational threshold) | CMP-CORE-02 | Before Phase 5 |
+| CLAR-SLA-01 | Differential-oracle labeling-correction window SLA target | CMP-SNAP-04 | Before Stage A go-live |
+| CLAR-FE-01 | Stage-D proprietary front-end work — build vs buy vs delay | T-STAGE-D-FE-01 | Before Stage D |
+| CLAR-FE-02 | Stage-C points-to / interface-dispatch investment scope (Andersen-style baseline vs richer) | T-STAGE-C-FE-01 | Before Stage C |
+| CLAR-OWNER-01 | Module / corpus / risk owners — every `CMP-*` and every `R-*` mitigation needs a named owner | All phases | Continuous |
+| CLAR-MIGRATION-01 | Legacy data migration plan from v2 to v3.2 (findings, codebase membership, credentials) — in scope vs new-env-only | CMP-CP-03 | Before Phase 11 |
+
+---
+
+## 18. OUT-OF-SCOPE register
+
+`SDD.md` §12 enumerates the v3 out-of-scope items. The WBS records them here so derived tasks that drift toward them are deflected.
+
+| Id | Item | Source |
+|---|---|---|
+| OOS-CI-AGENT-01 | CI-agent / on-prem runner | SDD §12 |
+| OOS-CONTAINER-SCAN-01 | Container-image scanning | SDD §12 |
+| OOS-BINARY-01 | Binary-only analysis | SDD §12 |
+| OOS-IDE-01 | IDE plugin | SDD §12 |
+| OOS-CC-01 | C/C++ memory-safety port to core (remains oracle-passthrough through v3.2) | SDD §11 |
+| OOS-LLM-DET-01 | Any LLM influence on `deterministic-core` findings other than via accepted version-pinned `S` | SDD INV-3 |
+| OOS-ENV-INDEP-01 | Environment-independent determinism (reproducibility is **scoped to fixed `Env`**) | PLAN §"Central correction" |
+
+If a derived task implies any of the above, emit an `OOS-*` reference and **do not** schedule it under v3.2.
+
+---
+
+## 19. Risk mitigation matrix
+
+`SDD.md` §13 risks are matched to mitigation work packages here. Every risk must have a mitigation task that is in-flight or done by Stage A go-live.
+
+| Risk | Statement | Mitigation owner(s) | Notes |
+|---|---|---|---|
+| R-1 | Undecidable preconditions leak — `CW-DETECT` FN ships wrong `deterministic-core` label | CMP-SNAP-04 (differential oracle) | Must be scheduled in the **same stage** as CMP-SNAP-02, not later. |
+| R-2 | Front-end fidelity dominates schedule — weak front-ends silently depress AC-CORE-01b | CMP-CP-06 (gate) + T-STAGE-{C,D}-FE-01 | Gate precedes every Algorithm 2 benchmark. |
+| R-3 | Spec gate misuse — e-process without martingale unit test invalidates the guarantee | TST-AC-TRI-02b as hard production-enablement gate | Gate is wired by CMP-CI-01. |
+| R-4 | Determinism regression invisible to same-path re-run | CMP-SNAP-04 + CMP-CP-05 partition split | Both required, neither sufficient alone. |
+| R-5 | Detector-catalog chicken-and-egg — stubbed classes block adoption | Stage A front-loads `{injection, path-traversal, ssrf, deserialization}`; other six are post-Stage-A increments | Stage A is the minimum shippable set. |
+
+---
+
+## 20. Dependency DAG summary
+
+Adjacency list of `CMP-*` `Depends-On` edges, derived from `SDD.md`. Reading: `A → [B, C]` means A depends on B and C; B and C must reach `DONE` before A becomes `READY` (subject to per-language staging in §13).
+
+```
+CMP-DEPLOY-01      → []
+CMP-DEPLOY-02      → [CMP-DEPLOY-01]
+CMP-DEPLOY-03      → [CMP-DEPLOY-01]
+CMP-DEPLOY-04      → [CMP-DEPLOY-01, CMP-DEPLOY-02]
+CMP-DEPLOY-05      → [CMP-DEPLOY-01, CMP-CP-01, CMP-CP-03]
+
+CMP-SCM-01         → []                      (CMP-CP-02 mockable until available)
+CMP-SCM-05         → []
+CMP-SCM-02         → [CMP-SCM-01]
+CMP-SCM-03         → [CMP-SCM-01, CMP-SCM-05]
+
+CMP-DET-01         → []
+CMP-DET-02         → [CMP-DET-01]
+CMP-DET-03         → [CMP-DET-02]            (per class)
+
+CMP-SNAP-03        → []
+CMP-SNAP-01        → [CMP-SCM-01, CMP-FND-03]
+CMP-SNAP-05        → [CMP-SNAP-01, CMP-DEPLOY-02]
+CMP-SNAP-02        → [CMP-SNAP-01, CMP-SNAP-03]
+CMP-SNAP-04        → [CMP-SNAP-03, CMP-FND-02]
+
+CMP-CORE-03        → []
+CMP-CORE-01        → [CMP-DET-01, CMP-SNAP-02, CMP-CORE-03]
+CMP-CORE-02        → [CMP-CORE-01, CMP-CORE-03]
+
+CMP-FND-02         → [CMP-CP-03]
+CMP-FND-01         → [CMP-CORE-02, CMP-CORE-03]
+CMP-FND-03         → [CMP-FND-02]
+
+CMP-ORCH-01        → [CMP-SNAP-01, CMP-FND-01, CMP-CP-01]
+CMP-ORCH-02        → [CMP-ORCH-01]
+CMP-ORCH-03        → [CMP-CORE-01, CMP-DET-02, CMP-FND-01]
+
+CMP-TRI-01         → [CMP-FND-02]
+CMP-TRI-02         → [CMP-DET-02, CMP-FND-02]
+CMP-TRI-03         → [CMP-TRI-02]
+
+CMP-CP-02          → []
+CMP-CP-03          → []
+CMP-CP-01          → [CMP-CP-03]
+CMP-CP-04          → [CMP-CP-01, CMP-FND-03]
+CMP-CP-05          → [CMP-ORCH-01, CMP-FND-03]
+CMP-CP-06          → [CMP-SNAP-05]
+
+CMP-CORP-REFL-01   → []
+CMP-CORP-CPG-*     → []
+CMP-CORP-CANARY-01 → [CMP-SCM-02, CMP-SCM-03]
+CMP-CORP-REFAC-01  → []
+CMP-CORP-VULN-01   → []
+
+CMP-CI-01          → [CMP-DEPLOY-04]
+
+CMP-RES-01         → [CMP-SCM-02, CMP-TRI-02]
+```
+
+### 20.1 Cycle note
+
+There is one apparent cycle to be aware of when reading the DAG:
+
+```
+CMP-SNAP-01 → CMP-FND-03 → CMP-FND-02 → CMP-CP-03
+```
+
+`CMP-SNAP-01` depends on `CMP-FND-03` only insofar as Snapshot persistence emits a provenance row. Implementation order: stand up `CMP-CP-03`, `CMP-FND-02`, `CMP-FND-03` first; then `CMP-SNAP-01`. The dependency edge is forward in the DAG; there is no actual cycle.
+
+### 20.2 Eligible-to-start at project kickoff (no unmet deps)
+
+```
+CMP-DEPLOY-01, CMP-SCM-01, CMP-SCM-05, CMP-DET-01,
+CMP-SNAP-03, CMP-CORE-03, CMP-CP-02, CMP-CP-03,
+CMP-CORP-REFL-01, CMP-CORP-CPG-*, CMP-CORP-REFAC-01, CMP-CORP-VULN-01
+```
+
+These 12 work packages plus Phase 0 (Docs) and Phase 1 (QA / test specs) are the parallelisable wave-1 work.
+
+---
+
+## 21. Definition of Done — v3.2 baseline (SDD §14)
+
+The v3.2 baseline is complete iff **every** item below is checked.
+
+- [ ] Phase 0 — Every `CMP-*` has a `DOC-CMP-*`; every §3.2 cross-cutting reference exists.
+- [ ] Phase 1 — Every `AC-*` in `SDD.md` has a `TST-AC-*` artifact; every `INV-*` has at least one explicit `TST-INV-*` per emitting component.
+- [ ] Stage A — Every `CMP-*` with `Staging: Stage A` has every AC green for Java + Python.
+- [ ] CMP-CP-05 — Reports byte-identical core-partition SARIF over the canary corpus on every detector / engine / `Env` change.
+- [ ] CMP-SNAP-04 — Demonstrably re-partitions on a seeded `CW-DETECT` false negative; labeling-correction window has a contractual SLA value.
+- [ ] CMP-TRI-02 — Passes the adversarial unbounded-continuation test with `α`-bound respected; the martingale-property unit test is green; pre-customer-enablement gate enforced.
+- [ ] CMP-CI-01 — The four named gates (`AC-DET-01a`, `AC-SNAP-03a`, `AC-CP-05c`, `AC-TRI-02b`) are continuously enforced as hard pipeline failures.
+- [ ] CMP-DEPLOY-01..05 — Every substrate decision is recorded, the worker baseline image is signed and registered as `env_digest`, observability surfaces are populated, tenant-isolation backstop is verified.
+- [ ] Per-language staging — Stage A through Stage D status table is published, driven by AC pass/fail rather than by prose ("honest-labeling ledger as a living status table" per `SDD.md` §14).
+- [ ] `CLARIFICATION-NEEDED` register — Every item is either `RESOLVED` with a recorded decision or has been re-deferred to a post-v3.2 milestone with explicit reasoning.
+- [ ] `OUT-OF-SCOPE` register — No work has drifted in from this list.
+- [ ] All five risks `R-1..R-5` — Each has a mitigation that is `DONE` (R-1, R-2, R-3, R-4) or `LIVE AS POLICY` (R-5: Stage A front-loaded, six classes incremental).
+
+---
+
+## 22. Reading guide — for a code-writing agent that has never seen this WBS
+
+A code-writing agent assigned a work package `CMP-X` should:
+
+1. Read `DOC-CMP-X` (Phase 0 output) as its primary specification.
+2. Read the relevant §3.2 cross-cutting references (`DOC-INV`, `DOC-GLOSSARY`, `DOC-API`, `DOC-DB`, `DOC-SARIF`, `DOC-DSL`, `DOC-PROVENANCE`, `DOC-ALGS`, `DOC-PARTITION`, `DOC-STAGING`, `DOC-RUNBOOK`).
+3. Read the `TST-AC-X-*` set (Phase 1 output) as the "done" contract.
+4. Read every `INV-*` that `DOC-CMP-X` lists in its "Invariants touched" section, plus the corresponding `TST-INV-*` per emitting component.
+5. Confirm that every `Depends-On` for `CMP-X` is `DONE`, with `BLOCKED` / `STAGE-GATED` as failure modes.
+6. Implement the work package.
+7. Run every `TST-AC-*` and `TST-INV-*` attached to the work package. The package is `DONE` only when every one is green.
+8. If anything required for completion is unspecified, file a `CLAR-*` entry against §17 of this WBS rather than designing it inline. Do not invent scope (`SDD.md` §0 rule 6).
