@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+# Husky commit-msg hook — enforces Conventional Commits format
+# Format: <type>(<scope>): <subject>
+# Types: feat, fix, docs, style, refactor, test, chore, ci, perf
+# Scope: CMP-* identifier preferred (e.g., feat(CMP-SCM-01): add GitHub SCM adapter)
+
+npx --no-install commitlint --edit "$1"

@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# Husky pre-commit hook — Scanipy v3.2
+# Runs: lint-staged (JS/TS) + pre-commit (Python + shell + secrets)
+
+# Run lint-staged for JS/TS/CSS files in web/
+npx lint-staged
+
+# Run pre-commit for Python, YAML, shell, secret detection, DSL proofs
+pre-commit run --hook-stage pre-commit

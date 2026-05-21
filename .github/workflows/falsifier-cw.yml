@@ -1,0 +1,77 @@
+name: Gate 2 — Falsifier CW (nightly + pre-release)
+
+on:
+  schedule:
+    # Nightly at 02:00 UTC
+    - cron: "0 2 * * *"
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+-rc*"
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      env_digest:
+        description: "Worker env_digest to test against (leave blank for latest)"
+        required: false
+
+permissions:
+  contents: read
+  checks: write
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Gate 2 — Falsifier CW
+  # AC-SNAP-03a: CW-DETECT must have ZERO false negatives on reflection corpus
+  # Zero-FN is a hard release blocker — failure here blocks the release.
+  # ---------------------------------------------------------------------------
+  falsifier-cw:
+    name: "Gate 2 — Falsifier CW — zero false negatives (AC-SNAP-03a)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]" || pip install pytest
+
+      - name: Check reflection corpus exists
+        run: |
+          if [ ! -d "tests/corpora/reflection" ]; then
+            echo "ERROR: tests/corpora/reflection/ not found. CMP-CORP-REFL-01 must be DONE first."
+            exit 1
+          fi
+          if [ ! -f "tests/corpora/reflection/corpus.lock" ]; then
+            echo "ERROR: corpus.lock missing — corpus not versioned."
+            exit 1
+          fi
+
+      - name: Run Falsifier CW — zero false negatives
+        run: |
+          pytest tests/falsifier/cw/ \
+            -m falsifier \
+            -q --tb=long -v \
+            --junit-xml=falsifier-cw-results.xml
+        env:
+          SCANIPY_ENV: test
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: falsifier-cw-results
+          path: falsifier-cw-results.xml
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: "Falsifier CW Results"
+          path: falsifier-cw-results.xml
+          reporter: java-junit

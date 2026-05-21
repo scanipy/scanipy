@@ -1,0 +1,66 @@
+name: Corpus Work Package
+description: Track a CMP-CORP-* corpus build or update
+title: "corpus(CMP-CORP-): "
+labels: ["corpus", "test-infrastructure"]
+body:
+  - type: input
+    id: corpus_id
+    attributes:
+      label: Corpus work package ID
+      placeholder: "e.g. CMP-CORP-REFL-01"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: corpus_type
+    attributes:
+      label: Corpus type
+      options:
+        - "Reflection corpus (CMP-CORP-REFL-01)"
+        - "CPG-fidelity — Java"
+        - "CPG-fidelity — Python"
+        - "CPG-fidelity — JavaScript/TS"
+        - "CPG-fidelity — Go"
+        - "CPG-fidelity — Ruby"
+        - "CPG-fidelity — PHP"
+        - "Canary repos (CMP-CORP-CANARY-01)"
+        - "Seeded-refactor set (CMP-CORP-REFAC-01)"
+        - "OWASP/Juliet/BigVul slices (CMP-CORP-VULN-01)"
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: Corpus location
+      placeholder: "tests/corpora/reflection/"
+    validations:
+      required: true
+
+  - type: textarea
+    id: gate_consumer
+    attributes:
+      label: Gate / consumer
+      description: Which CMP-* or CI gate consumes this corpus?
+      placeholder: "CMP-CP-06 (CPG-fidelity gate), Gate 2 (Falsifier CW)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: labeling_methodology
+    attributes:
+      label: Ground-truth labeling methodology
+      description: How are labels generated? Must be documented and reproducible.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: done_criteria
+    attributes:
+      label: Done criteria
+      options:
+        - label: corpus.lock (or equivalent manifest) exists with version pin
+        - label: Labeling methodology documented in corpus directory
+        - label: Minimum N met (CLAR-CORP-* resolved if N was open)
+        - label: No BigVul training data in held-out split (for CMP-CORP-VULN-01)
+        - label: WBS.md status flipped to DONE

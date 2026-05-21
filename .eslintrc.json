@@ -1,0 +1,49 @@
+{
+  "root": true,
+  "env": {
+    "browser": true,
+    "es2022": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/strict-type-checked",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:jsx-a11y/recommended",
+    "plugin:import/recommended",
+    "plugin:import/typescript",
+    "plugin:security/recommended",
+    "prettier"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module",
+    "ecmaFeatures": { "jsx": true },
+    "project": "./tsconfig.json"
+  },
+  "plugins": [
+    "@typescript-eslint",
+    "react",
+    "react-hooks",
+    "jsx-a11y",
+    "import",
+    "security"
+  ],
+  "settings": {
+    "react": { "version": "detect" },
+    "import/resolver": { "typescript": true }
+  },
+  "rules": {
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/explicit-function-return-type": "warn",
+    "import/order": ["error", {
+      "groups": ["builtin", "external", "internal"],
+      "newlines-between": "always",
+      "alphabetize": { "order": "asc" }
+    }]
+  },
+  "ignorePatterns": ["dist/", "node_modules/", "*.js"]
+}

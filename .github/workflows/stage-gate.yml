@@ -1,0 +1,118 @@
+name: Stage Gate — CPG-fidelity evaluation
+
+on:
+  workflow_dispatch:
+    inputs:
+      language:
+        description: "Language to evaluate (java|python|js|go|ruby|php)"
+        required: true
+        type: choice
+        options: [java, python, js, go, ruby, php]
+      stage:
+        description: "Stage being evaluated (A|B|C|D)"
+        required: true
+        type: choice
+        options: [A, B, C, D]
+      corpus_version:
+        description: "Corpus version hash (from corpus.lock)"
+        required: true
+
+permissions:
+  contents: write
+  checks: write
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # CPG-fidelity gate — CMP-CP-06
+  # Thresholds: parse ≥99.5%, call-edge precision ≥90%, recall ≥85%, PDG ≥80%
+  # A fail blocks the (class, language) pair from Algorithm 2 benchmarking.
+  # ---------------------------------------------------------------------------
+  cpg-fidelity:
+    name: "CPG-fidelity gate — ${{ inputs.language }} (Stage ${{ inputs.stage }})"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]" || pip install pytest
+
+      - name: Verify corpus readiness
+        run: |
+          LANG="${{ inputs.language }}"
+          CORPUS_DIR="tests/corpora/cpg_fidelity/${LANG}"
+          if [ ! -d "${CORPUS_DIR}" ]; then
+            echo "ERROR: Corpus directory ${CORPUS_DIR} does not exist."
+            echo "CMP-CORP-CPG-${LANG} must be DONE before stage gate evaluation."
+            exit 1
+          fi
+          if [ ! -f "${CORPUS_DIR}/corpus.lock" ]; then
+            echo "ERROR: corpus.lock missing in ${CORPUS_DIR}."
+            exit 1
+          fi
+
+      - name: Run CPG-fidelity benchmark
+        run: |
+          pytest tests/ \
+            -m "empirical" \
+            -k "cpg_fidelity and ${{ inputs.language }}" \
+            -q --tb=long -v \
+            --junit-xml=stage-gate-${{ inputs.language }}-results.xml
+        env:
+          SCANIPY_ENV: test
+          STAGE_GATE_LANGUAGE: ${{ inputs.language }}
+          STAGE_GATE_CORPUS_VERSION: ${{ inputs.corpus_version }}
+
+      - name: Evaluate thresholds and write verdict
+        run: |
+          python - <<'EOF'
+          import json, sys, os
+          from pathlib import Path
+
+          lang = os.environ["STAGE_GATE_LANGUAGE"]
+          results_path = Path(f"tests/results/cpg_fidelity/{lang}/latest.json")
+
+          if not results_path.exists():
+              print(f"ERROR: results file not found at {results_path}")
+              sys.exit(1)
+
+          with results_path.open() as f:
+              r = json.load(f)
+
+          thresholds = {
+              "parse_success_rate": 0.995,
+              "call_edge_precision": 0.90,
+              "call_edge_recall": 0.85,
+              "pdg_recall": 0.80,
+          }
+
+          failures = []
+          for metric, threshold in thresholds.items():
+              value = r.get(metric, 0.0)
+              status = "PASS" if value >= threshold else "FAIL"
+              print(f"  {metric}: {value:.3f} (>={threshold:.3f}) — {status}")
+              if value < threshold:
+                  failures.append(f"{metric}={value:.3f} < {threshold:.3f}")
+
+          if failures:
+              print(f"\nGATE-FAIL: {', '.join(failures)}")
+              sys.exit(1)
+          else:
+              print(f"\nGATE-PASS: all thresholds met for {lang}")
+          EOF
+        env:
+          STAGE_GATE_LANGUAGE: ${{ inputs.language }}
+
+      - name: Upload verdict
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stage-gate-${{ inputs.language }}-verdict
+          path: stage-gate-${{ inputs.language }}-results.xml

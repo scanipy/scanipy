@@ -1,0 +1,138 @@
+minimum_pre_commit_version: "3.0.0"
+default_language_version:
+  python: python3.11
+
+repos:
+  # ---------------------------------------------------------------------------
+  # General hygiene
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: [--branch, main]
+        stages: [pre-commit]
+
+  # ---------------------------------------------------------------------------
+  # Secret detection
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
+        exclude: tests/corpora/
+
+  # ---------------------------------------------------------------------------
+  # Python — ruff (lint + format)
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.10
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # ---------------------------------------------------------------------------
+  # Python — mypy (type checking)
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.0
+    hooks:
+      - id: mypy
+        args: [--config-file, pyproject.toml]
+        additional_dependencies:
+          - types-PyYAML
+          - types-requests
+          - types-psycopg2
+        exclude: tests/corpora/
+
+  # ---------------------------------------------------------------------------
+  # YAML lint
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [-c, .yamllint.yaml]
+
+  # ---------------------------------------------------------------------------
+  # Shell scripts
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        files: \.(sh|bash)$
+
+  # ---------------------------------------------------------------------------
+  # Commit message — conventional commits
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.2.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args:
+          - feat
+          - fix
+          - docs
+          - style
+          - refactor
+          - test
+          - chore
+          - ci
+          - perf
+
+  # ---------------------------------------------------------------------------
+  # Scanipy-specific: DSL proof gate (Gate 1)
+  # Runs the DSL distributivity proof checker before any commit that touches
+  # detectors/ or the combinator DSL spec files.
+  # ---------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: dsl-proof-gate
+        name: DSL distributivity proof check (Gate 1)
+        language: system
+        entry: bash -c 'pytest tests/unit/test_dsl_proofs.py -m "unit" -q --tb=short'
+        files: ^detectors/
+        pass_filenames: false
+        stages: [pre-commit]
+
+  # ---------------------------------------------------------------------------
+  # Scanipy-specific: CLAUDE.md consistency check
+  # Verifies that the INV-* table in CLAUDE.md still lists all 6 invariants.
+  # ---------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: claude-md-invariant-check
+        name: CLAUDE.md INV-* consistency check
+        language: system
+        entry: bash -c 'grep -c "INV-[1-6]" CLAUDE.md | grep -q "^[6-9]\|^[1-9][0-9]" || (echo "CLAUDE.md missing INV-* entries" && exit 1)'
+        files: ^CLAUDE\.md$
+        pass_filenames: false
+        stages: [pre-commit]
+
+  # ---------------------------------------------------------------------------
+  # Scanipy-specific: provenance field check
+  # Warns (advisory) if a Finding() construction is missing required fields.
+  # ---------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: provenance-field-check
+        name: Finding provenance field advisory check
+        language: system
+        entry: bash .claude/hooks/post-edit-invariant-check.sh
+        files: ^(services|analysis|detectors)/.*\.py$
+        pass_filenames: false
+        stages: [pre-commit]

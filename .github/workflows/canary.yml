@@ -1,0 +1,85 @@
+name: Canary — SCM parity + nightly regression
+
+on:
+  schedule:
+    # Nightly at 03:30 UTC (after falsifier-cw completes)
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # SCM parity — TST-AC-SCM-03c
+  # 100 canary repos must resolve identical commits across GitHub/GitLab/BB/ADO
+  # ---------------------------------------------------------------------------
+  scm-parity:
+    name: SCM parity — 100 canary repos (TST-AC-SCM-03c)
+    runs-on: ubuntu-latest
+    if: hashFiles('tests/corpora/canary/corpus.lock') != ''
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]" || pip install pytest
+
+      - name: Run SCM parity tests
+        run: |
+          pytest tests/integration/ \
+            -m "integration" \
+            -k "scm_parity or canary" \
+            -q --tb=short -v \
+            --junit-xml=canary-scm-results.xml
+        env:
+          SCANIPY_ENV: test
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: canary-scm-results
+          path: canary-scm-results.xml
+
+  # ---------------------------------------------------------------------------
+  # Nightly regression — full test suite
+  # ---------------------------------------------------------------------------
+  nightly-regression:
+    name: Nightly regression suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]" || pip install pytest pytest-cov
+
+      - name: Run nightly tests
+        run: |
+          pytest tests/ \
+            -m "unit or integration or nightly" \
+            -q --tb=short \
+            --cov=. --cov-report=xml \
+            --junit-xml=nightly-results.xml
+        env:
+          SCANIPY_ENV: test
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nightly-coverage
+          path: coverage.xml

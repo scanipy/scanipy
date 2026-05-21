@@ -1,0 +1,73 @@
+name: Component Implementation
+description: Track implementation of a CMP-* work package
+title: "feat(CMP-): "
+labels: ["component", "in-progress"]
+body:
+  - type: input
+    id: cmp_id
+    attributes:
+      label: Component ID
+      description: The WBS component identifier
+      placeholder: "e.g. CMP-SCM-01"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: phase
+    attributes:
+      label: WBS Phase
+      options:
+        - "Phase 1 — Foundation"
+        - "Phase 2 — Core Engine"
+        - "Phase 3 — Alpha (Java + Python)"
+        - "Phase 4 — Beta (+ JS/TS)"
+        - "Phase 5 — GA (+ Go)"
+        - "Phase 6 — Extended (+ Ruby + PHP)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What does this component implement? Reference SDD.md section.
+      placeholder: "Implements AC-SCM-01 from SDD.md §3..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: depends_on
+    attributes:
+      label: Depends-On
+      description: List CMP-* items this depends on (from WBS.md)
+      placeholder: |
+        - CMP-CP-01 (DONE)
+        - CMP-DB-01 (DONE)
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria (TST-AC-*)
+      description: List the TST-AC-* tests that must be green for DONE
+      placeholder: |
+        - TST-AC-SCM-01a
+        - TST-AC-SCM-01b
+
+  - type: checkboxes
+    id: invariants_touched
+    attributes:
+      label: Invariants touched
+      options:
+        - label: INV-1 (origin partition)
+        - label: INV-2 (versioned params)
+        - label: INV-3 (LLM isolation)
+        - label: INV-4 (one-sided approximations)
+        - label: INV-5 (conditional labels)
+        - label: INV-6 (per-language honesty)
+
+  - type: checkboxes
+    id: security_review
+    attributes:
+      label: Security Analyst sign-off required?
+      options:
+        - label: "Yes (CMP is in: CP-02, SNAP-03, SNAP-04, DET-01, TRI-01..03)"

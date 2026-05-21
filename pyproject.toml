@@ -1,0 +1,120 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "scanipy"
+version = "3.2.0"
+description = "Multi-tenant SaaS SAST platform — deterministic taint analysis via IFDS/IDE"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["analysis*", "detectors*", "integrations*", "services*", "workers*", "web*"]
+
+# ---------------------------------------------------------------------------
+# Ruff — linter + formatter
+# ---------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["analysis", "detectors", "integrations", "services", "workers", "web", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "S",    # flake8-bandit (security)
+    "ANN",  # flake8-annotations
+    "C4",   # flake8-comprehensions
+    "PTH",  # flake8-use-pathlib
+    "RUF",  # ruff-specific
+]
+ignore = [
+    "ANN101", # missing type annotation for `self`
+    "ANN102", # missing type annotation for `cls`
+    "S101",   # assert used (tests use assert)
+    "S603",   # subprocess call (needed for tool invocations)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "ANN"]
+"db/migrations/**" = ["N999", "ANN"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["analysis", "detectors", "integrations", "services", "workers", "web"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+# ---------------------------------------------------------------------------
+# Mypy — strict type checking
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+show_error_codes = true
+pretty = true
+exclude = [
+    "db/migrations/",
+    "tests/corpora/",
+]
+
+[[tool.mypy.overrides]]
+module = ["joern.*", "codeql.*", "sarif_om.*"]
+ignore_missing_imports = true
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+addopts = [
+    "--strict-markers",
+    "--tb=short",
+    "-q",
+]
+markers = [
+    "unit: unit tests (fast, no I/O)",
+    "integration: integration tests (real components, slower)",
+    "falsifier: adversarial falsifier campaigns (Gate 2/4 release blockers)",
+    "empirical: empirical benchmark tests",
+    "invariant: invariant verification tests (TST-INV-*)",
+    "nightly: run only in nightly CI",
+    "pre_release: run only before release tags",
+]
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning:pkg_resources",
+]
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+[tool.coverage.run]
+source = ["analysis", "detectors", "integrations", "services"]
+omit = ["*/migrations/*", "*/corpora/*", "tests/*"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]

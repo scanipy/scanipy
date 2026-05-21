@@ -1,0 +1,71 @@
+name: CLAR — Clarification Request
+description: File an unspecified-behaviour clarification item that blocks a CMP-*
+title: "CLAR-: "
+labels: ["clarification", "blocked"]
+body:
+  - type: input
+    id: clar_id
+    attributes:
+      label: CLAR identifier
+      description: "Format: CLAR-<DOMAIN>-<NN> (domains: DEPLOY, CORP, PARAM, SLA, FE, OWNER, MIGRATION)"
+      placeholder: "e.g. CLAR-DEPLOY-07"
+    validations:
+      required: true
+
+  - type: input
+    id: blocks
+    attributes:
+      label: Blocks CMP-*
+      description: Which component(s) are blocked until this is resolved?
+      placeholder: "CMP-DEPLOY-01, CMP-SNAP-03"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target_phase
+    attributes:
+      label: Must resolve before phase
+      options:
+        - "Phase 1"
+        - "Phase 2"
+        - "Phase 3 (Alpha)"
+        - "Phase 4 (Beta)"
+        - "Phase 5 (GA)"
+        - "Phase 6 (Extended)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: approver
+    attributes:
+      label: Required approver
+      options:
+        - "CTO Agent"
+        - "Architect"
+        - "Corpus Curator + CTO"
+        - "Architect + SRE"
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: The precise unspecified behaviour or missing decision
+      placeholder: "What is the minimum N for the reflection corpus required by AC-CORP-REFL-01a?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Where in SDD.md / PLAN.md is this referenced? What did you try?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_resolution
+    attributes:
+      label: Proposed resolution (optional)
+      description: If you have a candidate answer, describe it here for the approver to evaluate
