@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+.env
+pip-wheel-metadata/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+
+# Node
+node_modules/
+dist/
+.next/
+.nuxt/
+.output/
+*.tsbuildinfo
+
+# Test artifacts
+falsifier-cw-results.xml
+attestor-results.xml
+nightly-results.xml
+canary-scm-results.xml
+stage-gate-*-results.xml
+tests/results/
+
+# Secrets — baseline IS committed so pre-commit can verify against it
+# .secrets.baseline  (intentionally tracked)
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Terraform
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.backup
+infra/.terraform.lock.hcl
+
+# Docker
+workers/**/.docker/
+
+# Alembic
+db/alembic/versions/__pycache__/

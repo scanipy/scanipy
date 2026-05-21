@@ -50,8 +50,6 @@ select = [
     "RUF",  # ruff-specific
 ]
 ignore = [
-    "ANN101", # missing type annotation for `self`
-    "ANN102", # missing type annotation for `cls`
     "S101",   # assert used (tests use assert)
     "S603",   # subprocess call (needed for tool invocations)
 ]

@@ -15,7 +15,8 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Pre-deploy gate checks — all four named gates must have passed
+  # Pre-deploy gate checks — all four named gates must show green on this SHA
+  # Uses the GitHub Checks API to verify required status checks actually passed.
   # ---------------------------------------------------------------------------
   pre-deploy-checks:
     name: Pre-deploy gate verification
@@ -23,21 +24,39 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify Gate 1 passed (DSL proofs)
+      - name: Verify all required CI gates passed on this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "Verifying Gate 1 (DSL proofs) passed on this commit..."
-          # In production: check required status check API via gh
-          echo "GATE-1: Required status check 'dsl-proofs' must pass before deploy."
+          SHA="${{ github.sha }}"
+          REPO="${{ github.repository }}"
 
-      - name: Verify Gate 2 passed (Falsifier CW)
-        run: |
-          echo "Verifying Gate 2 (Falsifier CW) passed for this release..."
-          echo "GATE-2: falsifier-cw workflow must show zero false negatives."
+          check_gate() {
+            local check_name="$1"
+            local result
+            result=$(gh api "repos/${REPO}/commits/${SHA}/check-runs" \
+              --jq ".check_runs[] | select(.name == \"${check_name}\") | .conclusion" \
+              2>/dev/null | tail -1)
 
-      - name: Verify Gate 3 passed (Attestor core)
-        run: |
-          echo "Verifying Gate 3 (Attestor core) passed..."
-          echo "GATE-3: attestor-core job must be green on this commit."
+            if [ "${result}" != "success" ]; then
+              echo "GATE FAIL: '${check_name}' conclusion='${result:-not found}' on ${SHA}"
+              return 1
+            fi
+            echo "GATE PASS: '${check_name}'"
+          }
+
+          failed=0
+          check_gate "Gate 1 — DSL proofs (AC-DET-01a)"       || failed=1
+          check_gate "Gate 2 — Falsifier CW — zero false negatives (AC-SNAP-03a)" || failed=1
+          check_gate "Gate 3 — Attestor core pipeline (AC-CP-05a/c)" || failed=1
+
+          if [ "$failed" -ne 0 ]; then
+            echo ""
+            echo "ERROR: One or more required gates did not pass on ${SHA}."
+            echo "Do not deploy until all gates are green."
+            exit 1
+          fi
+          echo "All pre-deploy gates verified green."
 
   # ---------------------------------------------------------------------------
   # Build and push worker images with digest pinning + Cosign signing

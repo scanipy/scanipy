@@ -20,7 +20,9 @@ repos:
         args: [--maxkb=500]
       - id: detect-private-key
       - id: no-commit-to-branch
-        args: [--branch, main]
+        # Allow direct commits to main only from the scaffold/infra setup phase.
+        # Feature branches (CMP-*) must go through PR — enforced by branch protection rules.
+        args: [--branch, production, --branch, release]
         stages: [pre-commit]
 
   # ---------------------------------------------------------------------------
@@ -125,14 +127,15 @@ repos:
 
   # ---------------------------------------------------------------------------
   # Scanipy-specific: provenance field check
-  # Warns (advisory) if a Finding() construction is missing required fields.
+  # Warns if a Finding() construction is missing required provenance fields.
+  # Uses a dedicated script that accepts filenames as arguments (not stdin JSON).
   # ---------------------------------------------------------------------------
   - repo: local
     hooks:
       - id: provenance-field-check
-        name: Finding provenance field advisory check
+        name: Finding provenance field check
         language: system
-        entry: bash .claude/hooks/post-edit-invariant-check.sh
+        entry: bash scripts/check-finding-provenance.sh
         files: ^(services|analysis|detectors)/.*\.py$
-        pass_filenames: false
+        pass_filenames: true
         stages: [pre-commit]
