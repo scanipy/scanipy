@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "scanipy"
@@ -8,6 +8,19 @@ version = "3.2.0"
 description = "Multi-tenant SaaS SAST platform — deterministic taint analysis via IFDS/IDE"
 requires-python = ">=3.11"
 license = { text = "Proprietary" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "ruff>=0.4.10",
+    "mypy>=1.10",
+    "types-PyYAML",
+    "types-requests",
+    "psycopg2-binary>=2.9",
+    "pre-commit>=3.7",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
