@@ -897,36 +897,36 @@ Per-component verification tasks rather than a single global task. Already enume
 
 ## 17. CLARIFICATION-NEEDED register
 
-These items must be resolved before the work that depends on them can begin. Each carries an owner and a target resolution phase.
+These items must be resolved before the work that depends on them can begin. Each carries an owner and a target resolution phase. **Resolved** items carry a one-line decision summary and link to the full decision record. **Deferred** items remain blocking until a human decision is recorded.
 
-| Id | Question | Blocks | Target resolution |
-|---|---|---|---|
-| CLAR-DEPLOY-01 | Cloud / compute service selection (container-orchestration primitive) | CMP-DEPLOY-01..05; everything dependent | Before Phase 4 |
-| CLAR-DEPLOY-02 | Object-store choice (must support content-addressable, deterministic keys) | CMP-SNAP-01 | Before Phase 4 |
-| CLAR-DEPLOY-03 | Relational-DB engine + version | CMP-CP-03; CMP-FND-02 | Before Phase 7 (Findings) |
-| CLAR-DEPLOY-04 | KMS / envelope-encryption vendor + rotation primitive | CMP-CP-02 | Before Phase 11 (Control plane) |
-| CLAR-DEPLOY-05 | Secrets vendor + injection path into workers | CMP-DEPLOY-02..04 | Before Phase 4 |
-| CLAR-DEPLOY-06 | Queue technology + DLQ + visibility-timeout / retry semantics | CMP-ORCH-01..03 | Before Phase 6 (Orchestration) |
-| CLAR-DEPLOY-07 | Observability stack — logs, metrics, traces, alarms | CMP-DEPLOY-03 | Before Phase 4 |
-| CLAR-DEPLOY-08 | Region strategy — per-env, per-tenant, single-region | CMP-DEPLOY-01 | Before Phase 4 |
-| CLAR-DEPLOY-09 | Network model — VPC, private subnets, ingress / egress controls | CMP-DEPLOY-01 | Before Phase 4 |
-| CLAR-DEPLOY-10 | OIDC / SAML IdP integration target — preferred IdP, federation pattern | CMP-CP-04 | Before Phase 11 |
-| CLAR-DEPLOY-11 | CI/CD provider + OIDC-to-cloud trust pattern | CMP-DEPLOY-04 | Before Phase 4 |
-| CLAR-DEPLOY-12 | RBAC model surface — which roles exist (admin, viewer, scanner, …), default role on first-admin provisioning | CMP-CP-01, CMP-CP-04 | Before Phase 11 |
-| CLAR-DEPLOY-13 | Image registry + signing/attestation surface | CMP-DEPLOY-02, CMP-DEPLOY-04 | Before Phase 4 |
-| CLAR-DEPLOY-14 | LLM provider for triage and spec inference, plus pricing/quota controls | CMP-TRI-01, CMP-TRI-02 | Before Phase 8 enable |
-| CLAR-DEPLOY-15 | Data retention policy per artifact class (CPG tarball, witness blob, SARIF, provenance record); legal hold and export | CMP-DEPLOY-01, CMP-FND-03 | Before Phase 7 |
-| CLAR-DEPLOY-16 | Per-tenant data-isolation backstop at the substrate layer (e.g. per-tenant blob namespace; per-tenant DB row-level security) | CMP-DEPLOY-05 | Before Phase 11 |
-| CLAR-CORP-01 | Reflection corpus minimum sample size per category (Spring proxies, Python `__import__`/`getattr`, Ruby `send`/`method_missing`, PHP variable functions, Java `Class.forName`, mutation-injected) | CMP-CORP-REFL-01 | Before Phase 4 |
-| CLAR-CORP-02 | CPG-fidelity gate exact thresholds per language (parse success ≥ 99.5% is given; call-edge precision/recall and PDG dependence-edge recall floors are not pinned) | CMP-CP-06 | Per stage |
-| CLAR-PARAM-01 | Default values for `κ` (closed-world κ-bound regression threshold), `θ_cone` (default 0.25 stated; confirm), `θ_files` (default 0.4 stated; confirm), `(B, T)` budget (defaults `2^16` nodes / 200 ms stated; confirm) | CMP-SNAP-02, CMP-CORE-02, CMP-CORE-03 | Before relevant stage |
-| CLAR-PARAM-02 | Default values for the e-process gate: `π₀` per detector class, `α`, and the per-class evaluation-stream definition | CMP-TRI-02 | Before Phase 8 enable |
-| CLAR-PARAM-03 | Default value for the `weak`-fallback-rate publish threshold (5% target stated; confirm operational threshold) | CMP-CORE-02 | Before Phase 5 |
-| CLAR-SLA-01 | Differential-oracle labeling-correction window SLA target | CMP-SNAP-04 | Before Stage A go-live |
-| CLAR-FE-01 | Stage-D proprietary front-end work — build vs buy vs delay | T-STAGE-D-FE-01 | Before Stage D |
-| CLAR-FE-02 | Stage-C points-to / interface-dispatch investment scope (Andersen-style baseline vs richer) | T-STAGE-C-FE-01 | Before Stage C |
-| CLAR-OWNER-01 | Module / corpus / risk owners — every `CMP-*` and every `R-*` mitigation needs a named owner | All phases | Continuous |
-| CLAR-MIGRATION-01 | Legacy data migration plan from v2 to v3.2 (findings, codebase membership, credentials) — in scope vs new-env-only | CMP-CP-03 | Before Phase 11 |
+| Id | Question | Blocks | Target resolution | Status | Resolved date | Decision summary |
+|---|---|---|---|---|---|---|
+| CLAR-DEPLOY-01 | Cloud / compute service selection (container-orchestration primitive) | CMP-DEPLOY-01..05; everything dependent | Before Phase 4 | RESOLVED | 2026-05-23 | AWS ECS Fargate, pinned-image workers. See `docs/cross-cutting/DOC-DEPLOY-DECISIONS.md`. |
+| CLAR-DEPLOY-02 | Object-store choice (must support content-addressable, deterministic keys) | CMP-SNAP-01 | Before Phase 4 | RESOLVED | 2026-05-23 | Amazon S3, key path `orgs/{org_id}/...`. See `DOC-DEPLOY-DECISIONS.md`. |
+| CLAR-DEPLOY-03 | Relational-DB engine + version | CMP-CP-03; CMP-FND-02 | Before Phase 7 (Findings) | RESOLVED | 2026-05-23 | PostgreSQL 16 on Amazon RDS, Alembic migrations. See `DOC-DEPLOY-DECISIONS.md`. |
+| CLAR-DEPLOY-04 | KMS / envelope-encryption vendor + rotation primitive | CMP-CP-02 | Before Phase 11 (Control plane) | RESOLVED | 2026-05-23 | AWS KMS envelope encryption, per-tenant CMKs, annual rotation. See `DOC-DEPLOY-DECISIONS.md`. |
+| CLAR-DEPLOY-05 | Secrets vendor + injection path into workers | CMP-DEPLOY-02..04 | Before Phase 4 | RESOLVED | 2026-05-23 | AWS Secrets Manager, ECS task `secrets` env-var injection. See `DOC-DEPLOY-DECISIONS.md`. |
+| CLAR-DEPLOY-06 | Queue technology + DLQ + visibility-timeout / retry semantics | CMP-ORCH-01..03 | Before Phase 6 (Orchestration) | RESOLVED | 2026-05-23 | Amazon SQS standard + per-queue DLQ, max-receive 3. See `DOC-DEPLOY-DECISIONS.md`. |
+| CLAR-DEPLOY-07 | Observability stack — logs, metrics, traces, alarms | CMP-DEPLOY-03 | Before Phase 4 | RESOLVED | 2026-05-23 | OpenTelemetry → CloudWatch Logs + X-Ray. See `DOC-DEPLOY-DECISIONS.md`. |
+| CLAR-DEPLOY-08 | Region strategy — per-env, per-tenant, single-region | CMP-DEPLOY-01 | Before Phase 4 | RESOLVED | 2026-05-23 | Single region `us-east-1` (prod), `us-east-2` (staging). See `DOC-DEPLOY-DECISIONS.md`. |
+| CLAR-DEPLOY-09 | Network model — VPC, private subnets, ingress / egress controls | CMP-DEPLOY-01 | Before Phase 4 | RESOLVED | 2026-05-23 | Single VPC per env, three subnet tiers, VPC endpoints. See `DOC-DEPLOY-DECISIONS.md`. |
+| CLAR-DEPLOY-10 | OIDC / SAML IdP integration target — preferred IdP, federation pattern | CMP-CP-04 | Before Phase 11 | RESOLVED | 2026-05-23 | Auth0 (primary); federated to customer IdPs via Auth0 connections. See `DOC-DEPLOY-DECISIONS.md`. |
+| CLAR-DEPLOY-11 | CI/CD provider + OIDC-to-cloud trust pattern | CMP-DEPLOY-04 | Before Phase 4 | RESOLVED | 2026-05-23 | GitHub Actions, OIDC-to-AWS keyless. See `DOC-DEPLOY-DECISIONS.md`. |
+| CLAR-DEPLOY-12 | RBAC model surface — which roles exist (admin, viewer, scanner, …), default role on first-admin provisioning | CMP-CP-01, CMP-CP-04 | Before Phase 11 | RESOLVED | 2026-05-23 | Roles `org-admin`, `org-viewer`, `scanner`; first user → `org-admin`. See `DOC-DEPLOY-DECISIONS.md`. |
+| CLAR-DEPLOY-13 | Image registry + signing/attestation surface | CMP-DEPLOY-02, CMP-DEPLOY-04 | Before Phase 4 | RESOLVED | 2026-05-23 | Amazon ECR + Sigstore Cosign keyless, SLSA-3 attestation. See `DOC-DEPLOY-DECISIONS.md`. |
+| CLAR-DEPLOY-14 | LLM provider for triage and spec inference, plus pricing/quota controls | CMP-TRI-01, CMP-TRI-02 | Before Phase 8 enable | RESOLVED | 2026-05-23 | Anthropic API `claude-sonnet-4-6`; per-tenant quota via `CMP-CP-01`. See `DOC-DEPLOY-DECISIONS.md`. |
+| CLAR-DEPLOY-15 | Data retention policy per artifact class (CPG tarball, witness blob, SARIF, provenance record); legal hold and export | CMP-DEPLOY-01, CMP-FND-03 | Before Phase 7 | RESOLVED | 2026-05-23 | CPG 90d / witness 1y / SARIF+provenance 7y (S3 Object Lock). See `DOC-DEPLOY-DECISIONS.md`. |
+| CLAR-DEPLOY-16 | Per-tenant data-isolation backstop at the substrate layer (e.g. per-tenant blob namespace; per-tenant DB row-level security) | CMP-DEPLOY-05 | Before Phase 11 | RESOLVED | 2026-05-23 | S3 prefix + RDS row-level security + KMS per-tenant CMKs. See `DOC-DEPLOY-DECISIONS.md`. |
+| CLAR-CORP-01 | Reflection corpus minimum sample size per category (Spring proxies, Python `__import__`/`getattr`, Ruby `send`/`method_missing`, PHP variable functions, Java `Class.forName`, mutation-injected) | CMP-CORP-REFL-01 | Before Phase 4 | RESOLVED | 2026-05-23 | N ≥ 50 per category, ≥ 20 mutation-injected per language; revisit during `CMP-CORP-REFL-01` build. |
+| CLAR-CORP-02 | CPG-fidelity gate exact thresholds per language (parse success ≥ 99.5% is given; call-edge precision/recall and PDG dependence-edge recall floors are not pinned) | CMP-CP-06 | Per stage | RESOLVED | 2026-05-23 | Parse ≥99.5%, call-edge precision ≥90%, recall ≥85%, PDG dependence-edge recall ≥80% per language. |
+| CLAR-PARAM-01 | Default values for `κ` (closed-world κ-bound regression threshold), `θ_cone` (default 0.25 stated; confirm), `θ_files` (default 0.4 stated; confirm), `(B, T)` budget (defaults `2^16` nodes / 200 ms stated; confirm) | CMP-SNAP-02, CMP-CORE-02, CMP-CORE-03 | Before relevant stage | RESOLVED | 2026-05-23 | Confirm θ_cone=0.25, θ_files=0.4, B=2^16, T=200ms; κ TBD by detector at registration. |
+| CLAR-PARAM-02 | Default values for the e-process gate: `π₀` per detector class, `α`, and the per-class evaluation-stream definition | CMP-TRI-02 | Before Phase 8 enable | DEFERRED | — | π₀ requires per-class empirical baseline (collect during Phase 5); α=0.05 confirmed. |
+| CLAR-PARAM-03 | Default value for the `weak`-fallback-rate publish threshold (5% target stated; confirm operational threshold) | CMP-CORE-02 | Before Phase 5 | RESOLVED | 2026-05-23 | 5% confirmed as operational publish threshold (gates `CMP-CORE-02` benchmark report). |
+| CLAR-SLA-01 | Differential-oracle labeling-correction window SLA target | CMP-SNAP-04 | Before Stage A go-live | RESOLVED | 2026-05-23 | 24h for high-impact incidents, 7d for routine; finalize numeric SLA at Stage A go-live. |
+| CLAR-FE-01 | Stage-D proprietary front-end work — build vs buy vs delay | T-STAGE-D-FE-01 | Before Stage D | DEFERRED | — | Business decision required (build/buy/delay); Ruby/PHP remain oracle-passthrough until resolved. |
+| CLAR-FE-02 | Stage-C points-to / interface-dispatch investment scope (Andersen-style baseline vs richer) | T-STAGE-C-FE-01 | Before Stage C | DEFERRED | — | Scoping decision required; default to Andersen-style baseline if approved. |
+| CLAR-OWNER-01 | Module / corpus / risk owners — every `CMP-*` and every `R-*` mitigation needs a named owner | All phases | Continuous | DEFERRED | — | Team-assignment exercise; CTO to populate `docs/cross-cutting/DOC-OWNERS.md` once teams are seated. |
+| CLAR-MIGRATION-01 | Legacy data migration plan from v2 to v3.2 (findings, codebase membership, credentials) — in scope vs new-env-only | CMP-CP-03 | Before Phase 11 | DEFERRED | — | Depends on v2 production-data state; default = new-env-only unless customer migration is committed. |
 
 ---
 
