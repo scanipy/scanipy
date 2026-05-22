@@ -20,9 +20,17 @@ repos:
         args: [--maxkb=500]
       - id: detect-private-key
       - id: no-commit-to-branch
-        # Allow direct commits to main only from the scaffold/infra setup phase.
-        # Feature branches (CMP-*) must go through PR — enforced by branch protection rules.
-        args: [--branch, production, --branch, release]
+        # Block direct commits to protected branches LOCALLY. GitHub Free
+        # + private repos cannot enforce branch protection server-side
+        # (see README §"Branch protection"), so this hook is one of the
+        # process-level shims that stand in for real protection. Feature
+        # branches (CMP-*) go through PR; emergencies bypass with
+        # `git commit --no-verify` and surface as a red `enforce-pr-only-
+        # merges` check on the commit.
+        #
+        # Including `main` explicitly because the default block-list
+        # (master/main) is overridden whenever any --branch arg is set.
+        args: [--branch, main, --branch, production, --branch, release]
         stages: [pre-commit]
 
   # ---------------------------------------------------------------------------

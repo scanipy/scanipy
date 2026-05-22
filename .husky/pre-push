@@ -1,23 +1,29 @@
 #!/usr/bin/env sh
 # Husky pre-push hook — Scanipy v3.2
 #
-# Runs the same fast checks as the CI lint + unit-tests jobs, locally,
-# before any commit leaves the machine. Pays for itself the first time
-# you would have shipped a red main and re-based every open branch
-# against the breakage.
+# Two responsibilities:
 #
-# Skip in emergencies with:
+#  1. Refuse direct pushes (and deletes) to protected branches. GitHub
+#     Free + private repos cannot enforce branch protection server-side
+#     (see README §"Branch protection"), so this hook + the
+#     enforce-pr-only-merges.yml workflow are the process-level shims
+#     standing in for real protection.
+#
+#  2. Run the same fast checks as the CI lint + unit-tests jobs locally
+#     so a red push doesn't reach `origin`. Pays for itself the first
+#     time you would have shipped a red main and re-based every open
+#     branch against the breakage.
+#
+# Skip both in emergencies with:
 #
 #     git push --no-verify
 #
-# Scope choice (per the recommended default in the Zeus-vs-Scanipy
-# dev-infra report): ruff + ruff format + mypy + pytest unit only. We
-# explicitly DO NOT run:
+# Scope choice for the local checks: ruff + ruff format + mypy + pytest
+# unit only. We explicitly DO NOT run:
 #   - Integration tests (need Postgres up; see docker-compose.dev.yml)
 #   - Falsifier campaigns (slow; gated on schedule + release tags)
 #   - Attestor canary (slow; gated on detector/engine/env changes)
-# Those are CI's job. The contract here is "if pre-push passes, you
-# probably haven't broken the cheap-to-detect class of bug".
+# Those are CI's job.
 set -e
 
 # Honour `--no-verify` semantically: husky already short-circuits the
@@ -27,6 +33,39 @@ if [ -n "$SKIP_HUSKY" ] || [ "$HUSKY" = "0" ]; then
   echo "pre-push: skipped (SKIP_HUSKY / HUSKY=0 set)"
   exit 0
 fi
+
+# ─── Protected-branch guard ────────────────────────────────────────
+# Git's pre-push hook receives one line per ref being pushed on stdin:
+#     <local ref> <local sha> <remote ref> <remote sha>
+# Refuse if any of those refs targets a protected branch on origin.
+PROTECTED_BRANCHES="main production release"
+ZERO="0000000000000000000000000000000000000000"
+
+while IFS=' ' read -r _local_ref _local_sha remote_ref remote_sha; do
+  # When stdin yields no input (manual invocation / test harness), skip
+  # the guard rather than block. The remote_ref check below also handles
+  # the empty case as a no-op.
+  [ -z "$remote_ref" ] && continue
+  remote_branch="${remote_ref#refs/heads/}"
+  for branch in $PROTECTED_BRANCHES; do
+    if [ "$remote_branch" = "$branch" ]; then
+      # Block both creates/updates (local_sha != 0) AND deletes
+      # (local_sha == 0). Anything that mutates the protected branch
+      # is refused.
+      echo ""                                                          >&2
+      echo "ERROR: direct push to protected branch '$branch' refused." >&2
+      echo "       Open a PR via the GitHub UI instead."               >&2
+      echo "       Bypass with --no-verify only in real emergencies;"  >&2
+      echo "       direct pushes surface as a red 'enforce-pr-only-"   >&2
+      echo "       merges' check on the commit (see workflow file)."   >&2
+      echo ""                                                          >&2
+      # Suppress the unused-var warning for remote_sha (kept named for
+      # readability against the git pre-push hook spec).
+      : "$remote_sha"
+      exit 1
+    fi
+  done
+done
 
 echo "pre-push [1/4]: ruff check"
 ruff check .
