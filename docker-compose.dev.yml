@@ -1,0 +1,51 @@
+# Scanipy v3.2 — local development substrate.
+#
+# Brings up the Postgres 16 service so a fresh clone can run
+# integration tests + Alembic migrations without manually installing
+# postgres-server on the dev machine. CI uses the GitHub Actions
+# postgres `services:` container; this file mirrors its shape (same
+# version, same db / user / password) so the SCANIPY_DATABASE_URL in
+# .env.example works identically locally and in CI.
+#
+# Usage:
+#
+#     cp .env.example .env
+#     docker compose -f docker-compose.dev.yml up -d
+#     pip install -e ".[dev]"
+#     # ... run pytest, alembic, etc.
+#
+# Tear down (keeps the volume so data survives a restart):
+#
+#     docker compose -f docker-compose.dev.yml down
+#
+# Tear down AND wipe the database volume:
+#
+#     docker compose -f docker-compose.dev.yml down -v
+#
+# Future services to add as their CMPs come online:
+#   - LocalStack (S3 + SQS + KMS) — once CMP-DEPLOY-02 (worker image)
+#     and CMP-SNAP-05 (worker + env) start exercising AWS SDK code
+#     paths in integration tests. See Priority D1 in the dev-infra
+#     comparison report.
+
+services:
+  scanipy-db:
+    container_name: scanipy-db
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: scanipy
+      POSTGRES_PASSWORD: scanipy_dev
+      POSTGRES_DB: scanipy_dev
+    volumes:
+      - scanipy-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scanipy -d scanipy_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  scanipy-pgdata:
