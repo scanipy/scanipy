@@ -11,10 +11,11 @@
 #   - <owner> is one or more @user or @org/team references.
 #   - Last-match-wins, so put the most specific rules at the bottom.
 #
-# Sections (lines starting with `[Name]` or `^[Name]`) define optional
-# named groups in the GitHub MR UI:
-#   - `[Name]`  → blocking (approval REQUIRED before merge).
-#   - `^[Name]` → non-blocking (shows in MR but doesn't gate merge).
+# NOTE on section headers: GitLab CODEOWNERS supports `[Name]` /
+# `^[Name]` section labels. GitHub CODEOWNERS does NOT — it interprets
+# any line starting with `[` as a (malformed) path pattern and rejects
+# it via the parser (`gh api repos/.../codeowners/errors`). Use plain
+# `#` comments for visual grouping instead.
 #
 # TODO: this scaffold uses a single individual handle (@locus-x64) as
 # the default owner. As the org grows, replace per-section with team
@@ -28,22 +29,22 @@
 # in .claude/rules/00-global.md.
 
 # ── Catch-all ──────────────────────────────────────────────────────
-# Default reviewer for anything not matched by a section below.
+# Default reviewer for anything not matched by a more-specific rule
+# below. Last-match-wins, so this is overridden by the rules that
+# follow.
 * @locus-x64
 
-# ── Source-of-truth documents (blocking — only the CTO writes these) ─
+# ── Source-of-truth documents (CTO-only) ───────────────────────────
 # CLAUDE.md §1: PLAN.md and SDD.md are immutable from agents; WBS.md
-# only allows §17/§18 appends + status flips. Route any change here to
-# the CTO Agent (handle below).
-[Source-of-truth]
+# only allows §17/§18 appends + status flips. Any change here must
+# route to the CTO Agent (handle below).
 /PLAN.md @locus-x64
 /SDD.md @locus-x64
 /WBS.md @locus-x64
 
-# ── Critical infrastructure (blocking) ─────────────────────────────
+# ── Critical infrastructure ────────────────────────────────────────
 # Changes here have outsized blast radius — a broken workflow or
-# Dockerfile takes down every contributor at once.
-[Critical infra]
+# dependency-bot config takes down every contributor at once.
 /.github/workflows/ @locus-x64
 /.github/CODEOWNERS @locus-x64
 /.github/PULL_REQUEST_TEMPLATE.md @locus-x64
@@ -57,63 +58,58 @@
 /docker-compose.dev.yml @locus-x64
 /.env.example @locus-x64
 
-# ── Infrastructure as code (blocking, future) ──────────────────────
-# CMP-DEPLOY-01..05. Once the IaC scaffold (Priority B1) lands, every
-# tofu module change needs an SRE Agent review.
-[Infrastructure as code]
+# ── Infrastructure as code (future, CMP-DEPLOY-01..05) ─────────────
+# Once the IaC scaffold (Priority B1) lands, every OpenTofu module
+# change needs an SRE Agent review.
 /infra/ @locus-x64
 
-# ── Database schema (blocking) ─────────────────────────────────────
-# CMP-CP-03 + CMP-FND-02 own the schema. Migrations are forward-only;
-# a wrong drop or column-rename can hose every tenant. Per RULE-9 the
-# Security Analyst is also on the hook when migrations touch INV-2
-# fields (S_version / env_digest / origin).
-[Database schema]
+# ── Database schema (CMP-CP-03 + CMP-FND-02) ───────────────────────
+# Migrations are forward-only; a wrong drop or column-rename can hose
+# every tenant. Per RULE-9 the Security Analyst is also on the hook
+# when migrations touch INV-2 fields (S_version / env_digest / origin).
 /db/migrations/ @locus-x64
 
-# ── Architectural invariants + agent rules (blocking) ──────────────
+# ── Architectural invariants + agent rules ─────────────────────────
 # The catalog of invariants and rules is contract, not convention.
 # Loosening any of them needs CTO sign-off.
-[Invariants and agent rules]
 /.claude/rules/ @locus-x64
 /.claude/commands/ @locus-x64
 /.claude/agents/ @locus-x64
 /.claude/hooks/ @locus-x64
 /.claude/settings.json @locus-x64
 
-# ── Detector catalog and analysis core (blocking) ──────────────────
-# INV-1/INV-3/INV-4 owners. Provenance threading + DSL closure check
-# + one-sided approximation correctness all live here.
-[Detectors and analysis core]
+# ── Detector catalog and analysis core ─────────────────────────────
+# INV-1 / INV-3 / INV-4 owners. Provenance threading + DSL closure
+# check + one-sided approximation correctness all live here.
 /detectors/ @locus-x64
 /analysis/ @locus-x64
 /services/snapshot/ @locus-x64
 /services/scan/ @locus-x64
 /services/triage/ @locus-x64
 
-# ── Security-sensitive paths (blocking, Security Analyst sign-off) ──
+# ── Security-sensitive paths (Security Analyst sign-off) ───────────
 # RULE-9: components touching INV-3 (LLM off the detection path) or
-# INV-4 (one-sided undecidable approximations). The Security Analyst
-# Agent is the named reviewer here, separate from the Code Review
-# Agent on the catch-all.
-[Security-sensitive]
+# INV-4 (one-sided undecidable approximations). When team handles
+# exist, route these to @scanipy/security separate from the Code
+# Review Agent on the catch-all.
 /analysis/ifds/dsl/ @locus-x64
 /services/snapshot/cw_detect/ @locus-x64
 /services/triage/ @locus-x64
 /scripts/check-finding-provenance.sh @locus-x64
 
-# ── Test corpora (blocking) ────────────────────────────────────────
+# ── Test corpora ───────────────────────────────────────────────────
 # Corpora are append-only and version-pinned by corpus.lock. A wrong
 # delete or threshold change silently invalidates falsifier campaigns.
 # Per CMP-CORP-*: only the Corpus Curator Agent merges these.
-[Test corpora]
 /tests/corpora/ @locus-x64
 /tests/falsifier/ @locus-x64
 
-# ── Documentation (non-blocking) ───────────────────────────────────
-# Docs changes get reviewed for accuracy but don't gate merges; use
-# the ^[caret] section for "advisory only".
-^[Documentation]
+# ── Documentation ──────────────────────────────────────────────────
+# Docs changes still want a reviewer for accuracy. (GitHub CODEOWNERS
+# has no "advisory only" / non-blocking section concept the way GitLab
+# does; if you want docs PRs to merge without owner approval, omit
+# these lines or relax the branch-protection setting "Require review
+# from Code Owners" to be path-scoped.)
 /README.md @locus-x64
 /docs/ @locus-x64
 /CLAUDE.md @locus-x64
