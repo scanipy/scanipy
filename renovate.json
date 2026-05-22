@@ -1,0 +1,138 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    "schedule:weekly"
+  ],
+  "timezone": "Asia/Karachi",
+  "rebaseWhen": "behind-base-branch",
+  "labels": ["dependencies"],
+  "prHourlyLimit": 0,
+  "prConcurrentLimit": 5,
+  "branchConcurrentLimit": 5,
+  "rangeStrategy": "pin",
+  "minimumReleaseAge": "3 days",
+  "minimumReleaseAgeBehaviour": "timestamp-optional",
+  "configMigration": true,
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security", "dependencies"],
+    "automerge": false
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on monday"],
+    "automerge": true,
+    "automergeType": "branch"
+  },
+  "packageRules": [
+    {
+      "description": "LLM SDKs — high-touch. One PR per package, NEVER automerge, smoke-test required before human merge. INV-3 means an LLM-SDK bump can silently shift triage outputs; treat every release as load-bearing.",
+      "matchPackageNames": [
+        "anthropic",
+        "@anthropic-ai/sdk",
+        "@anthropic-ai/claude-agent-sdk",
+        "openai",
+        "@google/adk",
+        "google-cloud-aiplatform"
+      ],
+      "groupName": null,
+      "automerge": false,
+      "prPriority": 10,
+      "labels": ["llm-sdk", "needs-smoke"],
+      "commitMessagePrefix": "chore(deps): "
+    },
+    {
+      "description": "Front-end binaries (Joern, CodeQL CLI, OpenTofu, semgrep). These are vendored via the GitHub-Actions workflow YAML, not pyproject.toml — see the customManagers block below for how they're tracked. A wrong bump here can shift CPG fidelity (INV-6) or detector recall (INV-4) silently, so NEVER automerge.",
+      "matchPackageNames": [
+        "joernio/joern",
+        "github/codeql-cli-binaries",
+        "opentofu/opentofu",
+        "returntocorp/semgrep",
+        "anchore/syft",
+        "anchore/grype",
+        "gitleaks/gitleaks",
+        "aquasecurity/trivy"
+      ],
+      "automerge": false,
+      "prPriority": 9,
+      "labels": ["analyzer-binary", "needs-fidelity-gate"],
+      "commitMessagePrefix": "chore(deps): "
+    },
+    {
+      "description": "Pre-1.0 deps (ruff, mypy at <1.0 historically) — manual review, no automerge. Pre-1.0 packages have no semver contract; patch releases can ship breaking changes.",
+      "matchPackageNames": [
+        "ruff",
+        "mypy",
+        "pre-commit",
+        "pydantic"
+      ],
+      "matchCurrentVersion": "/^0\\./",
+      "automerge": false,
+      "labels": ["pre-1.0", "needs-review"],
+      "commitMessagePrefix": "chore(deps): "
+    },
+    {
+      "description": "Post-1.0 patch + minor — grouped into one weekly PR, automerged if CI passes. The npm + pypi communities treat post-1.0 semver as binding; if a package breaks that contract, move it to per-package review.",
+      "matchUpdateTypes": ["patch", "minor"],
+      "matchCurrentVersion": "!/^0\\./",
+      "groupName": "post-1.0 minor + patch",
+      "automerge": true,
+      "automergeType": "branch",
+      "schedule": ["before 6am on monday"]
+    },
+    {
+      "description": "Major bumps anywhere — always manual. Read the migration guide; the PR body should link to it.",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["major-bump", "needs-review"],
+      "prPriority": 5
+    },
+    {
+      "description": "Dev dependencies (linters, types, test infra) — more permissive. Grouped + automerged.",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "dev deps",
+      "automerge": true,
+      "automergeType": "branch"
+    },
+    {
+      "description": "GitHub Actions — pinned by SHA preferred; renovate keeps the SHA + comment in sync. Group all action bumps into one weekly PR.",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "automerge": true,
+      "automergeType": "branch",
+      "pinDigests": true
+    },
+    {
+      "description": "Docker base images — patch + minor automerge after the 3-day soak. Major Postgres or Python image bumps are manual (could be a runtime regression).",
+      "matchDatasources": ["docker"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "docker images",
+      "automerge": true,
+      "automergeType": "branch"
+    }
+  ],
+  "customManagers": [
+    {
+      "description": "Track pinned tool versions in .github/workflows/*.yml that aren't in pyproject.toml or package.json (e.g. cosign, syft, trivy installed via direct binary download). Convention: comment line `# renovate: datasource=<x> depName=<y>` immediately before the `TOOL_VERSION: \"X.Y.Z\"` line.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/workflows/.+\\.ya?ml$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.+?) depName=(?<depName>.+?)\\s+\\S+_VERSION:\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "versioningTemplate": "semver"
+    },
+    {
+      "description": "Track Docker base-image SHA pins in Dockerfiles when written as `FROM image:tag@sha256:<digest>`. Renovate maintains both the tag and digest in lockstep.",
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)Dockerfile$/", "/(^|/)Dockerfile\\..+$/"],
+      "matchStrings": [
+        "FROM (?<depName>[^:@\\s]+):(?<currentValue>[^@\\s]+)@(?<currentDigest>sha256:[a-f0-9]{64})"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ]
+}
