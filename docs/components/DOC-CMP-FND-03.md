@@ -1,6 +1,6 @@
 # DOC-CMP-FND-03 — Signed provenance record
 
-> **Status:** DRAFT (Phase 0). Satisfies `AC-DOC-04`: an Implementation Agent given only this document plus the cross-cutting refs (`DOC-PROVENANCE`, `DOC-DB`, `DOC-INV`, `DOC-SARIF`, `DOC-DEPLOY-DECISIONS`, `DOC-PARTITION`, `DOC-GLOSSARY`) can produce a passing implementation without re-reading `SDD.md`.
+> **Status:** ACTIVE (Phase 0 deliverable). Satisfies `AC-DOC-04`: an Implementation Agent given only this document plus the cross-cutting refs (`DOC-PROVENANCE`, `DOC-DB`, `DOC-INV`, `DOC-SARIF`, `DOC-DEPLOY-DECISIONS`, `DOC-PARTITION`, `DOC-GLOSSARY`) can produce a passing implementation without re-reading `SDD.md`.
 
 ---
 
