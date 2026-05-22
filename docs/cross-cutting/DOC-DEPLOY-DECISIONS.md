@@ -2,8 +2,8 @@
 
 **Owner:** CTO Agent
 **Status:** ACTIVE (Phase 0a output; covers `CLAR-DEPLOY-01..16`)
-**Resolved date:** 2026-05-23
-**Source of truth:** CLAUDE.md §8 (resolved technology stack table). This document expands each row into a formal decision record per the format in `.claude/commands/clar-resolve.md`.
+**Resolved date (applies to all 16 records in this file unless a per-section override is noted):** 2026-05-23
+**Source of truth:** CLAUDE.md §8 (resolved technology stack table). This document expands each row into a formal decision record. The format follows `.claude/commands/clar-resolve.md` with one deviation: the **Resolved date** field is hoisted to this header rather than repeated per section, because all 16 records were resolved in a single CTO session. Any future re-resolution of an individual record must add a per-section **Resolved date** override.
 
 Each `CLAR-DEPLOY-*` resolution below honors `RULE-8` (CTO approves every CLAR-DEPLOY-* before its dependent phase starts). Resolutions are mirrored as one-line summaries in `WBS.md §17`.
 
@@ -33,9 +33,9 @@ Each `CLAR-DEPLOY-*` resolution below honors `RULE-8` (CTO approves every CLAR-D
 
 **Question:** Object-store choice (must support content-addressable, deterministic keys).
 
-**Decision:** Amazon S3 with deterministic key paths `orgs/{org_id}/codebases/{codebase_id}/snapshots/{commit_sha}/{artifact_type}`. Per-tenant prefix isolation enforced via IAM session tags (see CLAR-DEPLOY-16).
+**Decision:** Amazon S3 with deterministic key scheme `orgs/{org_id}/codebases/{codebase_id}/snapshots/{commit_sha}/{env_digest}/{artifact_type}`. Per-tenant prefix isolation enforced via IAM session tags (see CLAR-DEPLOY-16).
 
-**Rationale:** `SDD.md CMP-SNAP-01` requires "deterministic blob-store keys" for the five persisted snapshot artifacts (CPG tarball, reverse-symbol index, dynamic call graph, ΔG, precondition-status). S3 keys are content-addressable via SSE-S3 + the deterministic path scheme. S3 Object Lock backs the data-retention policy (CLAR-DEPLOY-15).
+**Rationale:** `SDD.md CMP-SNAP-01` requires deterministic blob-store keys for the five persisted snapshot artifacts (CPG tarball, reverse-symbol index, dynamic call graph, ΔG, precondition-status). S3 is not natively content-addressable, but the chosen key scheme **delivers content-addressability transitively**: `commit_sha` is Git's content hash over the source tree, and `env_digest` is the container image digest (CMP-SNAP-05 AC-SNAP-05b). Together they uniquely identify the inputs `(source, Env)` that determine every snapshot artifact, so the key path is byte-for-byte reproducible from the inputs — the operational definition of content-addressability the SDD requires (it does not mandate `key = SHA-256(content)`, which would break per-tenant prefix isolation). S3 Object Lock backs the data-retention policy (CLAR-DEPLOY-15).
 
 **Consequences:** `CMP-SNAP-01` artifact persistence layer is an S3 client. `CMP-DEPLOY-05` (tenant isolation) enforces the `orgs/{org_id}/...` prefix in worker IAM policy.
 
