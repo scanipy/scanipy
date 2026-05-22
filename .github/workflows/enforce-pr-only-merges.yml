@@ -1,0 +1,97 @@
+name: Enforce PR-only merges on main
+
+# Process-level shim for branch protection on the GitHub Free plan.
+# The Free tier blocks the `branch_protection_rules` API on private
+# repos (both classic protection AND rulesets return 403:
+# "Upgrade to GitHub Pro or make this repository public"), so we
+# cannot prevent direct pushes server-side. This workflow detects
+# direct pushes after the fact and turns them into a red check on
+# the commit so they're impossible to miss.
+#
+# When the org upgrades to GitHub Team, replace this with real
+# branch-protection rules and add this workflow to the
+# `required_status_checks.contexts` list for defense-in-depth.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  direct-push-detector:
+    name: Direct-push detector
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Verify HEAD on main came through a PR / known automation
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+        run: |
+          SHA="${GITHUB_SHA}"
+          COMMITTER_EMAIL="$(git log -1 --pretty='%ce' "$SHA")"
+          COMMITTER_NAME="$(git log -1 --pretty='%cn' "$SHA")"
+          MSG_SUBJECT="$(git log -1 --pretty='%s' "$SHA")"
+          MSG_BODY="$(git log -1 --pretty='%B' "$SHA")"
+
+          echo "Inspecting $SHA"
+          echo "  actor:           $GITHUB_ACTOR"
+          echo "  committer:       $COMMITTER_NAME <$COMMITTER_EMAIL>"
+          echo "  subject:         $MSG_SUBJECT"
+          echo ""
+
+          # Allowlist 1: GitHub UI merges. Merge / Squash / Rebase via
+          # the GitHub UI always set committer email to
+          # noreply@github.com (the `web-flow` identity). Direct local
+          # pushes carry the developer's own git config as committer.
+          if [ "$COMMITTER_EMAIL" = "noreply@github.com" ]; then
+            echo "PASS: commit was authored by the GitHub merge UI."
+            exit 0
+          fi
+
+          # Allowlist 2: known automation accounts that legitimately
+          # push to main (Renovate branch-automerge, GitHub Actions
+          # workflows that commit + push, Dependabot).
+          case "$GITHUB_ACTOR" in
+            renovate\[bot\]|github-actions\[bot\]|dependabot\[bot\])
+              echo "PASS: push by known automation actor ($GITHUB_ACTOR)."
+              exit 0
+              ;;
+          esac
+
+          # Allowlist 3: explicit revert / hotfix commits. A revert
+          # touching main outside the PR flow is sometimes the right
+          # call during an incident; require the message to start
+          # with `Revert ` so it's auditable.
+          case "$MSG_SUBJECT" in
+            "Revert "*)
+              echo "PASS: explicit revert commit."
+              exit 0
+              ;;
+          esac
+
+          # Everything else is a direct push by a human. Fail loudly.
+          echo ""
+          echo "FAIL: direct push to main detected."
+          echo ""
+          echo "  Commit:    $SHA"
+          echo "  Actor:     $GITHUB_ACTOR"
+          echo "  Committer: $COMMITTER_NAME <$COMMITTER_EMAIL>"
+          echo "  Subject:   $MSG_SUBJECT"
+          echo ""
+          echo "main accepts only:"
+          echo "  - merges from a PR via the GitHub UI"
+          echo "  - reverts whose subject starts with 'Revert '"
+          echo "  - pushes by renovate[bot], github-actions[bot], dependabot[bot]"
+          echo ""
+          echo "If this was an intentional emergency hotfix:"
+          echo "  - record an OOS-INFRA-* entry in WBS.md §18"
+          echo "  - open a follow-up PR to reconcile main with the hotfix"
+          echo ""
+          echo "Server-side branch protection is not available on the"
+          echo "current org plan; see README §'Branch protection'."
+          exit 1
