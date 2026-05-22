@@ -16,24 +16,43 @@ env:
 jobs:
   # ---------------------------------------------------------------------------
   # SCM parity — TST-AC-SCM-03c
-  # 100 canary repos must resolve identical commits across GitHub/GitLab/BB/ADO
+  # 100 canary repos must resolve identical commits across GitHub/GitLab/BB/ADO.
+  #
+  # NOTE: hashFiles() is NOT allowed at the job-level `if:` (only inside
+  # steps — see GitHub Actions context-availability docs). The original
+  # scaffold had `if: hashFiles(...) != ''` here, which caused this
+  # workflow to fail at parse time on every push since 00c5bfe. The
+  # fix moves the corpus-presence check into a first step that emits a
+  # `has_corpus` output, and gates every subsequent step on it.
   # ---------------------------------------------------------------------------
   scm-parity:
     name: SCM parity — 100 canary repos (TST-AC-SCM-03c)
     runs-on: ubuntu-latest
-    if: hashFiles('tests/corpora/canary/corpus.lock') != ''
     steps:
       - uses: actions/checkout@v4
 
+      - name: Detect canary corpus presence
+        id: corpus_check
+        run: |
+          if [ -f "tests/corpora/canary/corpus.lock" ]; then
+            echo "has_corpus=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_corpus=false" >> "$GITHUB_OUTPUT"
+            echo "Canary corpus not present — TST-AC-SCM-03c skipped (CMP-CORP-CANARY-01 not DONE)."
+          fi
+
       - uses: actions/setup-python@v5
+        if: steps.corpus_check.outputs.has_corpus == 'true'
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
 
       - name: Install dependencies
+        if: steps.corpus_check.outputs.has_corpus == 'true'
         run: pip install -e ".[dev]"
 
       - name: Run SCM parity tests
+        if: steps.corpus_check.outputs.has_corpus == 'true'
         run: |
           pytest tests/integration/ \
             -m "integration" \
@@ -45,7 +64,7 @@ jobs:
 
       - name: Upload results
         uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && steps.corpus_check.outputs.has_corpus == 'true'
         with:
           name: canary-scm-results
           path: canary-scm-results.xml
