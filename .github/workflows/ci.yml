@@ -6,6 +6,16 @@ on:
   pull_request:
     branches: [main]
 
+# Cancel superseded PR / feature-branch runs when a developer pushes
+# again before the previous run finishes. `main` (push to default
+# branch) is kept sacred — its runs deploy nothing today but will once
+# CMP-DEPLOY-* lands, and cancelling a main run mid-attestor would
+# leave a half-recorded determinism partition. Pattern lifted from
+# Zeus .gitlab-ci.yml workflow:auto_cancel.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 permissions:
   contents: read
   checks: write

@@ -1,0 +1,54 @@
+#!/usr/bin/env sh
+# Husky pre-push hook — Scanipy v3.2
+#
+# Runs the same fast checks as the CI lint + unit-tests jobs, locally,
+# before any commit leaves the machine. Pays for itself the first time
+# you would have shipped a red main and re-based every open branch
+# against the breakage.
+#
+# Skip in emergencies with:
+#
+#     git push --no-verify
+#
+# Scope choice (per the recommended default in the Zeus-vs-Scanipy
+# dev-infra report): ruff + ruff format + mypy + pytest unit only. We
+# explicitly DO NOT run:
+#   - Integration tests (need Postgres up; see docker-compose.dev.yml)
+#   - Falsifier campaigns (slow; gated on schedule + release tags)
+#   - Attestor canary (slow; gated on detector/engine/env changes)
+# Those are CI's job. The contract here is "if pre-push passes, you
+# probably haven't broken the cheap-to-detect class of bug".
+set -e
+
+# Honour `--no-verify` semantically: husky already short-circuits the
+# hook entirely in that case, but be defensive against direct script
+# invocation.
+if [ -n "$SKIP_HUSKY" ] || [ "$HUSKY" = "0" ]; then
+  echo "pre-push: skipped (SKIP_HUSKY / HUSKY=0 set)"
+  exit 0
+fi
+
+echo "pre-push [1/4]: ruff check"
+ruff check .
+
+echo "pre-push [2/4]: ruff format --check"
+ruff format --check .
+
+echo "pre-push [3/4]: mypy --strict"
+# Mirror the scaffold-phase guard from .github/workflows/ci.yml: if
+# there's no Python source yet, mypy has nothing to check and would
+# error otherwise.
+if find analysis detectors integrations services workers -name "*.py" 2>/dev/null | grep -q .; then
+  mypy --config-file pyproject.toml analysis/ detectors/ integrations/ services/ workers/ 2>/dev/null || \
+    mypy --config-file pyproject.toml $(find analysis detectors integrations services workers -name "*.py" 2>/dev/null | head -n 1 | xargs -n1 dirname | sort -u | tr '\n' ' ')
+else
+  echo "  no Python source yet — mypy skipped (scaffold phase)"
+fi
+
+echo "pre-push [4/4]: pytest -m unit -x"
+# `-x` stops at the first failure for fast feedback. `-q --tb=short`
+# matches the CI invocation. We exclude the falsifier + integration
+# markers explicitly to avoid pulling them in via marker overlap.
+pytest tests/ -m "unit and not integration and not falsifier and not empirical" -q --tb=short -x
+
+echo "pre-push: all checks passed"
