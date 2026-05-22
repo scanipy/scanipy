@@ -58,21 +58,38 @@ jobs:
             echo "No Python source files yet — mypy skipped (scaffold phase)"
           fi
 
+      # Node toolchain is needed only once the web/ dashboard (CMP-CP-04)
+      # has source files. Gate every Node step on web/ existence so the
+      # lint job stays green during the scaffold phase. Same pattern as
+      # the Mypy scaffold-phase guard above.
+      #
+      # `cache: npm` is intentionally omitted: actions/setup-node@v4
+      # errors out when cache:npm is set but no package-lock.json /
+      # npm-shrinkwrap.json / yarn.lock exists. Re-enable once the
+      # first lockfile is committed; switch `npm install` back to
+      # `npm ci` at the same time for deterministic installs (Renovate
+      # will keep the lockfile fresh per the LLM-SDK and post-1.0
+      # rules in renovate.json).
       - uses: actions/setup-node@v4
+        if: hashFiles('web/**/*.{ts,tsx,js,jsx}') != ''
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
 
       - name: Install Node dependencies
-        run: npm ci --ignore-scripts
+        if: hashFiles('web/**/*.{ts,tsx,js,jsx}') != ''
+        run: npm install --no-audit --no-fund --ignore-scripts
 
       - name: ESLint
+        if: hashFiles('web/**/*.{ts,tsx,js,jsx}') != ''
         run: npm run lint
-        if: hashFiles('web/**/*.ts') != ''
 
       - name: Prettier check
+        if: hashFiles('web/**/*.{ts,tsx,js,jsx}') != ''
         run: npm run format:check
-        if: hashFiles('web/**/*.ts') != ''
+
+      - name: Node toolchain — skipped (scaffold phase, no web/ source yet)
+        if: hashFiles('web/**/*.{ts,tsx,js,jsx}') == ''
+        run: echo "web/ has no TS/JS source yet — Node setup + ESLint + Prettier skipped."
 
   # ---------------------------------------------------------------------------
   # Unit tests
