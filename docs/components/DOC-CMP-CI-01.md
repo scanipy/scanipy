@@ -149,7 +149,7 @@ Failure response per gate is owned by `DOC-RUNBOOK §8`. Summary:
 ### 7.2 Pipeline anti-patterns rejected
 
 - `if: always()` on a Gate-class step (would let a failed gate report success).
-- `|| true` masking of a Gate-class command (`MEMORY.md` feedback-style rule: "No silent fallbacks in CI; no `|| true` masks").
+- `|| true` masking of a Gate-class command. No silent fallbacks in CI; `AC-DEPLOY-04b` forbids advisory enforcement, which a `|| true` mask would simulate.
 - Cancelling a Gate-class run on `main` mid-stream (`ci.yml` and `attestor.yml` both keep `cancel-in-progress: false` on `main` for exactly this reason — see the inline comments).
 
 ---

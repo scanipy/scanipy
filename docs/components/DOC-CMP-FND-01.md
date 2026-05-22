@@ -1,6 +1,6 @@
 # DOC-CMP-FND-01 — Findings normalizer (SARIF emission)
 
-> **Status:** DRAFT (Phase 0). Satisfies `AC-DOC-04`: an Implementation Agent given only this document plus the cross-cutting refs (`DOC-SARIF`, `DOC-INV`, `DOC-PROVENANCE`, `DOC-DB`, `DOC-PARTITION`, `DOC-GLOSSARY`, `DOC-ALGS`) can produce a passing implementation without re-reading `SDD.md`.
+> **Status:** ACTIVE (Phase 0 deliverable). Satisfies `AC-DOC-04`: an Implementation Agent given only this document plus the cross-cutting refs (`DOC-SARIF`, `DOC-INV`, `DOC-PROVENANCE`, `DOC-DB`, `DOC-PARTITION`, `DOC-GLOSSARY`, `DOC-ALGS`) can produce a passing implementation without re-reading `SDD.md`.
 
 ---
 

@@ -1,6 +1,6 @@
 # DOC-CMP-FND-02 — Findings store schema
 
-> **Status:** DRAFT (Phase 0). Satisfies `AC-DOC-04`: an Implementation Agent given only this document plus the cross-cutting refs (`DOC-DB`, `DOC-INV`, `DOC-PROVENANCE`, `DOC-PARTITION`, `DOC-DEPLOY-DECISIONS`, `DOC-GLOSSARY`) can produce a passing implementation without re-reading `SDD.md`.
+> **Status:** ACTIVE (Phase 0 deliverable). Satisfies `AC-DOC-04`: an Implementation Agent given only this document plus the cross-cutting refs (`DOC-DB`, `DOC-INV`, `DOC-PROVENANCE`, `DOC-PARTITION`, `DOC-DEPLOY-DECISIONS`, `DOC-GLOSSARY`) can produce a passing implementation without re-reading `SDD.md`.
 
 ---
 

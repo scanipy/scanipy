@@ -1,6 +1,6 @@
 # DOC-CMP-CORE-02 — Slice fingerprint (Algorithm 3)
 
-> **Status:** DRAFT (Phase 0). Satisfies `AC-DOC-04`: an Implementation Agent given only this document plus the cross-cutting refs (`DOC-INV`, `DOC-GLOSSARY`, `DOC-ALGS`, `DOC-PROVENANCE`, `DOC-SARIF`, `DOC-DB`) can produce a passing implementation without re-reading `SDD.md`.
+> **Status:** ACTIVE (Phase 0 deliverable). Satisfies `AC-DOC-04`: an Implementation Agent given only this document plus the cross-cutting refs (`DOC-INV`, `DOC-GLOSSARY`, `DOC-ALGS`, `DOC-PROVENANCE`, `DOC-SARIF`, `DOC-DB`) can produce a passing implementation without re-reading `SDD.md`.
 
 ---
 
