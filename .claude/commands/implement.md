@@ -73,7 +73,7 @@ If during implementation you discover an unspecified behaviour:
 1. All `TST-AC-<id>-*` green.
 2. All `TST-INV-*` for this component green.
 3. `WBS.md` status for this CMP flipped to `DONE`.
-4. PR opened; Code Review Agent tagged.
+4. PR opened; the `claude-review` CI check reviews automatically (RULE-10) and must reach an APPROVE verdict before merge.
 
 ## Rules reference
 
