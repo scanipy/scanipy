@@ -433,7 +433,7 @@ The `triage_score` and `triage_reason` columns are **deliberately split into a s
 | `origin` | `text` | NULL | — | CHECK (`IN ('deterministic-core','oracle-passthrough')`) | link 9 — INV-1; see row-level CHECK |
 | `determinism_partition` | `text` | NULL | — | | mirrors `origin` |
 | `repartition_reason` | `text` | NULL | — | | only on `repartition` rows |
-| `repartition_oracle_id` | `uuid` | NULL | — | FK → `repartition_events(id)` | only on `repartition` rows |
+| `repartition_oracle_id` | `uuid` | NULL | — | FK → `snap_oracle_runs(id)` | only on `repartition` rows; identifies the async oracle run that detected the disagreement (table to be added — `CLAR-DB-03`) |
 | `kms_key_arn` | `text` | NOT NULL | — | | signing CMK (CLAR-DEPLOY-04) |
 | `kms_key_version` | `text` | NOT NULL | — | | envelope-encryption version; preserves prior signatures across rotation |
 | `signature` | `bytea` | NOT NULL | — | | KMS asymmetric signature over canonical record bytes |

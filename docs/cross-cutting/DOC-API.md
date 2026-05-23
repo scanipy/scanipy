@@ -391,7 +391,7 @@ Export the signed provenance chain for a scan (CMP-CP-05, CMP-FND-03 AC-FND-03a)
       "repartition_events": [
         { "event_id": "uuid", "occurred_at": "RFC3339", "trigger": "differential-oracle-disagreement", "finding_ids": ["uuid", "..."] }
       ],
-      "signature": { "key_id": "kms-arn", "algorithm": "ecdsa-p256-sha256", "value": "base64url" }
+      "signature": { "kms_key_arn": "kms-arn", "kms_key_version": "string", "signature_alg": "RSASSA_PSS_SHA_256", "value": "base64url" }
     },
     "sarif_log_uri": "s3://…  (if format=sarif|both)"
   }

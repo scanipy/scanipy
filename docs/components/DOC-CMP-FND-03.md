@@ -43,18 +43,21 @@ import uuid
 Sha256       = NewType("Sha256", bytes)             # 32 bytes
 Sha256Hex    = NewType("Sha256Hex", str)            # 64 hex
 SemVer       = NewType("SemVer", str)
-RecordKind   = Literal["finding", "repartition"]
+RecordType   = Literal["chain", "repartition", "attestation", "spec-acceptance", "witness-update"]
 Origin       = Literal["deterministic-core", "oracle-passthrough"]
-SignatureAlg = Literal["RSASSA_PSS_SHA_256"]        # CLAR-DEPLOY-04 baseline
+SignatureAlg = Literal["RSASSA_PSS_SHA_256", "RSASSA_PSS_SHA_384"]   # CLAR-DEPLOY-04 baseline = SHA_256
 ClaimLabel   = Literal["CONDITIONAL_THEOREM", "EMPIRICAL", "STAGED", "UNCONDITIONAL"]
 
 @dataclass(frozen=True)
 class ProvenanceRecord:
-    """The 9-link chain, pre-signature (DOC-PROVENANCE §3)."""
+    """The 9-link chain, pre-signature. Canonical DDL: DOC-DB §4.13; semantics: DOC-PROVENANCE §3."""
     # Identity & chain linkage
-    record_id:                 uuid.UUID
+    id:                        uuid.UUID             # PK (was record_id; CLAR-FND-01)
     parent_record_id:          uuid.UUID | None      # set for repartition records
-    record_kind:               RecordKind
+    record_type:               RecordType            # 'chain' = per-finding base record
+    # Scope keys
+    scan_id:                   uuid.UUID
+    finding_id:                uuid.UUID | None       # NULL for scan-level record types
     # Link 1 — source commit
     org_id:                    uuid.UUID
     codebase_id:               uuid.UUID
@@ -106,7 +109,7 @@ def sign_provenance(record: ProvenanceRecord) -> SignedProvenanceRecord:
        (CLAR-DEPLOY-04). Resolves the CMK ARN via the tenant config (one CMK per tenant
        per CLAR-DEPLOY-16).
     3. Persist to provenance_records and to S3
-       `orgs/{org_id}/codebases/{codebase_id}/provenance/{commit_sha}/{record_id}.json.sig`
+       `orgs/{org_id}/codebases/{codebase_id}/provenance/{commit_sha}/{id}.json.sig`
        under Object Lock (Compliance mode, 7y per CLAR-DEPLOY-15).
     """
     ...
@@ -120,7 +123,7 @@ def verify_chain(record: SignedProvenanceRecord) -> Literal["VERIFIED","TAMPERED
       3. Verify signature over canonical_bytes with signature_alg.
       4. Fetch S3 artefacts (sarif, witness, snapshot tarball if cached) and recompute digests.
       5. Assert recomputed digests match record.sarif_hash and record.snapshot_digest.
-      6. If record_kind == 'repartition':
+      6. If record_type == 'repartition':
            a. Verify parent record per 1..5.
            b. Fetch the oracle-run artefact at repartition_oracle_id and assert its
               disagreement with CW-DETECT for the parent snapshot.
@@ -145,7 +148,7 @@ def append_repartition_event(
     Called by CMP-SNAP-04 within the same DB transaction as the
     repartition_events INSERT + findings.origin UPDATE.
 
-    Constructs a new record with record_kind='repartition', origin='oracle-passthrough',
+    Constructs a new record with record_type='repartition', origin='oracle-passthrough',
     parent_record_id set, cpg_order_hash NULL (not recomputed on repartition per
     DOC-PROVENANCE §4.1), signs, persists. The parent record is NEVER mutated
     (append-only chain per AC-FND-03c).
@@ -201,7 +204,7 @@ Per `DOC-PROVENANCE.md §3.2`: JSON with keys sorted lexicographically by Unicod
 | Artefact | Location | Retention |
 |---|---|---|
 | `provenance_records` row | PostgreSQL (`DOC-DB.md §4.13`) | 7 years (per `CLAR-DEPLOY-15`) |
-| Signed canonical bytes | S3 `orgs/{org_id}/codebases/{codebase_id}/provenance/{commit_sha}/{record_id}.json.sig` | 7 years, S3 Object Lock — Compliance mode (per `CLAR-DEPLOY-15`) |
+| Signed canonical bytes | S3 `orgs/{org_id}/codebases/{codebase_id}/provenance/{commit_sha}/{id}.json.sig` | 7 years, S3 Object Lock — Compliance mode (per `CLAR-DEPLOY-15`) |
 
 ---
 
@@ -296,7 +299,7 @@ This component is consumed by **`CMP-SNAP-01`** (links to provenance record via 
 
 ### 7.3 Idempotency
 
-`sign_provenance` is *not* idempotent at the signature level — calling KMS twice produces two different signatures (RSASSA-PSS uses random salt). However, the same `record_id` constraint on `provenance_records` (PK) prevents a second insert. Callers must use stable `record_id`s (UUIDv4 generated once, persisted with the signed payload).
+`sign_provenance` is *not* idempotent at the signature level — calling KMS twice produces two different signatures (RSASSA-PSS uses random salt). However, the `id` PK constraint on `provenance_records` prevents a second insert. Callers must use stable `id`s (UUIDv4 generated once, persisted with the signed payload).
 
 ---
 
@@ -336,7 +339,7 @@ A code-review check on any FND-03 patch: every new chain construction path impor
 |---|---|---|---|---|
 | `AC-FND-03a` | "The record is independently verifiable from stored artifacts without re-running analysis." | `TST-AC-FND-03a` `[FORTHCOMING]` | `[INTEGRATION]` | Implements the `verify_chain` procedure of `DOC-PROVENANCE.md §8.4`; given a stored `provenance_records` row + S3 artefacts + KMS public key, returns `VERIFIED` for an untampered record and `TAMPERED(field)` for a mutated record. No IFDS / Algorithm 5 / detector invocations during verification. |
 | `AC-FND-03b` | "The `cpg_order_hash` field carries its conditional-canonicality annotation in the auditor export (INV-5)." | `TST-AC-FND-03b` `[FORTHCOMING]` | `[INVARIANT]` | Asserts the auditor export JSON contains `cpg_order_hash_annotation` as a JSON-adjacent key with the literal string `"canonical iff fingerprint_class = strong"`. Greps export for any abbreviated/translated variant; fails on hit. |
-| `AC-FND-03c` | "Differential-oracle re-partition events appear in the record." | `TST-AC-FND-03c` `[FORTHCOMING]` | `[INVARIANT]` | Seed a re-partition event via `CMP-SNAP-04`; assert a new `provenance_records` row exists with `record_kind = 'repartition'`, `parent_record_id` set to the base record, `origin = 'oracle-passthrough'`, and the auditor export's `repartition_history` array surfaces it. |
+| `AC-FND-03c` | "Differential-oracle re-partition events appear in the record." | `TST-AC-FND-03c` `[FORTHCOMING]` | `[INVARIANT]` | Seed a re-partition event via `CMP-SNAP-04`; assert a new `provenance_records` row exists with `record_type = 'repartition'`, `parent_record_id` set to the base record, `origin = 'oracle-passthrough'`, and the auditor export's `repartition_history` array surfaces it. |
 | `TST-INV-1-FND-03` | — (invariant test) | `TST-INV-1-FND-03` `[FORTHCOMING]` | `[INVARIANT]` | Every chained record has non-null `origin`; the parent is never mutated post-sign (append-only). |
 | `TST-INV-2-FND-03` | — (invariant test) | `TST-INV-2-FND-03` `[FORTHCOMING]` | `[INVARIANT]` | Every chained record has non-null `S_version` and `env_digest`. |
 | `TST-INV-5-FND-03` | — (invariant test) | `TST-INV-5-FND-03` `[FORTHCOMING]` | `[INVARIANT]` | The annotation literal is present in every chain record and every auditor export. |
@@ -351,7 +354,7 @@ Per `WBS.md §10 CMP-FND-03`: tasks are `T-CMP-FND-03-01` (construct chain), `T-
 - **`CLAR-DEPLOY-15` (RESOLVED).** SARIF + provenance retention = 7 years under S3 Object Lock — Compliance mode.
 - **`CLAR-DEPLOY-16` (RESOLVED).** Per-tenant isolation backstop = S3 prefix + RDS RLS + KMS per-tenant CMKs. The IAM role for `CMP-FND-03` is scoped to one CMK ARN per task; cross-tenant `kms:Sign` denied.
 - **`CLAR-SLA-01` (RESOLVED).** Differential-oracle labelling-correction window = 24h high-impact / 7d routine. Published per environment in `DOC-RUNBOOK`.
-- **`CLAR-FND-01` (FILED BY THIS DOCUMENT — see Appendix C).** `DOC-DB.md §4.13` and `DOC-PROVENANCE.md §3` describe two structurally different shapes for `provenance_records` (column-per-link vs. `chain_payload jsonb`; `record_kind` 2-enum vs. `record_type` 5-enum; `RSASSA_PSS_SHA_256` vs. `ecdsa-p256-sha256` baseline; `kms_key_arn + kms_key_version` vs. `signature_key_id + signature_algorithm + signature_value`). This document treats **`DOC-PROVENANCE.md §3` as the primary contract for `CMP-FND-03`** (it is the dedicated chain reference and aligns with the SDD chain shape); `DOC-DB.md §4.13` is treated as the persistence layer's reasonable rendering of the same conceptual shape into a SQL table. The DB-shape mismatch must be reconciled before migration delivery.
+- **`CLAR-FND-01` — RESOLVED 2026-05-23 (see Appendix B).** The `DOC-DB §4.13` vs `DOC-PROVENANCE §3` divergence is reconciled: the canonical shape is **column-per-link** (PROVENANCE/this document), with DOC-DB's forced parts adopted — PK `id` + `<table>(id)` FKs, `record_type` 5-enum (`chain` = per-finding base record), `scan_id` NOT NULL + `finding_id` NULL. Signature stays `RSASSA_PSS_SHA_256`. The **canonical DDL now lives in `DOC-DB §4.13`**; `DOC-PROVENANCE §3` points to it (single source of DDL, drift-proof). This document's dataclass (§3.1) matches.
 
 If an Implementation Agent encounters ambiguity not covered here (e.g. unspecified rendering of `repartition_history` in CSV vs. PDF exports), file `CLAR-FND-NN` in `WBS.md §17` per `.claude/rules/03-scope.md`. **Do not invent missing scope.**
 
@@ -366,7 +369,7 @@ def sign_finding_record(finding_row, snapshot_row, sarif_hash, detector_manifest
     record = ProvenanceRecord(
         # ... populate every field from finding_row + snapshot_row + detector_manifest;
         # cpg_order_hash_annotation MUST be CPG_ORDER_HASH_ANNOTATION (never a string literal);
-        # parent_record_id=None for record_kind="finding"; sarif_hash from CMP-FND-01.
+        # parent_record_id=None for record_type="chain"; sarif_hash from CMP-FND-01.
     )
     canonical = _canonical_serialize(record)                       # DOC-PROVENANCE §3.2
     cmk_arn   = _tenant_cmk_arn(finding_row.org_id)                # CLAR-DEPLOY-16
@@ -380,20 +383,22 @@ def sign_finding_record(finding_row, snapshot_row, sarif_hash, detector_manifest
     return signed
 ```
 
-Full field-by-field mapping in §3.1 + §8. The `append_repartition_event` path follows the same shape with `record_kind="repartition"`, `parent_record_id` set, `cpg_order_hash=None`, `origin="oracle-passthrough"`.
+Full field-by-field mapping in §3.1 + §8. The `append_repartition_event` path follows the same shape with `record_type="repartition"`, `parent_record_id` set, `cpg_order_hash=None`, `origin="oracle-passthrough"`.
 
-## Appendix B. CLAR-FND-01 (filed by this document)
+## Appendix B. CLAR-FND-01 — RESOLVED (2026-05-23)
 
-**Filed in `WBS.md §17` as OPEN.** Brief: `DOC-DB.md §4.13` and `DOC-PROVENANCE.md §3` define the `provenance_records` table with structurally different shapes:
+**Resolved in `WBS.md §17`.** The `DOC-DB.md §4.13` vs `DOC-PROVENANCE.md §3` divergence is reconciled into one canonical shape. Per-concern outcome:
 
-| Concern | `DOC-DB.md §4.13` | `DOC-PROVENANCE.md §3` |
-|---|---|---|
-| Layout | enum + opaque `chain_payload jsonb` | one column per chain link |
-| Record-kind enum | `record_type IN ('chain','repartition','attestation','spec-acceptance','witness-update')` | `record_kind IN ('finding','repartition')` |
-| Signing-algorithm baseline | `signature_algorithm IN ('ecdsa-p256-sha256','ecdsa-p384-sha384')` | `signature_alg = 'RSASSA_PSS_SHA_256'` |
-| KMS key-id surface | `signature_key_id` | `kms_key_arn` + `kms_key_version` |
+| Concern | Was (DOC-DB §4.13) | Was (DOC-PROVENANCE §3) | **Resolved** |
+|---|---|---|---|
+| Layout | opaque `chain_payload jsonb` | one column per chain link | **column-per-link** (schema-enforced INV-1/2/5) |
+| Record-type enum | `('chain','repartition','attestation','spec-acceptance','witness-update')` | `('finding','repartition')` | **5-enum**; `chain` = per-finding base record (forced by TRI-02/CP-05/SNAP-04) |
+| PK / FK naming | `id` + `<table>(id)` | `record_id` + `<table>(<table>_id)` | **`id` + `<table>(id)`** (schema-wide; `attestations.signed_chain_id` FK) |
+| Scope keys | `scan_id` + nullable `finding_id` | finding-implicit | **`scan_id` NOT NULL + `finding_id` NULL** for scan-level types |
+| Signing-algorithm baseline | `ecdsa-p256-sha256` | `RSASSA_PSS_SHA_256` | **`RSASSA_PSS_SHA_256`** (ECDSA flip would need a `CLAR-DEPLOY-04` amendment — out of scope here) |
+| KMS key-id surface | `signature_key_id` | `kms_key_arn` + `kms_key_version` | **`kms_key_arn` + `kms_key_version`** + `signature` + `signature_alg` |
 
-These differences imply different migration code, verification code, and KMS configuration. This document treats `DOC-PROVENANCE.md §3` as the primary contract for `CMP-FND-03` (aligns with SDD chain shape + `CLAR-DEPLOY-04` algorithm). `DOC-DB.md §4.13` must be reconciled before migration delivery. Architect Agent + CTO Agent ratification required.
+**Single source of DDL:** the canonical `CREATE TABLE provenance_records` now lives in `DOC-DB §4.13`; `DOC-PROVENANCE §3` points to it and keeps the chain semantics; this document's `ProvenanceRecord` dataclass (§3.1) matches. A new `CLAR-DB-03` was filed to add the `snap_oracle_runs` table that `repartition_oracle_id` references.
 
 **Auditor export sample shape.** See `DOC-PROVENANCE.md §8.1` for the full JSON shape and §5.3 of this document for the INV-5 adjacency rule.
 
@@ -404,7 +409,7 @@ These differences imply different migration code, verification code, and KMS con
 - `SDD.md §8 CMP-FND-03` — verbatim ACs and `Purpose:`.
 - `WBS.md §10 CMP-FND-03` — task list (`T-CMP-FND-03-01..04`); `§15` invariant map; `§17` CLAR register; `§20` DAG.
 - `DOC-PROVENANCE` — §3 (chain shape, primary contract for this component), §4 (re-partition events), §5 (honest-labelling), §6 (storage + retention), §7 (KMS), §8 (auditor export), §9 (test map), §10 (per-component threading).
-- `DOC-DB` §4.13 (persistence rendering — see CLAR-FND-01), §4.15 (`repartition_events` trigger contract), §7 (retention).
+- `DOC-DB` §4.13 (**canonical DDL** — CLAR-FND-01 RESOLVED), §4.15 (`repartition_events` trigger contract), §7 (retention).
 - `DOC-INV` (INV-1, INV-2, INV-5 — this component is a co-owner of all three).
 - `DOC-SARIF` §9 (auditor export adjacency), §10 (historical SARIF after re-partition).
 - `DOC-DEPLOY-DECISIONS` (CLAR-DEPLOY-04 KMS, CLAR-DEPLOY-15 retention, CLAR-DEPLOY-16 isolation).
