@@ -141,7 +141,8 @@ if e_value >= threshold:
     )
     # e-process detail { e_value, threshold, pi_zero, alpha, evaluation_stream_id }
     # is persisted on the spec_versions row (NOT inlined in provenance) — CLAR-FND-01.
-    provenance_records.insert(
+    # Insert is delegated through CMP-FND-03 sign_provenance(); shown expanded here:
+    provenance_records.insert(   # via CMP-FND-03 sign_provenance() helper
         record_type            = 'spec-acceptance',   # scan-level; finding_id NULL
         spec_id                = spec.id,
         scan_id                = research_scan_id,

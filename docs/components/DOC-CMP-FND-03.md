@@ -77,16 +77,16 @@ class ProvenanceRecord:
     # Link 6 — taint witness
     witness_blob_uri:          str | None
     slice_fingerprint:         Sha256 | None
-    # Link 7 — rule / spec id
-    rule_id:                   str
+    # Link 7 — rule / spec id  (NULL on scan-level record_types: attestation, witness-update)
+    rule_id:                   str | None
     spec_id:                   str | None
-    detector_id:               str
-    detector_engine:           Literal["ifds","ide","semgrep","cpg-query","external"]
-    # Link 8 — SARIF hash (from CMP-FND-01)
-    sarif_hash:                Sha256
-    # Link 9 — per-finding origin (INV-1)
-    origin:                    Origin
-    determinism_partition:     Origin
+    detector_id:               str | None
+    detector_engine:           Literal["ifds","ide","semgrep","cpg-query","external"] | None
+    # Link 8 — SARIF hash (from CMP-FND-01; NULL on scan-level record_types)
+    sarif_hash:                Sha256 | None
+    # Link 9 — per-finding origin (INV-1; NOT NULL only for record_type in {chain, repartition})
+    origin:                    Origin | None
+    determinism_partition:     Origin | None
     # Re-partition linkage (DOC-PROVENANCE §4)
     repartition_reason:        str | None
     repartition_oracle_id:     uuid.UUID | None
