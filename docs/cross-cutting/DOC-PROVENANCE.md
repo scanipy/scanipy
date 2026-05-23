@@ -63,84 +63,16 @@ Counter-example (violation of `INV-5`): an auditor export that writes `"cpg_cano
 
 ## 3. Full chain schema (`provenance_records` table)
 
-`CMP-FND-03` (`T-CMP-FND-03-01`) constructs the signed audit chain `source commit → snapshot digest → S_version → env_digest → cpg_order_hash → taint witness → rule/spec id → SARIF hash → per-finding origin`. The chain is a **linked list of records**, one record per finding, with optional append-only re-partition records linked back to the affected base record (§4).
+`CMP-FND-03` (`T-CMP-FND-03-01`) constructs the signed audit chain `source commit → snapshot digest → S_version → env_digest → cpg_order_hash → taint witness → rule/spec id → SARIF hash → per-finding origin`. The chain is a **linked list of records**: one `record_type='chain'` row per finding, plus append-only `record_type='repartition'` rows linked back to the affected base record (§4), and scan-level rows for the other record types (`attestation`, `spec-acceptance`, `witness-update`).
 
-```sql
-CREATE TABLE provenance_records (
-    -- Identity & chain linkage
-    record_id              uuid        PRIMARY KEY,
-    parent_record_id       uuid        NULL REFERENCES provenance_records(record_id),
-    record_kind            text        NOT NULL CHECK (
-                                          record_kind IN ('finding', 'repartition')),
-    created_at             timestamptz NOT NULL DEFAULT now(),
-
-    -- Source commit (link 1)
-    org_id                 uuid        NOT NULL REFERENCES orgs(org_id),
-    codebase_id            uuid        NOT NULL REFERENCES codebases(codebase_id),
-    commit_sha             text        NOT NULL,                  -- 40 hex
-    scm_provider           text        NOT NULL,                  -- 'github'|'gitlab'|...
-
-    -- Snapshot digest (link 2)
-    snapshot_id            uuid        NOT NULL REFERENCES snapshots(snapshot_id),
-    snapshot_digest        text        NOT NULL,                  -- sha256
-    precondition_status    text        NOT NULL CHECK (
-                                          precondition_status IN
-                                          ('closed-world','degraded','full-reparse')),
-
-    -- S_version (link 3) and env_digest (link 4) — INV-2
-    S_version              text        NOT NULL,                  -- semver
-    env_digest             text        NOT NULL,                  -- sha256 of container image
-
-    -- cpg_order_hash + INV-5 annotation (link 5)
-    cpg_order_hash         bytea       NULL,                      -- sha256, NULL only for repartition rows
-    cpg_order_hash_annotation
-                           text        NOT NULL DEFAULT
-                                       'canonical iff fingerprint_class = strong',
-    fingerprint_class      text        NULL CHECK (
-                                          fingerprint_class IN ('strong','weak')),
-
-    -- Taint witness (link 6) — null for oracle findings without a slice
-    witness_blob_uri       text        NULL,
-    slice_fingerprint      bytea       NULL,                      -- sha256
-
-    -- Rule / spec id (link 7)
-    rule_id                text        NOT NULL,                  -- e.g. 'java-jdbc-sqli'
-    spec_id                text        NULL,                      -- for `S`-derived rules
-    detector_id            text        NOT NULL,
-    detector_engine        text        NOT NULL CHECK (
-                                          detector_engine IN
-                                          ('ifds','ide','semgrep','cpg-query','external')),
-
-    -- SARIF hash (link 8)
-    sarif_hash             bytea       NOT NULL,                  -- sha256 of canonical-sorted SARIF blob
-
-    -- Per-finding origin (link 9) — INV-1
-    origin                 text        NOT NULL CHECK (
-                                          origin IN
-                                          ('deterministic-core','oracle-passthrough')),
-    determinism_partition  text        NOT NULL,                  -- mirrors `origin`
-
-    -- Re-partition linkage (§4)
-    repartition_reason     text        NULL,                      -- only on record_kind='repartition'
-    repartition_oracle_id  uuid        NULL REFERENCES snap_oracle_runs(run_id),
-
-    -- Signature — KMS-issued (§7)
-    kms_key_arn            text        NOT NULL,
-    kms_key_version        text        NOT NULL,                  -- envelope-encryption version
-    signature              bytea       NOT NULL,                  -- KMS asymmetric signature over canonical record
-    signature_alg          text        NOT NULL,                  -- e.g. 'RSASSA_PSS_SHA_256'
-
-    -- Honest-labeling claim type (§5)
-    claim_label            text        NOT NULL CHECK (
-                                          claim_label IN
-                                          ('CONDITIONAL_THEOREM','EMPIRICAL','STAGED','UNCONDITIONAL'))
-);
-
-CREATE INDEX idx_prov_codebase_commit  ON provenance_records (codebase_id, commit_sha);
-CREATE INDEX idx_prov_snapshot         ON provenance_records (snapshot_id);
-CREATE INDEX idx_prov_slice            ON provenance_records (codebase_id, slice_fingerprint);
-CREATE INDEX idx_prov_parent           ON provenance_records (parent_record_id);
-```
+> **Canonical DDL: `DOC-DB §4.13`.** Per the `CLAR-FND-01` resolution (2026-05-23), the authoritative `CREATE TABLE provenance_records` lives in `DOC-DB §4.13` — a single source of DDL, so the two documents cannot drift again. This section is the **semantic** reference: it states what each chain-link column carries (§3.1) and which bytes the signature covers (§3.2). Key facts of the reconciled shape:
+>
+> - **Materialisation:** column-per-link (one typed column per chain link), so INV-1/INV-2/INV-5 are enforced by the schema, not by application code over an opaque `jsonb` payload.
+> - **Identity:** PK `id`; discriminator `record_type ∈ {chain, repartition, attestation, spec-acceptance, witness-update}` (`chain` = the per-finding base record); `parent_record_id → provenance_records(id)` for re-partition rows.
+> - **Scope keys:** `scan_id` NOT NULL; `finding_id` NULL for scan-level record types.
+> - **INV columns:** `S_version`, `env_digest` NOT NULL on **every** row (INV-2 binds every provenance record); `origin` NOT NULL only for `chain`/`repartition` rows (row-level CHECK, INV-1); `cpg_order_hash` paired with the `cpg_order_hash_annotation` pinned literal (INV-5).
+> - **Signature:** `kms_key_arn` + `kms_key_version` + `signature` + `signature_alg`, baseline `RSASSA_PSS_SHA_256` (§7.3, `CLAR-DEPLOY-04`).
+> - **Type-specific detail** (e-process metrics for `spec-acceptance`, attestation metrics for `attestation`) lives in the owning domain table (`spec_versions` / `attestations`), joined back via `spec_id` / `scan_id` — never inlined here.
 
 ### 3.1 Field-by-field cross-reference
 
@@ -170,13 +102,12 @@ The signature is computed over the **canonical serialization** of every field ab
 
 ### 4.1 Re-partition record shape
 
-A re-partition record has `record_kind = 'repartition'` and the following constraints additional to §3:
+A re-partition record has `record_type = 'repartition'` and the following constraints additional to §3:
 
 ```sql
 -- ALTER above table for the repartition CHECKs:
-CHECK (record_kind = 'finding'
-       OR (record_kind = 'repartition'
-           AND parent_record_id IS NOT NULL
+CHECK (record_type <> 'repartition'
+       OR (parent_record_id IS NOT NULL
            AND repartition_reason IS NOT NULL
            AND repartition_oracle_id IS NOT NULL
            AND origin = 'oracle-passthrough'        -- always flip TO oracle
@@ -185,7 +116,7 @@ CHECK (record_kind = 'finding'
 
 Key properties:
 
-1. **Append-only.** The original `finding`-kind record is never mutated. The re-partition record is **chained** via `parent_record_id`, preserving the audit trail.
+1. **Append-only.** The original `chain`-type record is never mutated. The re-partition record is **chained** via `parent_record_id`, preserving the audit trail.
 2. **Flip is one-way.** `origin` always flips to `oracle-passthrough` on a re-partition; the reverse direction is not a re-partition event but a **re-run** under a corrected `CW-DETECT` (different `env_digest`).
 3. **Oracle run id.** `repartition_oracle_id` references the specific `snap_oracle_runs` row that produced the disagreement; the verifier can reproduce the disagreement evidence from that row's artifacts.
 4. **No new `cpg_order_hash`.** The re-partition does not re-run Algorithm 5; the hash from the parent record is the authoritative same-source hash.
@@ -233,7 +164,7 @@ Per `CLAR-DEPLOY-02` (S3) and `CLAR-DEPLOY-15` (retention), both RESOLVED in `do
 | Artifact | Store | Key path | Retention | Lock |
 |---|---|---|---|---|
 | `provenance_records` row | PostgreSQL (`RDS` per `CLAR-DEPLOY-03`) | row-level | 7 years | row immutable post-sign |
-| Signed canonical bytes | S3 | `orgs/{org_id}/codebases/{codebase_id}/provenance/{commit_sha}/{record_id}.json.sig` | **7 years** | **S3 Object Lock — Compliance mode** |
+| Signed canonical bytes | S3 | `orgs/{org_id}/codebases/{codebase_id}/provenance/{commit_sha}/{id}.json.sig` | **7 years** | **S3 Object Lock — Compliance mode** |
 | Witness blob | S3 | `orgs/{org_id}/codebases/{codebase_id}/witness/{slice_fingerprint}.json` | 1 year | governance mode |
 | SARIF blob | S3 | `orgs/{org_id}/codebases/{codebase_id}/sarif/{scan_id}.sarif.json` | 7 years | Compliance mode |
 | CPG tarball | S3 | `orgs/{org_id}/codebases/{codebase_id}/snapshots/{commit_sha}/{env_digest}/cpg.tar.zst` | 90 days | governance mode |
@@ -281,9 +212,9 @@ Per finding (one row in the export, plus zero-or-more re-partition rows linked):
 
 ```json
 {
-  "record_id":                "uuid",
+  "id":                       "uuid",
   "parent_record_id":         "uuid | null",
-  "record_kind":              "finding | repartition",
+  "record_type":              "chain | repartition | attestation | spec-acceptance | witness-update",
 
   "commit_sha":               "40-hex",
   "snapshot_digest":          "sha256:...",
@@ -316,7 +247,7 @@ Per finding (one row in the export, plus zero-or-more re-partition rows linked):
 
   "repartition_history": [
     {
-      "record_id":            "uuid",
+      "id":                   "uuid",
       "created_at":           "iso-8601",
       "repartition_reason":   "string",
       "repartition_oracle_id":"uuid",
@@ -345,7 +276,7 @@ verify_record(record):
     3. Verify signature over canonical bytes with signature_alg.
     4. Fetch S3 artifacts (sarif, witness, cpg tarball if needed) and recompute their digests.
     5. Assert recomputed digests == those in the record (sarif_hash, snapshot_digest).
-    6. If record_kind == 'repartition':
+    6. If record_type == 'repartition':
          a. Verify parent record per step 1-5.
          b. Fetch the oracle-run artifact at repartition_oracle_id.
          c. Verify the oracle's disagreement with CW-DETECT for the parent snapshot.
@@ -414,10 +345,10 @@ This subsumes the table in `.claude/rules/02-provenance.md §"Per-component thre
 - `docs/cross-cutting/DOC-DEPLOY-DECISIONS.md` — substrate decision record (KMS, S3, retention, isolation).
 - `.claude/rules/02-provenance.md` — code-review-time threading rules (canonically extended here).
 - `.claude/rules/01-invariants.md` — invariant catalog.
-- `DOC-DB` (forthcoming sibling) — full DB schema reference including this table.
-- `DOC-API` (forthcoming sibling) — canonical record-bytes serialization.
-- `DOC-SARIF` (forthcoming sibling) — SARIF `properties` block carrying the conditional annotation.
-- `DOC-INV` (forthcoming sibling) — INV-1/2/5 owner cross-reference.
+- `DOC-DB §4.13` — **canonical DDL** for `provenance_records` (CLAR-FND-01 RESOLVED 2026-05-23).
+- `DOC-API` — canonical record-bytes serialization.
+- `DOC-SARIF` — SARIF `properties` block carrying the conditional annotation.
+- `DOC-INV` — INV-1/2/5 owner cross-reference.
 - `DOC-RUNBOOK` (forthcoming sibling) — labelling-correction window SLA and re-partition incident procedure.
 
 ---
