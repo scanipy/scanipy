@@ -77,6 +77,8 @@ The existing `.github/workflows/deploy.yml` is the implementation surface. Its t
 
 Branch protection on `main` (configured in `infra/modules/identity/` or via GitHub repo settings) enforces Gates 1–4 as required status checks for any PR merge. `CMP-DEPLOY-04` re-verifies Gates 1–3 at tag-push time as a defence-in-depth check: a tag may only be created on a commit that has already passed the gates as a PR; the re-verification catches the (forbidden) case of a force-push that bypassed branch protection.
 
+> **Subject to `CLAR-DEPLOY-17` (WBS §17).** Native branch protection is **not currently available** on this repo (GitHub Free/private → 403). Until `CLAR-DEPLOY-17` resolves, PR-merge gate enforcement is **process-level** (`enforce-pr-only-merges.yml` + RULE-10). The tag-push re-verification in this component is therefore the *primary* (not merely defence-in-depth) gate check today — making `CMP-DEPLOY-04`'s re-verify step load-bearing until server-side protection lands.
+
 ### 3.4 OIDC trust policy contract
 
 Per `CLAR-DEPLOY-11`, GitHub Actions assumes AWS IAM via OIDC keyless auth. The trust policy of `AWS_DEPLOY_ROLE_ARN` (provisioned by `CMP-DEPLOY-01` `identity` module) MUST be:

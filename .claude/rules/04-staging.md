@@ -49,9 +49,9 @@ For language `L`, the following thresholds must be met on the curated per-langua
 | Metric | Threshold |
 |---|---|
 | Parse success rate | ≥ 99.5% of files |
-| Call-edge precision | ≥ threshold (CLAR-CORP-02 per language) |
-| Call-edge recall | ≥ threshold (CLAR-CORP-02 per language) |
-| PDG dependence-edge recall | ≥ threshold (CLAR-CORP-02 per language) |
+| Call-edge precision | ≥ 90% (CLAR-CORP-02 RESOLVED 2026-05-23) |
+| Call-edge recall | ≥ 85% (CLAR-CORP-02 RESOLVED 2026-05-23) |
+| PDG dependence-edge recall | ≥ 80% (CLAR-CORP-02 RESOLVED 2026-05-23) |
 
 A language that fails is reported **`front-end-blocked`**, never as a recall failure (INV-6).
 
