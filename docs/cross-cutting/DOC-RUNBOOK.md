@@ -420,4 +420,4 @@ CloudWatch alarm on each DLQ at depth ≥ 1 → PagerDuty (CLAR-DEPLOY-07 notes 
 
 ---
 
-*End of DOC-RUNBOOK. Updates to operational procedures require an SRE-Agent-authored PR; reviewed by the Code Review Agent per RULE-10.*
+*End of DOC-RUNBOOK. Updates to operational procedures require an SRE-Agent-authored PR; reviewed by the `claude-review` CI check per RULE-10.*

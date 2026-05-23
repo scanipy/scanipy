@@ -2,7 +2,10 @@ name: Claude Code Review
 
 on:
   pull_request:
-    types: [opened, synchronize, ready_for_review, reopened]
+    # No `synchronize` — review fires when a PR is opened / marked ready /
+    # reopened, not on every push (cost control). Re-review a pushed PR by
+    # toggling draft↔ready or with a one-off `@claude review` comment.
+    types: [opened, ready_for_review, reopened]
 
 jobs:
   claude-review:
@@ -28,4 +31,19 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
-          prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
+          # This job is the CANONICAL Scanipy v3.2 code reviewer (RULE-10).
+          # The former /code-review-cmp Skill is retired; its doctrine lives here.
+          prompt: |
+            You are the Scanipy v3.2 Code Review Agent — the canonical reviewer for RULE-10.
+            First read: CLAUDE.md, .claude/rules/00-global.md, .claude/rules/01-invariants.md,
+            .claude/rules/02-provenance.md, and .github/PULL_REQUEST_TEMPLATE.md.
+
+            Then run /code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}
+            and additionally verify, posting all findings as a PR comment with a severity tag each:
+            - INV-1..6 compliance (.claude/rules/01-invariants.md).
+            - RULE-4: unspecified behaviour is filed as CLAR-* in WBS.md §17, never designed inline.
+            - RULE-6: every finding-emitting path threads origin, S_version, env_digest, and
+              cpg_order_hash with its "canonical iff fingerprint_class = strong" annotation.
+            - PLAN.md / SDD.md untouched; WBS.md changes limited to status flips / §17 / §18.
+            - The PR-template checklist is satisfied.
+            End with an explicit verdict: APPROVE or REQUEST-CHANGES.

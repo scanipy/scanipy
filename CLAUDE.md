@@ -227,7 +227,7 @@ Full decision record: `docs/cross-cutting/DOC-DEPLOY-DECISIONS.md` (Phase 0 / CM
 | **SRE / DevOps** | `/sre-agent` | CMP-DEPLOY-*; CI/CD; Dockerfile pinning; observability |
 | **Corpus Curator** | `/corpus-agent` | CMP-CORP-* (reflection, CPG-fidelity, canary, refactor, vuln) |
 | **Implementation** | `/implement` | One CMP at a time; reads DOC-CMP-*; makes TST-AC-* green |
-| **Code Review** | `/code-review-cmp` | PR review: INV-* compliance, scope, provenance threading |
+| **Code Review** | `claude-review` (CI check) | Automated PR review on open/ready (RULE-10): INV-* compliance, scope, provenance threading. Replaces the retired `/code-review-cmp` Skill; defined in `.github/workflows/claude-code-review.yml`. |
 | **WBS Sync** | `/sync-wbs` | Update status codes; surface next-READY items |
 | **Stage Gate** | `/stage-gate` | Approve/reject Stage A→D transitions |
 | **CLAR Resolution** | `/clar-resolve` | Research + write a single CLAR-* decision record in WBS.md §17 |
@@ -249,11 +249,15 @@ RULE-6   Every finding emitter threads {S_version, env_digest, origin,
 RULE-7   No (class, language) enters Alg-2 benchmarking before CMP-CP-06 green.
 RULE-8   CTO approves every CLAR-DEPLOY-* before its dependent phase starts.
 RULE-9   Security Analyst reviews every component touching INV-3 or INV-4.
-RULE-10  Code Review approval required before merge.
+RULE-10  The `claude-review` CI check (`.github/workflows/claude-code-review.yml`)
+         is the canonical code review and must be green (verdict APPROVE)
+         before merge. It is the sole reviewer — the old `/code-review-cmp`
+         Skill is retired. Server-side required-checks are unavailable on this
+         repo (Free/private), so this is a process-level gate like the others.
 RULE-11  Board reflects reality. Before picking up CMP-X: run
          `scripts/board.sh check <issue>`; stop if In-Progress/Done.
          Claim with `set <issue> "In Progress"`; mark `Done` only when
-         merged + all TST-* green + Code Review approved.
+         merged + all TST-* green + the `claude-review` check is APPROVE.
 ```
 
 Also in `.claude/rules/00-global.md` and the PR template.
@@ -269,8 +273,9 @@ CLAUDE.md, PLAN.md, SDD.md, WBS.md, README.md   ← root
   hooks/                   ← post-edit-invariant-check.sh, pre-edit-sot-guard.sh, stop-wbs-sync.sh
   rules/                   ← 00-global, 01-invariants, 02-provenance, 03-scope, 04-staging, 05-determinism
   commands/                ← /cto, /architect, /doc-agent, /qa-agent, /security-analyst,
-                             /sre-agent, /corpus-agent, /implement, /code-review-cmp,
+                             /sre-agent, /corpus-agent, /implement,
                              /sync-wbs, /stage-gate, /clar-resolve
+                             (code review is the `claude-review` CI workflow, not a Skill — RULE-10)
   agents/                  ← doc-agent, qa-agent, corpus-agent, implement (Agent SDK)
 .github/
   workflows/               ← ci.yml, attestor.yml, canary.yml, stage-gate.yml, deploy.yml, falsifier-cw.yml
