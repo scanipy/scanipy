@@ -291,6 +291,9 @@ docs/
   cross-cutting/           ← DOC-INV, DOC-GLOSSARY, DOC-API, DOC-DB, DOC-SARIF,
                              DOC-DSL, DOC-PROVENANCE, DOC-ALGS, DOC-PARTITION,
                              DOC-STAGING, DOC-RUNBOOK, DOC-DEPLOY-DECISIONS
+  workflows/               ← one doc per .github/workflows/*.yml + README index
+                             (CI gates, attestor, canary, stage-gate, deploy,
+                             PR-only-merge shim, claude / claude-code-review)
 
 integrations/scm/          ← CMP-SCM-01..05
 analysis/
