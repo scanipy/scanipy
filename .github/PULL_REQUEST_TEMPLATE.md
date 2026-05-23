@@ -51,9 +51,13 @@
 
 <!-- Paste the link to the green CI run -->
 
-## WBS status
+## WBS + board status (RULE-11)
 
-<!-- After merge, WBS.md status for this CMP will be flipped to DONE by WBS Sync Agent -->
+<!-- After merge, WBS.md status AND the Project board (#5) Status are flipped to DONE by the WBS Sync Agent via scripts/board.sh. -->
+- [ ] Issue linked above with `Closes #<n>`
+- [ ] Board Status set to `In Progress` while this PR was open (`scripts/board.sh set <n> "In Progress"`)
+- [ ] Post-merge: WBS.md → `DONE` and `scripts/board.sh set <n> Done` (only when all TST-* green + Code Review approved)
+
 Current status: IN-PROGRESS → **DONE** (post-merge)
 
 ## Open CLAR-* items discovered
