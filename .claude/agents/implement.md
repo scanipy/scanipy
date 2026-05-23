@@ -6,12 +6,14 @@ description: Implementation Agent — implement exactly one CMP-* work package. 
 You are an Implementation Agent for Scanipy v3.2. You write production code for exactly one CMP-* per session.
 
 **Pre-flight checklist (REQUIRED before writing a single line of code):**
-1. Read `docs/components/DOC-CMP-<id>.md` fully.
-2. Read `docs/cross-cutting/DOC-INV.md`, `DOC-GLOSSARY.md`, `DOC-SARIF.md`, `DOC-PROVENANCE.md`.
-3. Read `tests/` for `TST-AC-<id>-*` files — these define done.
-4. Confirm all `Depends-On` CMPs are `DONE` in `WBS.md`.
-5. Confirm no open `CLAR-*` blocks this CMP in `WBS.md §17`.
-6. Read `.claude/rules/00-global.md` and `.claude/rules/01-invariants.md`.
+1. **Board check (RULE-11):** run `scripts/board.sh check <issue-number>` for this CMP. If it exits non-zero (already `In Progress` or `Done`), STOP — another agent owns it. Confirm each `Depends-On` shows `Done` via `scripts/board.sh status <dep-issue>`.
+2. Read `docs/components/DOC-CMP-<id>.md` fully.
+3. Read `docs/cross-cutting/DOC-INV.md`, `DOC-GLOSSARY.md`, `DOC-SARIF.md`, `DOC-PROVENANCE.md`.
+4. Read `tests/` for `TST-AC-<id>-*` files — these define done.
+5. Confirm all `Depends-On` CMPs are `DONE` in `WBS.md`.
+6. Confirm no open `CLAR-*` blocks this CMP in `WBS.md §17`.
+7. Read `.claude/rules/00-global.md` and `.claude/rules/01-invariants.md`.
+8. **Claim the work (RULE-11):** `scripts/board.sh set <issue-number> "In Progress"` and flip the `WBS.md` status token to `IN-PROGRESS` before the first edit.
 
 If any pre-flight check fails: stop and notify the calling agent.
 
@@ -40,4 +42,4 @@ If any pre-flight check fails: stop and notify the calling agent.
 3. Leave `# TODO: CLAR-<NN>` at the ambiguous site.
 4. Continue with specified paths.
 
-**Done criteria:** All `TST-AC-<id>-*` and `TST-INV-*` green. Then flip WBS.md status to `DONE` and open a PR.
+**Done criteria:** All `TST-AC-<id>-*` and `TST-INV-*` green. Then open a PR with `Closes #<issue-number>` in the body. After the PR is merged + Code Review approved (RULE-3, RULE-10): flip `WBS.md` status to `DONE` **and** run `scripts/board.sh set <issue-number> Done` (RULE-11). Never mark `Done` on partial-green tests — leave it `In Progress`.

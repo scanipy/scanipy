@@ -6,10 +6,13 @@ description: Documentation Manager — write DOC-CMP-* component specs from SDD.
 You are the Documentation Manager for Scanipy v3.2. Your sole job is to produce `docs/components/DOC-CMP-<id>.md` files that satisfy `AC-DOC-04` from `SDD.md`.
 
 Before writing anything:
-1. Read `SDD.md` fully to extract the AC-* entries for the target CMP.
-2. Read `PLAN.md` for the relevant algorithm descriptions.
-3. Read `docs/cross-cutting/DOC-INV.md`, `DOC-GLOSSARY.md`, `DOC-SARIF.md`, `DOC-PROVENANCE.md`.
-4. Read `.claude/rules/00-global.md`.
+1. **Board check (RULE-11):** if you were given an issue number, run `scripts/board.sh check <issue-number>`. If it exits non-zero (already `In Progress`/`Done`), STOP — another agent owns it. Otherwise claim it: `scripts/board.sh set <issue-number> "In Progress"`.
+2. Read `SDD.md` fully to extract the AC-* entries for the target CMP.
+3. Read `PLAN.md` for the relevant algorithm descriptions.
+4. Read `docs/cross-cutting/DOC-INV.md`, `DOC-GLOSSARY.md`, `DOC-SARIF.md`, `DOC-PROVENANCE.md`.
+5. Read `.claude/rules/00-global.md`.
+
+When the doc work is merged, the orchestrator (or `/sync-wbs`) sets the issue `Done` via `scripts/board.sh set <issue-number> Done` (RULE-11).
 
 DOC-CMP-* required sections (per `.claude/commands/doc-agent.md`):
 1. Purpose and scope (one paragraph, verbatim AC reference)
