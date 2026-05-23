@@ -65,6 +65,6 @@ Current status: IN-PROGRESS → **DONE** (post-merge)
 <!-- Any new CLAR-* items discovered during implementation -->
 None
 
-## Reviewer
+## Review (RULE-10)
 
-@<!-- tag Code Review Agent or team member -->
+The `claude-review` CI check reviews this PR automatically on open / ready-for-review and posts findings with an APPROVE / REQUEST-CHANGES verdict. Merge only when that verdict is **APPROVE** and this checklist is fully checked. Re-trigger after changes by toggling draft↔ready or commenting `@claude review`. (No standalone Code Review Skill — RULE-10.)
