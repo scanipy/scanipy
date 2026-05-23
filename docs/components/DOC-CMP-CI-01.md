@@ -67,6 +67,8 @@ This component does **not** invent additional gates. The lint/typecheck/secret-d
 
 The four Gate jobs are configured as **required status checks** on `main`. The exact required-check names map verbatim to the job `name:` fields above (so the `Gate N — ...` prefix is preserved in the GitHub Checks API). This wiring is part of `CMP-DEPLOY-04`'s deployment job; `CMP-CI-01` is responsible for ensuring the job names remain stable so the branch protection does not drift.
 
+> **Subject to `CLAR-DEPLOY-17` (WBS §17).** Server-side required-status-checks are **not currently available** on this repository (GitHub Free/private; `gh api .../branches/main/protection` returns 403). Until `CLAR-DEPLOY-17` resolves (upgrade plan / make public vs keep shims), gate enforcement is **process-level**: the `enforce-pr-only-merges.yml` shim + the RULE-10 doctrine stand in for native required checks. The required-check wiring described here is the target state once protection is available.
+
 ### 3.4 Verbatim ACs anchored by each gate
 
 | Gate | Verbatim anchor (from SDD.md) |
