@@ -59,6 +59,24 @@ Affected components: CMP-CP-02, CMP-SNAP-03, CMP-SNAP-04, CMP-DET-01, CMP-TRI-01
 
 Every PR requires Code Review Agent approval. Approval is conditional on the PR checklist being fully checked. An approval without a checked checklist is not valid.
 
+## RULE-11 — The board reflects reality; check it before you pick up work
+
+The GitHub Project board (#5, *"Scanipy v3.2 Development"*) is the live operational mirror of `WBS.md` status codes. It is the authority for **who is doing what right now**. A board that lies causes two agents to implement the same component and collide on merge. Two obligations bind every agent (orchestrator and sub-agent alike):
+
+**Pre-flight — before the first edit on any `CMP-*` / `T-CMP-*` / meta issue:**
+1. Run `scripts/board.sh check <issue-number>`. If it exits non-zero (already `In Progress` or `Done`), **STOP** — another agent owns it or it is finished. Do not duplicate work.
+2. Confirm every `Depends-On` (WBS §20) shows `Done` on the board (`scripts/board.sh status <dep-issue>`), per RULE-2.
+3. Claim the work: `scripts/board.sh set <issue-number> "In Progress"` **and** flip the matching `WBS.md` status token to `IN-PROGRESS`. Do both in the same step.
+
+**Post-flight — as work lands:**
+4. When the PR opens, link the issue in the PR body (`Closes #<n>`).
+5. When the PR is **merged AND every `TST-AC-*` / `TST-INV-*` is green AND Code Review approved** (RULE-3, RULE-10): `scripts/board.sh set <issue-number> Done` and flip `WBS.md` → `DONE`. (Closing the issue also auto-syncs the board to `Done`; setting it explicitly is idempotent and covers PRs that close issues indirectly.)
+6. **Never** set `Done` on partial-green tests. `In Progress` is the honest status until every gate is green.
+
+Status ↔ WBS mapping: `Todo` ← {`BLOCKED`,`READY`,`STAGE-GATED`} · `In Progress` ← `IN-PROGRESS` · `Done` ← `DONE`. The board has three columns; `WBS.md` carries the finer distinction (e.g. `STAGE-GATED` vs `BLOCKED`).
+
+The orchestrating agent owns Status transitions for components it dispatches. The `/sync-wbs` agent reconciles the board against CI evidence and surfaces the next `READY` wave. Use `scripts/board.sh` — never hand-edit the board through ad-hoc `gh` calls, so the transition is auditable and consistent.
+
 ---
 
 *These rules are cross-referenced from CLAUDE.md §11 and the PR template.*

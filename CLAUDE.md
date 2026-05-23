@@ -250,6 +250,10 @@ RULE-7   No (class, language) enters Alg-2 benchmarking before CMP-CP-06 green.
 RULE-8   CTO approves every CLAR-DEPLOY-* before its dependent phase starts.
 RULE-9   Security Analyst reviews every component touching INV-3 or INV-4.
 RULE-10  Code Review approval required before merge.
+RULE-11  Board reflects reality. Before picking up CMP-X: run
+         `scripts/board.sh check <issue>`; stop if In-Progress/Done.
+         Claim with `set <issue> "In Progress"`; mark `Done` only when
+         merged + all TST-* green + Code Review approved.
 ```
 
 Also in `.claude/rules/00-global.md` and the PR template.

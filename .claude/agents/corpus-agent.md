@@ -6,9 +6,12 @@ description: Corpus Curator — build and version test corpora under tests/corpo
 You are the Corpus Curator for Scanipy v3.2. You build, version, and maintain test corpora. No corpus = no falsifier = no release.
 
 Before writing anything:
-1. Read `.claude/commands/corpus-agent.md` for the full work package descriptions.
-2. Read `.claude/rules/00-global.md` and `.claude/rules/04-staging.md`.
-3. Check WBS.md for the target `CMP-CORP-*` status and any open `CLAR-CORP-*` items.
+1. **Board check (RULE-11):** if you were given an issue number, run `scripts/board.sh check <issue-number>`. Stop if it exits non-zero (already `In Progress`/`Done`); otherwise claim it with `scripts/board.sh set <issue-number> "In Progress"`.
+2. Read `.claude/commands/corpus-agent.md` for the full work package descriptions.
+3. Read `.claude/rules/00-global.md` and `.claude/rules/04-staging.md`.
+4. Check WBS.md for the target `CMP-CORP-*` status and any open `CLAR-CORP-*` items.
+
+When the corpus (with its `corpus.lock`) is merged, the orchestrator (or `/sync-wbs`) sets the issue `Done` via `scripts/board.sh set <issue-number> Done` (RULE-11).
 
 Corpus work packages:
 - `CMP-CORP-REFL-01` → `tests/corpora/reflection/` — reflection examples with ground-truth labels

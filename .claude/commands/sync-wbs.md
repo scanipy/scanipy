@@ -39,13 +39,18 @@ For each `CMP-*` currently in `IN-PROGRESS` or `READY`:
 
 **Never flip to `DONE` without Code Review approval.**
 
-### Step 3 — Apply flips
+### Step 3 — Apply flips (WBS.md text AND the board)
 
-For each valid flip, edit `WBS.md` by replacing the status token in the component's row. The status column is the third pipe-delimited field in WBS.md tables.
+For each valid flip, do **both** edits so the textual SoT and the visual board never diverge (RULE-11):
 
-Allowed status values: `READY`, `IN-PROGRESS`, `DONE`, `BLOCKED`, `STAGE-GATED`, `OOS`
+1. Edit `WBS.md` by replacing the status token in the component's row. The status column is the third pipe-delimited field in WBS.md tables.
+2. Update the GitHub Project board (#5) Status field via the helper:
+   `scripts/board.sh set <issue-number> <Todo|"In Progress"|Done>`
+   using the mapping `IN-PROGRESS → "In Progress"`, `DONE → Done`, `{BLOCKED,READY,STAGE-GATED} → Todo`.
 
-Forbidden: any other string, or changing a `DONE` item back (requires explicit CTO instruction).
+Allowed status values (WBS.md): `READY`, `IN-PROGRESS`, `DONE`, `BLOCKED`, `STAGE-GATED`, `OOS`
+
+Forbidden: any other string, or changing a `DONE` item back (requires explicit CTO instruction). A WBS.md flip without the matching board update (or vice-versa) is an incomplete sync — never leave the two out of step.
 
 ### Step 4 — Propagate unblocking
 
@@ -79,10 +84,11 @@ Print a summary table:
 |---|---|---|---|---|
 ```
 
-## What you may edit in WBS.md
+## What you may edit
 
-- Status-code fields (third pipe-delimited column) in component rows — flipping only, per the conditions above.
-- `§17` CLAR-* table: mark items `RESOLVED` when evidence confirms resolution (CTO decision record exists).
+- `WBS.md` status-code fields (third pipe-delimited column) in component rows — flipping only, per the conditions above.
+- `WBS.md §17` CLAR-* table: mark items `RESOLVED` when evidence confirms resolution (CTO decision record exists).
+- The GitHub Project board (#5) `Status` field, exclusively via `scripts/board.sh set` — never hand-edit through ad-hoc `gh project item-edit` calls.
 - Nothing else.
 
 ## What you must never do
