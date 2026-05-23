@@ -139,16 +139,20 @@ if e_value >= threshold:
         accepted_as_spec_version_id = <new row id>,
         decided_at                  = now_utc(),
     )
-    provenance_records.insert(
-        record_type            = 'spec-acceptance',
-        S_version              = new_S_version,
-        env_digest             = analysis_env_digest(),
-        cpg_order_hash         = <not applicable; pinned literal placeholder>,
-        chain_payload          = { e_value, threshold, evaluation_stream_id,
-                                   pi_zero, alpha, spec_id },
-        signature_key_id       = KMS_CMK_ARN,        # CLAR-DEPLOY-04
-        signature_algorithm    = 'ecdsa-p256-sha256',
-        signature_value        = kms.sign(chain_payload).
+    # e-process detail { e_value, threshold, pi_zero, alpha, evaluation_stream_id }
+    # is persisted on the spec_versions row (NOT inlined in provenance) — CLAR-FND-01.
+    # Insert is delegated through CMP-FND-03 sign_provenance(); shown expanded here:
+    provenance_records.insert(   # via CMP-FND-03 sign_provenance() helper
+        record_type            = 'spec-acceptance',   # scan-level; finding_id NULL
+        spec_id                = spec.id,
+        scan_id                = research_scan_id,
+        S_version              = new_S_version,        # INV-2 (every provenance row)
+        env_digest             = analysis_env_digest(),# INV-2
+        cpg_order_hash         = None,                 # not applicable to spec-acceptance
+        kms_key_arn            = KMS_CMK_ARN,          # CLAR-DEPLOY-04
+        kms_key_version        = cmk_version,
+        signature_alg          = 'RSASSA_PSS_SHA_256', # canonical baseline (CLAR-FND-01)
+        signature              = kms.sign(canonical_record_bytes),  # DOC-PROVENANCE §3.2
     )
     return AcceptanceVerdict('accepted', e_value, threshold, new_S_version)
 
@@ -186,7 +190,7 @@ Implementation: one `EProcessState` per `(spec_id)`; the combined-e-process for 
 
 1. `spec_versions` insert — new row with fresh `S_version` semver, `scope='global'` (or `'customer'` for customer-specific gates per `CMP-TRI-03`), `spec_provenance='global-unrevalidated'` (per `DOC-DB §4.9` default).
 2. `proposed_specs` update — `decision='accepted'`, `accepted_as_spec_version_id=<new row id>`, `decided_at=now()`.
-3. `provenance_records` insert — `record_type='spec-acceptance'`, KMS-signed chain payload capturing `{ e_value, threshold, π₀, α, spec_id, evaluation_stream_id }` (`DOC-DB §4.13`). The signature uses `signature_algorithm IN ('ecdsa-p256-sha256','ecdsa-p384-sha384')`; the CMK is per `CLAR-DEPLOY-04`.
+3. `provenance_records` insert — `record_type='spec-acceptance'` (scan-level; `finding_id` NULL), carrying `spec_id`, `S_version`, `env_digest`, and the KMS signature over canonical record bytes (`DOC-DB §4.13` canonical schema; `DOC-PROVENANCE §3.2` byte rule). The e-process detail `{ e_value, threshold, π₀, α, evaluation_stream_id }` is persisted on the `spec_versions` row, **not** inlined in the provenance record (CLAR-FND-01). The signature uses `signature_alg = 'RSASSA_PSS_SHA_256'` (canonical baseline); the CMK is per `CLAR-DEPLOY-04`.
 
 **On quarantine** (when the customer-stream e-process for the complementary null crosses threshold — owned by `CMP-TRI-03`, but the spec's `decision` flips to `'quarantined'` here): `proposed_specs.decision='quarantined'`, no `spec_versions` mutation (specs are append-only).
 
@@ -286,7 +290,7 @@ Algorithm-level tests (cross-referenced from `DOC-ALGS §7.9`):
 | CLAR-ID | Question | Status | Impact on CMP-TRI-02 |
 |---|---|---|---|
 | `CLAR-PARAM-02` | π₀ per detector class, α, per-class evaluation-stream definition | **DEFERRED** (until Phase 5 empirical baseline) | π₀ values must be wired from config, not hardcoded. α=0.05 is confirmed and may be inlined as a default but should remain config-overridable. The per-class evaluation-stream definition affects which adjudicated findings contribute to which σ — a config-driven mapping is mandatory before the gate is meaningful on real traffic. |
-| `CLAR-DEPLOY-04` | KMS / envelope-encryption vendor + rotation primitive | **RESOLVED** (2026-05-23) | AWS KMS; per-tenant CMKs; annual rotation. Spec-acceptance provenance row is signed via `kms:Sign` with `ecdsa-p256-sha256` (or `-p384-sha384`). |
+| `CLAR-DEPLOY-04` | KMS / envelope-encryption vendor + rotation primitive | **RESOLVED** (2026-05-23) | AWS KMS; per-tenant CMKs; annual rotation. Spec-acceptance provenance row is signed via `kms:Sign` with `RSASSA_PSS_SHA_256` (canonical baseline per CLAR-FND-01; `-SHA_384` permitted). |
 | `CLAR-DEPLOY-14` | LLM provider (proposing engine only — not on the acceptance path) | **RESOLVED** (2026-05-23) | Anthropic `claude-sonnet-4-6`. Proposers (`CMP-TRI-01` / `CMP-RES-01`) emit candidates into `proposed_specs`; `CMP-TRI-02` does not call the LLM. |
 | `CLAR-OWNER-01` | Per-component owner | **DEFERRED** | §1 `Owner` stays DEFERRED. |
 | `CLAR-PARAM-05` *(NOT FILED — explicit non-action)* | Specific betting-strategy choice within the Waudby-Smith & Ramdas 2024 family (e.g. coin-betting vs. ONS-style updates) | n/a | Implementation detail under `T-CMP-TRI-02-02`. `DOC-ALGS §7.10` flags this as a known sensitivity; not load-bearing. Document the chosen strategy in the implementation PR. |
