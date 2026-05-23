@@ -175,7 +175,7 @@ The shim MAY internally route into the v3.2 scan pool; the surface contract is w
 | `CMP-SCM-02` | The GitHub connector exposes `search_code()` typed as Research-only. The non-Research call-path rejection is enforced one layer down (`T-CMP-SCM-02-02`); `CMP-RES-01` is the *legitimate* consumer of that API and does not need to re-enforce. |
 | `CMP-TRI-02` | The e-process evaluation stream accepts labelled findings + covariate-shift metadata and runs Algorithm 6 (see `DOC-ALGS.md §7`). `CMP-RES-01` is one of two upstream feeders (the other is the production triage path); both ride the same Algorithm 6 implementation but on logically separated streams. |
 
-`CMP-RES-01` is NOT a dependency of any deterministic-core component. A core component that imports from `services/research/` would itself be in violation of INV-3 and would be rejected at code review (`code-review-cmp`).
+`CMP-RES-01` is NOT a dependency of any deterministic-core component. A core component that imports from `services/research/` would itself be in violation of INV-3 and would be rejected at code review (the `claude-review` CI check, RULE-10).
 
 ---
 

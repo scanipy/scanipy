@@ -57,7 +57,9 @@ Affected components: CMP-CP-02, CMP-SNAP-03, CMP-SNAP-04, CMP-DET-01, CMP-TRI-01
 
 ## RULE-10 — Code Review approval required before merge
 
-Every PR requires Code Review Agent approval. Approval is conditional on the PR checklist being fully checked. An approval without a checked checklist is not valid.
+Every PR is reviewed by the **canonical reviewer: the `claude-review` CI check** (`.github/workflows/claude-code-review.yml`), which runs automatically when a PR is opened / marked ready / reopened. It reads `CLAUDE.md` + these rules + the PR template and posts findings with an explicit **APPROVE / REQUEST-CHANGES** verdict. A PR may merge only when that verdict is **APPROVE** and the PR-template checklist is fully checked; a REQUEST-CHANGES verdict (or an unchecked checklist) blocks merge.
+
+This is the **sole** code-review surface — the former `/code-review-cmp` Skill is retired (one doctrine, one place). Server-side required-status-checks are unavailable on this repo (GitHub Free/private), so RULE-10 is a **process-level gate**, enforced the same way as the four CI gates and the PR-only-merge shim (`.github/workflows/enforce-pr-only-merges.yml`). The on-demand `@claude` agent (`.github/workflows/claude.yml`) is for fixes/questions/re-review, not the routine gate; re-trigger a review by toggling draft↔ready or commenting `@claude review`.
 
 ## RULE-11 — The board reflects reality; check it before you pick up work
 
