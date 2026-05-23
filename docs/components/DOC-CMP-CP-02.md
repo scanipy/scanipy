@@ -293,7 +293,7 @@ CP-02 itself does **not** write `findings` rows or `provenance_records` rows. It
 |---|---|
 | `scm_credentials.kms_key_arn`, `ciphertext`, `display_fingerprint` | Populated from `EncryptedCredential` by the caller after `encrypt_credential` returns. |
 | `orgs.kms_cmk_arn`, `orgs.kms_signing_key_arn` | Lazily provisioned by CP-02. |
-| `provenance_records.signature_key_id`, `signature_algorithm`, `signature_value` (in `CMP-FND-03`) | The `SigningKeyHandle` returned by CP-02 is the input to `kms:Sign` calls in `CMP-FND-03`. CP-02 does not write `provenance_records`; it provides the key handle. |
+| `provenance_records.kms_key_arn`, `kms_key_version`, `signature`, `signature_alg` (in `CMP-FND-03`) | The `SigningKeyHandle` returned by CP-02 is the input to `kms:Sign` calls in `CMP-FND-03` (`signature_alg='RSASSA_PSS_SHA_256'` baseline, CLAR-FND-01). CP-02 does not write `provenance_records`; it provides the key handle. |
 | Audit-log event on `rotate_cmk` | OTel attribute set: `{org_id, kms_key_arn, reason}`; no finding-row mutation. |
 
 **Must NOT touch.** CP-02 never reads or writes `findings`, `triage_scores`, `attestations`, `repartition_events`. The triage role's IAM (managed via `CMP-DEPLOY-05`) explicitly denies `kms:Decrypt` against credential CMKs — this is the IAM-level INV-3 ancillary fence.
