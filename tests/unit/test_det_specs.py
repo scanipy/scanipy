@@ -179,8 +179,15 @@ def test_dsl_rejects_non_core_engine_e_dsl_009() -> None:
 @pytest.mark.parametrize(
     "e_dsl_code",
     [
-        "E-DSL-001", "E-DSL-002", "E-DSL-003", "E-DSL-004", "E-DSL-005",
-        "E-DSL-006", "E-DSL-007", "E-DSL-008", "E-DSL-009",
+        "E-DSL-001",
+        "E-DSL-002",
+        "E-DSL-003",
+        "E-DSL-004",
+        "E-DSL-005",
+        "E-DSL-006",
+        "E-DSL-007",
+        "E-DSL-008",
+        "E-DSL-009",
     ],
 )
 def test_registration_rejects_out_of_dsl_spec_passthrough_e_dsl(e_dsl_code: str) -> None:
