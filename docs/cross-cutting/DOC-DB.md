@@ -402,28 +402,51 @@ The `triage_score` and `triage_reason` columns are **deliberately split into a s
 ### 4.13 `provenance_records`
 
 - **Owning component:** CMP-FND-03.
-- **Append-only.**
+- **Append-only.** The signed audit chain — one `record_type='chain'` row per finding, plus scan-level rows for the other record types. **This is the canonical DDL** for `provenance_records` (CLAR-FND-01 resolution, 2026-05-23): the chain is materialised **column-per-link** (not an opaque `jsonb` payload) so INV-1/INV-2/INV-5 are enforced by the schema itself. `DOC-PROVENANCE §3` is the semantic reference for what each chain-link column carries and §3.2 defines the bytes the signature covers.
 
 | Column | Type | Nullability | Default | Constraint / FK | Notes |
 |---|---|---|---|---|---|
-| `id` | `uuid` | NOT NULL | `gen_random_uuid()` | PRIMARY KEY | |
+| `id` | `uuid` | NOT NULL | `gen_random_uuid()` | PRIMARY KEY | referenced by `attestations.signed_chain_id`, `repartition_events.provenance_record_id` |
+| `parent_record_id` | `uuid` | NULL | — | FK → `provenance_records(id)` | set on `repartition` rows |
+| `record_type` | `text` | NOT NULL | — | CHECK (`record_type IN ('chain','repartition','attestation','spec-acceptance','witness-update')`) | `chain` = per-finding base record |
 | `org_id` | `uuid` | NOT NULL | — | FK → `orgs(id)` | |
-| `finding_id` | `uuid` | NULL | — | FK → `findings(id) ON DELETE CASCADE` | NULL for scan-level chain records |
+| `codebase_id` | `uuid` | NOT NULL | — | FK → `codebases(id) ON DELETE CASCADE` | link 1 (source commit) |
+| `commit_sha` | `text` | NOT NULL | — | | link 1 (40 hex) |
+| `scm_provider` | `text` | NOT NULL | — | | `github`\|`gitlab`\|… |
 | `scan_id` | `uuid` | NOT NULL | — | FK → `scans(id) ON DELETE CASCADE` | |
-| `record_type` | `text` | NOT NULL | — | CHECK (`record_type IN ('chain','repartition','attestation','spec-acceptance','witness-update')`) | |
-| `S_version` | `text` | NOT NULL | — | INV-2 |
-| `env_digest` | `text` | NOT NULL | — | INV-2 |
-| `cpg_order_hash` | `bytea` | NOT NULL | — | INV-5 paired |
+| `finding_id` | `uuid` | NULL | — | FK → `findings(id) ON DELETE CASCADE` | NULL for scan-level record types |
+| `snapshot_id` | `uuid` | NOT NULL | — | FK → `snapshots(id)` | link 2 |
+| `snapshot_digest` | `text` | NOT NULL | — | | link 2 (sha256) |
+| `precondition_status` | `text` | NOT NULL | — | CHECK (`IN ('closed-world','degraded','full-reparse')`) | |
+| `S_version` | `text` | NOT NULL | — | | link 3 — INV-2 (every row) |
+| `env_digest` | `text` | NOT NULL | — | | link 4 — INV-2 (every row) |
+| `cpg_order_hash` | `bytea` | NULL | — | | link 5; NULL on `repartition` + scan-level rows |
 | `cpg_order_hash_annotation` | `text` | NOT NULL | `'canonical iff fingerprint_class = strong'` | CHECK (pinned literal) | INV-5 |
-| `chain_payload` | `jsonb` | NOT NULL | — | full chain object (see DOC-PROVENANCE) |
-| `signature_key_id` | `text` | NOT NULL | — | KMS key ARN |
-| `signature_algorithm` | `text` | NOT NULL | — | CHECK (`signature_algorithm IN ('ecdsa-p256-sha256','ecdsa-p384-sha384')`) |
-| `signature_value` | `bytea` | NOT NULL | — | |
-| `created_at` | `timestamptz` | NOT NULL | `now()` | — | |
+| `fingerprint_class` | `text` | NULL | — | CHECK (`IN ('strong','weak')`) | |
+| `witness_blob_uri` | `text` | NULL | — | | link 6 |
+| `slice_fingerprint` | `bytea` | NULL | — | | link 6 (sha256) |
+| `rule_id` | `text` | NULL | — | | link 7; NULL on scan-level rows |
+| `spec_id` | `text` | NULL | — | | `S`-derived rules; spec id for `spec-acceptance` |
+| `detector_id` | `text` | NULL | — | | link 7 |
+| `detector_engine` | `text` | NULL | — | CHECK (`IN ('ifds','ide','semgrep','cpg-query','external')`) | |
+| `sarif_hash` | `bytea` | NULL | — | | link 8; NULL on scan-level rows |
+| `origin` | `text` | NULL | — | CHECK (`IN ('deterministic-core','oracle-passthrough')`) | link 9 — INV-1; see row-level CHECK |
+| `determinism_partition` | `text` | NULL | — | | mirrors `origin` |
+| `repartition_reason` | `text` | NULL | — | | only on `repartition` rows |
+| `repartition_oracle_id` | `uuid` | NULL | — | FK → `repartition_events(id)` | only on `repartition` rows |
+| `kms_key_arn` | `text` | NOT NULL | — | | signing CMK (CLAR-DEPLOY-04) |
+| `kms_key_version` | `text` | NOT NULL | — | | envelope-encryption version; preserves prior signatures across rotation |
+| `signature` | `bytea` | NOT NULL | — | | KMS asymmetric signature over canonical record bytes |
+| `signature_alg` | `text` | NOT NULL | — | CHECK (`signature_alg IN ('RSASSA_PSS_SHA_256','RSASSA_PSS_SHA_384')`) | baseline `RSASSA_PSS_SHA_256` (CLAR-DEPLOY-04) |
+| `claim_label` | `text` | NOT NULL | — | CHECK (`IN ('CONDITIONAL_THEOREM','EMPIRICAL','STAGED','UNCONDITIONAL')`) | honest-labeling (INV-6 linkage) |
+| `created_at` | `timestamptz` | NOT NULL | `now()` | — | excluded from signed bytes |
 
-- **Indices:** PK; INDEX `(scan_id, record_type)`; INDEX `(finding_id)` WHERE `finding_id IS NOT NULL`; INDEX `(org_id, created_at DESC)`.
-- **RLS:** standard template.
-- **No UPDATE / DELETE grants** — table is append-only; revocation is by inserting a new record with `record_type = 'repartition'` etc.
+- **Row-level CHECK (INV-1):** `CHECK (record_type NOT IN ('chain','repartition') OR origin IS NOT NULL)` — every finding-bearing record carries an `origin`; scan-level records (`attestation`, `spec-acceptance`, `witness-update`) may omit it. `S_version` and `env_digest` are NOT NULL on **every** row (INV-2 binds every provenance record, not only finding rows).
+- **Record-type-specific detail is NOT stored here.** e-process metrics `{e_value, threshold, π₀, α}` for `spec-acceptance` live in `spec_versions` / `proposed_specs`; attestation metrics live in `attestations`. The provenance row carries the chain links + signature only, with `spec_id` / `scan_id` as the join key back to the detail.
+- **Indices:** PK; INDEX `(codebase_id, commit_sha)`; INDEX `(snapshot_id)`; INDEX `(codebase_id, slice_fingerprint)`; INDEX `(parent_record_id)`; INDEX `(scan_id, record_type)`; INDEX `(finding_id)` WHERE `finding_id IS NOT NULL`.
+- **RLS:** standard template (keyed on `org_id`).
+- **No UPDATE / DELETE grants** — table is append-only; a correction is a new `record_type='repartition'` row linked by `parent_record_id`.
+- **Canonical record-bytes for signing:** `DOC-PROVENANCE §3.2` — all columns except `signature`, `kms_key_version`, and `created_at`, serialized as lexicographically-sorted UTF-8 JSON.
 
 ### 4.14 `triage_scores`
 
