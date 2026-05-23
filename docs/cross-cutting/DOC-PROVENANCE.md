@@ -164,7 +164,7 @@ Per `CLAR-DEPLOY-02` (S3) and `CLAR-DEPLOY-15` (retention), both RESOLVED in `do
 | Artifact | Store | Key path | Retention | Lock |
 |---|---|---|---|---|
 | `provenance_records` row | PostgreSQL (`RDS` per `CLAR-DEPLOY-03`) | row-level | 7 years | row immutable post-sign |
-| Signed canonical bytes | S3 | `orgs/{org_id}/codebases/{codebase_id}/provenance/{commit_sha}/{record_id}.json.sig` | **7 years** | **S3 Object Lock — Compliance mode** |
+| Signed canonical bytes | S3 | `orgs/{org_id}/codebases/{codebase_id}/provenance/{commit_sha}/{id}.json.sig` | **7 years** | **S3 Object Lock — Compliance mode** |
 | Witness blob | S3 | `orgs/{org_id}/codebases/{codebase_id}/witness/{slice_fingerprint}.json` | 1 year | governance mode |
 | SARIF blob | S3 | `orgs/{org_id}/codebases/{codebase_id}/sarif/{scan_id}.sarif.json` | 7 years | Compliance mode |
 | CPG tarball | S3 | `orgs/{org_id}/codebases/{codebase_id}/snapshots/{commit_sha}/{env_digest}/cpg.tar.zst` | 90 days | governance mode |
@@ -212,7 +212,7 @@ Per finding (one row in the export, plus zero-or-more re-partition rows linked):
 
 ```json
 {
-  "record_id":                "uuid",
+  "id":                       "uuid",
   "parent_record_id":         "uuid | null",
   "record_type":              "chain | repartition | attestation | spec-acceptance | witness-update",
 
@@ -247,7 +247,7 @@ Per finding (one row in the export, plus zero-or-more re-partition rows linked):
 
   "repartition_history": [
     {
-      "record_id":            "uuid",
+      "id":                   "uuid",
       "created_at":           "iso-8601",
       "repartition_reason":   "string",
       "repartition_oracle_id":"uuid",
