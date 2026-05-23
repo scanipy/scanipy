@@ -345,10 +345,10 @@ This subsumes the table in `.claude/rules/02-provenance.md §"Per-component thre
 - `docs/cross-cutting/DOC-DEPLOY-DECISIONS.md` — substrate decision record (KMS, S3, retention, isolation).
 - `.claude/rules/02-provenance.md` — code-review-time threading rules (canonically extended here).
 - `.claude/rules/01-invariants.md` — invariant catalog.
-- `DOC-DB` (forthcoming sibling) — full DB schema reference including this table.
-- `DOC-API` (forthcoming sibling) — canonical record-bytes serialization.
-- `DOC-SARIF` (forthcoming sibling) — SARIF `properties` block carrying the conditional annotation.
-- `DOC-INV` (forthcoming sibling) — INV-1/2/5 owner cross-reference.
+- `DOC-DB §4.13` — **canonical DDL** for `provenance_records` (CLAR-FND-01 RESOLVED 2026-05-23).
+- `DOC-API` — canonical record-bytes serialization.
+- `DOC-SARIF` — SARIF `properties` block carrying the conditional annotation.
+- `DOC-INV` — INV-1/2/5 owner cross-reference.
 - `DOC-RUNBOOK` (forthcoming sibling) — labelling-correction window SLA and re-partition incident procedure.
 
 ---

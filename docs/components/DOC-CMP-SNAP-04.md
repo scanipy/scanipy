@@ -79,8 +79,8 @@ Persisted to a dedicated table `snap_oracle_runs` (referenced by `provenance_rec
 
 ```sql
 CREATE TABLE snap_oracle_runs (
-    run_id              uuid        PRIMARY KEY,
-    snapshot_id         uuid        NOT NULL REFERENCES snapshots(snapshot_id),
+    id                  uuid        PRIMARY KEY,            -- was run_id; aligned to schema convention (CLAR-DB-03)
+    snapshot_id         uuid        NOT NULL REFERENCES snapshots(id),
     oracle_version      text        NOT NULL,
     cw_detect_version   text        NOT NULL,
     oracle_verdict      text        NOT NULL CHECK (
@@ -89,7 +89,7 @@ CREATE TABLE snap_oracle_runs (
     reflection_sites    jsonb       NOT NULL DEFAULT '[]',
     started_at          timestamptz NOT NULL,
     completed_at        timestamptz NOT NULL,
-    org_id              uuid        NOT NULL REFERENCES orgs(org_id)
+    org_id              uuid        NOT NULL REFERENCES orgs(id)
 );
 CREATE INDEX idx_oracle_snapshot ON snap_oracle_runs(snapshot_id);
 CREATE INDEX idx_oracle_disagree ON snap_oracle_runs(agreed) WHERE agreed = false;

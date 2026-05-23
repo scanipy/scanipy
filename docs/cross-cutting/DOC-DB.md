@@ -408,7 +408,7 @@ The `triage_score` and `triage_reason` columns are **deliberately split into a s
 |---|---|---|---|---|---|
 | `id` | `uuid` | NOT NULL | `gen_random_uuid()` | PRIMARY KEY | referenced by `attestations.signed_chain_id`, `repartition_events.provenance_record_id` |
 | `parent_record_id` | `uuid` | NULL | — | FK → `provenance_records(id)` | set on `repartition` rows |
-| `record_type` | `text` | NOT NULL | — | CHECK (`record_type IN ('chain','repartition','attestation','spec-acceptance','witness-update')`) | `chain` = per-finding base record |
+| `record_type` | `text` | NOT NULL | — | CHECK (`record_type IN ('chain','repartition','attestation','spec-acceptance','witness-update')`) | `chain` = per-finding base record; `repartition` ← CMP-SNAP-04, `attestation` ← CMP-CP-05, `spec-acceptance` ← CMP-TRI-02; `witness-update` reserved (no current writer) |
 | `org_id` | `uuid` | NOT NULL | — | FK → `orgs(id)` | |
 | `codebase_id` | `uuid` | NOT NULL | — | FK → `codebases(id) ON DELETE CASCADE` | link 1 (source commit) |
 | `commit_sha` | `text` | NOT NULL | — | | link 1 (40 hex) |
