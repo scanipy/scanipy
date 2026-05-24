@@ -1,0 +1,12 @@
+package com.scanipy.corpus.relocated.refac;
+
+import java.net.URL;
+import java.net.HttpURLConnection;
+
+public class FetchService {
+    public int fetch(String host036) throws Exception {
+        URL url = new URL("http://" + host036 + "/status");
+        HttpURLConnection c = (HttpURLConnection) url.openConnection();
+        return c.getResponseCode();
+    }
+}
