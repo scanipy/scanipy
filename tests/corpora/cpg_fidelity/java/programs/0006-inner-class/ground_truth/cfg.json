@@ -1,0 +1,17 @@
+{
+  "schema": "cpg-fidelity/cfg/v1",
+  "program_id": "0006-inner-class",
+  "method": "Per-method intraprocedural CFG by-inspection.",
+  "methods": [
+    {"method": "corpus.cpg.p0006.Outer$Inner.boosted()", "nodes": ["return base + 5"], "edges": []},
+    {"method": "corpus.cpg.p0006.Outer$StaticNested.constant()", "nodes": ["return 42"], "edges": []},
+    {"method": "corpus.cpg.p0006.Outer.anon()", "nodes": ["return new Greeter() { ... }"], "edges": []},
+    {"method": "corpus.cpg.p0006.Outer$1.greet()", "nodes": ["return \"hello \" + base"], "edges": []},
+    {"method": "corpus.cpg.p0006.Outer.main(String[])", "nodes": [
+      "Outer o = new Outer()",
+      "Inner i = o.new Inner()",
+      "StaticNested s = new StaticNested()",
+      "System.out.println(i.boosted() + s.constant() + o.anon().greet())"
+    ], "edges": [[0, 1], [1, 2], [2, 3]]}
+  ]
+}

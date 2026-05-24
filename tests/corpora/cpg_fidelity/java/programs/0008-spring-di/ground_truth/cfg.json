@@ -1,0 +1,15 @@
+{
+  "schema": "cpg-fidelity/cfg/v1",
+  "program_id": "0008-spring-di",
+  "method": "Per-method intraprocedural CFG by-inspection.",
+  "methods": [
+    {"method": "corpus.cpg.p0008.OrderApp$Repository.find(int)", "nodes": ["return \"order#\" + id"], "edges": []},
+    {"method": "corpus.cpg.p0008.OrderApp$OrderService.<init>(Repository)", "nodes": ["this.repo = repo"], "edges": []},
+    {"method": "corpus.cpg.p0008.OrderApp$OrderService.lookup(int)", "nodes": ["return repo.find(id)"], "edges": []},
+    {"method": "corpus.cpg.p0008.OrderApp.main(String[])", "nodes": [
+      "Repository repo = new Repository()",
+      "OrderService svc = new OrderService(repo)",
+      "System.out.println(svc.lookup(7))"
+    ], "edges": [[0, 1], [1, 2]]}
+  ]
+}
