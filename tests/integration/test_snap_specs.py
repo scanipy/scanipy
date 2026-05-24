@@ -17,6 +17,8 @@ Covers (from WBS §4.2 / §4.3):
   - TST-INV-1-SNAP-04 [INVARIANT]  — re-partition flips origin core→oracle correctly
 """
 
+from pathlib import Path
+
 import pytest
 
 
@@ -88,11 +90,7 @@ def test_snap_02b_open_world_speedup_and_fallback_rate() -> None:
 
 
 @pytest.mark.empirical
-@pytest.mark.xfail(
-    reason="CMP-SNAP-03 (CW-DETECT) not yet implemented",
-    strict=False,
-)
-def test_snap_03b_combined_routing_rate_measured_and_reported() -> None:
+def test_snap_03b_combined_routing_rate_measured_and_reported(tmp_path: Path) -> None:
     """Combined TP+FP routing rate measured and reported (≤15% economics signal).
 
     Test id:        TST-AC-SNAP-03b
@@ -114,11 +112,36 @@ def test_snap_03b_combined_routing_rate_measured_and_reported() -> None:
     Frequency:      nightly
     Hard gate?:     no — economics signal, not a release blocker.
     """
-    # TODO: import CW-DETECT from analysis/snapshotter when CMP-SNAP-03 is DONE;
-    #       run the representative population and assert a numeric rate is reported.
-    # report = measure_routing_rate(repo_population)
-    # assert report.combined_tp_fp_rate is not None  # measured + reported
-    pytest.skip("CMP-SNAP-03 not implemented yet")
+    from services.snapshot import (
+        CwDetectRequest,
+        Snapshot,  # noqa: F401  (exported surface check)
+        measure_routing_rate,
+    )
+
+    # A small representative population: some closed-world repos, some with
+    # reflection. The rate is measured + surfaced as a numeric artifact.
+    closed = tmp_path / "closed"
+    closed.mkdir()
+    (closed / "Plain.java").write_text("class Plain { int add(int a, int b){ return a+b; } }\n")
+
+    reflective = tmp_path / "reflective"
+    reflective.mkdir()
+    (reflective / "Dyn.java").write_text('Class.forName("com.x.Y").newInstance();\n')
+
+    population = [
+        CwDetectRequest(source_tree_root=str(closed), language_mix=("java",)),
+        CwDetectRequest(source_tree_root=str(reflective), language_mix=("java",)),
+    ]
+
+    report = measure_routing_rate(population, clock=lambda: "2026-01-01T00:00:00+00:00")
+
+    # The rate is MEASURED and surfaced as a numeric artifact (the AC contract).
+    assert report.total == 2
+    assert isinstance(report.combined_tp_fp_rate, float)
+    assert 0.0 <= report.combined_tp_fp_rate <= 1.0
+    # One reflective repo routed not-closed-world ⇒ rate reflects it numerically.
+    assert report.routed_not_closed_world >= 1
+    assert report.combined_tp_fp_rate == report.routed_not_closed_world / report.total
 
 
 @pytest.mark.empirical
