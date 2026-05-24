@@ -250,9 +250,11 @@ def _ruby_version() -> str:
         out = subprocess.run(
             ["ruby", "-e", "print RUBY_VERSION"], capture_output=True, text=True, check=True
         )
-        return out.stdout.strip()
-    except Exception:  # noqa: BLE001
-        return "unknown"
+    except Exception as exc:
+        # methodology.md ties reproducibility to the pinned ruby_version; a silent
+        # "unknown" fallback would break that contract. Refuse the build instead.
+        sys.exit(f"CORPUS BUILD REFUSED: ruby not found; cannot pin ruby_version ({exc})")
+    return out.stdout.strip()
 
 
 def canonical_digest(lock: dict) -> str:
@@ -294,7 +296,11 @@ def main() -> int:
             print("corpus.lock missing; run --write", file=sys.stderr)
             return 3
         existing = _load_yaml(LOCK_PATH)
-        recomputed = canonical_digest({**existing, "corpus_digest": "sha256:PENDING"})
+        # Recompute from the freshly assembled `lock` (fresh item_digests hashed
+        # off disk) — NOT from `existing` — so the check detects source-file drift,
+        # not merely internal lock self-consistency. `canonical_digest` excludes
+        # the volatile `corpus_digest`/`built_at`/`built_by` fields.
+        recomputed = canonical_digest(lock)
         if existing.get("corpus_digest") != recomputed:
             print(
                 f"corpus_digest drift: recorded={existing.get('corpus_digest')} "

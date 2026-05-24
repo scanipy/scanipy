@@ -19,7 +19,7 @@ This build delivers:
 - the **`dynamic`-tag HARD rule** wired into `build_lock.py` (INV-6).
 
 It deliberately does **not** pin a per-category minimum sample size `N`: SDD does
-not specify one for Ruby (`DOC SS10`). That is filed as **`CLAR-CORP-07-ruby`**
+not specify one for Ruby (`DOC SS10`). That is filed as **`CLAR-CORP-07`**
 (`WBS.md SS17`) and blocks a v1.0.0 bar, not this v0.1.0 scaffold.
 
 ## INV-6 / staging honesty
@@ -80,5 +80,5 @@ artifacts and the same `corpus_digest`.
   build does **not** block on this; only the gate verdict does.
 - **`CLAR-CORP-02`** (RESOLVED 2026-05-23) — gate thresholds: parse >= 99.5%,
   call-edge precision >= 90%, recall >= 85%, PDG dependence-edge recall >= 80%.
-- **`CLAR-CORP-07-ruby`** (this build) — per-category minimum sample size `N` for
+- **`CLAR-CORP-07`** (this build) — per-category minimum sample size `N` for
   the Ruby CPG-fidelity corpus is unpinned by SDD; blocks a v1.0.0 bar.
