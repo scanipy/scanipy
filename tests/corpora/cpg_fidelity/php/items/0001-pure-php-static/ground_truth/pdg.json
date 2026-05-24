@@ -7,12 +7,12 @@
     {"function": "Calculator::add", "from": "param:b", "to": "return:14", "type": "data"},
     {"function": "Calculator::doubleAdd", "from": "param:a", "to": "return:19", "type": "data"},
     {"function": "Calculator::doubleAdd", "from": "param:b", "to": "return:19", "type": "data"},
-    {"function": "run", "from": "param:x", "to": "cond:25", "type": "data"},
-    {"function": "run", "from": "cond:25", "to": "return:26", "type": "control"},
-    {"function": "run", "from": "cond:25", "to": "return:28", "type": "control"},
-    {"function": "run", "from": "param:x", "to": "return:26", "type": "data"},
-    {"function": "run", "from": "param:x", "to": "return:28", "type": "data"},
-    {"function": "run", "from": "stmt:24", "to": "return:26", "type": "data"},
-    {"function": "run", "from": "stmt:24", "to": "return:28", "type": "data"}
+    {"function": "run", "from": "param:x", "to": "cond:26", "type": "data"},
+    {"function": "run", "from": "cond:26", "to": "return:27", "type": "control"},
+    {"function": "run", "from": "cond:26", "to": "return:29", "type": "control"},
+    {"function": "run", "from": "param:x", "to": "return:27", "type": "data"},
+    {"function": "run", "from": "param:x", "to": "return:29", "type": "data"},
+    {"function": "run", "from": "stmt:25", "to": "return:27", "type": "data"},
+    {"function": "run", "from": "stmt:25", "to": "return:29", "type": "data"}
   ]
 }

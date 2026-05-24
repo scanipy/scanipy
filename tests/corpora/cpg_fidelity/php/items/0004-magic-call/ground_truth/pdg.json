@@ -3,9 +3,9 @@
   "file": "magic_call.php",
   "is_lower_bound": true,
   "edges": [
-    {"function": "Service::handleEcho", "from": "param:s", "to": "return:20", "type": "data"},
-    {"function": "Service::__call", "from": "param:name", "to": "assign:26", "type": "data"},
-    {"function": "Service::__call", "from": "assign:26", "to": "return:27", "type": "data"},
-    {"function": "Service::__call", "from": "param:args", "to": "return:27", "type": "data"}
+    {"function": "Service::handleEcho", "from": "param:s", "to": "return:21", "type": "data"},
+    {"function": "Service::__call", "from": "param:name", "to": "assign:27", "type": "data"},
+    {"function": "Service::__call", "from": "assign:27", "to": "return:28", "type": "data"},
+    {"function": "Service::__call", "from": "param:args", "to": "return:28", "type": "data"}
   ]
 }

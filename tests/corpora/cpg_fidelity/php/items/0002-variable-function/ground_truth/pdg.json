@@ -3,10 +3,10 @@
   "file": "variable_function.php",
   "is_lower_bound": true,
   "edges": [
-    {"function": "greet", "from": "param:name", "to": "return:14", "type": "data"},
-    {"function": "shout", "from": "param:name", "to": "return:19", "type": "data"},
-    {"function": "dispatch", "from": "param:which", "to": "assign:24", "type": "data"},
-    {"function": "dispatch", "from": "assign:24", "to": "return:26", "type": "data"},
-    {"function": "dispatch", "from": "param:name", "to": "return:26", "type": "data"}
+    {"function": "greet", "from": "param:name", "to": "return:13", "type": "data"},
+    {"function": "shout", "from": "param:name", "to": "return:18", "type": "data"},
+    {"function": "dispatch", "from": "param:which", "to": "assign:23", "type": "data"},
+    {"function": "dispatch", "from": "assign:23", "to": "return:25", "type": "data"},
+    {"function": "dispatch", "from": "param:name", "to": "return:25", "type": "data"}
   ]
 }

@@ -6,7 +6,7 @@
       "name": "greet",
       "blocks": [
         {"id": "B0", "kind": "entry", "succ": ["B1"]},
-        {"id": "B1", "kind": "return", "line": 14, "succ": ["B2"]},
+        {"id": "B1", "kind": "return", "line": 13, "succ": ["B2"]},
         {"id": "B2", "kind": "exit", "succ": []}
       ]
     },
@@ -14,7 +14,7 @@
       "name": "shout",
       "blocks": [
         {"id": "B0", "kind": "entry", "succ": ["B1"]},
-        {"id": "B1", "kind": "return", "line": 19, "succ": ["B2"]},
+        {"id": "B1", "kind": "return", "line": 18, "succ": ["B2"]},
         {"id": "B2", "kind": "exit", "succ": []}
       ]
     },
@@ -22,8 +22,8 @@
       "name": "dispatch",
       "blocks": [
         {"id": "B0", "kind": "entry", "succ": ["B1"]},
-        {"id": "B1", "kind": "assign", "line": 24, "succ": ["B2"]},
-        {"id": "B2", "kind": "return", "line": 26, "succ": ["B3"]},
+        {"id": "B1", "kind": "assign", "line": 23, "succ": ["B2"]},
+        {"id": "B2", "kind": "return", "line": 25, "succ": ["B3"]},
         {"id": "B3", "kind": "exit", "succ": []}
       ]
     }

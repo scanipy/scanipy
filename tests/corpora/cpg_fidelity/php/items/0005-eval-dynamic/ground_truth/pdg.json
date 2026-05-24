@@ -3,10 +3,10 @@
   "file": "eval_dynamic.php",
   "is_lower_bound": true,
   "edges": [
-    {"function": "helper", "from": "param:n", "to": "return:13", "type": "data"},
+    {"function": "helper", "from": "param:n", "to": "return:14", "type": "data"},
     {"function": "compute", "from": "param:op", "to": "eval:21", "type": "data"},
     {"function": "compute", "from": "param:n", "to": "eval:21", "type": "data"},
-    {"function": "compute", "from": "assign:18", "to": "return:22", "type": "data"},
+    {"function": "compute", "from": "assign:19", "to": "return:22", "type": "data"},
     {"function": "compute", "from": "eval:21", "to": "return:22", "type": "data"}
   ]
 }

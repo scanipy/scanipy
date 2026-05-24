@@ -3,11 +3,11 @@
   "file": "magic_call.php",
   "is_lower_bound": true,
   "dynamic": true,
-  "notes": "Undefined-method calls $svc->ping() (line 31) and $svc->echo() (line 32) route to Service::__call. Inside __call, $this->$handler(...) (line 27) dispatches dynamically to handlePing/handleEcho. The magic-routing edges and the variable-method edges are demonstrably-reachable lower bound.",
+  "notes": "Undefined-method calls $svc->ping() (line 33) and $svc->echo() (line 34) route to Service::__call. Inside __call, $this->$handler(...) (line 28) dispatches dynamically to handlePing/handleEcho. The magic-routing edges and the variable-method edges are demonstrably-reachable lower bound.",
   "edges": [
-    {"caller": "{main}", "callee": "Service::__call", "line": 31, "resolution": "dynamic-magic-call"},
-    {"caller": "{main}", "callee": "Service::__call", "line": 32, "resolution": "dynamic-magic-call"},
-    {"caller": "Service::__call", "callee": "Service::handlePing", "line": 27, "resolution": "dynamic-variable-method"},
-    {"caller": "Service::__call", "callee": "Service::handleEcho", "line": 27, "resolution": "dynamic-variable-method"}
+    {"caller": "{main}", "callee": "Service::__call", "line": 33, "resolution": "dynamic-magic-call"},
+    {"caller": "{main}", "callee": "Service::__call", "line": 34, "resolution": "dynamic-magic-call"},
+    {"caller": "Service::__call", "callee": "Service::handlePing", "line": 28, "resolution": "dynamic-variable-method"},
+    {"caller": "Service::__call", "callee": "Service::handleEcho", "line": 28, "resolution": "dynamic-variable-method"}
   ]
 }
