@@ -1,0 +1,10 @@
+expected_sites:
+  - file: Calculator.php
+    kind: php-variable-function
+    line: 26
+label: not-closed-world
+labelled_by: pipeline
+rationale: Mutation-injected php-variable-function reflection construct inserted at
+  line 26 of a clean closed-world base. not-closed-world by construction (INV-4 safe
+  direction).
+review_status: single-pass
