@@ -219,8 +219,11 @@ class CredentialEncryptionService:
             kms_key_arn=cmk_arn,
             encryption_algorithm=algorithm,
             encryption_context=context,
-            # Display-only sha256; never a key-derivation input (DOC-CMP-CP-02 §3.2).
-            display_fingerprint=sha256(plaintext).hexdigest(),
+            # Digest of the at-rest CIPHERTEXT blob — never the raw secret. A hash
+            # of the plaintext would be a confirmation/brute-force oracle and a
+            # cross-tenant dedupe signal at rest (RULE-9 Security finding, PR #225).
+            # Display/dedupe only; never a key-derivation input (DOC-CMP-CP-02 §3.2).
+            display_fingerprint=sha256(ciphertext_blob).hexdigest(),
             created_at=_now(),
         )
 
