@@ -1,0 +1,9 @@
+{
+  "schema": "cpg-fidelity/ast/v0.1.0",
+  "file": "include_dynamic.php",
+  "namespace": "Corpus\\IncludeDynamic",
+  "decls": [
+    {"kind": "function", "name": "loadModule", "line": 12, "params": ["name"]},
+    {"kind": "function", "name": "bootstrap", "line": 19, "params": ["env"]}
+  ]
+}

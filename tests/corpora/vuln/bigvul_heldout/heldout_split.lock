@@ -1,0 +1,14 @@
+corpus_id: CMP-CORP-VULN-01
+disjoint_assertion: "heldout \u2229 training_eligible == \u2205 (verified at build)"
+heldout_count: 1
+heldout_digest: sha256:8ca711ce12bd131a43008556370ac2c0917e53761b35d1135d777c90f871d58d
+heldout_row_ids:
+  - bigvul:100d0b9ffa07ebda3a9e0ed2894e1823
+input_csv: data/bigvul_sample.csv
+input_csv_sha256: sha256:7ac71b8f3d5f5bf9b34166f8e18341b0b39d2f60ed9a6b7bb135e1dc270d3091
+procedure: row_id = sha256(commit_sha\0file_path\0func_name); HELD-OUT iff int(sha256(row_id),16)
+  % 10 == 9; complement is TRAINING-ELIGIBLE. See pipeline/bigvul_split.py and training_exclusion_proof.md.
+source: bigvul_heldout
+total_rows: 20
+training_eligible_count: 19
+training_eligible_digest: sha256:cc7d86d6ee5a30a0bbfe21b5fdedcde2969e38ae6a1e9862b5aba49f1fb97de8

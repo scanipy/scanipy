@@ -1,0 +1,11 @@
+{
+  "schema": "cpg-fidelity/callgraph/v0.1.0",
+  "file": "call_user_func.php",
+  "is_lower_bound": true,
+  "dynamic": true,
+  "notes": "call_user_func($cb,...) at lines 19 and 25 dispatch to the callable bound at the call sites (lines 28-29: formatUpper). User-defined targets only; builtins (call_user_func, strtoupper) are not call-graph nodes. Edges through $cb are demonstrably-reachable lower bound.",
+  "edges": [
+    {"caller": "apply", "callee": "formatUpper", "line": 19, "resolution": "dynamic-call-user-func"},
+    {"caller": "applyArgs", "callee": "formatUpper", "line": 25, "resolution": "dynamic-call-user-func"}
+  ]
+}

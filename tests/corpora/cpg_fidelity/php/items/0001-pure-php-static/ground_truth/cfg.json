@@ -1,0 +1,32 @@
+{
+  "schema": "cpg-fidelity/cfg/v0.1.0",
+  "file": "Calculator.php",
+  "functions": [
+    {
+      "name": "Calculator::add",
+      "blocks": [
+        {"id": "B0", "kind": "entry", "succ": ["B1"]},
+        {"id": "B1", "kind": "return", "line": 14, "succ": ["B2"]},
+        {"id": "B2", "kind": "exit", "succ": []}
+      ]
+    },
+    {
+      "name": "Calculator::doubleAdd",
+      "blocks": [
+        {"id": "B0", "kind": "entry", "succ": ["B1"]},
+        {"id": "B1", "kind": "return", "line": 19, "succ": ["B2"]},
+        {"id": "B2", "kind": "exit", "succ": []}
+      ]
+    },
+    {
+      "name": "run",
+      "blocks": [
+        {"id": "B0", "kind": "entry", "succ": ["B1"]},
+        {"id": "B1", "kind": "cond", "line": 26, "succ": ["B2", "B3"]},
+        {"id": "B2", "kind": "return", "line": 27, "succ": ["B4"]},
+        {"id": "B3", "kind": "return", "line": 29, "succ": ["B4"]},
+        {"id": "B4", "kind": "exit", "succ": []}
+      ]
+    }
+  ]
+}

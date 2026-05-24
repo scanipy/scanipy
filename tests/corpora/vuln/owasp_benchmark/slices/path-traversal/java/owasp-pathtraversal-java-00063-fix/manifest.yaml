@@ -1,0 +1,25 @@
+slice_id: owasp-pathtraversal-java-00063-fix
+source: owasp_benchmark
+class: path-traversal
+language: java
+cwe_ids:
+  - CWE-22
+positive: false
+fix_pair_id: null
+license: GPL-2.0
+vendored: false
+notes: |
+  OWASP BenchmarkTest00063. SOURCED ground truth: upstream expectedresults CSV row
+  "BenchmarkTest00063,pathtraver,false,22" — a NOT-a-real-vulnerability (clean) path
+  case used as a precision (true-negative) anchor. Fetch-on-demand (GPL-2.0).
+ground_truth_sites: []
+provenance:
+  dataset: owasp_benchmark
+  repo: https://github.com/OWASP-Benchmark/BenchmarkJava
+  release_tag: "1.2beta"
+  commit_sha: 2734ae486356765ea4e45393a28e20bcb5047f8c
+  expected_results_csv: expectedresults-1.2beta.csv
+  upstream_path: src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00063.java
+  upstream_sha256: sha256:18680b3299bda578af9227848dc5da0d9227feb23586d23c89714182b10c50f6
+  fetch_on_demand: true
+  ground_truth_origin: upstream_csv_verbatim

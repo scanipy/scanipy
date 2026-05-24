@@ -1,0 +1,10 @@
+{
+  "schema": "cpg-fidelity/ast/v0.1.0",
+  "file": "call_user_func.php",
+  "namespace": "Corpus\\CallUserFunc",
+  "decls": [
+    {"kind": "function", "name": "formatUpper", "line": 11, "params": ["s"]},
+    {"kind": "function", "name": "apply", "line": 16, "params": ["cb", "s"]},
+    {"kind": "function", "name": "applyArgs", "line": 22, "params": ["cb", "args"]}
+  ]
+}

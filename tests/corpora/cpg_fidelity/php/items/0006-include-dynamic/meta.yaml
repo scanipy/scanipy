@@ -1,0 +1,9 @@
+categories:
+  - include_dynamic
+dynamic: true
+id: 0006-include-dynamic
+license: Apache-2.0
+primary_file: include_dynamic.php
+source_commit: content-addressed
+source_url: vendored
+synthetic: true

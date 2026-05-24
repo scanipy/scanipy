@@ -1,0 +1,11 @@
+{
+  "schema": "cpg-fidelity/pdg/v0.1.0",
+  "file": "callable_array.php",
+  "is_lower_bound": true,
+  "edges": [
+    {"function": "trigger", "from": "param:event", "to": "assign:26", "type": "data"},
+    {"function": "trigger", "from": "param:h", "to": "assign:28", "type": "data"},
+    {"function": "trigger", "from": "assign:26", "to": "assign:28", "type": "data"},
+    {"function": "trigger", "from": "assign:28", "to": "return:29", "type": "data"}
+  ]
+}

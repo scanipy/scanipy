@@ -1,0 +1,28 @@
+slice_id: owasp-injection-java-00018
+source: owasp_benchmark
+class: injection
+language: java
+cwe_ids:
+  - CWE-89
+positive: true
+fix_pair_id: null
+license: GPL-2.0
+vendored: false
+notes: |
+  OWASP BenchmarkTest00018. SOURCED ground truth: upstream expectedresults CSV row
+  "BenchmarkTest00018,sqli,true,89". Fetch-on-demand (GPL-2.0 off vendor allow-list).
+ground_truth_sites:
+  - file: src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00018.java
+    line: 57
+    kind: sql-injection-sink
+    note: "statement.executeUpdate(sql) over a tainted SQL string"
+provenance:
+  dataset: owasp_benchmark
+  repo: https://github.com/OWASP-Benchmark/BenchmarkJava
+  release_tag: "1.2beta"
+  commit_sha: 2734ae486356765ea4e45393a28e20bcb5047f8c
+  expected_results_csv: expectedresults-1.2beta.csv
+  upstream_path: src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00018.java
+  upstream_sha256: sha256:e3a97c315ff300a1caabbf448469eda60005cc0e581ec554f3d052f38f6a94be
+  fetch_on_demand: true
+  ground_truth_origin: upstream_csv_verbatim
