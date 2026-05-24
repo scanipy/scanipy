@@ -33,6 +33,11 @@ include = ["analysis*", "detectors*", "integrations*", "services*", "workers*", 
 target-version = "py311"
 line-length = 100
 src = ["analysis", "detectors", "integrations", "services", "workers", "web", "tests"]
+# Corpus fixtures are intentionally-malformed sample programs (reflection
+# seeds, vuln samples) — test DATA, not code. mypy and detect-secrets already
+# exclude tests/corpora/; keep ruff in lockstep so `ruff check .` in the
+# pre-push hook does not flag deliberate F821/etc. in the corpora.
+extend-exclude = ["tests/corpora"]
 
 [tool.ruff.lint]
 select = [
