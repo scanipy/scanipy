@@ -1,0 +1,17 @@
+extracted_by: pipeline
+extracted_at: 2026-05-24T00:00:00Z
+tool_versions:
+  jdk: openjdk-21.0.10
+  soot: NOT-AVAILABLE
+  wala: NOT-AVAILABLE
+parse_verified_by: "javac -d /tmp -source 17 (JDK 21)"
+known_limitations: |
+  DOC-CMP-CORP-CPG-java §3.4 pins JDK 17 + Soot 4.4.1 + WALA 1.6.5. This sandbox
+  has only JDK 21; Soot and WALA are NOT installed. Therefore:
+    - AST parse-success is empirically verified (javac).
+    - AST node detail, CFG, call-graph, and PDG edges are derived BY INSPECTION
+      of tiny programs, not by running Soot/WALA. This is sound for these small
+      hand-authored programs but is NOT the pinned-tool extraction the DOC mandates.
+  Tracked by CLAR-CORP-07-java-tooling (Soot/WALA unavailable) and CLAR-CORP-08-java-jdk (JDK 17 baseline
+  drift). Re-extraction under the pinned toolchain is required for v1.0.0.
+review_status: pipeline

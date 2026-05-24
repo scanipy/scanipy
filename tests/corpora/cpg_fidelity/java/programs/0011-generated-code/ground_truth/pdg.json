@@ -1,0 +1,20 @@
+{
+  "schema": "cpg-fidelity/pdg/v1",
+  "program_id": "0011-generated-code",
+  "method": "Intraprocedural PDG (data + control) by-inspection.",
+  "methods": [
+    {"method": "corpus.cpg.p0011.UserDto.hashCode()", "dependences": [
+      {"from": "int result = 17", "to": "result = 31 * result + this.name.hashCode()", "type": "data", "var": "result"},
+      {"from": "result = 31 * result + this.name.hashCode()", "to": "result = 31 * result + this.age", "type": "data", "var": "result"},
+      {"from": "result = 31 * result + this.age", "to": "return result", "type": "data", "var": "result"}
+    ]},
+    {"method": "corpus.cpg.p0011.UserDto.equals(Object)", "dependences": [
+      {"from": "param o", "to": "if (this == o)", "type": "data", "var": "o"},
+      {"from": "if (!(o instanceof UserDto))", "to": "return false", "type": "control"},
+      {"from": "UserDto other = (UserDto) o", "to": "return this.age == other.age && this.name.equals(other.name)", "type": "data", "var": "other"}
+    ]},
+    {"method": "corpus.cpg.p0011.UserDto.main(String[])", "dependences": [
+      {"from": "UserDto u = new UserDto(\"ann\", 30)", "to": "System.out.println(u.getName() + u.getAge())", "type": "data", "var": "u"}
+    ]}
+  ]
+}

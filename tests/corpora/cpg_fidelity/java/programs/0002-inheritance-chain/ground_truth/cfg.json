@@ -1,0 +1,12 @@
+{
+  "schema": "cpg-fidelity/cfg/v1",
+  "program_id": "0002-inheritance-chain",
+  "method": "Per-method intraprocedural CFG by-inspection (BriefUnitGraph equivalent).",
+  "methods": [
+    {"method": "corpus.cpg.p0002.Animals$Animal.describe()", "nodes": ["return \"I say \" + speak()"], "edges": []},
+    {"method": "corpus.cpg.p0002.Animals$Dog.speak()", "nodes": ["return \"woof\""], "edges": []},
+    {"method": "corpus.cpg.p0002.Animals$Puppy.speak()", "nodes": ["return \"yip\""], "edges": []},
+    {"method": "corpus.cpg.p0002.Animals.greet(Animal)", "nodes": ["return a.describe()"], "edges": []},
+    {"method": "corpus.cpg.p0002.Animals.main(String[])", "nodes": ["Animal a = new Puppy()", "System.out.println(greet(a))"], "edges": [[0, 1]]}
+  ]
+}

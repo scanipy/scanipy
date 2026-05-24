@@ -1,0 +1,48 @@
+{
+  "ffi.py": {
+    "_encode": {
+      "edges": [
+        {
+          "from_line": 14,
+          "to_line": 15,
+          "kind": "data",
+          "var": "text"
+        },
+        {
+          "from_line": 15,
+          "to_line": 16,
+          "kind": "data",
+          "var": "encoded"
+        }
+      ]
+    },
+    "length": {
+      "edges": [
+        {
+          "from_line": 19,
+          "to_line": 21,
+          "kind": "data",
+          "var": "text"
+        },
+        {
+          "from_line": 20,
+          "to_line": 22,
+          "kind": "data",
+          "var": "libc"
+        },
+        {
+          "from_line": 21,
+          "to_line": 22,
+          "kind": "data",
+          "var": "buf"
+        },
+        {
+          "from_line": 22,
+          "to_line": 23,
+          "kind": "data",
+          "var": "n"
+        }
+      ]
+    }
+  }
+}

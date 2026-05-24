@@ -1,0 +1,11 @@
+source_url: local:synthesized/CMP-CORP-CPG-js/0003-prototype-this
+commit_sha: sha256:a906e1cb527373d86681d155f3194c3e5cea966fc1cf5541d057d97ccce8d8ab
+license: Apache-2.0
+surface: js
+module_system: commonjs
+synthetic: true
+loc: 33
+construct_coverage:
+  - prototype-mutation
+  - this-binding
+notes: Authored for this corpus (Apache-2.0). Content-addressed source/ sha256.

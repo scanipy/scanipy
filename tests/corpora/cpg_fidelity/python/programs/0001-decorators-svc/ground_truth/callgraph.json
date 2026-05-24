@@ -1,0 +1,30 @@
+{
+  "service.py": {
+    "edges": [
+      {
+        "caller": "handle",
+        "callee": "validate",
+        "line": 29,
+        "kind": "static"
+      },
+      {
+        "caller": "main",
+        "callee": "handle",
+        "line": 34,
+        "kind": "static"
+      },
+      {
+        "caller": "trace.wrapper",
+        "callee": "wraps",
+        "line": 14,
+        "kind": "dynamic"
+      },
+      {
+        "caller": "trace.wrapper",
+        "callee": "fn",
+        "line": 16,
+        "kind": "dynamic"
+      }
+    ]
+  }
+}

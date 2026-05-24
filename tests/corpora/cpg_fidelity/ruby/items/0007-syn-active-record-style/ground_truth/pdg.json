@@ -1,0 +1,62 @@
+{
+  "convention": "lower-bound",
+  "methods": [
+    {
+      "method": "initialize",
+      "edges": [
+        {
+          "var": "connection",
+          "use_line": 9,
+          "def_line": 8
+        }
+      ]
+    },
+    {
+      "method": "active_admins",
+      "edges": [
+        {
+          "var": "scope",
+          "use_line": 14,
+          "def_line": 14
+        },
+        {
+          "var": "scope",
+          "use_line": 15,
+          "def_line": 14
+        }
+      ]
+    },
+    {
+      "method": "base_scope",
+      "edges": [
+
+      ]
+    },
+    {
+      "method": "apply_scope",
+      "edges": [
+        {
+          "var": "name",
+          "use_line": 23,
+          "def_line": 22
+        },
+        {
+          "var": "scope",
+          "use_line": 23,
+          "def_line": 22
+        }
+      ]
+    },
+    {
+      "method": "find",
+      "edges": [
+        {
+          "var": "id",
+          "use_line": 27,
+          "def_line": 26
+        }
+      ]
+    }
+  ],
+  "ruby_version": "3.2.3"
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "cpg-fidelity/ast/v1",
+  "program_id": "0005-method-references",
+  "method": "javac -Xprint traversal; parse_success verified by javac (JDK 21, -source 17).",
+  "files": [
+    {
+      "file": "MethodRefs.java",
+      "parse_success": true,
+      "type_decls": [{"name": "MethodRefs", "kind": "CLASS"}],
+      "methods": [
+        {"name": "MethodRefs.shout(String)"},
+        {"name": "MethodRefs.run(Function,String)"},
+        {"name": "MethodRefs.make(Supplier)"},
+        {"name": "MethodRefs.main(String[])"}
+      ],
+      "member_references": ["MethodRefs::shout", "\"x\"::trim"]
+    }
+  ]
+}

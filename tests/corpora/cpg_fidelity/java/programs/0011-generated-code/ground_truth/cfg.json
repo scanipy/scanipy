@@ -1,0 +1,28 @@
+{
+  "schema": "cpg-fidelity/cfg/v1",
+  "program_id": "0011-generated-code",
+  "method": "Per-method intraprocedural CFG by-inspection. equals() has two guarded early returns.",
+  "methods": [
+    {"method": "corpus.cpg.p0011.UserDto.<init>(String,int)", "nodes": ["this.name = name", "this.age = age"], "edges": [[0, 1]]},
+    {"method": "corpus.cpg.p0011.UserDto.getName()", "nodes": ["return this.name"], "edges": []},
+    {"method": "corpus.cpg.p0011.UserDto.getAge()", "nodes": ["return this.age"], "edges": []},
+    {"method": "corpus.cpg.p0011.UserDto.equals(Object)", "nodes": [
+      "if (this == o)",
+      "return true",
+      "if (!(o instanceof UserDto))",
+      "return false",
+      "UserDto other = (UserDto) o",
+      "return this.age == other.age && this.name.equals(other.name)"
+    ], "edges": [[0, 1], [0, 2], [2, 3], [2, 4], [4, 5]]},
+    {"method": "corpus.cpg.p0011.UserDto.hashCode()", "nodes": [
+      "int result = 17",
+      "result = 31 * result + this.name.hashCode()",
+      "result = 31 * result + this.age",
+      "return result"
+    ], "edges": [[0, 1], [1, 2], [2, 3]]},
+    {"method": "corpus.cpg.p0011.UserDto.main(String[])", "nodes": [
+      "UserDto u = new UserDto(\"ann\", 30)",
+      "System.out.println(u.getName() + u.getAge())"
+    ], "edges": [[0, 1]]}
+  ]
+}

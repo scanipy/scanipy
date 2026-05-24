@@ -1,0 +1,57 @@
+{
+  "typed.py": {
+    "Adder.__init__": {
+      "nodes": [
+        "L13:AnnAssign"
+      ],
+      "edges": []
+    },
+    "Adder.add": {
+      "nodes": [
+        "L16:Return"
+      ],
+      "edges": []
+    },
+    "process": {
+      "nodes": [
+        "L20:AnnAssign",
+        "L21:AnnAssign",
+        "L22:For",
+        "L23:Assign",
+        "L24:Return"
+      ],
+      "edges": [
+        {
+          "from": "L20:AnnAssign",
+          "to": "L21:AnnAssign",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L21:AnnAssign",
+          "to": "L22:For",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L22:For",
+          "to": "L23:Assign",
+          "kind": "loop-body"
+        },
+        {
+          "from": "L23:Assign",
+          "to": "L22:For",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L23:Assign",
+          "to": "L22:For",
+          "kind": "loop-back"
+        },
+        {
+          "from": "L22:For",
+          "to": "L24:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    }
+  }
+}

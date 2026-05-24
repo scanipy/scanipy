@@ -1,0 +1,297 @@
+{
+  "ruby_version": "3.2.3",
+  "tree": {
+    "type": "SCOPE",
+    "line": 1,
+    "children": [
+      [
+
+      ],
+      null,
+      {
+        "type": "BLOCK",
+        "line": 7,
+        "children": [
+          {
+            "type": "CLASS",
+            "line": 7,
+            "children": [
+              {
+                "type": "COLON2",
+                "line": 7,
+                "children": [
+                  null,
+                  "String"
+                ]
+              },
+              null,
+              {
+                "type": "SCOPE",
+                "line": 7,
+                "children": [
+                  [
+
+                  ],
+                  null,
+                  {
+                    "type": "BLOCK",
+                    "line": 7,
+                    "children": [
+                      {
+                        "type": "BEGIN",
+                        "line": 7,
+                        "children": [
+                          null
+                        ]
+                      },
+                      {
+                        "type": "DEFN",
+                        "line": 8,
+                        "children": [
+                          "shout",
+                          {
+                            "type": "SCOPE",
+                            "line": 8,
+                            "children": [
+                              [
+
+                              ],
+                              {
+                                "type": "ARGS",
+                                "line": 8,
+                                "children": [
+                                  0,
+                                  null,
+                                  null,
+                                  null,
+                                  0,
+                                  null,
+                                  null,
+                                  null,
+                                  null,
+                                  null
+                                ]
+                              },
+                              {
+                                "type": "OPCALL",
+                                "line": 9,
+                                "children": [
+                                  {
+                                    "type": "VCALL",
+                                    "line": 9,
+                                    "children": [
+                                      "upcase_words"
+                                    ]
+                                  },
+                                  "+",
+                                  {
+                                    "type": "LIST",
+                                    "line": 9,
+                                    "children": [
+                                      {
+                                        "type": "STR",
+                                        "line": 9,
+                                        "children": [
+                                          "!"
+                                        ]
+                                      },
+                                      null
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "DEFN",
+                        "line": 12,
+                        "children": [
+                          "upcase_words",
+                          {
+                            "type": "SCOPE",
+                            "line": 12,
+                            "children": [
+                              [
+
+                              ],
+                              {
+                                "type": "ARGS",
+                                "line": 12,
+                                "children": [
+                                  0,
+                                  null,
+                                  null,
+                                  null,
+                                  0,
+                                  null,
+                                  null,
+                                  null,
+                                  null,
+                                  null
+                                ]
+                              },
+                              {
+                                "type": "CALL",
+                                "line": 13,
+                                "children": [
+                                  {
+                                    "type": "CALL",
+                                    "line": 13,
+                                    "children": [
+                                      {
+                                        "type": "FCALL",
+                                        "line": 13,
+                                        "children": [
+                                          "split",
+                                          {
+                                            "type": "LIST",
+                                            "line": 13,
+                                            "children": [
+                                              {
+                                                "type": "STR",
+                                                "line": 13,
+                                                "children": [
+                                                  " "
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      "map",
+                                      {
+                                        "type": "BLOCK_PASS",
+                                        "line": 13,
+                                        "children": [
+                                          null,
+                                          {
+                                            "type": "LIT",
+                                            "line": 13,
+                                            "children": [
+                                              "upcase"
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "join",
+                                  {
+                                    "type": "LIST",
+                                    "line": 13,
+                                    "children": [
+                                      {
+                                        "type": "STR",
+                                        "line": 13,
+                                        "children": [
+                                          " "
+                                        ]
+                                      },
+                                      null
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "CLASS",
+            "line": 17,
+            "children": [
+              {
+                "type": "COLON2",
+                "line": 17,
+                "children": [
+                  null,
+                  "Megaphone"
+                ]
+              },
+              null,
+              {
+                "type": "SCOPE",
+                "line": 17,
+                "children": [
+                  [
+
+                  ],
+                  null,
+                  {
+                    "type": "BLOCK",
+                    "line": 17,
+                    "children": [
+                      {
+                        "type": "BEGIN",
+                        "line": 17,
+                        "children": [
+                          null
+                        ]
+                      },
+                      {
+                        "type": "DEFN",
+                        "line": 18,
+                        "children": [
+                          "announce",
+                          {
+                            "type": "SCOPE",
+                            "line": 18,
+                            "children": [
+                              [
+                                "text"
+                              ],
+                              {
+                                "type": "ARGS",
+                                "line": 18,
+                                "children": [
+                                  1,
+                                  null,
+                                  null,
+                                  null,
+                                  0,
+                                  null,
+                                  null,
+                                  null,
+                                  null,
+                                  null
+                                ]
+                              },
+                              {
+                                "type": "CALL",
+                                "line": 19,
+                                "children": [
+                                  {
+                                    "type": "LVAR",
+                                    "line": 19,
+                                    "children": [
+                                      "text"
+                                    ]
+                                  },
+                                  "shout",
+                                  null
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

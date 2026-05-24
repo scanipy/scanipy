@@ -1,0 +1,177 @@
+corpus_id: CMP-CORP-CPG-js
+corpus_version: "0.1.0"
+corpus_digest: "sha256:8e15b23771fc31edc7d2b8be35c43791e7a290417e24f061493f03d78318721e"
+language: js-ts
+language_levels:
+  ecmascript: "2022"
+  typescript: "5.x"
+built_at: "2026-05-24T18:37:14Z"
+built_by: corpus-agent/CMP-CORP-CPG-js
+surface_counts:
+  js: 7
+  ts: 2
+ground_truth_method: "AST: @typescript-eslint/typescript-estree 6.18.0 -> one ESTree (JS+TS), canonical serialization (sorted keys, loc/range preserved). CFG: per-function statement CFG with branch/loop/await/yield edges. Call graph + PDG (v0.1.0): documented intraprocedural resolver in pipeline/extract_ground_truth.mjs; dynamic/HOF/type-informed sites tagged `dynamic` and EXCLUDED from gate precision/recall. v1.0.0 replaces with Jelly 1.4 + tsc --noEmit --declaration (CLAR-CORP-12). See README.md §3."
+programs:
+  - id: "0001-commonjs-hof"
+    source_url: "local:synthesized/CMP-CORP-CPG-js/0001-commonjs-hof"
+    commit_sha: "sha256:c9d1a6dde856eb8bdbcc3a5cfec59a24cfb367ed475c2923dd3c5e3a07fcef43"
+    sha256_source_tree: "sha256:c9d1a6dde856eb8bdbcc3a5cfec59a24cfb367ed475c2923dd3c5e3a07fcef43"
+    sha256_ground_truth: "sha256:bcabc98f55fe604e27f1b8b9e81e9f8098962a01d62ebf07fe70dfa840a5ded0"
+    license: Apache-2.0
+    surface: js
+    module_system: commonjs
+    synthetic: true
+    loc: 34
+    construct_coverage:
+      - higher-order-functions
+      - module-system-commonjs
+      - node-builtins
+    extraction_tools:
+      node: "24.13.0"
+      typescript_eslint: "6.18.0"
+      jelly: null
+      tsc: null
+  - id: "0002-esm-async"
+    source_url: "local:synthesized/CMP-CORP-CPG-js/0002-esm-async"
+    commit_sha: "sha256:463d9045edbd20148eaf1ab2c4d9c5419c51458a26a622e29965b47b3ba8c6c4"
+    sha256_source_tree: "sha256:463d9045edbd20148eaf1ab2c4d9c5419c51458a26a622e29965b47b3ba8c6c4"
+    sha256_ground_truth: "sha256:aaa169f0b3f4592fcc7ba4a5c44e8adb24cc9f719f821c8cadd80a31e37cab46"
+    license: Apache-2.0
+    surface: js
+    module_system: esm
+    synthetic: true
+    loc: 26
+    construct_coverage:
+      - async-await
+      - module-system-esm
+    extraction_tools:
+      node: "24.13.0"
+      typescript_eslint: "6.18.0"
+      jelly: null
+      tsc: null
+  - id: "0003-prototype-this"
+    source_url: "local:synthesized/CMP-CORP-CPG-js/0003-prototype-this"
+    commit_sha: "sha256:a906e1cb527373d86681d155f3194c3e5cea966fc1cf5541d057d97ccce8d8ab"
+    sha256_source_tree: "sha256:a906e1cb527373d86681d155f3194c3e5cea966fc1cf5541d057d97ccce8d8ab"
+    sha256_ground_truth: "sha256:110b2fe06b416f0cd2e309e29e502cdb9c9ee72e49273908986f0fe7e25b78f1"
+    license: Apache-2.0
+    surface: js
+    module_system: commonjs
+    synthetic: true
+    loc: 33
+    construct_coverage:
+      - prototype-mutation
+      - this-binding
+    extraction_tools:
+      node: "24.13.0"
+      typescript_eslint: "6.18.0"
+      jelly: null
+      tsc: null
+  - id: "0004-generators-builtins"
+    source_url: "local:synthesized/CMP-CORP-CPG-js/0004-generators-builtins"
+    commit_sha: "sha256:e8db05889a59a680610597598b715d4ea1c8b5acef016da85eed3fdabd6f172c"
+    sha256_source_tree: "sha256:e8db05889a59a680610597598b715d4ea1c8b5acef016da85eed3fdabd6f172c"
+    sha256_ground_truth: "sha256:cf44f82e880d804708d76ae9ebe2bdef538369eff52200c2f9641fd7e9109395"
+    license: Apache-2.0
+    surface: js
+    module_system: esm
+    synthetic: true
+    loc: 28
+    construct_coverage:
+      - generators
+      - module-system-esm
+      - node-builtins
+    extraction_tools:
+      node: "24.13.0"
+      typescript_eslint: "6.18.0"
+      jelly: null
+      tsc: null
+  - id: "0005-amd-umd-bundled"
+    source_url: "local:synthesized/CMP-CORP-CPG-js/0005-amd-umd-bundled"
+    commit_sha: "sha256:76eed867700acf54123545e6b1d88708b58dbc00d90921535ebc3f43f03df86e"
+    sha256_source_tree: "sha256:76eed867700acf54123545e6b1d88708b58dbc00d90921535ebc3f43f03df86e"
+    sha256_ground_truth: "sha256:d0480cae155b5ebae2142dc88b21bd6d4279ec951e3547d65d35566048469270"
+    license: Apache-2.0
+    surface: js
+    module_system: umd
+    synthetic: true
+    loc: 39
+    construct_coverage:
+      - bundled-transpiled
+      - module-system-amd-umd
+    extraction_tools:
+      node: "24.13.0"
+      typescript_eslint: "6.18.0"
+      jelly: null
+      tsc: null
+  - id: "0101-ts-type-dispatch"
+    source_url: "local:synthesized/CMP-CORP-CPG-js/0101-ts-type-dispatch"
+    commit_sha: "sha256:eaa5a28b5da5d076dba929e19e74b3cbe2963fff7394dae498099fab8113e034"
+    sha256_source_tree: "sha256:eaa5a28b5da5d076dba929e19e74b3cbe2963fff7394dae498099fab8113e034"
+    sha256_ground_truth: "sha256:db48bb12822286f5b4d44701aaae480a030d7f5da41025e783e3f027c22a5ea8"
+    license: Apache-2.0
+    surface: ts
+    module_system: esm
+    synthetic: true
+    loc: 30
+    construct_coverage:
+      - module-system-esm
+      - type-informed-dispatch
+    extraction_tools:
+      node: "24.13.0"
+      typescript_eslint: "6.18.0"
+      jelly: null
+      tsc: null
+  - id: "0102-tsx-decorators"
+    source_url: "local:synthesized/CMP-CORP-CPG-js/0102-tsx-decorators"
+    commit_sha: "sha256:3cc4850851594a6e5cb5b7afce8b53ab7c999d6c4b3c0644b1640f1b73695ccb"
+    sha256_source_tree: "sha256:3cc4850851594a6e5cb5b7afce8b53ab7c999d6c4b3c0644b1640f1b73695ccb"
+    sha256_ground_truth: "sha256:c3a1bb179668d89b637c819bb3f97a58faaada0fb26d16c6ed982234bc9c0fb8"
+    license: Apache-2.0
+    surface: ts
+    module_system: esm
+    synthetic: true
+    loc: 21
+    construct_coverage:
+      - decorators-experimental
+      - jsx-tsx
+    extraction_tools:
+      node: "24.13.0"
+      typescript_eslint: "6.18.0"
+      jelly: null
+      tsc: null
+  - id: "0201-escape-string-regexp"
+    source_url: "https://github.com/sindresorhus/escape-string-regexp"
+    commit_sha: cbc42403142c96923b482604e1f3d627b1956aff
+    sha256_source_tree: "sha256:0c61dcfe9da2df212af762288b6227e2d9c8bb188fd55b5e0c2f127ec7723ff5"
+    sha256_ground_truth: "sha256:6f9f225d9c86f254bd47752910c4c1d39b7ba4107d7317b5a626a989ee958e47"
+    license: MIT
+    surface: js
+    module_system: esm
+    synthetic: false
+    loc: 12
+    construct_coverage:
+      - module-system-esm
+    extraction_tools:
+      node: "24.13.0"
+      typescript_eslint: "6.18.0"
+      jelly: null
+      tsc: null
+  - id: "0202-is-number"
+    source_url: "https://github.com/jonschlinkert/is-number"
+    commit_sha: "98e8ff1da1a89f93d1397a24d7413ed15421c139"
+    sha256_source_tree: "sha256:c1656e2b0424a358e2905a95d1cd05ffc1876a33d47a330628bc33407f8e9538"
+    sha256_ground_truth: "sha256:be2440f37a647f9de1e7aa5926b9efe6a4d4af399ae4eb0fb85c5e463f4ff5b9"
+    license: MIT
+    surface: js
+    module_system: commonjs
+    synthetic: false
+    loc: 19
+    construct_coverage:
+      - module-system-commonjs
+      - node-builtins
+    extraction_tools:
+      node: "24.13.0"
+      typescript_eslint: "6.18.0"
+      jelly: null
+      tsc: null

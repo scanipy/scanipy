@@ -1,0 +1,36 @@
+{
+  "app.py": {
+    "use": {
+      "edges": [
+        {
+          "from_line": 12,
+          "to_line": 13,
+          "kind": "data",
+          "var": "value"
+        }
+      ]
+    }
+  },
+  "helpers.py": {
+    "helper": {
+      "edges": [
+        {
+          "from_line": 4,
+          "to_line": 5,
+          "kind": "data",
+          "var": "x"
+        }
+      ]
+    },
+    "other": {
+      "edges": [
+        {
+          "from_line": 8,
+          "to_line": 9,
+          "kind": "data",
+          "var": "x"
+        }
+      ]
+    }
+  }
+}

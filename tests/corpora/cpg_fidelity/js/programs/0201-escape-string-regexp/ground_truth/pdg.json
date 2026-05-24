@@ -1,0 +1,8 @@
+{
+  "index.js": [
+    {
+      "edges": [],
+      "function": "index.js::escapeStringRegexp@1"
+    }
+  ]
+}
