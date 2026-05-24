@@ -1,0 +1,16 @@
+source_url: https://github.com/jonschlinkert/is-number
+commit_sha: 98e8ff1da1a89f93d1397a24d7413ed15421c139
+license: MIT
+surface: js
+module_system: commonjs
+synthetic: false
+loc: 19
+package_version: 7.0.0
+path_in_source: index.js
+construct_coverage:
+  - module-system-commonjs
+  - node-builtins
+notes: |
+  SOURCED real OSS (jonschlinkert/is-number @ 98e8ff1, MIT). CommonJS
+  module.exports of a single predicate; calls Number.isFinite / isFinite
+  (node-builtins / global FFI boundary). LICENSE copied into source/.

@@ -1,0 +1,12 @@
+{
+  "schema": "cpg-fidelity/callgraph/v1",
+  "program_id": "0011-generated-code",
+  "notes": "Simulated generated DTO. equals() calls String.equals (library); hashCode() calls String.hashCode (library); main constructs UserDto and calls getName/getAge. In-corpus edges are the getter calls and the constructor; JDK calls tagged library=true.",
+  "edges": [
+    {"caller_method": "corpus.cpg.p0011.UserDto.equals(Object)", "callee_method": "java.lang.String.equals(Object)", "line": 39, "kind": "virtual", "library": true, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0011.UserDto.hashCode()", "callee_method": "java.lang.String.hashCode()", "line": 45, "kind": "virtual", "library": true, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0011.UserDto.main(String[])", "callee_method": "corpus.cpg.p0011.UserDto.<init>(String,int)", "line": 51, "kind": "special", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0011.UserDto.main(String[])", "callee_method": "corpus.cpg.p0011.UserDto.getName()", "line": 52, "kind": "virtual", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0011.UserDto.main(String[])", "callee_method": "corpus.cpg.p0011.UserDto.getAge()", "line": 52, "kind": "virtual", "library": false, "over_approximate": false}
+  ]
+}

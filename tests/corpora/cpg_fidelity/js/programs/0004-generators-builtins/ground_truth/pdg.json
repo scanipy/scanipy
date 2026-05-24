@@ -1,0 +1,59 @@
+{
+  "index.mjs": [
+    {
+      "edges": [],
+      "function": "index.mjs::hashOf@5"
+    },
+    {
+      "edges": [
+        {
+          "def_line": 10,
+          "kind": "data",
+          "use_line": 11,
+          "var": "part"
+        },
+        {
+          "def_line": 10,
+          "kind": "data",
+          "use_line": 12,
+          "var": "part"
+        }
+      ],
+      "function": "index.mjs::tokenize@9"
+    },
+    {
+      "edges": [
+        {
+          "def_line": 18,
+          "kind": "data",
+          "use_line": 19,
+          "var": "token"
+        }
+      ],
+      "function": "index.mjs::hashed@17"
+    },
+    {
+      "edges": [
+        {
+          "def_line": 24,
+          "kind": "data",
+          "use_line": 26,
+          "var": "out"
+        },
+        {
+          "def_line": 25,
+          "kind": "data",
+          "use_line": 26,
+          "var": "h"
+        },
+        {
+          "def_line": 24,
+          "kind": "data",
+          "use_line": 28,
+          "var": "out"
+        }
+      ],
+      "function": "index.mjs::digestStream@23"
+    }
+  ]
+}

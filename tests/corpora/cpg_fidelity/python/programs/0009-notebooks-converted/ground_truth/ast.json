@@ -1,0 +1,303 @@
+{
+  "analysis.py": {
+    "_type": "Module",
+    "body": [
+      {
+        "_type": "Expr",
+        "value": {
+          "_type": "Constant",
+          "value": "Notebook-converted coverage: .py derived from a .ipynb (irregular structure).\n\nConstruct under test: parse-success on jupyter-export structure (DOC \u00a74.3\n`notebooks-converted`) -- `# In[N]:` cell markers, top-level expression statements,\nand re-binding of the same name across cells. This is the parse-success stressor;\nits call edges (`step_two -> step_one`) are static.\n",
+          "kind": null,
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 7,
+          "end_col_offset": 3
+        },
+        "lineno": 1,
+        "col_offset": 0,
+        "end_lineno": 7,
+        "end_col_offset": 3
+      },
+      {
+        "_type": "FunctionDef",
+        "name": "step_one",
+        "args": {
+          "_type": "arguments",
+          "posonlyargs": [],
+          "args": [
+            {
+              "_type": "arg",
+              "arg": "x",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 14,
+              "col_offset": 13,
+              "end_lineno": 14,
+              "end_col_offset": 14
+            }
+          ],
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": null,
+          "defaults": []
+        },
+        "body": [
+          {
+            "_type": "Assign",
+            "targets": [
+              {
+                "_type": "Name",
+                "id": "y",
+                "ctx": {
+                  "_type": "Store"
+                },
+                "lineno": 15,
+                "col_offset": 4,
+                "end_lineno": 15,
+                "end_col_offset": 5
+              }
+            ],
+            "value": {
+              "_type": "BinOp",
+              "left": {
+                "_type": "Name",
+                "id": "x",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 15,
+                "col_offset": 8,
+                "end_lineno": 15,
+                "end_col_offset": 9
+              },
+              "op": {
+                "_type": "Add"
+              },
+              "right": {
+                "_type": "Constant",
+                "value": 1,
+                "kind": null,
+                "lineno": 15,
+                "col_offset": 12,
+                "end_lineno": 15,
+                "end_col_offset": 13
+              },
+              "lineno": 15,
+              "col_offset": 8,
+              "end_lineno": 15,
+              "end_col_offset": 13
+            },
+            "type_comment": null,
+            "lineno": 15,
+            "col_offset": 4,
+            "end_lineno": 15,
+            "end_col_offset": 13
+          },
+          {
+            "_type": "Return",
+            "value": {
+              "_type": "Name",
+              "id": "y",
+              "ctx": {
+                "_type": "Load"
+              },
+              "lineno": 16,
+              "col_offset": 11,
+              "end_lineno": 16,
+              "end_col_offset": 12
+            },
+            "lineno": 16,
+            "col_offset": 4,
+            "end_lineno": 16,
+            "end_col_offset": 12
+          }
+        ],
+        "decorator_list": [],
+        "returns": null,
+        "type_comment": null,
+        "type_params": [],
+        "lineno": 14,
+        "col_offset": 0,
+        "end_lineno": 16,
+        "end_col_offset": 12
+      },
+      {
+        "_type": "FunctionDef",
+        "name": "step_two",
+        "args": {
+          "_type": "arguments",
+          "posonlyargs": [],
+          "args": [
+            {
+              "_type": "arg",
+              "arg": "x",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 22,
+              "col_offset": 13,
+              "end_lineno": 22,
+              "end_col_offset": 14
+            }
+          ],
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": null,
+          "defaults": []
+        },
+        "body": [
+          {
+            "_type": "Assign",
+            "targets": [
+              {
+                "_type": "Name",
+                "id": "z",
+                "ctx": {
+                  "_type": "Store"
+                },
+                "lineno": 23,
+                "col_offset": 4,
+                "end_lineno": 23,
+                "end_col_offset": 5
+              }
+            ],
+            "value": {
+              "_type": "Call",
+              "func": {
+                "_type": "Name",
+                "id": "step_one",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 23,
+                "col_offset": 8,
+                "end_lineno": 23,
+                "end_col_offset": 16
+              },
+              "args": [
+                {
+                  "_type": "Name",
+                  "id": "x",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 23,
+                  "col_offset": 17,
+                  "end_lineno": 23,
+                  "end_col_offset": 18
+                }
+              ],
+              "keywords": [],
+              "lineno": 23,
+              "col_offset": 8,
+              "end_lineno": 23,
+              "end_col_offset": 19
+            },
+            "type_comment": null,
+            "lineno": 23,
+            "col_offset": 4,
+            "end_lineno": 23,
+            "end_col_offset": 19
+          },
+          {
+            "_type": "Return",
+            "value": {
+              "_type": "Name",
+              "id": "z",
+              "ctx": {
+                "_type": "Load"
+              },
+              "lineno": 24,
+              "col_offset": 11,
+              "end_lineno": 24,
+              "end_col_offset": 12
+            },
+            "lineno": 24,
+            "col_offset": 4,
+            "end_lineno": 24,
+            "end_col_offset": 12
+          }
+        ],
+        "decorator_list": [],
+        "returns": null,
+        "type_comment": null,
+        "type_params": [],
+        "lineno": 22,
+        "col_offset": 0,
+        "end_lineno": 24,
+        "end_col_offset": 12
+      },
+      {
+        "_type": "Assign",
+        "targets": [
+          {
+            "_type": "Name",
+            "id": "result",
+            "ctx": {
+              "_type": "Store"
+            },
+            "lineno": 30,
+            "col_offset": 0,
+            "end_lineno": 30,
+            "end_col_offset": 6
+          }
+        ],
+        "value": {
+          "_type": "Call",
+          "func": {
+            "_type": "Name",
+            "id": "step_two",
+            "ctx": {
+              "_type": "Load"
+            },
+            "lineno": 30,
+            "col_offset": 9,
+            "end_lineno": 30,
+            "end_col_offset": 17
+          },
+          "args": [
+            {
+              "_type": "Constant",
+              "value": 10,
+              "kind": null,
+              "lineno": 30,
+              "col_offset": 18,
+              "end_lineno": 30,
+              "end_col_offset": 20
+            }
+          ],
+          "keywords": [],
+          "lineno": 30,
+          "col_offset": 9,
+          "end_lineno": 30,
+          "end_col_offset": 21
+        },
+        "type_comment": null,
+        "lineno": 30,
+        "col_offset": 0,
+        "end_lineno": 30,
+        "end_col_offset": 21
+      },
+      {
+        "_type": "Expr",
+        "value": {
+          "_type": "Name",
+          "id": "result",
+          "ctx": {
+            "_type": "Load"
+          },
+          "lineno": 31,
+          "col_offset": 0,
+          "end_lineno": 31,
+          "end_col_offset": 6
+        },
+        "lineno": 31,
+        "col_offset": 0,
+        "end_lineno": 31,
+        "end_col_offset": 6
+      }
+    ],
+    "type_ignores": []
+  }
+}

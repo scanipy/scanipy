@@ -1,0 +1,13 @@
+{
+  "schema": "cpg-fidelity/pdg/v1",
+  "program_id": "0009-annotation-heavy",
+  "method": "Intraprocedural PDG (data) by-inspection.",
+  "methods": [
+    {"method": "corpus.cpg.p0009.Annotated$Service.compute(String)", "dependences": [
+      {"from": "param key", "to": "return key.length()", "type": "data", "var": "key"}
+    ]},
+    {"method": "corpus.cpg.p0009.Annotated.main(String[])", "dependences": [
+      {"from": "Service s = new Service()", "to": "System.out.println(s.compute(\"hello\"))", "type": "data", "var": "s"}
+    ]}
+  ]
+}

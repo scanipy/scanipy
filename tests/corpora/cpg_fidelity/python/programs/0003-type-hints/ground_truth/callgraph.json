@@ -1,0 +1,18 @@
+{
+  "typed.py": {
+    "edges": [
+      {
+        "caller": "process",
+        "callee": "Adder",
+        "line": 20,
+        "kind": "dynamic"
+      },
+      {
+        "caller": "process",
+        "callee": "add",
+        "line": 23,
+        "kind": "static"
+      }
+    ]
+  }
+}

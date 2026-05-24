@@ -1,0 +1,9 @@
+source_url: local:programs/0006-inner-class/source
+commit_sha: synthetic
+license: Apache-2.0
+language_level: 17
+synthetic: true
+authored_for: CMP-CORP-CPG-java
+construct_coverage:
+  - inner-class
+loc: 39

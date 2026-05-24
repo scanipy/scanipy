@@ -1,0 +1,149 @@
+{
+  "index.ts": [
+    {
+      "edges": [],
+      "function": "index.ts::constructor@8",
+      "nodes": [
+        {
+          "id": "index.ts::constructor@8#entry",
+          "kind": "Entry",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.ts::area@9#entry",
+          "kind": "seq",
+          "to": "index.ts::area@9#n0"
+        }
+      ],
+      "function": "index.ts::area@9",
+      "nodes": [
+        {
+          "id": "index.ts::area@9#entry",
+          "kind": "Entry",
+          "line": 9
+        },
+        {
+          "id": "index.ts::area@9#n0",
+          "kind": "ReturnStatement",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "edges": [],
+      "function": "index.ts::constructor@15",
+      "nodes": [
+        {
+          "id": "index.ts::constructor@15#entry",
+          "kind": "Entry",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.ts::area@16#entry",
+          "kind": "seq",
+          "to": "index.ts::area@16#n0"
+        }
+      ],
+      "function": "index.ts::area@16",
+      "nodes": [
+        {
+          "id": "index.ts::area@16#entry",
+          "kind": "Entry",
+          "line": 16
+        },
+        {
+          "id": "index.ts::area@16#n0",
+          "kind": "ReturnStatement",
+          "line": 17
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.ts::totalArea@21#entry",
+          "kind": "seq",
+          "to": "index.ts::totalArea@21#n0"
+        },
+        {
+          "from": "index.ts::totalArea@21#n0",
+          "kind": "seq",
+          "to": "index.ts::totalArea@21#n1"
+        },
+        {
+          "from": "index.ts::totalArea@21#n1",
+          "kind": "seq",
+          "to": "index.ts::totalArea@21#n2"
+        },
+        {
+          "from": "index.ts::totalArea@21#n2",
+          "kind": "loop-back",
+          "to": "index.ts::totalArea@21#n1"
+        },
+        {
+          "from": "index.ts::totalArea@21#n1",
+          "kind": "seq",
+          "to": "index.ts::totalArea@21#n3"
+        }
+      ],
+      "function": "index.ts::totalArea@21",
+      "nodes": [
+        {
+          "id": "index.ts::totalArea@21#entry",
+          "kind": "Entry",
+          "line": 21
+        },
+        {
+          "id": "index.ts::totalArea@21#n0",
+          "kind": "VariableDeclaration",
+          "line": 22
+        },
+        {
+          "id": "index.ts::totalArea@21#n1",
+          "kind": "ForOfStatement",
+          "line": 23
+        },
+        {
+          "id": "index.ts::totalArea@21#n2",
+          "kind": "ExpressionStatement",
+          "line": 25
+        },
+        {
+          "id": "index.ts::totalArea@21#n3",
+          "kind": "ReturnStatement",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.ts::makeShapes@30#entry",
+          "kind": "seq",
+          "to": "index.ts::makeShapes@30#n0"
+        }
+      ],
+      "function": "index.ts::makeShapes@30",
+      "nodes": [
+        {
+          "id": "index.ts::makeShapes@30#entry",
+          "kind": "Entry",
+          "line": 30
+        },
+        {
+          "id": "index.ts::makeShapes@30#n0",
+          "kind": "ReturnStatement",
+          "line": 31
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "index.js": [
+    {
+      "callee": null,
+      "caller": "index.js::escapeStringRegexp@1",
+      "line": 3,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.js::escapeStringRegexp@1",
+      "line": 8,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.js::escapeStringRegexp@1",
+      "line": 8,
+      "tag": "dynamic"
+    }
+  ]
+}

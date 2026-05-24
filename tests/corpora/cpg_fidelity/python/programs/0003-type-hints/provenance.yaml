@@ -1,0 +1,9 @@
+commit_sha: sha256:3ce463202d37c159ba3ea1bcd2b998480ac91b4a516eefe263c6b5995e67b501
+construct_coverage:
+  - type-hints
+license: Apache-2.0
+path_in_source: source/
+python_minor: '3.10'
+sha256_source_tree: sha256:3ce463202d37c159ba3ea1bcd2b998480ac91b4a516eefe263c6b5995e67b501
+source_url: local:programs/0003-type-hints/source
+synthetic: true

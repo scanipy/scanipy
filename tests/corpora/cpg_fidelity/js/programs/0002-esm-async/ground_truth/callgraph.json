@@ -1,0 +1,46 @@
+{
+  "index.mjs": [
+    {
+      "callee": null,
+      "caller": "index.mjs::delay@3",
+      "line": 4,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.mjs::<anonymous>@4",
+      "line": 4,
+      "tag": "dynamic"
+    },
+    {
+      "callee": "delay",
+      "caller": "index.mjs::fetchValue@7",
+      "line": 8,
+      "tag": "static"
+    },
+    {
+      "callee": "fetchValue",
+      "caller": "index.mjs::fetchAll@12",
+      "line": 15,
+      "tag": "static"
+    },
+    {
+      "callee": null,
+      "caller": "index.mjs::fetchAll@12",
+      "line": 16,
+      "tag": "dynamic"
+    },
+    {
+      "callee": "fetchAll",
+      "caller": "index.mjs::run@21",
+      "line": 22,
+      "tag": "static"
+    },
+    {
+      "callee": null,
+      "caller": "index.mjs::run@21",
+      "line": 23,
+      "tag": "dynamic"
+    }
+  ]
+}
