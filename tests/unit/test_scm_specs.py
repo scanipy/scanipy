@@ -682,6 +682,37 @@ def test_scm_05a_provider_default_policies() -> None:
 
 
 @pytest.mark.unit
+def test_scm_05a_honor_secondary_false_passes_through() -> None:
+    """honor_secondary=False: a secondary-classed response is returned, not retried (DOC §3.1)."""
+    from integrations.scm._http import RetryPolicy, classify_github
+
+    policy = RetryPolicy(max_attempts=4, honor_secondary=False)
+    secondary = _FakeResponse(
+        status_code=403,
+        headers={"Retry-After": "5"},
+        text="You have exceeded a secondary rate limit. Please wait.",
+    )
+    assert classify_github(secondary).is_secondary is True
+    outcome, sleeps = _run_retry(policy=policy, classify=classify_github, responses=[secondary])
+    assert outcome is secondary  # passed through, not retried
+    assert sleeps == []
+
+
+@pytest.mark.unit
+def test_scm_05a_honor_429_false_passes_through() -> None:
+    """honor_429=False: a primary 429 is returned, not retried (DOC §3.1)."""
+    from integrations.scm._http import RetryPolicy, classify_gitlab
+
+    policy = RetryPolicy(max_attempts=4, honor_429=False)
+    limited = _FakeResponse(status_code=429, headers={"Retry-After": "3"})
+    v = classify_gitlab(limited)
+    assert v.is_rate_limited is True and v.is_secondary is False
+    outcome, sleeps = _run_retry(policy=policy, classify=classify_gitlab, responses=[limited])
+    assert outcome is limited  # passed through, not retried
+    assert sleeps == []
+
+
+@pytest.mark.unit
 def test_scm_05a_classify_not_rate_limited_on_2xx() -> None:
     """Every classify_* returns is_rate_limited=False on a clean 200."""
     from integrations.scm._http import (
@@ -730,8 +761,6 @@ def test_scm_05a_honor_retry_after_false_falls_back_to_curve() -> None:
 @pytest.mark.unit
 def test_scm_05a_equal_jitter_bounds() -> None:
     """JitterMode.EQUAL yields sleeps in [base/2, base]."""
-    import random
-
     from integrations.scm._http import JitterMode, RetryPolicy, classify_gitlab
 
     policy = RetryPolicy(
@@ -745,7 +774,7 @@ def test_scm_05a_equal_jitter_bounds() -> None:
         policy=policy,
         classify=classify_gitlab,
         responses=[limited],
-        jitter_seed=random.randint(1, 99),
+        jitter_seed=42,  # fixed seed, consistent with the rest of the suite
     )
     for slept in sleeps:
         assert 2.0 <= slept <= 4.0  # base/2 .. base
