@@ -1,0 +1,10 @@
+commit_sha: sha256:d2f22fae8f29e424976d386ee1cd3d4feeb5cbd1b4100fb0062379e84cb7c974
+construct_coverage:
+  - duck-typing-callsite
+  - dynamic-dispatch
+license: Apache-2.0
+path_in_source: source/
+python_minor: '3.10'
+sha256_source_tree: sha256:d2f22fae8f29e424976d386ee1cd3d4feeb5cbd1b4100fb0062379e84cb7c974
+source_url: local:programs/0005-dynamic-dispatch/source
+synthetic: true

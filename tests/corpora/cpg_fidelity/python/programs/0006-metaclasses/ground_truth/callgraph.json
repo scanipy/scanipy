@@ -1,0 +1,24 @@
+{
+  "meta.py": {
+    "edges": [
+      {
+        "caller": "PluginMeta.__new__",
+        "callee": "__new__",
+        "line": 13,
+        "kind": "dynamic"
+      },
+      {
+        "caller": "PluginMeta.__new__",
+        "callee": "super",
+        "line": 13,
+        "kind": "dynamic"
+      },
+      {
+        "caller": "make",
+        "callee": "cls",
+        "line": 35,
+        "kind": "dynamic"
+      }
+    ]
+  }
+}

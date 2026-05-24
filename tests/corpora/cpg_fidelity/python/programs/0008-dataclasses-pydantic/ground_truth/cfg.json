@@ -1,0 +1,29 @@
+{
+  "models.py": {
+    "Point.norm": {
+      "nodes": [
+        "L21:Return"
+      ],
+      "edges": []
+    },
+    "build": {
+      "nodes": [
+        "L25:Assign",
+        "L26:Assign",
+        "L27:Return"
+      ],
+      "edges": [
+        {
+          "from": "L25:Assign",
+          "to": "L26:Assign",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L26:Assign",
+          "to": "L27:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    }
+  }
+}

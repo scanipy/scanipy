@@ -1,0 +1,265 @@
+{
+  "duck.py": {
+    "_type": "Module",
+    "body": [
+      {
+        "_type": "Expr",
+        "value": {
+          "_type": "Constant",
+          "value": "Duck-typing coverage: no type hints; assignment-based resolution only.\n\nConstruct under test: tests assignment-based call resolution without static type\nsignals (DOC \u00a74.3 `duck-typing-callsite`). `consume -> Reader.read` is a static\nedge resolvable from the local construction `r = Reader()`. The parameter-driven\n`obj.read()` call is `dynamic` (receiver type unknown) and excluded from metrics.\n",
+          "kind": null,
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 7,
+          "end_col_offset": 3
+        },
+        "lineno": 1,
+        "col_offset": 0,
+        "end_lineno": 7,
+        "end_col_offset": 3
+      },
+      {
+        "_type": "ClassDef",
+        "name": "Reader",
+        "bases": [],
+        "keywords": [],
+        "body": [
+          {
+            "_type": "FunctionDef",
+            "name": "read",
+            "args": {
+              "_type": "arguments",
+              "posonlyargs": [],
+              "args": [
+                {
+                  "_type": "arg",
+                  "arg": "self",
+                  "annotation": null,
+                  "type_comment": null,
+                  "lineno": 11,
+                  "col_offset": 13,
+                  "end_lineno": 11,
+                  "end_col_offset": 17
+                }
+              ],
+              "vararg": null,
+              "kwonlyargs": [],
+              "kw_defaults": [],
+              "kwarg": null,
+              "defaults": []
+            },
+            "body": [
+              {
+                "_type": "Return",
+                "value": {
+                  "_type": "Constant",
+                  "value": 1,
+                  "kind": null,
+                  "lineno": 12,
+                  "col_offset": 15,
+                  "end_lineno": 12,
+                  "end_col_offset": 16
+                },
+                "lineno": 12,
+                "col_offset": 8,
+                "end_lineno": 12,
+                "end_col_offset": 16
+              }
+            ],
+            "decorator_list": [],
+            "returns": null,
+            "type_comment": null,
+            "type_params": [],
+            "lineno": 11,
+            "col_offset": 4,
+            "end_lineno": 12,
+            "end_col_offset": 16
+          }
+        ],
+        "decorator_list": [],
+        "type_params": [],
+        "lineno": 10,
+        "col_offset": 0,
+        "end_lineno": 12,
+        "end_col_offset": 16
+      },
+      {
+        "_type": "FunctionDef",
+        "name": "consume",
+        "args": {
+          "_type": "arguments",
+          "posonlyargs": [],
+          "args": [],
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": null,
+          "defaults": []
+        },
+        "body": [
+          {
+            "_type": "Assign",
+            "targets": [
+              {
+                "_type": "Name",
+                "id": "r",
+                "ctx": {
+                  "_type": "Store"
+                },
+                "lineno": 16,
+                "col_offset": 4,
+                "end_lineno": 16,
+                "end_col_offset": 5
+              }
+            ],
+            "value": {
+              "_type": "Call",
+              "func": {
+                "_type": "Name",
+                "id": "Reader",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 16,
+                "col_offset": 8,
+                "end_lineno": 16,
+                "end_col_offset": 14
+              },
+              "args": [],
+              "keywords": [],
+              "lineno": 16,
+              "col_offset": 8,
+              "end_lineno": 16,
+              "end_col_offset": 16
+            },
+            "type_comment": null,
+            "lineno": 16,
+            "col_offset": 4,
+            "end_lineno": 16,
+            "end_col_offset": 16
+          },
+          {
+            "_type": "Return",
+            "value": {
+              "_type": "Call",
+              "func": {
+                "_type": "Attribute",
+                "value": {
+                  "_type": "Name",
+                  "id": "r",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 17,
+                  "col_offset": 11,
+                  "end_lineno": 17,
+                  "end_col_offset": 12
+                },
+                "attr": "read",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 17,
+                "col_offset": 11,
+                "end_lineno": 17,
+                "end_col_offset": 17
+              },
+              "args": [],
+              "keywords": [],
+              "lineno": 17,
+              "col_offset": 11,
+              "end_lineno": 17,
+              "end_col_offset": 19
+            },
+            "lineno": 17,
+            "col_offset": 4,
+            "end_lineno": 17,
+            "end_col_offset": 19
+          }
+        ],
+        "decorator_list": [],
+        "returns": null,
+        "type_comment": null,
+        "type_params": [],
+        "lineno": 15,
+        "col_offset": 0,
+        "end_lineno": 17,
+        "end_col_offset": 19
+      },
+      {
+        "_type": "FunctionDef",
+        "name": "consume_unknown",
+        "args": {
+          "_type": "arguments",
+          "posonlyargs": [],
+          "args": [
+            {
+              "_type": "arg",
+              "arg": "obj",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 20,
+              "col_offset": 20,
+              "end_lineno": 20,
+              "end_col_offset": 23
+            }
+          ],
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": null,
+          "defaults": []
+        },
+        "body": [
+          {
+            "_type": "Return",
+            "value": {
+              "_type": "Call",
+              "func": {
+                "_type": "Attribute",
+                "value": {
+                  "_type": "Name",
+                  "id": "obj",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 21,
+                  "col_offset": 11,
+                  "end_lineno": 21,
+                  "end_col_offset": 14
+                },
+                "attr": "read",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 21,
+                "col_offset": 11,
+                "end_lineno": 21,
+                "end_col_offset": 19
+              },
+              "args": [],
+              "keywords": [],
+              "lineno": 21,
+              "col_offset": 11,
+              "end_lineno": 21,
+              "end_col_offset": 21
+            },
+            "lineno": 21,
+            "col_offset": 4,
+            "end_lineno": 21,
+            "end_col_offset": 21
+          }
+        ],
+        "decorator_list": [],
+        "returns": null,
+        "type_comment": null,
+        "type_params": [],
+        "lineno": 20,
+        "col_offset": 0,
+        "end_lineno": 21,
+        "end_col_offset": 21
+      }
+    ],
+    "type_ignores": []
+  }
+}

@@ -1,0 +1,531 @@
+{
+  "models.py": {
+    "_type": "Module",
+    "body": [
+      {
+        "_type": "Expr",
+        "value": {
+          "_type": "Constant",
+          "value": "Dataclass coverage: auto-generated __init__ / synthetic methods.\n\nConstruct under test: `@dataclass` synthesizes `__init__`/`__eq__` that have no\nsource statements (DOC \u00a74.3 `dataclasses-pydantic`). A faithful front-end must\nrecover the construction call `build -> Point` without tripping on the synthetic\nmethods. (Pydantic is namechecked by the tag; this uses stdlib `dataclasses` to\nkeep the program dependency-free and the ground truth auditable.)\n",
+          "kind": null,
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 8,
+          "end_col_offset": 3
+        },
+        "lineno": 1,
+        "col_offset": 0,
+        "end_lineno": 8,
+        "end_col_offset": 3
+      },
+      {
+        "_type": "ImportFrom",
+        "module": "__future__",
+        "names": [
+          {
+            "_type": "alias",
+            "name": "annotations",
+            "asname": null,
+            "lineno": 10,
+            "col_offset": 23,
+            "end_lineno": 10,
+            "end_col_offset": 34
+          }
+        ],
+        "level": 0,
+        "lineno": 10,
+        "col_offset": 0,
+        "end_lineno": 10,
+        "end_col_offset": 34
+      },
+      {
+        "_type": "ImportFrom",
+        "module": "dataclasses",
+        "names": [
+          {
+            "_type": "alias",
+            "name": "dataclass",
+            "asname": null,
+            "lineno": 12,
+            "col_offset": 24,
+            "end_lineno": 12,
+            "end_col_offset": 33
+          }
+        ],
+        "level": 0,
+        "lineno": 12,
+        "col_offset": 0,
+        "end_lineno": 12,
+        "end_col_offset": 33
+      },
+      {
+        "_type": "ClassDef",
+        "name": "Point",
+        "bases": [],
+        "keywords": [],
+        "body": [
+          {
+            "_type": "AnnAssign",
+            "target": {
+              "_type": "Name",
+              "id": "x",
+              "ctx": {
+                "_type": "Store"
+              },
+              "lineno": 17,
+              "col_offset": 4,
+              "end_lineno": 17,
+              "end_col_offset": 5
+            },
+            "annotation": {
+              "_type": "Name",
+              "id": "int",
+              "ctx": {
+                "_type": "Load"
+              },
+              "lineno": 17,
+              "col_offset": 7,
+              "end_lineno": 17,
+              "end_col_offset": 10
+            },
+            "value": null,
+            "simple": 1,
+            "lineno": 17,
+            "col_offset": 4,
+            "end_lineno": 17,
+            "end_col_offset": 10
+          },
+          {
+            "_type": "AnnAssign",
+            "target": {
+              "_type": "Name",
+              "id": "y",
+              "ctx": {
+                "_type": "Store"
+              },
+              "lineno": 18,
+              "col_offset": 4,
+              "end_lineno": 18,
+              "end_col_offset": 5
+            },
+            "annotation": {
+              "_type": "Name",
+              "id": "int",
+              "ctx": {
+                "_type": "Load"
+              },
+              "lineno": 18,
+              "col_offset": 7,
+              "end_lineno": 18,
+              "end_col_offset": 10
+            },
+            "value": null,
+            "simple": 1,
+            "lineno": 18,
+            "col_offset": 4,
+            "end_lineno": 18,
+            "end_col_offset": 10
+          },
+          {
+            "_type": "FunctionDef",
+            "name": "norm",
+            "args": {
+              "_type": "arguments",
+              "posonlyargs": [],
+              "args": [
+                {
+                  "_type": "arg",
+                  "arg": "self",
+                  "annotation": null,
+                  "type_comment": null,
+                  "lineno": 20,
+                  "col_offset": 13,
+                  "end_lineno": 20,
+                  "end_col_offset": 17
+                }
+              ],
+              "vararg": null,
+              "kwonlyargs": [],
+              "kw_defaults": [],
+              "kwarg": null,
+              "defaults": []
+            },
+            "body": [
+              {
+                "_type": "Return",
+                "value": {
+                  "_type": "BinOp",
+                  "left": {
+                    "_type": "BinOp",
+                    "left": {
+                      "_type": "Attribute",
+                      "value": {
+                        "_type": "Name",
+                        "id": "self",
+                        "ctx": {
+                          "_type": "Load"
+                        },
+                        "lineno": 21,
+                        "col_offset": 15,
+                        "end_lineno": 21,
+                        "end_col_offset": 19
+                      },
+                      "attr": "x",
+                      "ctx": {
+                        "_type": "Load"
+                      },
+                      "lineno": 21,
+                      "col_offset": 15,
+                      "end_lineno": 21,
+                      "end_col_offset": 21
+                    },
+                    "op": {
+                      "_type": "Mult"
+                    },
+                    "right": {
+                      "_type": "Attribute",
+                      "value": {
+                        "_type": "Name",
+                        "id": "self",
+                        "ctx": {
+                          "_type": "Load"
+                        },
+                        "lineno": 21,
+                        "col_offset": 24,
+                        "end_lineno": 21,
+                        "end_col_offset": 28
+                      },
+                      "attr": "x",
+                      "ctx": {
+                        "_type": "Load"
+                      },
+                      "lineno": 21,
+                      "col_offset": 24,
+                      "end_lineno": 21,
+                      "end_col_offset": 30
+                    },
+                    "lineno": 21,
+                    "col_offset": 15,
+                    "end_lineno": 21,
+                    "end_col_offset": 30
+                  },
+                  "op": {
+                    "_type": "Add"
+                  },
+                  "right": {
+                    "_type": "BinOp",
+                    "left": {
+                      "_type": "Attribute",
+                      "value": {
+                        "_type": "Name",
+                        "id": "self",
+                        "ctx": {
+                          "_type": "Load"
+                        },
+                        "lineno": 21,
+                        "col_offset": 33,
+                        "end_lineno": 21,
+                        "end_col_offset": 37
+                      },
+                      "attr": "y",
+                      "ctx": {
+                        "_type": "Load"
+                      },
+                      "lineno": 21,
+                      "col_offset": 33,
+                      "end_lineno": 21,
+                      "end_col_offset": 39
+                    },
+                    "op": {
+                      "_type": "Mult"
+                    },
+                    "right": {
+                      "_type": "Attribute",
+                      "value": {
+                        "_type": "Name",
+                        "id": "self",
+                        "ctx": {
+                          "_type": "Load"
+                        },
+                        "lineno": 21,
+                        "col_offset": 42,
+                        "end_lineno": 21,
+                        "end_col_offset": 46
+                      },
+                      "attr": "y",
+                      "ctx": {
+                        "_type": "Load"
+                      },
+                      "lineno": 21,
+                      "col_offset": 42,
+                      "end_lineno": 21,
+                      "end_col_offset": 48
+                    },
+                    "lineno": 21,
+                    "col_offset": 33,
+                    "end_lineno": 21,
+                    "end_col_offset": 48
+                  },
+                  "lineno": 21,
+                  "col_offset": 15,
+                  "end_lineno": 21,
+                  "end_col_offset": 48
+                },
+                "lineno": 21,
+                "col_offset": 8,
+                "end_lineno": 21,
+                "end_col_offset": 48
+              }
+            ],
+            "decorator_list": [],
+            "returns": {
+              "_type": "Name",
+              "id": "int",
+              "ctx": {
+                "_type": "Load"
+              },
+              "lineno": 20,
+              "col_offset": 22,
+              "end_lineno": 20,
+              "end_col_offset": 25
+            },
+            "type_comment": null,
+            "type_params": [],
+            "lineno": 20,
+            "col_offset": 4,
+            "end_lineno": 21,
+            "end_col_offset": 48
+          }
+        ],
+        "decorator_list": [
+          {
+            "_type": "Name",
+            "id": "dataclass",
+            "ctx": {
+              "_type": "Load"
+            },
+            "lineno": 15,
+            "col_offset": 1,
+            "end_lineno": 15,
+            "end_col_offset": 10
+          }
+        ],
+        "type_params": [],
+        "lineno": 16,
+        "col_offset": 0,
+        "end_lineno": 21,
+        "end_col_offset": 48
+      },
+      {
+        "_type": "FunctionDef",
+        "name": "build",
+        "args": {
+          "_type": "arguments",
+          "posonlyargs": [],
+          "args": [
+            {
+              "_type": "arg",
+              "arg": "a",
+              "annotation": {
+                "_type": "Name",
+                "id": "int",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 24,
+                "col_offset": 13,
+                "end_lineno": 24,
+                "end_col_offset": 16
+              },
+              "type_comment": null,
+              "lineno": 24,
+              "col_offset": 10,
+              "end_lineno": 24,
+              "end_col_offset": 16
+            },
+            {
+              "_type": "arg",
+              "arg": "b",
+              "annotation": {
+                "_type": "Name",
+                "id": "int",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 24,
+                "col_offset": 21,
+                "end_lineno": 24,
+                "end_col_offset": 24
+              },
+              "type_comment": null,
+              "lineno": 24,
+              "col_offset": 18,
+              "end_lineno": 24,
+              "end_col_offset": 24
+            }
+          ],
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": null,
+          "defaults": []
+        },
+        "body": [
+          {
+            "_type": "Assign",
+            "targets": [
+              {
+                "_type": "Name",
+                "id": "p",
+                "ctx": {
+                  "_type": "Store"
+                },
+                "lineno": 25,
+                "col_offset": 4,
+                "end_lineno": 25,
+                "end_col_offset": 5
+              }
+            ],
+            "value": {
+              "_type": "Call",
+              "func": {
+                "_type": "Name",
+                "id": "Point",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 25,
+                "col_offset": 8,
+                "end_lineno": 25,
+                "end_col_offset": 13
+              },
+              "args": [
+                {
+                  "_type": "Name",
+                  "id": "a",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 25,
+                  "col_offset": 14,
+                  "end_lineno": 25,
+                  "end_col_offset": 15
+                },
+                {
+                  "_type": "Name",
+                  "id": "b",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 25,
+                  "col_offset": 17,
+                  "end_lineno": 25,
+                  "end_col_offset": 18
+                }
+              ],
+              "keywords": [],
+              "lineno": 25,
+              "col_offset": 8,
+              "end_lineno": 25,
+              "end_col_offset": 19
+            },
+            "type_comment": null,
+            "lineno": 25,
+            "col_offset": 4,
+            "end_lineno": 25,
+            "end_col_offset": 19
+          },
+          {
+            "_type": "Assign",
+            "targets": [
+              {
+                "_type": "Name",
+                "id": "magnitude",
+                "ctx": {
+                  "_type": "Store"
+                },
+                "lineno": 26,
+                "col_offset": 4,
+                "end_lineno": 26,
+                "end_col_offset": 13
+              }
+            ],
+            "value": {
+              "_type": "Call",
+              "func": {
+                "_type": "Attribute",
+                "value": {
+                  "_type": "Name",
+                  "id": "p",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 26,
+                  "col_offset": 16,
+                  "end_lineno": 26,
+                  "end_col_offset": 17
+                },
+                "attr": "norm",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 26,
+                "col_offset": 16,
+                "end_lineno": 26,
+                "end_col_offset": 22
+              },
+              "args": [],
+              "keywords": [],
+              "lineno": 26,
+              "col_offset": 16,
+              "end_lineno": 26,
+              "end_col_offset": 24
+            },
+            "type_comment": null,
+            "lineno": 26,
+            "col_offset": 4,
+            "end_lineno": 26,
+            "end_col_offset": 24
+          },
+          {
+            "_type": "Return",
+            "value": {
+              "_type": "Name",
+              "id": "magnitude",
+              "ctx": {
+                "_type": "Load"
+              },
+              "lineno": 27,
+              "col_offset": 11,
+              "end_lineno": 27,
+              "end_col_offset": 20
+            },
+            "lineno": 27,
+            "col_offset": 4,
+            "end_lineno": 27,
+            "end_col_offset": 20
+          }
+        ],
+        "decorator_list": [],
+        "returns": {
+          "_type": "Name",
+          "id": "Point",
+          "ctx": {
+            "_type": "Load"
+          },
+          "lineno": 24,
+          "col_offset": 29,
+          "end_lineno": 24,
+          "end_col_offset": 34
+        },
+        "type_comment": null,
+        "type_params": [],
+        "lineno": 24,
+        "col_offset": 0,
+        "end_lineno": 27,
+        "end_col_offset": 20
+      }
+    ],
+    "type_ignores": []
+  }
+}

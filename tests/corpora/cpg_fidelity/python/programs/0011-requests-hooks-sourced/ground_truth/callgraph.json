@@ -1,0 +1,24 @@
+{
+  "hooks.py": {
+    "edges": [
+      {
+        "caller": "dispatch_hook",
+        "callee": "get",
+        "line": 40,
+        "kind": "dynamic"
+      },
+      {
+        "caller": "dispatch_hook",
+        "callee": "isinstance",
+        "line": 42,
+        "kind": "dynamic"
+      },
+      {
+        "caller": "dispatch_hook",
+        "callee": "hook",
+        "line": 45,
+        "kind": "dynamic"
+      }
+    ]
+  }
+}
