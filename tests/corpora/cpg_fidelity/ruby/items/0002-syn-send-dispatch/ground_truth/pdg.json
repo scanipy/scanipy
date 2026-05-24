@@ -1,0 +1,66 @@
+{
+  "convention": "lower-bound",
+  "methods": [
+    {
+      "method": "initialize",
+      "edges": [
+        {
+          "var": "handler",
+          "use_line": 8,
+          "def_line": 7
+        }
+      ]
+    },
+    {
+      "method": "run",
+      "edges": [
+        {
+          "var": "action",
+          "use_line": 12,
+          "def_line": 11
+        },
+        {
+          "var": "name",
+          "use_line": 13,
+          "def_line": 12
+        },
+        {
+          "var": "payload",
+          "use_line": 13,
+          "def_line": 11
+        }
+      ]
+    },
+    {
+      "method": "run_safe",
+      "edges": [
+        {
+          "var": "action",
+          "use_line": 17,
+          "def_line": 16
+        },
+        {
+          "var": "name",
+          "use_line": 18,
+          "def_line": 17
+        },
+        {
+          "var": "payload",
+          "use_line": 18,
+          "def_line": 16
+        }
+      ]
+    },
+    {
+      "method": "normalize",
+      "edges": [
+        {
+          "var": "action",
+          "use_line": 22,
+          "def_line": 21
+        }
+      ]
+    }
+  ],
+  "ruby_version": "3.2.3"
+}

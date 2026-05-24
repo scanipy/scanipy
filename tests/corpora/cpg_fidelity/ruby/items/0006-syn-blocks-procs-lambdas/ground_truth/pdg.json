@@ -1,0 +1,59 @@
+{
+  "convention": "lower-bound",
+  "methods": [
+    {
+      "method": "initialize",
+      "edges": [
+
+      ]
+    },
+    {
+      "method": "add",
+      "edges": [
+        {
+          "var": "block",
+          "use_line": 12,
+          "def_line": 11
+        }
+      ]
+    },
+    {
+      "method": "run",
+      "edges": [
+        {
+          "var": "input",
+          "use_line": 16,
+          "def_line": 15
+        }
+      ]
+    },
+    {
+      "method": "apply",
+      "edges": [
+        {
+          "var": "step",
+          "use_line": 22,
+          "def_line": 21
+        },
+        {
+          "var": "value",
+          "use_line": 22,
+          "def_line": 21
+        }
+      ]
+    },
+    {
+      "method": "each_step",
+      "edges": [
+
+      ]
+    },
+    {
+      "method": "doubler",
+      "edges": [
+
+      ]
+    }
+  ],
+  "ruby_version": "3.2.3"
+}

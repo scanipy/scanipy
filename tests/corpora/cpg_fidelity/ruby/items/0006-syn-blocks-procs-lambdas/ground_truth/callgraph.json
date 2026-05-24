@@ -1,0 +1,42 @@
+{
+  "convention": "lower-bound",
+  "edges": [
+    {
+      "caller": "add",
+      "callee": "<<",
+      "line": 12,
+      "node": "OPCALL"
+    },
+    {
+      "caller": "run",
+      "callee": "reduce",
+      "line": 16,
+      "node": "CALL"
+    },
+    {
+      "caller": "run",
+      "callee": "apply",
+      "line": 17,
+      "node": "FCALL"
+    },
+    {
+      "caller": "each_step",
+      "callee": "each",
+      "line": 26,
+      "node": "CALL"
+    }
+  ],
+  "dynamic_sites": [
+    {
+      "caller": "apply",
+      "kind": "higher-order:call",
+      "line": 22
+    },
+    {
+      "caller": "each_step",
+      "kind": "higher-order:yield",
+      "line": 27
+    }
+  ],
+  "ruby_version": "3.2.3"
+}
