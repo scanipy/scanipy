@@ -1,0 +1,9 @@
+categories:
+  - callable_array
+dynamic: true
+id: 0007-callable-array-method
+license: Apache-2.0
+primary_file: callable_array.php
+source_commit: content-addressed
+source_url: vendored
+synthetic: true

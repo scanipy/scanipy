@@ -1,0 +1,11 @@
+{
+  "schema": "cpg-fidelity/pdg/v0.1.0",
+  "file": "magic_call.php",
+  "is_lower_bound": true,
+  "edges": [
+    {"function": "Service::handleEcho", "from": "param:s", "to": "return:21", "type": "data"},
+    {"function": "Service::__call", "from": "param:name", "to": "assign:27", "type": "data"},
+    {"function": "Service::__call", "from": "assign:27", "to": "return:28", "type": "data"},
+    {"function": "Service::__call", "from": "param:args", "to": "return:28", "type": "data"}
+  ]
+}
