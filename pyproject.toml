@@ -110,6 +110,14 @@ addopts = [
     "--strict-markers",
     "--tb=short",
     "-q",
+    # tests/corpora holds corpus DATA + each corpus's own build-pipeline
+    # self-tests (validated at corpus-build time, not platform unit tests).
+    # They use duplicate basenames (multiple test_pipeline.py) and cwd-relative
+    # paths, so collecting them in the platform `pytest tests/` run (pre-push,
+    # ad-hoc) breaks on import-file-mismatch once 2+ corpora coexist. CI's unit
+    # job already scopes to tests/unit/ and no workflow runs corpus pytest, so
+    # exclude them globally here (coverage already omits */corpora/*).
+    "--ignore=tests/corpora",
 ]
 markers = [
     "unit: unit tests (fast, no I/O)",
