@@ -1,0 +1,449 @@
+{
+  "ffi.py": {
+    "_type": "Module",
+    "body": [
+      {
+        "_type": "Expr",
+        "value": {
+          "_type": "Constant",
+          "value": "C-extension-wrapper coverage: calls into C via ctypes (FFI boundary).\n\nConstruct under test: call edges that necessarily terminate at the FFI boundary\n(DOC \u00a74.3 `c-extension-wrapper`). The `libc.strlen(...)` call is tagged `dynamic`\n(the callee lives behind ctypes and is unresolvable at the Python AST level) and\nexcluded from precision/recall. The pure-Python `length -> _encode` edge is static.\n",
+          "kind": null,
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 7,
+          "end_col_offset": 3
+        },
+        "lineno": 1,
+        "col_offset": 0,
+        "end_lineno": 7,
+        "end_col_offset": 3
+      },
+      {
+        "_type": "ImportFrom",
+        "module": "__future__",
+        "names": [
+          {
+            "_type": "alias",
+            "name": "annotations",
+            "asname": null,
+            "lineno": 9,
+            "col_offset": 23,
+            "end_lineno": 9,
+            "end_col_offset": 34
+          }
+        ],
+        "level": 0,
+        "lineno": 9,
+        "col_offset": 0,
+        "end_lineno": 9,
+        "end_col_offset": 34
+      },
+      {
+        "_type": "Import",
+        "names": [
+          {
+            "_type": "alias",
+            "name": "ctypes",
+            "asname": null,
+            "lineno": 11,
+            "col_offset": 7,
+            "end_lineno": 11,
+            "end_col_offset": 13
+          }
+        ],
+        "lineno": 11,
+        "col_offset": 0,
+        "end_lineno": 11,
+        "end_col_offset": 13
+      },
+      {
+        "_type": "FunctionDef",
+        "name": "_encode",
+        "args": {
+          "_type": "arguments",
+          "posonlyargs": [],
+          "args": [
+            {
+              "_type": "arg",
+              "arg": "text",
+              "annotation": {
+                "_type": "Name",
+                "id": "str",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 14,
+                "col_offset": 18,
+                "end_lineno": 14,
+                "end_col_offset": 21
+              },
+              "type_comment": null,
+              "lineno": 14,
+              "col_offset": 12,
+              "end_lineno": 14,
+              "end_col_offset": 21
+            }
+          ],
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": null,
+          "defaults": []
+        },
+        "body": [
+          {
+            "_type": "Assign",
+            "targets": [
+              {
+                "_type": "Name",
+                "id": "encoded",
+                "ctx": {
+                  "_type": "Store"
+                },
+                "lineno": 15,
+                "col_offset": 4,
+                "end_lineno": 15,
+                "end_col_offset": 11
+              }
+            ],
+            "value": {
+              "_type": "Call",
+              "func": {
+                "_type": "Attribute",
+                "value": {
+                  "_type": "Name",
+                  "id": "text",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 15,
+                  "col_offset": 14,
+                  "end_lineno": 15,
+                  "end_col_offset": 18
+                },
+                "attr": "encode",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 15,
+                "col_offset": 14,
+                "end_lineno": 15,
+                "end_col_offset": 25
+              },
+              "args": [
+                {
+                  "_type": "Constant",
+                  "value": "utf-8",
+                  "kind": null,
+                  "lineno": 15,
+                  "col_offset": 26,
+                  "end_lineno": 15,
+                  "end_col_offset": 33
+                }
+              ],
+              "keywords": [],
+              "lineno": 15,
+              "col_offset": 14,
+              "end_lineno": 15,
+              "end_col_offset": 34
+            },
+            "type_comment": null,
+            "lineno": 15,
+            "col_offset": 4,
+            "end_lineno": 15,
+            "end_col_offset": 34
+          },
+          {
+            "_type": "Return",
+            "value": {
+              "_type": "Name",
+              "id": "encoded",
+              "ctx": {
+                "_type": "Load"
+              },
+              "lineno": 16,
+              "col_offset": 11,
+              "end_lineno": 16,
+              "end_col_offset": 18
+            },
+            "lineno": 16,
+            "col_offset": 4,
+            "end_lineno": 16,
+            "end_col_offset": 18
+          }
+        ],
+        "decorator_list": [],
+        "returns": {
+          "_type": "Name",
+          "id": "bytes",
+          "ctx": {
+            "_type": "Load"
+          },
+          "lineno": 14,
+          "col_offset": 26,
+          "end_lineno": 14,
+          "end_col_offset": 31
+        },
+        "type_comment": null,
+        "type_params": [],
+        "lineno": 14,
+        "col_offset": 0,
+        "end_lineno": 16,
+        "end_col_offset": 18
+      },
+      {
+        "_type": "FunctionDef",
+        "name": "length",
+        "args": {
+          "_type": "arguments",
+          "posonlyargs": [],
+          "args": [
+            {
+              "_type": "arg",
+              "arg": "text",
+              "annotation": {
+                "_type": "Name",
+                "id": "str",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 19,
+                "col_offset": 17,
+                "end_lineno": 19,
+                "end_col_offset": 20
+              },
+              "type_comment": null,
+              "lineno": 19,
+              "col_offset": 11,
+              "end_lineno": 19,
+              "end_col_offset": 20
+            }
+          ],
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": null,
+          "defaults": []
+        },
+        "body": [
+          {
+            "_type": "Assign",
+            "targets": [
+              {
+                "_type": "Name",
+                "id": "libc",
+                "ctx": {
+                  "_type": "Store"
+                },
+                "lineno": 20,
+                "col_offset": 4,
+                "end_lineno": 20,
+                "end_col_offset": 8
+              }
+            ],
+            "value": {
+              "_type": "Call",
+              "func": {
+                "_type": "Attribute",
+                "value": {
+                  "_type": "Name",
+                  "id": "ctypes",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 20,
+                  "col_offset": 11,
+                  "end_lineno": 20,
+                  "end_col_offset": 17
+                },
+                "attr": "CDLL",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 20,
+                "col_offset": 11,
+                "end_lineno": 20,
+                "end_col_offset": 22
+              },
+              "args": [
+                {
+                  "_type": "Constant",
+                  "value": null,
+                  "kind": null,
+                  "lineno": 20,
+                  "col_offset": 23,
+                  "end_lineno": 20,
+                  "end_col_offset": 27
+                }
+              ],
+              "keywords": [],
+              "lineno": 20,
+              "col_offset": 11,
+              "end_lineno": 20,
+              "end_col_offset": 28
+            },
+            "type_comment": null,
+            "lineno": 20,
+            "col_offset": 4,
+            "end_lineno": 20,
+            "end_col_offset": 28
+          },
+          {
+            "_type": "Assign",
+            "targets": [
+              {
+                "_type": "Name",
+                "id": "buf",
+                "ctx": {
+                  "_type": "Store"
+                },
+                "lineno": 21,
+                "col_offset": 4,
+                "end_lineno": 21,
+                "end_col_offset": 7
+              }
+            ],
+            "value": {
+              "_type": "Call",
+              "func": {
+                "_type": "Name",
+                "id": "_encode",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 21,
+                "col_offset": 10,
+                "end_lineno": 21,
+                "end_col_offset": 17
+              },
+              "args": [
+                {
+                  "_type": "Name",
+                  "id": "text",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 21,
+                  "col_offset": 18,
+                  "end_lineno": 21,
+                  "end_col_offset": 22
+                }
+              ],
+              "keywords": [],
+              "lineno": 21,
+              "col_offset": 10,
+              "end_lineno": 21,
+              "end_col_offset": 23
+            },
+            "type_comment": null,
+            "lineno": 21,
+            "col_offset": 4,
+            "end_lineno": 21,
+            "end_col_offset": 23
+          },
+          {
+            "_type": "Assign",
+            "targets": [
+              {
+                "_type": "Name",
+                "id": "n",
+                "ctx": {
+                  "_type": "Store"
+                },
+                "lineno": 22,
+                "col_offset": 4,
+                "end_lineno": 22,
+                "end_col_offset": 5
+              }
+            ],
+            "value": {
+              "_type": "Call",
+              "func": {
+                "_type": "Attribute",
+                "value": {
+                  "_type": "Name",
+                  "id": "libc",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 22,
+                  "col_offset": 8,
+                  "end_lineno": 22,
+                  "end_col_offset": 12
+                },
+                "attr": "strlen",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 22,
+                "col_offset": 8,
+                "end_lineno": 22,
+                "end_col_offset": 19
+              },
+              "args": [
+                {
+                  "_type": "Name",
+                  "id": "buf",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 22,
+                  "col_offset": 20,
+                  "end_lineno": 22,
+                  "end_col_offset": 23
+                }
+              ],
+              "keywords": [],
+              "lineno": 22,
+              "col_offset": 8,
+              "end_lineno": 22,
+              "end_col_offset": 24
+            },
+            "type_comment": null,
+            "lineno": 22,
+            "col_offset": 4,
+            "end_lineno": 22,
+            "end_col_offset": 24
+          },
+          {
+            "_type": "Return",
+            "value": {
+              "_type": "Name",
+              "id": "n",
+              "ctx": {
+                "_type": "Load"
+              },
+              "lineno": 23,
+              "col_offset": 11,
+              "end_lineno": 23,
+              "end_col_offset": 12
+            },
+            "lineno": 23,
+            "col_offset": 4,
+            "end_lineno": 23,
+            "end_col_offset": 12
+          }
+        ],
+        "decorator_list": [],
+        "returns": {
+          "_type": "Name",
+          "id": "int",
+          "ctx": {
+            "_type": "Load"
+          },
+          "lineno": 19,
+          "col_offset": 25,
+          "end_lineno": 19,
+          "end_col_offset": 28
+        },
+        "type_comment": null,
+        "type_params": [],
+        "lineno": 19,
+        "col_offset": 0,
+        "end_lineno": 23,
+        "end_col_offset": 12
+      }
+    ],
+    "type_ignores": []
+  }
+}

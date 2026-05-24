@@ -1,0 +1,22 @@
+{
+  "schema": "cpg-fidelity/pdg/v1",
+  "program_id": "0003-generics-box",
+  "method": "Intraprocedural PDG (data + control) by-inspection.",
+  "methods": [
+    {"method": "corpus.cpg.p0003.Boxes.max(List)", "dependences": [
+      {"from": "param items", "to": "T best = items.get(0)", "type": "data", "var": "items"},
+      {"from": "param items", "to": "loop-header: for (T item : items)", "type": "data", "var": "items"},
+      {"from": "T best = items.get(0)", "to": "if (item.compareTo(best) > 0)", "type": "data", "var": "best"},
+      {"from": "loop-header: for (T item : items)", "to": "if (item.compareTo(best) > 0)", "type": "data", "var": "item"},
+      {"from": "if (item.compareTo(best) > 0)", "to": "best = item", "type": "control"},
+      {"from": "best = item", "to": "return best", "type": "data", "var": "best"},
+      {"from": "T best = items.get(0)", "to": "return best", "type": "data", "var": "best"}
+    ]},
+    {"method": "corpus.cpg.p0003.Boxes.main(String[])", "dependences": [
+      {"from": "List<Integer> nums = new ArrayList<>()", "to": "nums.add(3)", "type": "data", "var": "nums"},
+      {"from": "List<Integer> nums = new ArrayList<>()", "to": "nums.add(7)", "type": "data", "var": "nums"},
+      {"from": "List<Integer> nums = new ArrayList<>()", "to": "System.out.println(b.get() + max(nums))", "type": "data", "var": "nums"},
+      {"from": "Box<String> b = new Box<>(\"hi\")", "to": "System.out.println(b.get() + max(nums))", "type": "data", "var": "b"}
+    ]}
+  ]
+}

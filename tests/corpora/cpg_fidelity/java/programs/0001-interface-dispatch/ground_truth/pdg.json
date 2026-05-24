@@ -1,0 +1,15 @@
+{
+  "schema": "cpg-fidelity/pdg/v1",
+  "program_id": "0001-interface-dispatch",
+  "method": "Intraprocedural PDG dependence edges (data + control), by-inspection (Soot InfoflowSlicer equivalent). 'data' edges link a def to each use of the same local/param; 'control' edges link a predicate to guarded statements.",
+  "methods": [
+    {"method": "corpus.cpg.p0001.Shapes.main(String[])", "dependences": [
+      {"from": "Shape c = new Circle(2.0)", "to": "System.out.println(total(c, s))", "type": "data", "var": "c"},
+      {"from": "Shape s = new Square(3.0)", "to": "System.out.println(total(c, s))", "type": "data", "var": "s"}
+    ]},
+    {"method": "corpus.cpg.p0001.Shapes.total(Shape,Shape)", "dependences": [
+      {"from": "param a", "to": "return a.area() + b.area()", "type": "data", "var": "a"},
+      {"from": "param b", "to": "return a.area() + b.area()", "type": "data", "var": "b"}
+    ]}
+  ]
+}

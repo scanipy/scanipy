@@ -1,0 +1,14 @@
+source_url: local:synthesized/CMP-CORP-CPG-js/0005-amd-umd-bundled
+commit_sha: sha256:76eed867700acf54123545e6b1d88708b58dbc00d90921535ebc3f43f03df86e
+license: Apache-2.0
+surface: js
+module_system: umd
+synthetic: true
+loc: 39
+construct_coverage:
+  - module-system-amd-umd
+  - bundled-transpiled
+notes: |
+  Authored for this corpus (Apache-2.0). UMD wrapper as emitted by legacy
+  bundlers; the registry[name]() site is intentionally `dynamic` and EXCLUDED
+  from gate precision/recall (CW-DETECT territory, DOC §3.4). Content-addressed.

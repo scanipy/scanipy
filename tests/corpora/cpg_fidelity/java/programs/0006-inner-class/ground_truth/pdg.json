@@ -1,0 +1,13 @@
+{
+  "schema": "cpg-fidelity/pdg/v1",
+  "program_id": "0006-inner-class",
+  "method": "Intraprocedural PDG (data) by-inspection. Enclosing-instance field 'base' is read in Inner.boosted and Outer$1.greet (captured-this dependence).",
+  "methods": [
+    {"method": "corpus.cpg.p0006.Outer.main(String[])", "dependences": [
+      {"from": "Outer o = new Outer()", "to": "Inner i = o.new Inner()", "type": "data", "var": "o"},
+      {"from": "Outer o = new Outer()", "to": "System.out.println(i.boosted() + s.constant() + o.anon().greet())", "type": "data", "var": "o"},
+      {"from": "Inner i = o.new Inner()", "to": "System.out.println(i.boosted() + s.constant() + o.anon().greet())", "type": "data", "var": "i"},
+      {"from": "StaticNested s = new StaticNested()", "to": "System.out.println(i.boosted() + s.constant() + o.anon().greet())", "type": "data", "var": "s"}
+    ]}
+  ]
+}
