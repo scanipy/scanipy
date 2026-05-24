@@ -1,0 +1,66 @@
+{
+  "service.py": {
+    "trace": {
+      "edges": [
+        {
+          "from_line": 13,
+          "to_line": 15,
+          "kind": "data",
+          "var": "fn"
+        }
+      ]
+    },
+    "trace.wrapper": {
+      "edges": [
+        {
+          "from_line": 16,
+          "to_line": 17,
+          "kind": "data",
+          "var": "result"
+        }
+      ]
+    },
+    "validate": {
+      "edges": [
+        {
+          "from_line": 22,
+          "to_line": 23,
+          "kind": "data",
+          "var": "value"
+        },
+        {
+          "from_line": 23,
+          "to_line": 24,
+          "kind": "data",
+          "var": "checked"
+        }
+      ]
+    },
+    "handle": {
+      "edges": [
+        {
+          "from_line": 28,
+          "to_line": 29,
+          "kind": "data",
+          "var": "payload"
+        },
+        {
+          "from_line": 29,
+          "to_line": 30,
+          "kind": "data",
+          "var": "cleaned"
+        }
+      ]
+    },
+    "main": {
+      "edges": [
+        {
+          "from_line": 34,
+          "to_line": 35,
+          "kind": "data",
+          "var": "out"
+        }
+      ]
+    }
+  }
+}

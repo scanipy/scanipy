@@ -1,0 +1,108 @@
+{
+  "dispatch.py": {
+    "add": {
+      "edges": [
+        {
+          "from_line": 10,
+          "to_line": 11,
+          "kind": "data",
+          "var": "a"
+        },
+        {
+          "from_line": 10,
+          "to_line": 11,
+          "kind": "data",
+          "var": "b"
+        }
+      ]
+    },
+    "sub": {
+      "edges": [
+        {
+          "from_line": 14,
+          "to_line": 15,
+          "kind": "data",
+          "var": "a"
+        },
+        {
+          "from_line": 14,
+          "to_line": 15,
+          "kind": "data",
+          "var": "b"
+        }
+      ]
+    },
+    "op": {
+      "edges": [
+        {
+          "from_line": 18,
+          "to_line": 19,
+          "kind": "data",
+          "var": "a"
+        },
+        {
+          "from_line": 18,
+          "to_line": 19,
+          "kind": "data",
+          "var": "b"
+        }
+      ]
+    },
+    "dispatch_by_name": {
+      "edges": [
+        {
+          "from_line": 25,
+          "to_line": 26,
+          "kind": "data",
+          "var": "name"
+        },
+        {
+          "from_line": 25,
+          "to_line": 27,
+          "kind": "data",
+          "var": "a"
+        },
+        {
+          "from_line": 25,
+          "to_line": 27,
+          "kind": "data",
+          "var": "b"
+        },
+        {
+          "from_line": 26,
+          "to_line": 27,
+          "kind": "data",
+          "var": "fn"
+        }
+      ]
+    },
+    "dispatch_getattr": {
+      "edges": [
+        {
+          "from_line": 30,
+          "to_line": 31,
+          "kind": "data",
+          "var": "module_like"
+        },
+        {
+          "from_line": 30,
+          "to_line": 31,
+          "kind": "data",
+          "var": "name"
+        },
+        {
+          "from_line": 30,
+          "to_line": 32,
+          "kind": "data",
+          "var": "value"
+        },
+        {
+          "from_line": 31,
+          "to_line": 32,
+          "kind": "data",
+          "var": "handler"
+        }
+      ]
+    }
+  }
+}

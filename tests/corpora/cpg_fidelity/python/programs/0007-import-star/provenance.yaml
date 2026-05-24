@@ -1,0 +1,9 @@
+commit_sha: sha256:4dcd621bf3d107ff6ffd4a70b03ae7f8a1f6df1eb414d25e1aa052fb9d80c2fa
+construct_coverage:
+  - import-star
+license: Apache-2.0
+path_in_source: source/
+python_minor: '3.10'
+sha256_source_tree: sha256:4dcd621bf3d107ff6ffd4a70b03ae7f8a1f6df1eb414d25e1aa052fb9d80c2fa
+source_url: local:programs/0007-import-star/source
+synthetic: true
