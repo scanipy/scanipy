@@ -57,6 +57,8 @@ select = [
 ignore = [
     "S101",   # assert used (tests use assert)
     "S603",   # subprocess call (needed for tool invocations)
+    "ANN101", # missing self annotation — deprecated, removed in ruff 0.6+
+    "ANN102", # missing cls annotation — deprecated, removed in ruff 0.6+
 ]
 
 [tool.ruff.lint.per-file-ignores]
