@@ -1,0 +1,28 @@
+slice_id: owasp-injection-java-00052-fix
+source: owasp_benchmark
+class: injection
+language: java
+cwe_ids:
+  - CWE-89
+positive: false
+fix_pair_id: null
+license: GPL-2.0
+vendored: false
+notes: |
+  OWASP BenchmarkTest00052. SOURCED ground truth: upstream expectedresults CSV row
+  "BenchmarkTest00052,sqli,false,89" — a NOT-a-real-vulnerability (clean) sqli case:
+  the executeQuery sink is reached only by a non-tainted/constant value upstream, so
+  the upstream CSV marks real-vulnerability=false. Used as a precision (true-negative)
+  anchor. Fetch-on-demand (GPL-2.0 off vendor allow-list). Carries no ground_truth_sites
+  by design (clean variant).
+ground_truth_sites: []
+provenance:
+  dataset: owasp_benchmark
+  repo: https://github.com/OWASP-Benchmark/BenchmarkJava
+  release_tag: "1.2beta"
+  commit_sha: 2734ae486356765ea4e45393a28e20bcb5047f8c
+  expected_results_csv: expectedresults-1.2beta.csv
+  upstream_path: src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00052.java
+  upstream_sha256: sha256:bb1621c5345a0a41a44a068a74e2698737df8e0032f8a21f2bcd98bf63228a53
+  fetch_on_demand: true
+  ground_truth_origin: upstream_csv_verbatim
