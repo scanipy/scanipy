@@ -1,0 +1,12 @@
+{
+  "schema": "cpg-fidelity/callgraph/v1",
+  "program_id": "0004-lambdas",
+  "notes": "Lambdas compile to invokedynamic via LambdaMetafactory; the synthetic lambda body methods are named lambda$main$0 / lambda$main$1 by javac. apply()'s f.apply(x) dispatches (through Function.apply) to whichever lambda body was passed. A 0-CFA call graph resolves apply's callee to BOTH lambda bodies (context-insensitive merge) -> tagged over_approximate=true. The second lambda body calls twice().",
+  "edges": [
+    {"caller_method": "corpus.cpg.p0004.Lambdas.main(String[])", "callee_method": "corpus.cpg.p0004.Lambdas.apply(Function,int)", "line": 18, "kind": "static", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0004.Lambdas.main(String[])", "callee_method": "corpus.cpg.p0004.Lambdas.apply(Function,int)", "line": 19, "kind": "static", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0004.Lambdas.apply(Function,int)", "callee_method": "corpus.cpg.p0004.Lambdas.lambda$main$0(Integer)", "line": 9, "kind": "indy", "library": false, "over_approximate": true},
+    {"caller_method": "corpus.cpg.p0004.Lambdas.apply(Function,int)", "callee_method": "corpus.cpg.p0004.Lambdas.lambda$main$1(Integer)", "line": 9, "kind": "indy", "library": false, "over_approximate": true},
+    {"caller_method": "corpus.cpg.p0004.Lambdas.lambda$main$1(Integer)", "callee_method": "corpus.cpg.p0004.Lambdas.twice(int)", "line": 19, "kind": "static", "library": false, "over_approximate": false}
+  ]
+}

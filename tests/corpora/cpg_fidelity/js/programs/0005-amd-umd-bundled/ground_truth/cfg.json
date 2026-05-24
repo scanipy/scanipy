@@ -1,0 +1,224 @@
+{
+  "index.js": [
+    {
+      "edges": [
+        {
+          "from": "index.js::<anonymous>@6#entry",
+          "kind": "seq",
+          "to": "index.js::<anonymous>@6#n0"
+        },
+        {
+          "from": "index.js::<anonymous>@6#n0",
+          "kind": "seq",
+          "to": "index.js::<anonymous>@6#n1"
+        },
+        {
+          "from": "index.js::<anonymous>@6#n0",
+          "kind": "seq",
+          "to": "index.js::<anonymous>@6#n2"
+        },
+        {
+          "from": "index.js::<anonymous>@6#n2",
+          "kind": "seq",
+          "to": "index.js::<anonymous>@6#n3"
+        },
+        {
+          "from": "index.js::<anonymous>@6#n2",
+          "kind": "seq",
+          "to": "index.js::<anonymous>@6#n4"
+        }
+      ],
+      "function": "index.js::<anonymous>@6",
+      "nodes": [
+        {
+          "id": "index.js::<anonymous>@6#entry",
+          "kind": "Entry",
+          "line": 6
+        },
+        {
+          "id": "index.js::<anonymous>@6#n0",
+          "kind": "IfStatement",
+          "line": 7
+        },
+        {
+          "id": "index.js::<anonymous>@6#n1",
+          "kind": "ExpressionStatement",
+          "line": 8
+        },
+        {
+          "id": "index.js::<anonymous>@6#n2",
+          "kind": "IfStatement",
+          "line": 9
+        },
+        {
+          "id": "index.js::<anonymous>@6#n3",
+          "kind": "ExpressionStatement",
+          "line": 10
+        },
+        {
+          "id": "index.js::<anonymous>@6#n4",
+          "kind": "ExpressionStatement",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.js::<anonymous>@14#entry",
+          "kind": "seq",
+          "to": "index.js::<anonymous>@14#n0"
+        },
+        {
+          "from": "index.js::<anonymous>@14#n0",
+          "kind": "seq",
+          "to": "index.js::<anonymous>@14#n1"
+        },
+        {
+          "from": "index.js::<anonymous>@14#n1",
+          "kind": "seq",
+          "to": "index.js::<anonymous>@14#n2"
+        },
+        {
+          "from": "index.js::<anonymous>@14#n2",
+          "kind": "seq",
+          "to": "index.js::<anonymous>@14#n3"
+        },
+        {
+          "from": "index.js::<anonymous>@14#n3",
+          "kind": "seq",
+          "to": "index.js::<anonymous>@14#n4"
+        },
+        {
+          "from": "index.js::<anonymous>@14#n4",
+          "kind": "seq",
+          "to": "index.js::<anonymous>@14#n5"
+        },
+        {
+          "from": "index.js::<anonymous>@14#n5",
+          "kind": "seq",
+          "to": "index.js::<anonymous>@14#n6"
+        },
+        {
+          "from": "index.js::<anonymous>@14#n6",
+          "kind": "seq",
+          "to": "index.js::<anonymous>@14#n7"
+        }
+      ],
+      "function": "index.js::<anonymous>@14",
+      "nodes": [
+        {
+          "id": "index.js::<anonymous>@14#entry",
+          "kind": "Entry",
+          "line": 14
+        },
+        {
+          "id": "index.js::<anonymous>@14#n0",
+          "kind": "ExpressionStatement",
+          "line": 15
+        },
+        {
+          "id": "index.js::<anonymous>@14#n1",
+          "kind": "FunctionDeclaration",
+          "line": 17
+        },
+        {
+          "id": "index.js::<anonymous>@14#n2",
+          "kind": "FunctionDeclaration",
+          "line": 21
+        },
+        {
+          "id": "index.js::<anonymous>@14#n3",
+          "kind": "VariableDeclaration",
+          "line": 25
+        },
+        {
+          "id": "index.js::<anonymous>@14#n4",
+          "kind": "FunctionDeclaration",
+          "line": 27
+        },
+        {
+          "id": "index.js::<anonymous>@14#n5",
+          "kind": "ExpressionStatement",
+          "line": 32
+        },
+        {
+          "id": "index.js::<anonymous>@14#n6",
+          "kind": "ExpressionStatement",
+          "line": 33
+        },
+        {
+          "id": "index.js::<anonymous>@14#n7",
+          "kind": "ExpressionStatement",
+          "line": 34
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.js::square@17#entry",
+          "kind": "seq",
+          "to": "index.js::square@17#n0"
+        }
+      ],
+      "function": "index.js::square@17",
+      "nodes": [
+        {
+          "id": "index.js::square@17#entry",
+          "kind": "Entry",
+          "line": 17
+        },
+        {
+          "id": "index.js::square@17#n0",
+          "kind": "ReturnStatement",
+          "line": 18
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.js::cube@21#entry",
+          "kind": "seq",
+          "to": "index.js::cube@21#n0"
+        }
+      ],
+      "function": "index.js::cube@21",
+      "nodes": [
+        {
+          "id": "index.js::cube@21#entry",
+          "kind": "Entry",
+          "line": 21
+        },
+        {
+          "id": "index.js::cube@21#n0",
+          "kind": "ReturnStatement",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.js::dispatch@27#entry",
+          "kind": "seq",
+          "to": "index.js::dispatch@27#n0"
+        }
+      ],
+      "function": "index.js::dispatch@27",
+      "nodes": [
+        {
+          "id": "index.js::dispatch@27#entry",
+          "kind": "Entry",
+          "line": 27
+        },
+        {
+          "id": "index.js::dispatch@27#n0",
+          "kind": "ReturnStatement",
+          "line": 29
+        }
+      ]
+    }
+  ]
+}

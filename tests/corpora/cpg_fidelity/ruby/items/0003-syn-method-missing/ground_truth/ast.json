@@ -1,0 +1,425 @@
+{
+  "ruby_version": "3.2.3",
+  "tree": {
+    "type": "SCOPE",
+    "line": 1,
+    "children": [
+      [
+
+      ],
+      null,
+      {
+        "type": "CLASS",
+        "line": 6,
+        "children": [
+          {
+            "type": "COLON2",
+            "line": 6,
+            "children": [
+              null,
+              "GhostRecord"
+            ]
+          },
+          null,
+          {
+            "type": "SCOPE",
+            "line": 6,
+            "children": [
+              [
+
+              ],
+              null,
+              {
+                "type": "BLOCK",
+                "line": 6,
+                "children": [
+                  {
+                    "type": "BEGIN",
+                    "line": 6,
+                    "children": [
+                      null
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 7,
+                    "children": [
+                      "initialize",
+                      {
+                        "type": "SCOPE",
+                        "line": 7,
+                        "children": [
+                          [
+                            "attrs"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 7,
+                            "children": [
+                              1,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "IASGN",
+                            "line": 8,
+                            "children": [
+                              "@attrs",
+                              {
+                                "type": "LVAR",
+                                "line": 8,
+                                "children": [
+                                  "attrs"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 11,
+                    "children": [
+                      "method_missing",
+                      {
+                        "type": "SCOPE",
+                        "line": 11,
+                        "children": [
+                          [
+                            "name",
+                            "args",
+                            "key"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 11,
+                            "children": [
+                              1,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              "args",
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "BLOCK",
+                            "line": 12,
+                            "children": [
+                              {
+                                "type": "LASGN",
+                                "line": 12,
+                                "children": [
+                                  "key",
+                                  {
+                                    "type": "FCALL",
+                                    "line": 12,
+                                    "children": [
+                                      "decode",
+                                      {
+                                        "type": "LIST",
+                                        "line": 12,
+                                        "children": [
+                                          {
+                                            "type": "LVAR",
+                                            "line": 12,
+                                            "children": [
+                                              "name"
+                                            ]
+                                          },
+                                          null
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "IF",
+                                "line": 13,
+                                "children": [
+                                  {
+                                    "type": "CALL",
+                                    "line": 13,
+                                    "children": [
+                                      {
+                                        "type": "IVAR",
+                                        "line": 13,
+                                        "children": [
+                                          "@attrs"
+                                        ]
+                                      },
+                                      "key?",
+                                      {
+                                        "type": "LIST",
+                                        "line": 13,
+                                        "children": [
+                                          {
+                                            "type": "LVAR",
+                                            "line": 13,
+                                            "children": [
+                                              "key"
+                                            ]
+                                          },
+                                          null
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "CALL",
+                                    "line": 14,
+                                    "children": [
+                                      {
+                                        "type": "IVAR",
+                                        "line": 14,
+                                        "children": [
+                                          "@attrs"
+                                        ]
+                                      },
+                                      "[]",
+                                      {
+                                        "type": "LIST",
+                                        "line": 14,
+                                        "children": [
+                                          {
+                                            "type": "LVAR",
+                                            "line": 14,
+                                            "children": [
+                                              "key"
+                                            ]
+                                          },
+                                          null
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "ZSUPER",
+                                    "line": 16,
+                                    "children": [
+
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 20,
+                    "children": [
+                      "respond_to_missing?",
+                      {
+                        "type": "SCOPE",
+                        "line": 20,
+                        "children": [
+                          [
+                            "name",
+                            "include_private"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 20,
+                            "children": [
+                              1,
+                              null,
+                              {
+                                "type": "OPT_ARG",
+                                "line": 20,
+                                "children": [
+                                  {
+                                    "type": "LASGN",
+                                    "line": 20,
+                                    "children": [
+                                      "include_private",
+                                      {
+                                        "type": "FALSE",
+                                        "line": 20,
+                                        "children": [
+
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  null
+                                ]
+                              },
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "OR",
+                            "line": 21,
+                            "children": [
+                              {
+                                "type": "CALL",
+                                "line": 21,
+                                "children": [
+                                  {
+                                    "type": "IVAR",
+                                    "line": 21,
+                                    "children": [
+                                      "@attrs"
+                                    ]
+                                  },
+                                  "key?",
+                                  {
+                                    "type": "LIST",
+                                    "line": 21,
+                                    "children": [
+                                      {
+                                        "type": "FCALL",
+                                        "line": 21,
+                                        "children": [
+                                          "decode",
+                                          {
+                                            "type": "LIST",
+                                            "line": 21,
+                                            "children": [
+                                              {
+                                                "type": "LVAR",
+                                                "line": 21,
+                                                "children": [
+                                                  "name"
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      null
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "ZSUPER",
+                                "line": 21,
+                                "children": [
+
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 24,
+                    "children": [
+                      "decode",
+                      {
+                        "type": "SCOPE",
+                        "line": 24,
+                        "children": [
+                          [
+                            "name"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 24,
+                            "children": [
+                              1,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "CALL",
+                            "line": 25,
+                            "children": [
+                              {
+                                "type": "CALL",
+                                "line": 25,
+                                "children": [
+                                  {
+                                    "type": "CALL",
+                                    "line": 25,
+                                    "children": [
+                                      {
+                                        "type": "LVAR",
+                                        "line": 25,
+                                        "children": [
+                                          "name"
+                                        ]
+                                      },
+                                      "to_s",
+                                      null
+                                    ]
+                                  },
+                                  "sub",
+                                  {
+                                    "type": "LIST",
+                                    "line": 25,
+                                    "children": [
+                                      {
+                                        "type": "LIT",
+                                        "line": 25,
+                                        "children": [
+                                          "(?-mix:^find_by_)"
+                                        ]
+                                      },
+                                      {
+                                        "type": "STR",
+                                        "line": 25,
+                                        "children": [
+                                          ""
+                                        ]
+                                      },
+                                      null
+                                    ]
+                                  }
+                                ]
+                              },
+                              "to_sym",
+                              null
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

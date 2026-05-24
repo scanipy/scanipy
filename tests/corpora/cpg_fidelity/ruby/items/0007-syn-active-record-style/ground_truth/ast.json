@@ -1,0 +1,421 @@
+{
+  "ruby_version": "3.2.3",
+  "tree": {
+    "type": "SCOPE",
+    "line": 1,
+    "children": [
+      [
+
+      ],
+      null,
+      {
+        "type": "CLASS",
+        "line": 7,
+        "children": [
+          {
+            "type": "COLON2",
+            "line": 7,
+            "children": [
+              null,
+              "UserRepository"
+            ]
+          },
+          null,
+          {
+            "type": "SCOPE",
+            "line": 7,
+            "children": [
+              [
+
+              ],
+              null,
+              {
+                "type": "BLOCK",
+                "line": 7,
+                "children": [
+                  {
+                    "type": "BEGIN",
+                    "line": 7,
+                    "children": [
+                      null
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 8,
+                    "children": [
+                      "initialize",
+                      {
+                        "type": "SCOPE",
+                        "line": 8,
+                        "children": [
+                          [
+                            "connection"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 8,
+                            "children": [
+                              1,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "IASGN",
+                            "line": 9,
+                            "children": [
+                              "@connection",
+                              {
+                                "type": "LVAR",
+                                "line": 9,
+                                "children": [
+                                  "connection"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 12,
+                    "children": [
+                      "active_admins",
+                      {
+                        "type": "SCOPE",
+                        "line": 12,
+                        "children": [
+                          [
+                            "scope"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 12,
+                            "children": [
+                              0,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "BLOCK",
+                            "line": 13,
+                            "children": [
+                              {
+                                "type": "LASGN",
+                                "line": 13,
+                                "children": [
+                                  "scope",
+                                  {
+                                    "type": "VCALL",
+                                    "line": 13,
+                                    "children": [
+                                      "base_scope"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "LASGN",
+                                "line": 14,
+                                "children": [
+                                  "scope",
+                                  {
+                                    "type": "FCALL",
+                                    "line": 14,
+                                    "children": [
+                                      "apply_scope",
+                                      {
+                                        "type": "LIST",
+                                        "line": 14,
+                                        "children": [
+                                          {
+                                            "type": "LVAR",
+                                            "line": 14,
+                                            "children": [
+                                              "scope"
+                                            ]
+                                          },
+                                          {
+                                            "type": "LIT",
+                                            "line": 14,
+                                            "children": [
+                                              "admins"
+                                            ]
+                                          },
+                                          null
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "FCALL",
+                                "line": 15,
+                                "children": [
+                                  "apply_scope",
+                                  {
+                                    "type": "LIST",
+                                    "line": 15,
+                                    "children": [
+                                      {
+                                        "type": "LVAR",
+                                        "line": 15,
+                                        "children": [
+                                          "scope"
+                                        ]
+                                      },
+                                      {
+                                        "type": "LIT",
+                                        "line": 15,
+                                        "children": [
+                                          "active"
+                                        ]
+                                      },
+                                      null
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 18,
+                    "children": [
+                      "base_scope",
+                      {
+                        "type": "SCOPE",
+                        "line": 18,
+                        "children": [
+                          [
+
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 18,
+                            "children": [
+                              0,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "CALL",
+                            "line": 19,
+                            "children": [
+                              {
+                                "type": "IVAR",
+                                "line": 19,
+                                "children": [
+                                  "@connection"
+                                ]
+                              },
+                              "table",
+                              {
+                                "type": "LIST",
+                                "line": 19,
+                                "children": [
+                                  {
+                                    "type": "LIT",
+                                    "line": 19,
+                                    "children": [
+                                      "users"
+                                    ]
+                                  },
+                                  null
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 22,
+                    "children": [
+                      "apply_scope",
+                      {
+                        "type": "SCOPE",
+                        "line": 22,
+                        "children": [
+                          [
+                            "scope",
+                            "name"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 22,
+                            "children": [
+                              2,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "CALL",
+                            "line": 23,
+                            "children": [
+                              {
+                                "type": "LVAR",
+                                "line": 23,
+                                "children": [
+                                  "scope"
+                                ]
+                              },
+                              "send",
+                              {
+                                "type": "LIST",
+                                "line": 23,
+                                "children": [
+                                  {
+                                    "type": "LVAR",
+                                    "line": 23,
+                                    "children": [
+                                      "name"
+                                    ]
+                                  },
+                                  null
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 26,
+                    "children": [
+                      "find",
+                      {
+                        "type": "SCOPE",
+                        "line": 26,
+                        "children": [
+                          [
+                            "id"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 26,
+                            "children": [
+                              1,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "CALL",
+                            "line": 27,
+                            "children": [
+                              {
+                                "type": "CALL",
+                                "line": 27,
+                                "children": [
+                                  {
+                                    "type": "VCALL",
+                                    "line": 27,
+                                    "children": [
+                                      "base_scope"
+                                    ]
+                                  },
+                                  "where",
+                                  {
+                                    "type": "LIST",
+                                    "line": 27,
+                                    "children": [
+                                      {
+                                        "type": "HASH",
+                                        "line": 27,
+                                        "children": [
+                                          {
+                                            "type": "LIST",
+                                            "line": 27,
+                                            "children": [
+                                              {
+                                                "type": "LIT",
+                                                "line": 27,
+                                                "children": [
+                                                  "id"
+                                                ]
+                                              },
+                                              {
+                                                "type": "LVAR",
+                                                "line": 27,
+                                                "children": [
+                                                  "id"
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      null
+                                    ]
+                                  }
+                                ]
+                              },
+                              "first",
+                              null
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "index.js": [
+    {
+      "edges": [],
+      "function": "index.js::readConfig@7"
+    },
+    {
+      "edges": [],
+      "function": "index.js::parseConfig@11"
+    },
+    {
+      "edges": [],
+      "function": "index.js::compose@15"
+    },
+    {
+      "edges": [],
+      "function": "index.js::<anonymous>@16"
+    },
+    {
+      "edges": [
+        {
+          "def_line": 22,
+          "kind": "data",
+          "use_line": 23,
+          "var": "pipeline"
+        }
+      ],
+      "function": "index.js::loadConfig@21"
+    },
+    {
+      "edges": [
+        {
+          "def_line": 28,
+          "kind": "data",
+          "use_line": 29,
+          "var": "fn"
+        },
+        {
+          "def_line": 29,
+          "kind": "data",
+          "use_line": 31,
+          "var": "acc"
+        }
+      ],
+      "function": "index.js::applyAll@26"
+    }
+  ]
+}

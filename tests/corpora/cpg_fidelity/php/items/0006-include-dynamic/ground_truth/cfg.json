@@ -1,0 +1,23 @@
+{
+  "schema": "cpg-fidelity/cfg/v0.1.0",
+  "file": "include_dynamic.php",
+  "functions": [
+    {
+      "name": "loadModule",
+      "blocks": [
+        {"id": "B0", "kind": "entry", "succ": ["B1"]},
+        {"id": "B1", "kind": "assign", "line": 14, "succ": ["B2"]},
+        {"id": "B2", "kind": "include", "line": 16, "succ": ["B3"]},
+        {"id": "B3", "kind": "exit", "succ": []}
+      ]
+    },
+    {
+      "name": "bootstrap",
+      "blocks": [
+        {"id": "B0", "kind": "entry", "succ": ["B1"]},
+        {"id": "B1", "kind": "call", "line": 21, "succ": ["B2"]},
+        {"id": "B2", "kind": "exit", "succ": []}
+      ]
+    }
+  ]
+}

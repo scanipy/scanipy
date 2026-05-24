@@ -1,0 +1,75 @@
+{
+  "typed.py": {
+    "Adder.__init__": {
+      "edges": [
+        {
+          "from_line": 12,
+          "to_line": 13,
+          "kind": "data",
+          "var": "base"
+        },
+        {
+          "from_line": 12,
+          "to_line": 13,
+          "kind": "data",
+          "var": "self"
+        }
+      ]
+    },
+    "Adder.add": {
+      "edges": [
+        {
+          "from_line": 15,
+          "to_line": 16,
+          "kind": "data",
+          "var": "delta"
+        },
+        {
+          "from_line": 15,
+          "to_line": 16,
+          "kind": "data",
+          "var": "self"
+        }
+      ]
+    },
+    "process": {
+      "edges": [
+        {
+          "from_line": 19,
+          "to_line": 22,
+          "kind": "data",
+          "var": "values"
+        },
+        {
+          "from_line": 20,
+          "to_line": 22,
+          "kind": "data",
+          "var": "acc"
+        },
+        {
+          "from_line": 20,
+          "to_line": 23,
+          "kind": "data",
+          "var": "acc"
+        },
+        {
+          "from_line": 22,
+          "to_line": 23,
+          "kind": "control"
+        },
+        {
+          "from_line": 22,
+          "to_line": 23,
+          "kind": "data",
+          "var": "v"
+        },
+        {
+          "from_line": 23,
+          "to_line": 24,
+          "kind": "data",
+          "var": "total"
+        }
+      ]
+    }
+  }
+}

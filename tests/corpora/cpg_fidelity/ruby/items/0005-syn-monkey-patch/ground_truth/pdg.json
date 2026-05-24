@@ -1,0 +1,28 @@
+{
+  "convention": "lower-bound",
+  "methods": [
+    {
+      "method": "shout",
+      "edges": [
+
+      ]
+    },
+    {
+      "method": "upcase_words",
+      "edges": [
+
+      ]
+    },
+    {
+      "method": "announce",
+      "edges": [
+        {
+          "var": "text",
+          "use_line": 19,
+          "def_line": 18
+        }
+      ]
+    }
+  ],
+  "ruby_version": "3.2.3"
+}

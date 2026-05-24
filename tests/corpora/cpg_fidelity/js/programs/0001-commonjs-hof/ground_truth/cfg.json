@@ -1,0 +1,181 @@
+{
+  "index.js": [
+    {
+      "edges": [
+        {
+          "from": "index.js::readConfig@7#entry",
+          "kind": "seq",
+          "to": "index.js::readConfig@7#n0"
+        }
+      ],
+      "function": "index.js::readConfig@7",
+      "nodes": [
+        {
+          "id": "index.js::readConfig@7#entry",
+          "kind": "Entry",
+          "line": 7
+        },
+        {
+          "id": "index.js::readConfig@7#n0",
+          "kind": "ReturnStatement",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.js::parseConfig@11#entry",
+          "kind": "seq",
+          "to": "index.js::parseConfig@11#n0"
+        }
+      ],
+      "function": "index.js::parseConfig@11",
+      "nodes": [
+        {
+          "id": "index.js::parseConfig@11#entry",
+          "kind": "Entry",
+          "line": 11
+        },
+        {
+          "id": "index.js::parseConfig@11#n0",
+          "kind": "ReturnStatement",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.js::compose@15#entry",
+          "kind": "seq",
+          "to": "index.js::compose@15#n0"
+        }
+      ],
+      "function": "index.js::compose@15",
+      "nodes": [
+        {
+          "id": "index.js::compose@15#entry",
+          "kind": "Entry",
+          "line": 15
+        },
+        {
+          "id": "index.js::compose@15#n0",
+          "kind": "ReturnStatement",
+          "line": 16
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.js::<anonymous>@16#entry",
+          "kind": "seq",
+          "to": "index.js::<anonymous>@16#n0"
+        }
+      ],
+      "function": "index.js::<anonymous>@16",
+      "nodes": [
+        {
+          "id": "index.js::<anonymous>@16#entry",
+          "kind": "Entry",
+          "line": 16
+        },
+        {
+          "id": "index.js::<anonymous>@16#n0",
+          "kind": "ReturnStatement",
+          "line": 17
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.js::loadConfig@21#entry",
+          "kind": "seq",
+          "to": "index.js::loadConfig@21#n0"
+        },
+        {
+          "from": "index.js::loadConfig@21#n0",
+          "kind": "seq",
+          "to": "index.js::loadConfig@21#n1"
+        }
+      ],
+      "function": "index.js::loadConfig@21",
+      "nodes": [
+        {
+          "id": "index.js::loadConfig@21#entry",
+          "kind": "Entry",
+          "line": 21
+        },
+        {
+          "id": "index.js::loadConfig@21#n0",
+          "kind": "VariableDeclaration",
+          "line": 22
+        },
+        {
+          "id": "index.js::loadConfig@21#n1",
+          "kind": "ReturnStatement",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.js::applyAll@26#entry",
+          "kind": "seq",
+          "to": "index.js::applyAll@26#n0"
+        },
+        {
+          "from": "index.js::applyAll@26#n0",
+          "kind": "seq",
+          "to": "index.js::applyAll@26#n1"
+        },
+        {
+          "from": "index.js::applyAll@26#n1",
+          "kind": "seq",
+          "to": "index.js::applyAll@26#n2"
+        },
+        {
+          "from": "index.js::applyAll@26#n2",
+          "kind": "loop-back",
+          "to": "index.js::applyAll@26#n1"
+        },
+        {
+          "from": "index.js::applyAll@26#n1",
+          "kind": "seq",
+          "to": "index.js::applyAll@26#n3"
+        }
+      ],
+      "function": "index.js::applyAll@26",
+      "nodes": [
+        {
+          "id": "index.js::applyAll@26#entry",
+          "kind": "Entry",
+          "line": 26
+        },
+        {
+          "id": "index.js::applyAll@26#n0",
+          "kind": "VariableDeclaration",
+          "line": 27
+        },
+        {
+          "id": "index.js::applyAll@26#n1",
+          "kind": "ForOfStatement",
+          "line": 28
+        },
+        {
+          "id": "index.js::applyAll@26#n2",
+          "kind": "ExpressionStatement",
+          "line": 29
+        },
+        {
+          "id": "index.js::applyAll@26#n3",
+          "kind": "ReturnStatement",
+          "line": 31
+        }
+      ]
+    }
+  ]
+}

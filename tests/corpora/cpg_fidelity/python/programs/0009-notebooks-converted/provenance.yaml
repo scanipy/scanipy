@@ -1,0 +1,9 @@
+commit_sha: sha256:9989c210b78d8fb966308584962880bef3365253b185024b1a9d12f6a9bc81ad
+construct_coverage:
+  - notebooks-converted
+license: Apache-2.0
+path_in_source: source/
+python_minor: '3.10'
+sha256_source_tree: sha256:9989c210b78d8fb966308584962880bef3365253b185024b1a9d12f6a9bc81ad
+source_url: local:programs/0009-notebooks-converted/source
+synthetic: true

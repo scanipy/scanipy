@@ -1,0 +1,25 @@
+{
+  "schema": "cpg-fidelity/ast/v1",
+  "program_id": "0006-inner-class",
+  "method": "javac -Xprint traversal; parse_success verified by javac (JDK 21, -source 17).",
+  "files": [
+    {
+      "file": "Outer.java",
+      "parse_success": true,
+      "type_decls": [
+        {"name": "Outer", "kind": "CLASS"},
+        {"name": "Outer.Greeter", "kind": "INTERFACE"},
+        {"name": "Outer.Inner", "kind": "CLASS", "nesting": "inner-non-static"},
+        {"name": "Outer.StaticNested", "kind": "CLASS", "nesting": "static-nested"},
+        {"name": "Outer$1", "kind": "CLASS", "nesting": "anonymous", "implements": ["Greeter"]}
+      ],
+      "methods": [
+        {"name": "Inner.boosted()"},
+        {"name": "StaticNested.constant()"},
+        {"name": "Outer.anon()"},
+        {"name": "Outer$1.greet()"},
+        {"name": "Outer.main(String[])"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+categories:
+  - call_user_func
+dynamic: true
+id: 0003-call-user-func
+license: Apache-2.0
+primary_file: call_user_func.php
+source_commit: content-addressed
+source_url: vendored
+synthetic: true

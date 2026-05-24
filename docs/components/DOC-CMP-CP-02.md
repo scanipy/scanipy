@@ -81,7 +81,10 @@ class EncryptedCredential:
     encryption_algorithm: str       # KMS spec; default "SYMMETRIC_DEFAULT"
     encryption_context: dict[str, str]
                                     # MUST include {"org_id": "<uuid>", "purpose": "scm-credential"}
-    display_fingerprint: str        # sha256 of plaintext, hex; display-only; never used for crypto
+    display_fingerprint: str        # sha256 of ciphertext_blob, hex; display/dedupe only; never used
+                                    #   for crypto. MUST NOT be sha256 of the plaintext secret — that
+                                    #   would be a confirmation/brute-force oracle at rest and a
+                                    #   cross-tenant dedupe signal (Security Analyst finding, PR #225).
     created_at: datetime            # iso-8601 utc
 
 @dataclass(frozen=True)
@@ -108,8 +111,10 @@ def encrypt_credential(plaintext, org_id):
         Plaintext=plaintext,
         EncryptionContext={"org_id": str(org_id), "purpose": "scm-credential"},
     )
-    # 3. Compute the display fingerprint (no crypto significance).
-    display_fp = sha256(plaintext).hexdigest()
+    # 3. Compute the display fingerprint over the CIPHERTEXT, not the plaintext.
+    #    sha256(plaintext) would be a confirmation / brute-force oracle at rest and
+    #    a cross-tenant dedupe signal (Security Analyst finding, PR #225 / 488c3f0).
+    display_fp = sha256(resp["CiphertextBlob"]).hexdigest()
     return EncryptedCredential(
         ciphertext_blob=resp["CiphertextBlob"],
         kms_key_arn=cmk_arn,
@@ -249,7 +254,8 @@ CP-02.encrypt_credential / decrypt_credential
     | 1. Look up orgs.kms_cmk_arn for org_id (lazy-provision on first encrypt).
     | 2. Build EncryptionContext = {org_id, purpose}.
     | 3. boto3 kms.encrypt() / kms.decrypt() with KeyId + EncryptionContext.
-    | 4. On encrypt: compute display_fingerprint = sha256(plaintext).hex.
+    | 4. On encrypt: compute display_fingerprint = sha256(ciphertext_blob).hex
+    |    (NEVER sha256(plaintext) — brute-force oracle at rest; Security Analyst finding, PR #225).
     v
 KMS (AWS-managed; envelope encryption; annual auto-rotation)
     | returns CiphertextBlob (encrypt) / Plaintext (decrypt)

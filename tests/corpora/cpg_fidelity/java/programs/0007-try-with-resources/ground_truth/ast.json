@@ -1,0 +1,23 @@
+{
+  "schema": "cpg-fidelity/ast/v1",
+  "program_id": "0007-try-with-resources",
+  "method": "javac -Xprint traversal; parse_success verified by javac (JDK 21, -source 17).",
+  "files": [
+    {
+      "file": "Resources.java",
+      "parse_success": true,
+      "type_decls": [
+        {"name": "Resources", "kind": "CLASS"},
+        {"name": "Resources.Handle", "kind": "CLASS", "implements": ["AutoCloseable"]}
+      ],
+      "methods": [
+        {"name": "Handle.<init>(String)"},
+        {"name": "Handle.read()"},
+        {"name": "Handle.close()"},
+        {"name": "Resources.load(String)"},
+        {"name": "Resources.main(String[])"}
+      ],
+      "try_with_resources_count": 1
+    }
+  ]
+}

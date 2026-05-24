@@ -1,0 +1,24 @@
+{
+  "convention": "lower-bound",
+  "edges": [
+    {
+      "caller": "fetch",
+      "callee": "[]",
+      "line": 24,
+      "node": "CALL"
+    }
+  ],
+  "dynamic_sites": [
+    {
+      "caller": "<toplevel>",
+      "kind": "define_method",
+      "line": 10
+    },
+    {
+      "caller": "<toplevel>",
+      "kind": "define_method",
+      "line": 14
+    }
+  ],
+  "ruby_version": "3.2.3"
+}

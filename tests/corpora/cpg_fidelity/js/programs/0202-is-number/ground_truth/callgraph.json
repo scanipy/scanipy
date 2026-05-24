@@ -1,0 +1,22 @@
+{
+  "index.js": [
+    {
+      "callee": null,
+      "caller": "index.js::exports@10",
+      "line": 14,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.js::exports@10",
+      "line": 15,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.js::exports@10",
+      "line": 15,
+      "tag": "dynamic"
+    }
+  ]
+}
