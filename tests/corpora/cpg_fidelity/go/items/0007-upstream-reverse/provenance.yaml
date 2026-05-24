@@ -1,0 +1,17 @@
+source_url: https://github.com/golang/example
+source_commit: 7f05d217867b2af52b0a28c6d1c91df97e1b5b39
+source_path_in_repo: hello/reverse/reverse.go
+origin: SOURCED
+license: BSD-3-Clause
+categories: [real-world, parse-fidelity, runes, slices, single-function]
+upstream_file_sha256: 4910698348676d13ee171255cef9b2414f22d97635619377ada81c93843699a1
+upstream_license_sha256: 911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad
+note: >-
+  Vendored verbatim from golang/example at the pinned commit (BSD-3-Clause,
+  redistributable). The upstream LICENSE is vendored alongside. A build-harness
+  go.mod (module corpusitem/0007-upstream-reverse, declaring no upstream module
+  path) is added solely so the pinned deriver can load the package; the upstream
+  reverse.go byte content is unmodified. Ground truth is tool-derived via
+  tools/derive (see methodology.md). reverse.String has no internal call edges,
+  so this item's callgraph is empty by construction — a valid parse/AST/CFG
+  fidelity datapoint and a real-world (not synthesized) sample.

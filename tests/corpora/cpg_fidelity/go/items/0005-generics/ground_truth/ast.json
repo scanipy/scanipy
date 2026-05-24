@@ -1,0 +1,48 @@
+{
+  "deriver": "go/parser+go/ast",
+  "files": [
+    {
+      "file": "main.go",
+      "node_kinds": {
+        "ArrayType": 3,
+        "AssignStmt": 3,
+        "BasicLit": 5,
+        "BinaryExpr": 2,
+        "BlockStmt": 4,
+        "CallExpr": 3,
+        "Comment": 8,
+        "CommentGroup": 5,
+        "CompositeLit": 2,
+        "DeclStmt": 1,
+        "Field": 9,
+        "FieldList": 9,
+        "File": 1,
+        "FuncDecl": 3,
+        "FuncType": 3,
+        "GenDecl": 2,
+        "Ident": 40,
+        "InterfaceType": 1,
+        "RangeStmt": 1,
+        "ReturnStmt": 3,
+        "TypeSpec": 1,
+        "UnaryExpr": 2,
+        "ValueSpec": 1
+      },
+      "top_level_decls": [
+        "Number",
+        "Run",
+        "Sum",
+        "add"
+      ],
+      "func_decls": [
+        "Run",
+        "Sum",
+        "add"
+      ],
+      "type_decls": [
+        "Number"
+      ],
+      "total_nodes": 112
+    }
+  ]
+}

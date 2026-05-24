@@ -1,0 +1,150 @@
+{
+  "deriver": "x/tools/go/ssa def-use (intra-procedural data dependence)",
+  "edges": [
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t0",
+      "use": "t10=\u0026t0[t3]"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t0",
+      "use": "t12=\u0026t0[t3]"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t0",
+      "use": "t13=\u0026t0[t4]"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t0",
+      "use": "t16=convert string \u003c- []rune (t0)"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t0",
+      "use": "t1=len(t0)"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t0",
+      "use": "t5=len(t0)"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t0",
+      "use": "t8=\u0026t0[t4]"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t1",
+      "use": "t2=t1 - 1:int"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t10",
+      "use": "t11=*t10"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t11",
+      "use": "*t13 = t11"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t12",
+      "use": "*t12 = t9"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t13",
+      "use": "*t13 = t11"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t14",
+      "use": "t3=phi [0: 0:int, 2: t14] #i"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t15",
+      "use": "t4=phi [0: t2, 2: t15] #j"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t16",
+      "use": "return t16"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t2",
+      "use": "t4=phi [0: t2, 2: t15] #j"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t3",
+      "use": "t10=\u0026t0[t3]"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t3",
+      "use": "t12=\u0026t0[t3]"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t3",
+      "use": "t14=t3 + 1:int"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t3",
+      "use": "t7=t3 \u003c t6"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t4",
+      "use": "t13=\u0026t0[t4]"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t4",
+      "use": "t15=t4 - 1:int"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t4",
+      "use": "t8=\u0026t0[t4]"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t5",
+      "use": "t6=t5 / 2:int"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t6",
+      "use": "t7=t3 \u003c t6"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t7",
+      "use": "if t7 goto 2 else 3"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t8",
+      "use": "t9=*t8"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.String",
+      "def": "t9",
+      "use": "*t12 = t9"
+    },
+    {
+      "func": "corpusitem/0007-upstream-reverse.init",
+      "def": "t0",
+      "use": "if t0 goto 2 else 1"
+    }
+  ]
+}

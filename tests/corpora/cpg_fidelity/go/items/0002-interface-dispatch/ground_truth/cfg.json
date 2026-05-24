@@ -1,0 +1,102 @@
+{
+  "deriver": "x/tools/go/ssa",
+  "funcs": [
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Circle).Area",
+      "blocks": [
+        {
+          "index": 0,
+          "succs": null,
+          "num_instructions": 9
+        }
+      ]
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Rect).Area",
+      "blocks": [
+        {
+          "index": 0,
+          "succs": null,
+          "num_instructions": 8
+        }
+      ]
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Triangle).Area",
+      "blocks": [
+        {
+          "index": 0,
+          "succs": null,
+          "num_instructions": 9
+        }
+      ]
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "blocks": [
+        {
+          "index": 0,
+          "succs": null,
+          "num_instructions": 20
+        }
+      ]
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.TotalArea",
+      "blocks": [
+        {
+          "index": 0,
+          "succs": [
+            1
+          ],
+          "num_instructions": 2
+        },
+        {
+          "index": 1,
+          "succs": [
+            2,
+            3
+          ],
+          "num_instructions": 5
+        },
+        {
+          "index": 2,
+          "succs": [
+            1
+          ],
+          "num_instructions": 5
+        },
+        {
+          "index": 3,
+          "succs": null,
+          "num_instructions": 1
+        }
+      ]
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.init",
+      "blocks": [
+        {
+          "index": 0,
+          "succs": [
+            1,
+            2
+          ],
+          "num_instructions": 2
+        },
+        {
+          "index": 1,
+          "succs": [
+            2
+          ],
+          "num_instructions": 2
+        },
+        {
+          "index": 2,
+          "succs": null,
+          "num_instructions": 1
+        }
+      ]
+    }
+  ]
+}
