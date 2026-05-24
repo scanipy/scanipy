@@ -18,9 +18,9 @@ This is a **provisional, scaffolding** build. It delivers the load-bearing,
 
 - the v0.1.0 **call-graph + PDG** come from a documented *intraprocedural* resolver
   (`pipeline/extract_ground_truth.mjs`), **not** Jelly 1.4 + `tsc` as
-  `DOC §3.4` requires (filed as **CLAR-CORP-07**);
+  `DOC §3.4` requires (filed as **CLAR-CORP-12**);
 - program count (9) is a coverage skeleton, not a statistically-meaningful gate set
-  (minimum-N is **CLAR-CORP-08**).
+  (minimum-N is **CLAR-CORP-13**).
 
 The corpus is wired so `CMP-CP-06`'s `TST-AC-CP-06-js-*` can run against
 `corpus.lock` today, but **the JS/TS gate must NOT be declared passing on this
@@ -28,11 +28,11 @@ v0.1.0 ground truth** — see Open CLARs below.
 
 | Track | This build (v0.1.0) | v1.0.0 gate bar |
 |---|---|---|
-| Programs | 9 (coverage skeleton) | minimum-N per CLAR-CORP-08 |
+| Programs | 9 (coverage skeleton) | minimum-N per CLAR-CORP-13 |
 | Surfaces | js (7) + ts (2) | both, balanced |
 | AST ground truth | typescript-estree 6.18.0 (production tool) | same |
 | CFG ground truth | documented per-function visitor | same / Jelly-corroborated |
-| Call-graph + PDG ground truth | intraprocedural resolver (CLAR-CORP-07) | Jelly 1.4 + tsc type-informed |
+| Call-graph + PDG ground truth | intraprocedural resolver (CLAR-CORP-12) | Jelly 1.4 + tsc type-informed |
 
 ## What is SOURCED vs SYNTHESIZED
 
@@ -67,7 +67,7 @@ Per `FunctionDeclaration` / `FunctionExpression` / `ArrowFunctionExpression`
 `seq` (sequential), branch (`if`/`for`/`while`/`switch` bodies), `loop-back`, and
 explicit `await` / `yield` suspension self-edges. Output: `cfg.json`.
 
-## 3. Call-graph extraction (v0.1.0 resolver — CLAR-CORP-07)
+## 3. Call-graph extraction (v0.1.0 resolver — CLAR-CORP-12)
 
 `pipeline/extract_ground_truth.mjs` emits `(caller, callee, line)` triples tagged:
 
@@ -82,14 +82,14 @@ explicit `await` / `yield` suspension self-edges. Output: `cfg.json`.
 > **v1.0.0 replaces this resolver with Jelly 1.4** over the source tree, and a
 > second `tsc --noEmit --declaration` pass for TS type-informed edges, taking the
 > UNION tagged `jelly-only` / `tsc-only` / `both` / `type-informed` (`DOC §3.4`).
-> Filed as **CLAR-CORP-07**. Until then, gate call-edge numbers on this corpus are
+> Filed as **CLAR-CORP-12**. Until then, gate call-edge numbers on this corpus are
 > not authoritative.
 
 ## 4. PDG dependence edges (v0.1.0)
 
 Intra-function def→use data-dependence edges over variable declarations /
 assignments and their later identifier reads. Output: `pdg.json`. v1.0.0 uses
-Jelly's dataflow output (CLAR-CORP-07).
+Jelly's dataflow output (CLAR-CORP-12).
 
 ## 5. Determinism contract
 
@@ -124,11 +124,11 @@ MPL-2.0, ISC. Refusals recorded in `LICENSES.md`.
 
 ## Open CLARs (block v1.0.0 / gate-passing, not v0.1.0)
 
-- **CLAR-CORP-07** — adopt Jelly 1.4 (+ `tsc --noEmit --declaration` for TS
+- **CLAR-CORP-12** — adopt Jelly 1.4 (+ `tsc --noEmit --declaration` for TS
   type-informed edges) as the call-graph / PDG ground-truth tool, replacing the
   v0.1.0 intraprocedural resolver. Until resolved, JS/TS call-edge + PDG gate
   numbers on this corpus are NOT authoritative and `CMP-CP-06` must NOT declare the
   JS/TS gate passing on v0.1.0 ground truth.
-- **CLAR-CORP-08** — minimum program count N (and per-surface / per-module-system
+- **CLAR-CORP-13** — minimum program count N (and per-surface / per-module-system
   quotas) for a statistically-meaningful JS/TS fidelity gate. v0.1.0 ships a
   9-program coverage skeleton; the gate bar needs a scoped sourcing campaign.

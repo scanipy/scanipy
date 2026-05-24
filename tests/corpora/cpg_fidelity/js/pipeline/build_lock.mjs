@@ -317,7 +317,7 @@ function assemble() {
       'Call graph + PDG (v0.1.0): documented intraprocedural resolver in ' +
       'pipeline/extract_ground_truth.mjs; dynamic/HOF/type-informed sites tagged ' +
       '`dynamic` and EXCLUDED from gate precision/recall. v1.0.0 replaces with ' +
-      'Jelly 1.4 + tsc --noEmit --declaration (CLAR-CORP-07). See README.md §3.',
+      'Jelly 1.4 + tsc --noEmit --declaration (CLAR-CORP-12). See README.md §3.',
     programs,
   };
   return { lock, hard, warn };
