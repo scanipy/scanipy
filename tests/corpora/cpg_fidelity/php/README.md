@@ -17,13 +17,13 @@ This is a **provisional, scaffolding** build that delivers a **versioned,
 reproducible `corpus.lock`**, the **ground-truth schema + methodology**, the
 **dynamic-tag invariant guard**, and **one synthesized item per PHP dynamism
 axis**. It deliberately does **not** meet a per-category `N` bar (none is pinned
-yet — see `CLAR-CORP-03-php`) and includes **no** SOURCED real-world / framework
+yet — see `CLAR-CORP-16`) and includes **no** SOURCED real-world / framework
 items.
 
 | Track | This build (v0.1.0) | v1.0.0 release bar |
 |---|---|---|
 | Dynamism axes covered | 6 (variable_functions, call_user_func, magic_methods, eval, include_dynamic, callable_array) + 1 pure_php control | all axes + framework idioms |
-| Items per category | 1 | `N` per `CLAR-CORP-03-php` (OPEN) |
+| Items per category | 1 | `N` per `CLAR-CORP-16` (OPEN) |
 | SOURCED (real OSS @ pinned commit) | 0 | Laravel / Symfony / WordPress / pure-PHP, license-screened |
 | Toolchain image digest pinned | no (TBD pending CMP-SNAP-05) | yes |
 
@@ -70,7 +70,7 @@ must never be trimmed or relabelled to flatter the front-end (`DOC §5`).
 
 ## Open items
 
-- **`CLAR-CORP-03-php`** (filed `WBS.md §17`): per-category minimum item counts
+- **`CLAR-CORP-16`** (filed `WBS.md §17`): per-category minimum item counts
   for PHP are not pinned by `SDD.md`. v0.1.0 ships 1 item/axis with a documented
   rationale; the `N` bar and the framework-coverage distribution (Laravel /
   Symfony / WordPress / pure-PHP) need a decision before the v1.0.0 build.

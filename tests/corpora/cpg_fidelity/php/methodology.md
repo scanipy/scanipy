@@ -24,7 +24,7 @@ is reproducible and any tool drift forces a `corpus_version` bump.
 | AST | `nikic/PHP-Parser` | `v5.3.1` (composer; recorded here, executed in the `CMP-CP-06` image) |
 | PHP runtime | `php-cli` | `8.3.x` (matches the `CMP-SNAP-05` analysis image) |
 | CFG / PDG | in-repo extractor over the PHP-Parser AST | versioned with this corpus (`schema: cpg-fidelity/*/v0.1.0`) |
-| Toolchain image digest | PHP analysis image | **TBD** — pinned when `CMP-SNAP-05` publishes the PHP worker image digest (tracked alongside `CLAR-CORP-03-php`). |
+| Toolchain image digest | PHP analysis image | **TBD** — pinned when `CMP-SNAP-05` publishes the PHP worker image digest (tracked alongside `CLAR-CORP-16`). |
 
 > The image-digest pin is a known v0.1.0 gap: `CMP-SNAP-05` has not yet published
 > a PHP worker image. Until then the toolchain is pinned by tool semver only; the
@@ -87,7 +87,7 @@ dump, which is an implementation detail of the AST stage):
   hand-derived ground truth is auditable line-by-line.
 - **SOURCED** (real OSS at a pinned commit, license-screened): **none yet.**
   Framework idioms (Laravel facades, Symfony DI, WordPress hooks) and bulk
-  real-world items are deferred to v1.0.0 (see README + `CLAR-CORP-03-php`).
+  real-world items are deferred to v1.0.0 (see README + `CLAR-CORP-16`).
 
 ## 5. Versioning & digest
 

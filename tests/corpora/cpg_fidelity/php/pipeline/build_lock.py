@@ -49,7 +49,7 @@ ITEMS_DIR = CORPUS_ROOT / "items"
 LOCK_PATH = CORPUS_ROOT / "corpus.lock"
 
 CORPUS_ID = "CORP-CPG-php"
-CORPUS_VERSION = "0.1.0"  # README: NOT the v1.0.0 bar (per-category N pinned via CLAR-CORP-03-php)
+CORPUS_VERSION = "0.1.0"  # README: NOT the v1.0.0 bar (per-category N pinned via CLAR-CORP-16)
 LANGUAGE = "php"
 BUILT_BY = "corpus-agent/CMP-CORP-CPG-php"
 
