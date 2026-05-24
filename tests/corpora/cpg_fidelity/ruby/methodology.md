@@ -109,7 +109,7 @@ The DOC enumerates Ruby idioms: `send`, `method_missing`, `define_method`,
 `monkey_patch`, `rails_active_record`, `blocks_procs_lambdas`. Each is represented
 by at least one item; `plain_calls` / `closed_world` and `sourced` anchor the
 non-dynamic baseline. Per-category **minimum counts are not pinned by SDD**
-(`DOC SS10`); see `CLAR-CORP-07` (`WBS.md SS17`). Until resolved, this build
+(`DOC SS10`); see `CLAR-CORP-15` (`WBS.md SS17`). Until resolved, this build
 documents its distribution rationale here rather than asserting an unpinned N.
 
 ## Versioning + digest
