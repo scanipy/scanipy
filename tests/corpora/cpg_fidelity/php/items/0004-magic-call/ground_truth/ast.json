@@ -1,0 +1,11 @@
+{
+  "schema": "cpg-fidelity/ast/v0.1.0",
+  "file": "magic_call.php",
+  "namespace": "Corpus\\MagicCall",
+  "decls": [
+    {"kind": "class", "name": "Service", "line": 11},
+    {"kind": "method", "name": "Service::handlePing", "line": 13, "params": []},
+    {"kind": "method", "name": "Service::handleEcho", "line": 18, "params": ["s"]},
+    {"kind": "method", "name": "Service::__call", "line": 23, "params": ["name", "args"]}
+  ]
+}

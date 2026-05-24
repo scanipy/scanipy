@@ -1,0 +1,11 @@
+{
+  "schema": "cpg-fidelity/callgraph/v0.1.0",
+  "file": "callable_array.php",
+  "is_lower_bound": true,
+  "dynamic": true,
+  "notes": "call_user_func([$h, $method]) at line 28 dispatches to a method whose name is data-derived ('on'.ucfirst($event)). The reachable targets are onStart/onStop (driver passes 'start','stop' at lines 31-32). Demonstrably-reachable lower bound.",
+  "edges": [
+    {"caller": "trigger", "callee": "Handlers::onStart", "line": 28, "resolution": "dynamic-callable-array"},
+    {"caller": "trigger", "callee": "Handlers::onStop", "line": 28, "resolution": "dynamic-callable-array"}
+  ]
+}

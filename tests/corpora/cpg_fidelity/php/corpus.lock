@@ -1,0 +1,70 @@
+built_by: corpus-agent/CMP-CORP-CPG-php
+corpus_digest: sha256:675d865f1d7111b3946ddb0834dfa999afce50e99a3b07ae9d320f26548e1eee
+corpus_id: CORP-CPG-php
+corpus_version: 0.1.0
+created_at: '2026-05-24T17:55:17Z'
+ground_truth_method: Hand-derived per the documented procedure in methodology.md,
+  which pins nikic/PHP-Parser + a CFG/PDG extractor and the PHP toolchain (image digest
+  TBD pending CMP-SNAP-05). PHP is not on the corpus-build host, so the ground_truth/*.json
+  files are the persisted projections the CMP-CP-06 harness compares against; re-derivation
+  under a pinned toolchain bumps corpus_version. Call graphs over dynamic dispatch
+  are a LOWER BOUND on recall (PHP dynamism is undecidable); INV-6 applies. See README.md
+  for the v0.1.0 scope note and SOURCED vs SYNTHESIZED.
+items:
+  - categories:
+      - pure_php
+    dynamic: false
+    id: 0001-pure-php-static
+    item_digest: sha256:c7b405697fc2e5ab051b2ceaacd68d62443e3c7ba29f2831be9b0e4bcdc0a667
+    license: Apache-2.0
+    source_commit: sha256:0b92487a1366b01df74b1abd14c8c8f62c10dde5a732c1e0145ef4f01d999b58
+    source_url: vendored
+  - categories:
+      - variable_functions
+    dynamic: true
+    id: 0002-variable-function
+    item_digest: sha256:857fc980ca04007124948069f0e65513077c0f613de943ba51af7b19570d1f00
+    license: Apache-2.0
+    source_commit: sha256:f2a1f1af8d66199614aa80ed691b2fa30d7936b6d3d8cebeb8b1bd9e5664f6b4
+    source_url: vendored
+  - categories:
+      - call_user_func
+    dynamic: true
+    id: 0003-call-user-func
+    item_digest: sha256:a630874de1216be044a0ca050bd7c5a82ebb160c40ac7d92cbe6693f0233ba23
+    license: Apache-2.0
+    source_commit: sha256:f30b3b0bb2afb6ab719454e5ed0736607a5f01e1b0f9d52680b1ffdd949c3d51
+    source_url: vendored
+  - categories:
+      - magic_methods
+    dynamic: true
+    id: 0004-magic-call
+    item_digest: sha256:b549a259dca72465a692d82eac560946f3ed4c13ad218b42d1075d17b5de5a79
+    license: Apache-2.0
+    source_commit: sha256:60386c61c078d120d6b10299ef7f1e25dc641c1d7278f9e057dbe670f45b1b3d
+    source_url: vendored
+  - categories:
+      - eval
+    dynamic: true
+    id: 0005-eval-dynamic
+    item_digest: sha256:4b08d9f187c08ac145b9362da911187dd5552aca8e04a3b090a6ce2fc7eb7574
+    license: Apache-2.0
+    source_commit: sha256:527813aea4d75bf6f0b0fc3cf3243c9db91d5f4196677200ee54863c0653a048
+    source_url: vendored
+  - categories:
+      - include_dynamic
+    dynamic: true
+    id: 0006-include-dynamic
+    item_digest: sha256:727274d104908df2fc36a13d3fbaf814bbcd9dd434e25dbdb7ccfa9ac72a1efc
+    license: Apache-2.0
+    source_commit: sha256:52f92b5ff8d67680e10ae1a9ed214f811f6ece6c3b6d9a33167243a46f30a4ae
+    source_url: vendored
+  - categories:
+      - callable_array
+    dynamic: true
+    id: 0007-callable-array-method
+    item_digest: sha256:0e364e680eb92a179ef4d50b9c22750a051d9a7f4f28e2f3654fd091526755ea
+    license: Apache-2.0
+    source_commit: sha256:9bad014fb7a60df4ac27dc5ab0d9a8d5aa6e242cece5c9e70ada4c6aa3a1bb8d
+    source_url: vendored
+language: php

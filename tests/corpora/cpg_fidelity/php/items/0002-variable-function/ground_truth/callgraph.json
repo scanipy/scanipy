@@ -1,0 +1,11 @@
+{
+  "schema": "cpg-fidelity/callgraph/v0.1.0",
+  "file": "variable_function.php",
+  "is_lower_bound": true,
+  "dynamic": true,
+  "notes": "Variable-function call $fn($name) at line 26. Targets are the two string literals assigned to $fn at line 24 (greet, shout). Recorded as demonstrably-reachable lower bound; a front-end that resolves neither still must not be scored as a recall failure beyond INV-6.",
+  "edges": [
+    {"caller": "dispatch", "callee": "shout", "line": 26, "resolution": "dynamic-variable-function"},
+    {"caller": "dispatch", "callee": "greet", "line": 26, "resolution": "dynamic-variable-function"}
+  ]
+}
