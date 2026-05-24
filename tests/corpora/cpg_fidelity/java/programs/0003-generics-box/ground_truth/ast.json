@@ -1,0 +1,21 @@
+{
+  "schema": "cpg-fidelity/ast/v1",
+  "program_id": "0003-generics-box",
+  "method": "javac -Xprint traversal; parse_success verified by javac (JDK 21, -source 17).",
+  "files": [
+    {
+      "file": "Boxes.java",
+      "parse_success": true,
+      "type_decls": [
+        {"name": "Boxes", "kind": "CLASS"},
+        {"name": "Boxes.Box", "kind": "CLASS", "type_parameters": ["T"]}
+      ],
+      "methods": [
+        {"name": "Box.<init>(T)"},
+        {"name": "Box.get()", "returns": "T"},
+        {"name": "Boxes.max(List<T>)", "type_parameters": ["T extends Comparable<T>"]},
+        {"name": "Boxes.main(String[])"}
+      ]
+    }
+  ]
+}
