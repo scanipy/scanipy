@@ -65,7 +65,14 @@ repos:
           - types-PyYAML
           - types-requests
           - types-psycopg2
-        exclude: tests/corpora/
+        # Scope to the same source dirs CI type-checks (ci.yml runs
+        # `mypy analysis/ detectors/ integrations/ services/`). Tests are
+        # not type-checked in CI; running mypy on them here only fails on
+        # pytest's untyped decorators (pytest is absent from this hook's
+        # isolated venv). db/migrations/ is generated Alembic DDL, also
+        # excluded in pyproject [tool.mypy]. Keeping the hook and CI in
+        # lockstep avoids forcing `git commit --no-verify`.
+        exclude: ^(tests/|db/migrations/)
 
   # ---------------------------------------------------------------------------
   # YAML lint
