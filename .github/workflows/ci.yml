@@ -51,9 +51,19 @@ jobs:
 
       - name: Mypy strict
         run: |
-          # Only run mypy if Python source directories exist (scaffold phase: skip gracefully)
-          if find analysis detectors integrations services -name "*.py" 2>/dev/null | grep -q .; then
-            mypy --config-file pyproject.toml analysis/ detectors/ integrations/ services/
+          # Type-check only the source dirs that actually contain .py files.
+          # A per-component branch contains only a subset of these dirs; handing
+          # mypy a dir that is absent or empty makes it error ("Duplicate module
+          # __main__" / "no .py files in directory"). Build the list dynamically
+          # so the job matches the resilient pre-push hook and stays green during
+          # incremental Phase-2 landings.
+          DIRS=""
+          for d in analysis detectors integrations services workers; do
+            if find "$d" -name "*.py" 2>/dev/null | grep -q .; then DIRS="$DIRS $d"; fi
+          done
+          if [ -n "$DIRS" ]; then
+            echo "mypy on:$DIRS"
+            mypy --config-file pyproject.toml $DIRS
           else
             echo "No Python source files yet — mypy skipped (scaffold phase)"
           fi
