@@ -41,7 +41,7 @@ TOOLCHAIN = CORPUS_ROOT / "toolchain" / "derive_ground_truth.rb"
 LOCK_PATH = CORPUS_ROOT / "corpus.lock"
 
 CORPUS_ID = "CORP-CPG-ruby"
-CORPUS_VERSION = "0.1.0"  # README SSStatus: NOT the full per-category N bar (CLAR-CORP-07-ruby)
+CORPUS_VERSION = "0.1.0"  # README SSStatus: NOT the full per-category N bar (CLAR-CORP-15-ruby)
 BUILT_BY = "corpus-agent/CMP-CORP-CPG-ruby"
 LANGUAGE = "ruby"
 
