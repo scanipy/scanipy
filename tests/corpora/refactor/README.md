@@ -22,7 +22,7 @@ is met; the *falsifier diversity* is closer to 8 than 50.
 
 `DOC-CMP-CORP-REFAC-01 §4.1` names the seed-selection input as
 "Algorithm 2 / Semgrep + manual curation". Sourcing real, structurally-distinct
-seeds from public repositories is deferred to v1.0.0 — see **CLAR-CORP-07** in
+seeds from public repositories is deferred to v1.0.0 — see **CLAR-CORP-17** in
 `WBS.md §17`. Until then, `corpus.lock.distinct_topologies` records the honest
 diversity, and consumers (`TST-AC-CORE-02a/b`) must not read this as a
 50-independent-topology falsifier.
@@ -30,14 +30,14 @@ diversity, and consumers (`TST-AC-CORE-02a/b`) must not read this as a
 | Track | This build (v0.1.0) | v1.0.0 release bar |
 |---|---|---|
 | Pairs (seeds × refactors) | 350 (50 × 7) — meets AC-CORP-REFAC-01a count | 350 |
-| Distinct (class, language) topologies | 8 | target set by CLAR-CORP-07 |
+| Distinct (class, language) topologies | 8 | target set by CLAR-CORP-17 |
 | Structurally-distinct seeds | 8 templates | ≥ N distinct, sourced + curated |
 
 ## What is SOURCED vs SYNTHESIZED
 
 - **SOURCED (real public repos with `source_url` + `commit_sha`):** **none.**
   This build sources no third-party code. Real-repo seeds are the v1.0.0 work
-  deferred under CLAR-CORP-07.
+  deferred under CLAR-CORP-17.
 - **SYNTHESIZED:** **all 50 seeds** (and all 350 `after/` trees). The bases in
   `bases/__init__.py` are small closed-world programs authored for this corpus
   (Apache-2.0), each with exactly one seeded source→sink finding. The `after/`
@@ -98,4 +98,4 @@ from `corpus_digest`, so two builds produce the same digest.
 - `SDD.md §6 CMP-CORE-02` — consumer ACs (AC-CORE-02a/b/c).
 - `PLAN.md §"Algorithm 3"` — the 5 named normalization passes + 2 flip cases.
 - `.claude/rules/01-invariants.md §INV-5` — `fingerprint_class` semantics.
-- `WBS.md §17 CLAR-CORP-07` — topology-diversity expansion (v0.1.0 → v1.0.0).
+- `WBS.md §17 CLAR-CORP-17` — topology-diversity expansion (v0.1.0 → v1.0.0).
