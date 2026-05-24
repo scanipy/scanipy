@@ -1,0 +1,9 @@
+expected_sites:
+  - file: Calculator.java
+    kind: java-method-invoke
+    line: 21
+label: not-closed-world
+labelled_by: pipeline
+rationale: Mutation-injected java-method-invoke reflection construct inserted at line
+  21 of a clean closed-world base. not-closed-world by construction (INV-4 safe direction).
+review_status: single-pass
