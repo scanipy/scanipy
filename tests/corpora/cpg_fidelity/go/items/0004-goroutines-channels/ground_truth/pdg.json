@@ -1,0 +1,95 @@
+{
+  "deriver": "x/tools/go/ssa def-use (intra-procedural data dependence)",
+  "edges": [
+    {
+      "func": "corpusitem/0004-goroutines-channels.Run",
+      "def": "t0",
+      "use": "t1=changetype chan\u003c- int \u003c- chan int (t0)"
+    },
+    {
+      "func": "corpusitem/0004-goroutines-channels.Run",
+      "def": "t0",
+      "use": "t2=changetype \u003c-chan int \u003c- chan int (t0)"
+    },
+    {
+      "func": "corpusitem/0004-goroutines-channels.Run",
+      "def": "t1",
+      "use": "go produce(n, t1)"
+    },
+    {
+      "func": "corpusitem/0004-goroutines-channels.Run",
+      "def": "t2",
+      "use": "t3=consume(t2)"
+    },
+    {
+      "func": "corpusitem/0004-goroutines-channels.Run",
+      "def": "t3",
+      "use": "return t3"
+    },
+    {
+      "func": "corpusitem/0004-goroutines-channels.consume",
+      "def": "t0",
+      "use": "return t0"
+    },
+    {
+      "func": "corpusitem/0004-goroutines-channels.consume",
+      "def": "t0",
+      "use": "t4=t0 + t3"
+    },
+    {
+      "func": "corpusitem/0004-goroutines-channels.consume",
+      "def": "t1",
+      "use": "t2=extract t1 #1"
+    },
+    {
+      "func": "corpusitem/0004-goroutines-channels.consume",
+      "def": "t1",
+      "use": "t3=extract t1 #0"
+    },
+    {
+      "func": "corpusitem/0004-goroutines-channels.consume",
+      "def": "t2",
+      "use": "if t2 goto 2 else 3"
+    },
+    {
+      "func": "corpusitem/0004-goroutines-channels.consume",
+      "def": "t3",
+      "use": "t4=t0 + t3"
+    },
+    {
+      "func": "corpusitem/0004-goroutines-channels.consume",
+      "def": "t4",
+      "use": "t0=phi [0: 0:int, 2: t4] #sum"
+    },
+    {
+      "func": "corpusitem/0004-goroutines-channels.init",
+      "def": "t0",
+      "use": "if t0 goto 2 else 1"
+    },
+    {
+      "func": "corpusitem/0004-goroutines-channels.produce",
+      "def": "t0",
+      "use": "send out \u003c- t0"
+    },
+    {
+      "func": "corpusitem/0004-goroutines-channels.produce",
+      "def": "t0",
+      "use": "t1=t0 \u003c n"
+    },
+    {
+      "func": "corpusitem/0004-goroutines-channels.produce",
+      "def": "t0",
+      "use": "t2=t0 + 1:int"
+    },
+    {
+      "func": "corpusitem/0004-goroutines-channels.produce",
+      "def": "t1",
+      "use": "if t1 goto 2 else 3"
+    },
+    {
+      "func": "corpusitem/0004-goroutines-channels.produce",
+      "def": "t2",
+      "use": "t0=phi [0: 0:int, 2: t2] #i"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "deriver": "x/tools/go/callgraph/cha",
+  "edges": [
+    {
+      "caller": "corpusitem/0005-generics.Run",
+      "callee": "corpusitem/0005-generics.Sum[float64]",
+      "dynamic": false
+    },
+    {
+      "caller": "corpusitem/0005-generics.Run",
+      "callee": "corpusitem/0005-generics.Sum[int]",
+      "dynamic": false
+    },
+    {
+      "caller": "corpusitem/0005-generics.Sum",
+      "callee": "corpusitem/0005-generics.add[T]",
+      "dynamic": false
+    },
+    {
+      "caller": "corpusitem/0005-generics.Sum[float64]",
+      "callee": "corpusitem/0005-generics.add[float64]",
+      "dynamic": false
+    },
+    {
+      "caller": "corpusitem/0005-generics.Sum[int]",
+      "callee": "corpusitem/0005-generics.add[int]",
+      "dynamic": false
+    },
+    {
+      "caller": "corpusitem/0005-generics.add[T]",
+      "callee": "corpusitem/0005-generics.add",
+      "dynamic": false
+    }
+  ]
+}

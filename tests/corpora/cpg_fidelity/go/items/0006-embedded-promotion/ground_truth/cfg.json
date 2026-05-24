@@ -1,0 +1,70 @@
+{
+  "deriver": "x/tools/go/ssa",
+  "funcs": [
+    {
+      "func": "(*corpusitem/0006-embedded-promotion.Logger).Log",
+      "blocks": [
+        {
+          "index": 0,
+          "succs": null,
+          "num_instructions": 4
+        }
+      ]
+    },
+    {
+      "func": "(*corpusitem/0006-embedded-promotion.Service).Handle",
+      "blocks": [
+        {
+          "index": 0,
+          "succs": null,
+          "num_instructions": 9
+        }
+      ]
+    },
+    {
+      "func": "(corpusitem/0006-embedded-promotion.Base).Describe",
+      "blocks": [
+        {
+          "index": 0,
+          "succs": null,
+          "num_instructions": 5
+        }
+      ]
+    },
+    {
+      "func": "corpusitem/0006-embedded-promotion.Run",
+      "blocks": [
+        {
+          "index": 0,
+          "succs": null,
+          "num_instructions": 11
+        }
+      ]
+    },
+    {
+      "func": "corpusitem/0006-embedded-promotion.init",
+      "blocks": [
+        {
+          "index": 0,
+          "succs": [
+            1,
+            2
+          ],
+          "num_instructions": 2
+        },
+        {
+          "index": 1,
+          "succs": [
+            2
+          ],
+          "num_instructions": 2
+        },
+        {
+          "index": 2,
+          "succs": null,
+          "num_instructions": 1
+        }
+      ]
+    }
+  ]
+}

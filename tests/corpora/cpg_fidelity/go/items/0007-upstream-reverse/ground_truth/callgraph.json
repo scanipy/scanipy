@@ -1,0 +1,4 @@
+{
+  "deriver": "x/tools/go/callgraph/cha",
+  "edges": []
+}
