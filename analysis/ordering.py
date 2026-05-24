@@ -24,9 +24,10 @@ Algorithm 5 (verbatim, ``PLAN.md §"Algorithm 5"`` / ``DOC-ALGS §6.4``):
     form.
 
 The ``(B, T)`` defaults are ``B = 2**16`` search-tree nodes and ``T = 200 ms``
-wall-clock (``CLAR-PARAM-01`` RESOLVED 2026-05-23). ``B`` is the authoritative
-budget trigger; ``T`` is a soft cap (wall-clock skew is accepted per
-``DOC-CMP-CORE-03 §7.1`` so long as ``B`` is honoured).
+wall-clock (``CLAR-PARAM-01`` RESOLVED 2026-05-23). ``B`` and ``T`` are **both
+hard triggers** (``DOC-CMP-CORE-03 §7.1``): ``B`` is the primary search-tree
+node cap; ``T`` guards against wall-clock skew. Either firing yields the weak
+result via ``BudgetExhausted`` — never an unbounded loop.
 
 Source-of-truth: ``DOC-CMP-CORE-03``, ``DOC-ALGS §6``, ``DOC-PROVENANCE §2.1``,
 ``.claude/rules/01-invariants.md §INV-5``.
@@ -53,8 +54,8 @@ Annotation = Literal["canonical iff fingerprint_class = strong"]
 CPG_ORDER_HASH_ANNOTATION: Final[Annotation] = "canonical iff fingerprint_class = strong"
 
 # CLAR-PARAM-01 RESOLVED 2026-05-23: hard (B, T) canonicalisation budget.
-DEFAULT_B: Final[int] = 2**16  # search-tree node cap (authoritative trigger)
-DEFAULT_T: Final[Duration] = Duration(0.200)  # wall-clock soft cap (seconds)
+DEFAULT_B: Final[int] = 2**16  # search-tree node cap (hard trigger)
+DEFAULT_T: Final[Duration] = Duration(0.200)  # wall-clock cap, seconds (hard trigger)
 
 
 class BudgetExhausted(Exception):  # noqa: N818  (named verbatim per DOC-CMP-CORE-03 App. A)
