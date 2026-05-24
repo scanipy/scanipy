@@ -15,7 +15,7 @@ seed. Because nothing is sourced from a public repository, the per-seed
 (e.g. `tests/corpora/reflection/`) are intentionally absent here; the
 `base_sha256` content hash pins each synthetic base instead.
 
-When real-repo seeds are added at v1.0.0 (CLAR-CORP-07), each must arrive with a
+When real-repo seeds are added at v1.0.0 (CLAR-CORP-17), each must arrive with a
 `source_url`, a pinned `commit_sha`, and a license on the corpus allow-list
 (`MIT`, `Apache-2.0`, `BSD-2-Clause`, `BSD-3-Clause`, `MPL-2.0`), and this file
 must be updated with the attribution.
