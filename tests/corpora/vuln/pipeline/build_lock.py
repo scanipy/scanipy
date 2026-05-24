@@ -75,8 +75,14 @@ def _load_yaml(path: Path) -> dict:
     return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
 
 
-def regenerate_bigvul_split() -> dict:
-    """(Re)derive the held-out split + write heldout_split.lock. Returns its summary."""
+def regenerate_bigvul_split(write: bool = False) -> dict:
+    """(Re)derive the held-out split + return its summary.
+
+    The split is RE-DERIVED on every call so `--check` can re-assert disjointness
+    (DOC §7) and recompute digests, but `heldout_split.lock` is written to the
+    worktree ONLY when ``write=True``. `--check` must stay read-only: the split is
+    fully deterministic, so a CI run never needs to mutate tracked files.
+    """
     rows = bvs.load_rows_from_csv(BIGVUL_DATA)
     res = bvs.split_rows(rows)  # raises on held-out/training intersection (DOC §7)
 
@@ -98,7 +104,8 @@ def regenerate_bigvul_split() -> dict:
         "heldout_row_ids": sorted(res.heldout_ids),
         "disjoint_assertion": "heldout ∩ training_eligible == ∅ (verified at build)",
     }
-    BIGVUL_SPLIT_LOCK.write_text(_dump_yaml(split_doc), encoding="utf-8")
+    if write:
+        BIGVUL_SPLIT_LOCK.write_text(_dump_yaml(split_doc), encoding="utf-8")
     return split_doc
 
 
@@ -166,11 +173,11 @@ def _walk_slices(hard: list[str], warn: list[str]) -> list[dict]:
     return slices
 
 
-def assemble_lock() -> tuple[dict, list[str], list[str]]:
+def assemble_lock(write: bool = False) -> tuple[dict, list[str], list[str]]:
     hard: list[str] = []
     warn: list[str] = []
 
-    split = regenerate_bigvul_split()
+    split = regenerate_bigvul_split(write=write)
     slices = _walk_slices(hard, warn)
 
     # AC-CORP-VULN-01b: every Stage-A (class, language) pair must be populated.
@@ -238,7 +245,7 @@ def main() -> int:
     ap.add_argument("--check", action="store_true", help="fail on digest drift / leakage")
     args = ap.parse_args()
 
-    lock, hard, warn = assemble_lock()
+    lock, hard, warn = assemble_lock(write=args.write)
     for w in warn:
         print(f"[warn] {w}", file=sys.stderr)
     if hard:
@@ -254,7 +261,9 @@ def main() -> int:
             print("corpus.lock missing; run --write", file=sys.stderr)
             return 3
         existing = _load_yaml(LOCK_PATH)
-        recomputed = canonical_digest({**existing, "corpus_digest": "sha256:PENDING"})
+        # canonical_digest already excludes corpus_digest (+ built_at/built_by), so the
+        # recorded digest is recomputed straight from the existing lock.
+        recomputed = canonical_digest(existing)
         if existing.get("corpus_digest") != recomputed:
             print(
                 f"corpus_digest drift: recorded={existing.get('corpus_digest')} "
