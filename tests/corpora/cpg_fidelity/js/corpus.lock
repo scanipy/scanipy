@@ -1,11 +1,11 @@
 corpus_id: CMP-CORP-CPG-js
 corpus_version: "0.1.0"
-corpus_digest: "sha256:476ce69589865b2e8b5bef10108b7bb6a32555b76fcaae07131f6e1ef35ad5e7"
+corpus_digest: "sha256:8e15b23771fc31edc7d2b8be35c43791e7a290417e24f061493f03d78318721e"
 language: js-ts
 language_levels:
   ecmascript: "2022"
   typescript: "5.x"
-built_at: "2026-05-24T17:53:26Z"
+built_at: "2026-05-24T18:37:14Z"
 built_by: corpus-agent/CMP-CORP-CPG-js
 surface_counts:
   js: 7
@@ -21,7 +21,7 @@ programs:
     surface: js
     module_system: commonjs
     synthetic: true
-    loc: 41
+    loc: 34
     construct_coverage:
       - higher-order-functions
       - module-system-commonjs

@@ -298,7 +298,7 @@ function assemble() {
   if (jsCount === 0 || tsCount === 0) hard.push(`both surfaces required (js=${jsCount} ts=${tsCount})`);
   const total = jsCount + tsCount;
   if (total > 0 && (jsCount / total > 0.9 || tsCount / total > 0.9)) {
-    warn.push(`surface imbalance > 90% (js=${jsCount} ts=${tsCount})`);
+    hard.push(`surface imbalance > 90% (js=${jsCount} ts=${tsCount})`);
   }
 
   const lock = {
