@@ -1,0 +1,1121 @@
+{
+  "ruby_version": "3.2.3",
+  "methods": [
+    {
+      "method": "[]",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 43
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "default",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 47
+            },
+            {
+              "type": "SUPER",
+              "line": 49
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "default=",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "SUPER",
+              "line": 53
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "assoc",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "SUPER",
+              "line": 57
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "rassoc",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "SUPER",
+              "line": 61
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "fetch",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 65
+            },
+            {
+              "type": "SUPER",
+              "line": 67
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "[]",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "SUPER",
+              "line": 71
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "[]=",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "SUPER",
+              "line": 75
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "key",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "SUPER",
+              "line": 81
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "key?",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "SUPER",
+              "line": 85
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "value?",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "SUPER",
+              "line": 93
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "delete",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "SUPER",
+              "line": 99
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "dig",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "SUPER",
+              "line": 104
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "fetch_values",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 108
+            },
+            {
+              "type": "SUPER",
+              "line": 110
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "slice",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 114
+            },
+            {
+              "type": "CALL",
+              "line": 116
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "values_at",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 120
+            },
+            {
+              "type": "SUPER",
+              "line": 122
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "merge!",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "ITER",
+              "line": 126
+            },
+            {
+              "type": "SELF",
+              "line": 138
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "merge",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 144
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "replace",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "SUPER",
+              "line": 148
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "transform_values",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 152
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "transform_values!",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "ZSUPER",
+              "line": 156
+            },
+            {
+              "type": "SUPER",
+              "line": 157
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "transform_keys",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 161
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "transform_keys!",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "ZSUPER",
+              "line": 165
+            },
+            {
+              "type": "SUPER",
+              "line": 166
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "select",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        },
+        {
+          "id": "b2",
+          "kind": "JOIN",
+          "line": 170,
+          "stmts": [
+            {
+              "type": "ITER",
+              "line": 172
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "kind": "THEN",
+          "line": 170,
+          "stmts": [
+            {
+              "type": "RETURN",
+              "line": 170
+            }
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b2"
+        },
+        {
+          "from": "b0",
+          "to": "b3"
+        },
+        {
+          "from": "b2",
+          "to": "b1"
+        },
+        {
+          "from": "b3",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "reject",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        },
+        {
+          "id": "b2",
+          "kind": "JOIN",
+          "line": 176,
+          "stmts": [
+            {
+              "type": "ITER",
+              "line": 178
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "kind": "THEN",
+          "line": 176,
+          "stmts": [
+            {
+              "type": "RETURN",
+              "line": 176
+            }
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b2"
+        },
+        {
+          "from": "b0",
+          "to": "b3"
+        },
+        {
+          "from": "b2",
+          "to": "b1"
+        },
+        {
+          "from": "b3",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "compact",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 182
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "except",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 186
+            },
+            {
+              "type": "CALL",
+              "line": 188
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "convert_key",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        },
+        {
+          "id": "b2",
+          "kind": "JOIN",
+          "line": 194,
+          "stmts": [
+
+          ]
+        },
+        {
+          "id": "b3",
+          "kind": "THEN",
+          "line": 194,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 194
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "kind": "ELSE",
+          "line": 194,
+          "stmts": [
+            {
+              "type": "LVAR",
+              "line": 194
+            }
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b3"
+        },
+        {
+          "from": "b0",
+          "to": "b4"
+        },
+        {
+          "from": "b2",
+          "to": "b1"
+        },
+        {
+          "from": "b3",
+          "to": "b2"
+        },
+        {
+          "from": "b4",
+          "to": "b2"
+        }
+      ]
+    },
+    {
+      "method": "convert_value",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        },
+        {
+          "id": "b2",
+          "kind": "JOIN",
+          "line": 198,
+          "stmts": [
+
+          ]
+        },
+        {
+          "id": "b3",
+          "kind": "WHEN",
+          "line": 198,
+          "stmts": [
+            {
+              "type": "LVAR",
+              "line": 198
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "kind": "WHEN",
+          "line": 199,
+          "stmts": [
+            {
+              "type": "WHEN",
+              "line": 199
+            }
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b2"
+        },
+        {
+          "from": "b0",
+          "to": "b3"
+        },
+        {
+          "from": "b0",
+          "to": "b4"
+        },
+        {
+          "from": "b2",
+          "to": "b1"
+        },
+        {
+          "from": "b3",
+          "to": "b2"
+        },
+        {
+          "from": "b4",
+          "to": "b2"
+        }
+      ]
+    }
+  ]
+}

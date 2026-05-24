@@ -1,0 +1,64 @@
+{
+  "ruby_version": "3.2.3",
+  "tree": {
+    "type": "SCOPE",
+    "line": 1,
+    "children": [
+      [
+
+      ],
+      null,
+      {
+        "type": "MODULE",
+        "line": 3,
+        "children": [
+          {
+            "type": "COLON2",
+            "line": 3,
+            "children": [
+              null,
+              "Sinatra"
+            ]
+          },
+          {
+            "type": "SCOPE",
+            "line": 3,
+            "children": [
+              [
+
+              ],
+              null,
+              {
+                "type": "BLOCK",
+                "line": 3,
+                "children": [
+                  {
+                    "type": "BEGIN",
+                    "line": 3,
+                    "children": [
+                      null
+                    ]
+                  },
+                  {
+                    "type": "CDECL",
+                    "line": 4,
+                    "children": [
+                      "VERSION",
+                      {
+                        "type": "STR",
+                        "line": 4,
+                        "children": [
+                          "4.1.1"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

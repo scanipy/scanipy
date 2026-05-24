@@ -1,0 +1,3331 @@
+{
+  "ruby_version": "3.2.3",
+  "tree": {
+    "type": "SCOPE",
+    "line": 1,
+    "children": [
+      [
+
+      ],
+      null,
+      {
+        "type": "MODULE",
+        "line": 3,
+        "children": [
+          {
+            "type": "COLON2",
+            "line": 3,
+            "children": [
+              null,
+              "Sinatra"
+            ]
+          },
+          {
+            "type": "SCOPE",
+            "line": 3,
+            "children": [
+              [
+
+              ],
+              null,
+              {
+                "type": "BLOCK",
+                "line": 3,
+                "children": [
+                  {
+                    "type": "BEGIN",
+                    "line": 3,
+                    "children": [
+                      null
+                    ]
+                  },
+                  {
+                    "type": "CLASS",
+                    "line": 41,
+                    "children": [
+                      {
+                        "type": "COLON2",
+                        "line": 41,
+                        "children": [
+                          null,
+                          "IndifferentHash"
+                        ]
+                      },
+                      {
+                        "type": "CONST",
+                        "line": 41,
+                        "children": [
+                          "Hash"
+                        ]
+                      },
+                      {
+                        "type": "SCOPE",
+                        "line": 41,
+                        "children": [
+                          [
+
+                          ],
+                          null,
+                          {
+                            "type": "BLOCK",
+                            "line": 42,
+                            "children": [
+                              {
+                                "type": "DEFS",
+                                "line": 42,
+                                "children": [
+                                  {
+                                    "type": "SELF",
+                                    "line": 42,
+                                    "children": [
+
+                                    ]
+                                  },
+                                  "[]",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 42,
+                                    "children": [
+                                      [
+                                        "args"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 42,
+                                        "children": [
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          "args",
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "CALL",
+                                        "line": 43,
+                                        "children": [
+                                          {
+                                            "type": "VCALL",
+                                            "line": 43,
+                                            "children": [
+                                              "new"
+                                            ]
+                                          },
+                                          "merge!",
+                                          {
+                                            "type": "LIST",
+                                            "line": 43,
+                                            "children": [
+                                              {
+                                                "type": "CALL",
+                                                "line": 43,
+                                                "children": [
+                                                  {
+                                                    "type": "CONST",
+                                                    "line": 43,
+                                                    "children": [
+                                                      "Hash"
+                                                    ]
+                                                  },
+                                                  "[]",
+                                                  {
+                                                    "type": "SPLAT",
+                                                    "line": 43,
+                                                    "children": [
+                                                      {
+                                                        "type": "LVAR",
+                                                        "line": 43,
+                                                        "children": [
+                                                          "args"
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 46,
+                                "children": [
+                                  "default",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 46,
+                                    "children": [
+                                      [
+                                        "args"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 46,
+                                        "children": [
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          "args",
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "BLOCK",
+                                        "line": 47,
+                                        "children": [
+                                          {
+                                            "type": "CALL",
+                                            "line": 47,
+                                            "children": [
+                                              {
+                                                "type": "LVAR",
+                                                "line": 47,
+                                                "children": [
+                                                  "args"
+                                                ]
+                                              },
+                                              "map!",
+                                              {
+                                                "type": "BLOCK_PASS",
+                                                "line": 47,
+                                                "children": [
+                                                  null,
+                                                  {
+                                                    "type": "FCALL",
+                                                    "line": 47,
+                                                    "children": [
+                                                      "method",
+                                                      {
+                                                        "type": "LIST",
+                                                        "line": 47,
+                                                        "children": [
+                                                          {
+                                                            "type": "LIT",
+                                                            "line": 47,
+                                                            "children": [
+                                                              "convert_key"
+                                                            ]
+                                                          },
+                                                          null
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "type": "SUPER",
+                                            "line": 49,
+                                            "children": [
+                                              {
+                                                "type": "SPLAT",
+                                                "line": 49,
+                                                "children": [
+                                                  {
+                                                    "type": "LVAR",
+                                                    "line": 49,
+                                                    "children": [
+                                                      "args"
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 52,
+                                "children": [
+                                  "default=",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 52,
+                                    "children": [
+                                      [
+                                        "value"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 52,
+                                        "children": [
+                                          1,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "SUPER",
+                                        "line": 53,
+                                        "children": [
+                                          {
+                                            "type": "LIST",
+                                            "line": 53,
+                                            "children": [
+                                              {
+                                                "type": "FCALL",
+                                                "line": 53,
+                                                "children": [
+                                                  "convert_value",
+                                                  {
+                                                    "type": "LIST",
+                                                    "line": 53,
+                                                    "children": [
+                                                      {
+                                                        "type": "LVAR",
+                                                        "line": 53,
+                                                        "children": [
+                                                          "value"
+                                                        ]
+                                                      },
+                                                      null
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 56,
+                                "children": [
+                                  "assoc",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 56,
+                                    "children": [
+                                      [
+                                        "key"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 56,
+                                        "children": [
+                                          1,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "SUPER",
+                                        "line": 57,
+                                        "children": [
+                                          {
+                                            "type": "LIST",
+                                            "line": 57,
+                                            "children": [
+                                              {
+                                                "type": "FCALL",
+                                                "line": 57,
+                                                "children": [
+                                                  "convert_key",
+                                                  {
+                                                    "type": "LIST",
+                                                    "line": 57,
+                                                    "children": [
+                                                      {
+                                                        "type": "LVAR",
+                                                        "line": 57,
+                                                        "children": [
+                                                          "key"
+                                                        ]
+                                                      },
+                                                      null
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 60,
+                                "children": [
+                                  "rassoc",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 60,
+                                    "children": [
+                                      [
+                                        "value"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 60,
+                                        "children": [
+                                          1,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "SUPER",
+                                        "line": 61,
+                                        "children": [
+                                          {
+                                            "type": "LIST",
+                                            "line": 61,
+                                            "children": [
+                                              {
+                                                "type": "FCALL",
+                                                "line": 61,
+                                                "children": [
+                                                  "convert_value",
+                                                  {
+                                                    "type": "LIST",
+                                                    "line": 61,
+                                                    "children": [
+                                                      {
+                                                        "type": "LVAR",
+                                                        "line": 61,
+                                                        "children": [
+                                                          "value"
+                                                        ]
+                                                      },
+                                                      null
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 64,
+                                "children": [
+                                  "fetch",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 64,
+                                    "children": [
+                                      [
+                                        "key",
+                                        "args"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 64,
+                                        "children": [
+                                          1,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          "args",
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "BLOCK",
+                                        "line": 65,
+                                        "children": [
+                                          {
+                                            "type": "CALL",
+                                            "line": 65,
+                                            "children": [
+                                              {
+                                                "type": "LVAR",
+                                                "line": 65,
+                                                "children": [
+                                                  "args"
+                                                ]
+                                              },
+                                              "map!",
+                                              {
+                                                "type": "BLOCK_PASS",
+                                                "line": 65,
+                                                "children": [
+                                                  null,
+                                                  {
+                                                    "type": "FCALL",
+                                                    "line": 65,
+                                                    "children": [
+                                                      "method",
+                                                      {
+                                                        "type": "LIST",
+                                                        "line": 65,
+                                                        "children": [
+                                                          {
+                                                            "type": "LIT",
+                                                            "line": 65,
+                                                            "children": [
+                                                              "convert_value"
+                                                            ]
+                                                          },
+                                                          null
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "type": "SUPER",
+                                            "line": 67,
+                                            "children": [
+                                              {
+                                                "type": "ARGSCAT",
+                                                "line": 67,
+                                                "children": [
+                                                  {
+                                                    "type": "LIST",
+                                                    "line": 67,
+                                                    "children": [
+                                                      {
+                                                        "type": "FCALL",
+                                                        "line": 67,
+                                                        "children": [
+                                                          "convert_key",
+                                                          {
+                                                            "type": "LIST",
+                                                            "line": 67,
+                                                            "children": [
+                                                              {
+                                                                "type": "LVAR",
+                                                                "line": 67,
+                                                                "children": [
+                                                                  "key"
+                                                                ]
+                                                              },
+                                                              null
+                                                            ]
+                                                          }
+                                                        ]
+                                                      },
+                                                      null
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "LVAR",
+                                                    "line": 67,
+                                                    "children": [
+                                                      "args"
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 70,
+                                "children": [
+                                  "[]",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 70,
+                                    "children": [
+                                      [
+                                        "key"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 70,
+                                        "children": [
+                                          1,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "SUPER",
+                                        "line": 71,
+                                        "children": [
+                                          {
+                                            "type": "LIST",
+                                            "line": 71,
+                                            "children": [
+                                              {
+                                                "type": "FCALL",
+                                                "line": 71,
+                                                "children": [
+                                                  "convert_key",
+                                                  {
+                                                    "type": "LIST",
+                                                    "line": 71,
+                                                    "children": [
+                                                      {
+                                                        "type": "LVAR",
+                                                        "line": 71,
+                                                        "children": [
+                                                          "key"
+                                                        ]
+                                                      },
+                                                      null
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 74,
+                                "children": [
+                                  "[]=",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 74,
+                                    "children": [
+                                      [
+                                        "key",
+                                        "value"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 74,
+                                        "children": [
+                                          2,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "SUPER",
+                                        "line": 75,
+                                        "children": [
+                                          {
+                                            "type": "LIST",
+                                            "line": 75,
+                                            "children": [
+                                              {
+                                                "type": "FCALL",
+                                                "line": 75,
+                                                "children": [
+                                                  "convert_key",
+                                                  {
+                                                    "type": "LIST",
+                                                    "line": 75,
+                                                    "children": [
+                                                      {
+                                                        "type": "LVAR",
+                                                        "line": 75,
+                                                        "children": [
+                                                          "key"
+                                                        ]
+                                                      },
+                                                      null
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "FCALL",
+                                                "line": 75,
+                                                "children": [
+                                                  "convert_value",
+                                                  {
+                                                    "type": "LIST",
+                                                    "line": 75,
+                                                    "children": [
+                                                      {
+                                                        "type": "LVAR",
+                                                        "line": 75,
+                                                        "children": [
+                                                          "value"
+                                                        ]
+                                                      },
+                                                      null
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "ALIAS",
+                                "line": 78,
+                                "children": [
+                                  {
+                                    "type": "LIT",
+                                    "line": 78,
+                                    "children": [
+                                      "store"
+                                    ]
+                                  },
+                                  {
+                                    "type": "LIT",
+                                    "line": 78,
+                                    "children": [
+                                      "[]="
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 80,
+                                "children": [
+                                  "key",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 80,
+                                    "children": [
+                                      [
+                                        "value"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 80,
+                                        "children": [
+                                          1,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "SUPER",
+                                        "line": 81,
+                                        "children": [
+                                          {
+                                            "type": "LIST",
+                                            "line": 81,
+                                            "children": [
+                                              {
+                                                "type": "FCALL",
+                                                "line": 81,
+                                                "children": [
+                                                  "convert_value",
+                                                  {
+                                                    "type": "LIST",
+                                                    "line": 81,
+                                                    "children": [
+                                                      {
+                                                        "type": "LVAR",
+                                                        "line": 81,
+                                                        "children": [
+                                                          "value"
+                                                        ]
+                                                      },
+                                                      null
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 84,
+                                "children": [
+                                  "key?",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 84,
+                                    "children": [
+                                      [
+                                        "key"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 84,
+                                        "children": [
+                                          1,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "SUPER",
+                                        "line": 85,
+                                        "children": [
+                                          {
+                                            "type": "LIST",
+                                            "line": 85,
+                                            "children": [
+                                              {
+                                                "type": "FCALL",
+                                                "line": 85,
+                                                "children": [
+                                                  "convert_key",
+                                                  {
+                                                    "type": "LIST",
+                                                    "line": 85,
+                                                    "children": [
+                                                      {
+                                                        "type": "LVAR",
+                                                        "line": 85,
+                                                        "children": [
+                                                          "key"
+                                                        ]
+                                                      },
+                                                      null
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "ALIAS",
+                                "line": 88,
+                                "children": [
+                                  {
+                                    "type": "LIT",
+                                    "line": 88,
+                                    "children": [
+                                      "has_key?"
+                                    ]
+                                  },
+                                  {
+                                    "type": "LIT",
+                                    "line": 88,
+                                    "children": [
+                                      "key?"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "ALIAS",
+                                "line": 89,
+                                "children": [
+                                  {
+                                    "type": "LIT",
+                                    "line": 89,
+                                    "children": [
+                                      "include?"
+                                    ]
+                                  },
+                                  {
+                                    "type": "LIT",
+                                    "line": 89,
+                                    "children": [
+                                      "key?"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "ALIAS",
+                                "line": 90,
+                                "children": [
+                                  {
+                                    "type": "LIT",
+                                    "line": 90,
+                                    "children": [
+                                      "member?"
+                                    ]
+                                  },
+                                  {
+                                    "type": "LIT",
+                                    "line": 90,
+                                    "children": [
+                                      "key?"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 92,
+                                "children": [
+                                  "value?",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 92,
+                                    "children": [
+                                      [
+                                        "value"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 92,
+                                        "children": [
+                                          1,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "SUPER",
+                                        "line": 93,
+                                        "children": [
+                                          {
+                                            "type": "LIST",
+                                            "line": 93,
+                                            "children": [
+                                              {
+                                                "type": "FCALL",
+                                                "line": 93,
+                                                "children": [
+                                                  "convert_value",
+                                                  {
+                                                    "type": "LIST",
+                                                    "line": 93,
+                                                    "children": [
+                                                      {
+                                                        "type": "LVAR",
+                                                        "line": 93,
+                                                        "children": [
+                                                          "value"
+                                                        ]
+                                                      },
+                                                      null
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "ALIAS",
+                                "line": 96,
+                                "children": [
+                                  {
+                                    "type": "LIT",
+                                    "line": 96,
+                                    "children": [
+                                      "has_value?"
+                                    ]
+                                  },
+                                  {
+                                    "type": "LIT",
+                                    "line": 96,
+                                    "children": [
+                                      "value?"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 98,
+                                "children": [
+                                  "delete",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 98,
+                                    "children": [
+                                      [
+                                        "key"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 98,
+                                        "children": [
+                                          1,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "SUPER",
+                                        "line": 99,
+                                        "children": [
+                                          {
+                                            "type": "LIST",
+                                            "line": 99,
+                                            "children": [
+                                              {
+                                                "type": "FCALL",
+                                                "line": 99,
+                                                "children": [
+                                                  "convert_key",
+                                                  {
+                                                    "type": "LIST",
+                                                    "line": 99,
+                                                    "children": [
+                                                      {
+                                                        "type": "LVAR",
+                                                        "line": 99,
+                                                        "children": [
+                                                          "key"
+                                                        ]
+                                                      },
+                                                      null
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 103,
+                                "children": [
+                                  "dig",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 103,
+                                    "children": [
+                                      [
+                                        "key",
+                                        "other_keys"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 103,
+                                        "children": [
+                                          1,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          "other_keys",
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "SUPER",
+                                        "line": 104,
+                                        "children": [
+                                          {
+                                            "type": "ARGSCAT",
+                                            "line": 104,
+                                            "children": [
+                                              {
+                                                "type": "LIST",
+                                                "line": 104,
+                                                "children": [
+                                                  {
+                                                    "type": "FCALL",
+                                                    "line": 104,
+                                                    "children": [
+                                                      "convert_key",
+                                                      {
+                                                        "type": "LIST",
+                                                        "line": 104,
+                                                        "children": [
+                                                          {
+                                                            "type": "LVAR",
+                                                            "line": 104,
+                                                            "children": [
+                                                              "key"
+                                                            ]
+                                                          },
+                                                          null
+                                                        ]
+                                                      }
+                                                    ]
+                                                  },
+                                                  null
+                                                ]
+                                              },
+                                              {
+                                                "type": "LVAR",
+                                                "line": 104,
+                                                "children": [
+                                                  "other_keys"
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 107,
+                                "children": [
+                                  "fetch_values",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 107,
+                                    "children": [
+                                      [
+                                        "keys"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 107,
+                                        "children": [
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          "keys",
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "BLOCK",
+                                        "line": 108,
+                                        "children": [
+                                          {
+                                            "type": "CALL",
+                                            "line": 108,
+                                            "children": [
+                                              {
+                                                "type": "LVAR",
+                                                "line": 108,
+                                                "children": [
+                                                  "keys"
+                                                ]
+                                              },
+                                              "map!",
+                                              {
+                                                "type": "BLOCK_PASS",
+                                                "line": 108,
+                                                "children": [
+                                                  null,
+                                                  {
+                                                    "type": "FCALL",
+                                                    "line": 108,
+                                                    "children": [
+                                                      "method",
+                                                      {
+                                                        "type": "LIST",
+                                                        "line": 108,
+                                                        "children": [
+                                                          {
+                                                            "type": "LIT",
+                                                            "line": 108,
+                                                            "children": [
+                                                              "convert_key"
+                                                            ]
+                                                          },
+                                                          null
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "type": "SUPER",
+                                            "line": 110,
+                                            "children": [
+                                              {
+                                                "type": "SPLAT",
+                                                "line": 110,
+                                                "children": [
+                                                  {
+                                                    "type": "LVAR",
+                                                    "line": 110,
+                                                    "children": [
+                                                      "keys"
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 113,
+                                "children": [
+                                  "slice",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 113,
+                                    "children": [
+                                      [
+                                        "keys"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 113,
+                                        "children": [
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          "keys",
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "BLOCK",
+                                        "line": 114,
+                                        "children": [
+                                          {
+                                            "type": "CALL",
+                                            "line": 114,
+                                            "children": [
+                                              {
+                                                "type": "LVAR",
+                                                "line": 114,
+                                                "children": [
+                                                  "keys"
+                                                ]
+                                              },
+                                              "map!",
+                                              {
+                                                "type": "BLOCK_PASS",
+                                                "line": 114,
+                                                "children": [
+                                                  null,
+                                                  {
+                                                    "type": "FCALL",
+                                                    "line": 114,
+                                                    "children": [
+                                                      "method",
+                                                      {
+                                                        "type": "LIST",
+                                                        "line": 114,
+                                                        "children": [
+                                                          {
+                                                            "type": "LIT",
+                                                            "line": 114,
+                                                            "children": [
+                                                              "convert_key"
+                                                            ]
+                                                          },
+                                                          null
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "type": "CALL",
+                                            "line": 116,
+                                            "children": [
+                                              {
+                                                "type": "CALL",
+                                                "line": 116,
+                                                "children": [
+                                                  {
+                                                    "type": "SELF",
+                                                    "line": 116,
+                                                    "children": [
+
+                                                    ]
+                                                  },
+                                                  "class",
+                                                  null
+                                                ]
+                                              },
+                                              "[]",
+                                              {
+                                                "type": "LIST",
+                                                "line": 116,
+                                                "children": [
+                                                  {
+                                                    "type": "SUPER",
+                                                    "line": 116,
+                                                    "children": [
+                                                      {
+                                                        "type": "SPLAT",
+                                                        "line": 116,
+                                                        "children": [
+                                                          {
+                                                            "type": "LVAR",
+                                                            "line": 116,
+                                                            "children": [
+                                                              "keys"
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  },
+                                                  null
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 119,
+                                "children": [
+                                  "values_at",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 119,
+                                    "children": [
+                                      [
+                                        "keys"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 119,
+                                        "children": [
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          "keys",
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "BLOCK",
+                                        "line": 120,
+                                        "children": [
+                                          {
+                                            "type": "CALL",
+                                            "line": 120,
+                                            "children": [
+                                              {
+                                                "type": "LVAR",
+                                                "line": 120,
+                                                "children": [
+                                                  "keys"
+                                                ]
+                                              },
+                                              "map!",
+                                              {
+                                                "type": "BLOCK_PASS",
+                                                "line": 120,
+                                                "children": [
+                                                  null,
+                                                  {
+                                                    "type": "FCALL",
+                                                    "line": 120,
+                                                    "children": [
+                                                      "method",
+                                                      {
+                                                        "type": "LIST",
+                                                        "line": 120,
+                                                        "children": [
+                                                          {
+                                                            "type": "LIT",
+                                                            "line": 120,
+                                                            "children": [
+                                                              "convert_key"
+                                                            ]
+                                                          },
+                                                          null
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "type": "SUPER",
+                                            "line": 122,
+                                            "children": [
+                                              {
+                                                "type": "SPLAT",
+                                                "line": 122,
+                                                "children": [
+                                                  {
+                                                    "type": "LVAR",
+                                                    "line": 122,
+                                                    "children": [
+                                                      "keys"
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 125,
+                                "children": [
+                                  "merge!",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 125,
+                                    "children": [
+                                      [
+                                        "other_hashes"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 125,
+                                        "children": [
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          "other_hashes",
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "BLOCK",
+                                        "line": 126,
+                                        "children": [
+                                          {
+                                            "type": "ITER",
+                                            "line": 126,
+                                            "children": [
+                                              {
+                                                "type": "CALL",
+                                                "line": 126,
+                                                "children": [
+                                                  {
+                                                    "type": "LVAR",
+                                                    "line": 126,
+                                                    "children": [
+                                                      "other_hashes"
+                                                    ]
+                                                  },
+                                                  "each",
+                                                  null
+                                                ]
+                                              },
+                                              {
+                                                "type": "SCOPE",
+                                                "line": 126,
+                                                "children": [
+                                                  [
+                                                    "other_hash"
+                                                  ],
+                                                  {
+                                                    "type": "ARGS",
+                                                    "line": 126,
+                                                    "children": [
+                                                      1,
+                                                      null,
+                                                      null,
+                                                      null,
+                                                      0,
+                                                      null,
+                                                      null,
+                                                      null,
+                                                      null,
+                                                      null
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "IF",
+                                                    "line": 127,
+                                                    "children": [
+                                                      {
+                                                        "type": "CALL",
+                                                        "line": 127,
+                                                        "children": [
+                                                          {
+                                                            "type": "DVAR",
+                                                            "line": 127,
+                                                            "children": [
+                                                              "other_hash"
+                                                            ]
+                                                          },
+                                                          "is_a?",
+                                                          {
+                                                            "type": "LIST",
+                                                            "line": 127,
+                                                            "children": [
+                                                              {
+                                                                "type": "CALL",
+                                                                "line": 127,
+                                                                "children": [
+                                                                  {
+                                                                    "type": "SELF",
+                                                                    "line": 127,
+                                                                    "children": [
+
+                                                                    ]
+                                                                  },
+                                                                  "class",
+                                                                  null
+                                                                ]
+                                                              },
+                                                              null
+                                                            ]
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "SUPER",
+                                                        "line": 128,
+                                                        "children": [
+                                                          {
+                                                            "type": "LIST",
+                                                            "line": 128,
+                                                            "children": [
+                                                              {
+                                                                "type": "DVAR",
+                                                                "line": 128,
+                                                                "children": [
+                                                                  "other_hash"
+                                                                ]
+                                                              },
+                                                              null
+                                                            ]
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "ITER",
+                                                        "line": 130,
+                                                        "children": [
+                                                          {
+                                                            "type": "CALL",
+                                                            "line": 130,
+                                                            "children": [
+                                                              {
+                                                                "type": "DVAR",
+                                                                "line": 130,
+                                                                "children": [
+                                                                  "other_hash"
+                                                                ]
+                                                              },
+                                                              "each_pair",
+                                                              null
+                                                            ]
+                                                          },
+                                                          {
+                                                            "type": "SCOPE",
+                                                            "line": 130,
+                                                            "children": [
+                                                              [
+                                                                "key",
+                                                                "value"
+                                                              ],
+                                                              {
+                                                                "type": "ARGS",
+                                                                "line": 130,
+                                                                "children": [
+                                                                  2,
+                                                                  null,
+                                                                  null,
+                                                                  null,
+                                                                  0,
+                                                                  null,
+                                                                  null,
+                                                                  null,
+                                                                  null,
+                                                                  null
+                                                                ]
+                                                              },
+                                                              {
+                                                                "type": "BLOCK",
+                                                                "line": 131,
+                                                                "children": [
+                                                                  {
+                                                                    "type": "DASGN",
+                                                                    "line": 131,
+                                                                    "children": [
+                                                                      "key",
+                                                                      {
+                                                                        "type": "FCALL",
+                                                                        "line": 131,
+                                                                        "children": [
+                                                                          "convert_key",
+                                                                          {
+                                                                            "type": "LIST",
+                                                                            "line": 131,
+                                                                            "children": [
+                                                                              {
+                                                                                "type": "DVAR",
+                                                                                "line": 131,
+                                                                                "children": [
+                                                                                  "key"
+                                                                                ]
+                                                                              },
+                                                                              null
+                                                                            ]
+                                                                          }
+                                                                        ]
+                                                                      }
+                                                                    ]
+                                                                  },
+                                                                  {
+                                                                    "type": "IF",
+                                                                    "line": 132,
+                                                                    "children": [
+                                                                      {
+                                                                        "type": "AND",
+                                                                        "line": 132,
+                                                                        "children": [
+                                                                          {
+                                                                            "type": "FCALL",
+                                                                            "line": 132,
+                                                                            "children": [
+                                                                              "block_given?",
+                                                                              null
+                                                                            ]
+                                                                          },
+                                                                          {
+                                                                            "type": "FCALL",
+                                                                            "line": 132,
+                                                                            "children": [
+                                                                              "key?",
+                                                                              {
+                                                                                "type": "LIST",
+                                                                                "line": 132,
+                                                                                "children": [
+                                                                                  {
+                                                                                    "type": "DVAR",
+                                                                                    "line": 132,
+                                                                                    "children": [
+                                                                                      "key"
+                                                                                    ]
+                                                                                  },
+                                                                                  null
+                                                                                ]
+                                                                              }
+                                                                            ]
+                                                                          }
+                                                                        ]
+                                                                      },
+                                                                      {
+                                                                        "type": "DASGN",
+                                                                        "line": 132,
+                                                                        "children": [
+                                                                          "value",
+                                                                          {
+                                                                            "type": "YIELD",
+                                                                            "line": 132,
+                                                                            "children": [
+                                                                              {
+                                                                                "type": "LIST",
+                                                                                "line": 132,
+                                                                                "children": [
+                                                                                  {
+                                                                                    "type": "DVAR",
+                                                                                    "line": 132,
+                                                                                    "children": [
+                                                                                      "key"
+                                                                                    ]
+                                                                                  },
+                                                                                  {
+                                                                                    "type": "FCALL",
+                                                                                    "line": 132,
+                                                                                    "children": [
+                                                                                      "[]",
+                                                                                      {
+                                                                                        "type": "LIST",
+                                                                                        "line": 132,
+                                                                                        "children": [
+                                                                                          {
+                                                                                            "type": "DVAR",
+                                                                                            "line": 132,
+                                                                                            "children": [
+                                                                                              "key"
+                                                                                            ]
+                                                                                          },
+                                                                                          null
+                                                                                        ]
+                                                                                      }
+                                                                                    ]
+                                                                                  },
+                                                                                  {
+                                                                                    "type": "DVAR",
+                                                                                    "line": 132,
+                                                                                    "children": [
+                                                                                      "value"
+                                                                                    ]
+                                                                                  },
+                                                                                  null
+                                                                                ]
+                                                                              }
+                                                                            ]
+                                                                          }
+                                                                        ]
+                                                                      },
+                                                                      null
+                                                                    ]
+                                                                  },
+                                                                  {
+                                                                    "type": "ATTRASGN",
+                                                                    "line": 133,
+                                                                    "children": [
+                                                                      {
+                                                                        "type": "SELF",
+                                                                        "line": 133,
+                                                                        "children": [
+
+                                                                        ]
+                                                                      },
+                                                                      "[]=",
+                                                                      {
+                                                                        "type": "LIST",
+                                                                        "line": 133,
+                                                                        "children": [
+                                                                          {
+                                                                            "type": "DVAR",
+                                                                            "line": 133,
+                                                                            "children": [
+                                                                              "key"
+                                                                            ]
+                                                                          },
+                                                                          {
+                                                                            "type": "FCALL",
+                                                                            "line": 133,
+                                                                            "children": [
+                                                                              "convert_value",
+                                                                              {
+                                                                                "type": "LIST",
+                                                                                "line": 133,
+                                                                                "children": [
+                                                                                  {
+                                                                                    "type": "DVAR",
+                                                                                    "line": 133,
+                                                                                    "children": [
+                                                                                      "value"
+                                                                                    ]
+                                                                                  },
+                                                                                  null
+                                                                                ]
+                                                                              }
+                                                                            ]
+                                                                          },
+                                                                          null
+                                                                        ]
+                                                                      }
+                                                                    ]
+                                                                  }
+                                                                ]
+                                                              }
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "type": "SELF",
+                                            "line": 138,
+                                            "children": [
+
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "ALIAS",
+                                "line": 141,
+                                "children": [
+                                  {
+                                    "type": "LIT",
+                                    "line": 141,
+                                    "children": [
+                                      "update"
+                                    ]
+                                  },
+                                  {
+                                    "type": "LIT",
+                                    "line": 141,
+                                    "children": [
+                                      "merge!"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 143,
+                                "children": [
+                                  "merge",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 143,
+                                    "children": [
+                                      [
+                                        "other_hashes",
+                                        "block"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 143,
+                                        "children": [
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          "other_hashes",
+                                          null,
+                                          null,
+                                          "block"
+                                        ]
+                                      },
+                                      {
+                                        "type": "CALL",
+                                        "line": 144,
+                                        "children": [
+                                          {
+                                            "type": "VCALL",
+                                            "line": 144,
+                                            "children": [
+                                              "dup"
+                                            ]
+                                          },
+                                          "merge!",
+                                          {
+                                            "type": "BLOCK_PASS",
+                                            "line": 144,
+                                            "children": [
+                                              {
+                                                "type": "SPLAT",
+                                                "line": 144,
+                                                "children": [
+                                                  {
+                                                    "type": "LVAR",
+                                                    "line": 144,
+                                                    "children": [
+                                                      "other_hashes"
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "LVAR",
+                                                "line": 144,
+                                                "children": [
+                                                  "block"
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 147,
+                                "children": [
+                                  "replace",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 147,
+                                    "children": [
+                                      [
+                                        "other_hash"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 147,
+                                        "children": [
+                                          1,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "SUPER",
+                                        "line": 148,
+                                        "children": [
+                                          {
+                                            "type": "LIST",
+                                            "line": 148,
+                                            "children": [
+                                              {
+                                                "type": "IF",
+                                                "line": 148,
+                                                "children": [
+                                                  {
+                                                    "type": "CALL",
+                                                    "line": 148,
+                                                    "children": [
+                                                      {
+                                                        "type": "LVAR",
+                                                        "line": 148,
+                                                        "children": [
+                                                          "other_hash"
+                                                        ]
+                                                      },
+                                                      "is_a?",
+                                                      {
+                                                        "type": "LIST",
+                                                        "line": 148,
+                                                        "children": [
+                                                          {
+                                                            "type": "CALL",
+                                                            "line": 148,
+                                                            "children": [
+                                                              {
+                                                                "type": "SELF",
+                                                                "line": 148,
+                                                                "children": [
+
+                                                                ]
+                                                              },
+                                                              "class",
+                                                              null
+                                                            ]
+                                                          },
+                                                          null
+                                                        ]
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "LVAR",
+                                                    "line": 148,
+                                                    "children": [
+                                                      "other_hash"
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "CALL",
+                                                    "line": 148,
+                                                    "children": [
+                                                      {
+                                                        "type": "CALL",
+                                                        "line": 148,
+                                                        "children": [
+                                                          {
+                                                            "type": "SELF",
+                                                            "line": 148,
+                                                            "children": [
+
+                                                            ]
+                                                          },
+                                                          "class",
+                                                          null
+                                                        ]
+                                                      },
+                                                      "[]",
+                                                      {
+                                                        "type": "LIST",
+                                                        "line": 148,
+                                                        "children": [
+                                                          {
+                                                            "type": "LVAR",
+                                                            "line": 148,
+                                                            "children": [
+                                                              "other_hash"
+                                                            ]
+                                                          },
+                                                          null
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 151,
+                                "children": [
+                                  "transform_values",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 151,
+                                    "children": [
+                                      [
+                                        "block"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 151,
+                                        "children": [
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          "block"
+                                        ]
+                                      },
+                                      {
+                                        "type": "CALL",
+                                        "line": 152,
+                                        "children": [
+                                          {
+                                            "type": "VCALL",
+                                            "line": 152,
+                                            "children": [
+                                              "dup"
+                                            ]
+                                          },
+                                          "transform_values!",
+                                          {
+                                            "type": "BLOCK_PASS",
+                                            "line": 152,
+                                            "children": [
+                                              null,
+                                              {
+                                                "type": "LVAR",
+                                                "line": 152,
+                                                "children": [
+                                                  "block"
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 155,
+                                "children": [
+                                  "transform_values!",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 155,
+                                    "children": [
+                                      [
+
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 155,
+                                        "children": [
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "BLOCK",
+                                        "line": 156,
+                                        "children": [
+                                          {
+                                            "type": "ZSUPER",
+                                            "line": 156,
+                                            "children": [
+
+                                            ]
+                                          },
+                                          {
+                                            "type": "SUPER",
+                                            "line": 157,
+                                            "children": [
+                                              {
+                                                "type": "BLOCK_PASS",
+                                                "line": 157,
+                                                "children": [
+                                                  null,
+                                                  {
+                                                    "type": "FCALL",
+                                                    "line": 157,
+                                                    "children": [
+                                                      "method",
+                                                      {
+                                                        "type": "LIST",
+                                                        "line": 157,
+                                                        "children": [
+                                                          {
+                                                            "type": "LIT",
+                                                            "line": 157,
+                                                            "children": [
+                                                              "convert_value"
+                                                            ]
+                                                          },
+                                                          null
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 160,
+                                "children": [
+                                  "transform_keys",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 160,
+                                    "children": [
+                                      [
+                                        "block"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 160,
+                                        "children": [
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          "block"
+                                        ]
+                                      },
+                                      {
+                                        "type": "CALL",
+                                        "line": 161,
+                                        "children": [
+                                          {
+                                            "type": "VCALL",
+                                            "line": 161,
+                                            "children": [
+                                              "dup"
+                                            ]
+                                          },
+                                          "transform_keys!",
+                                          {
+                                            "type": "BLOCK_PASS",
+                                            "line": 161,
+                                            "children": [
+                                              null,
+                                              {
+                                                "type": "LVAR",
+                                                "line": 161,
+                                                "children": [
+                                                  "block"
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 164,
+                                "children": [
+                                  "transform_keys!",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 164,
+                                    "children": [
+                                      [
+
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 164,
+                                        "children": [
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "BLOCK",
+                                        "line": 165,
+                                        "children": [
+                                          {
+                                            "type": "ZSUPER",
+                                            "line": 165,
+                                            "children": [
+
+                                            ]
+                                          },
+                                          {
+                                            "type": "SUPER",
+                                            "line": 166,
+                                            "children": [
+                                              {
+                                                "type": "BLOCK_PASS",
+                                                "line": 166,
+                                                "children": [
+                                                  null,
+                                                  {
+                                                    "type": "FCALL",
+                                                    "line": 166,
+                                                    "children": [
+                                                      "method",
+                                                      {
+                                                        "type": "LIST",
+                                                        "line": 166,
+                                                        "children": [
+                                                          {
+                                                            "type": "LIT",
+                                                            "line": 166,
+                                                            "children": [
+                                                              "convert_key"
+                                                            ]
+                                                          },
+                                                          null
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 169,
+                                "children": [
+                                  "select",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 169,
+                                    "children": [
+                                      [
+                                        "args",
+                                        "block"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 169,
+                                        "children": [
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          "args",
+                                          null,
+                                          null,
+                                          "block"
+                                        ]
+                                      },
+                                      {
+                                        "type": "BLOCK",
+                                        "line": 170,
+                                        "children": [
+                                          {
+                                            "type": "UNLESS",
+                                            "line": 170,
+                                            "children": [
+                                              {
+                                                "type": "FCALL",
+                                                "line": 170,
+                                                "children": [
+                                                  "block_given?",
+                                                  null
+                                                ]
+                                              },
+                                              {
+                                                "type": "RETURN",
+                                                "line": 170,
+                                                "children": [
+                                                  {
+                                                    "type": "FCALL",
+                                                    "line": 170,
+                                                    "children": [
+                                                      "to_enum",
+                                                      {
+                                                        "type": "LIST",
+                                                        "line": 170,
+                                                        "children": [
+                                                          {
+                                                            "type": "LIT",
+                                                            "line": 170,
+                                                            "children": [
+                                                              "select"
+                                                            ]
+                                                          },
+                                                          null
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          },
+                                          {
+                                            "type": "ITER",
+                                            "line": 172,
+                                            "children": [
+                                              {
+                                                "type": "CALL",
+                                                "line": 172,
+                                                "children": [
+                                                  {
+                                                    "type": "VCALL",
+                                                    "line": 172,
+                                                    "children": [
+                                                      "dup"
+                                                    ]
+                                                  },
+                                                  "tap",
+                                                  null
+                                                ]
+                                              },
+                                              {
+                                                "type": "SCOPE",
+                                                "line": 172,
+                                                "children": [
+                                                  [
+                                                    "hash"
+                                                  ],
+                                                  {
+                                                    "type": "ARGS",
+                                                    "line": 172,
+                                                    "children": [
+                                                      1,
+                                                      null,
+                                                      null,
+                                                      null,
+                                                      0,
+                                                      null,
+                                                      null,
+                                                      null,
+                                                      null,
+                                                      null
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "CALL",
+                                                    "line": 172,
+                                                    "children": [
+                                                      {
+                                                        "type": "DVAR",
+                                                        "line": 172,
+                                                        "children": [
+                                                          "hash"
+                                                        ]
+                                                      },
+                                                      "select!",
+                                                      {
+                                                        "type": "BLOCK_PASS",
+                                                        "line": 172,
+                                                        "children": [
+                                                          {
+                                                            "type": "SPLAT",
+                                                            "line": 172,
+                                                            "children": [
+                                                              {
+                                                                "type": "DVAR",
+                                                                "line": 172,
+                                                                "children": [
+                                                                  "args"
+                                                                ]
+                                                              }
+                                                            ]
+                                                          },
+                                                          {
+                                                            "type": "DVAR",
+                                                            "line": 172,
+                                                            "children": [
+                                                              "block"
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 175,
+                                "children": [
+                                  "reject",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 175,
+                                    "children": [
+                                      [
+                                        "args",
+                                        "block"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 175,
+                                        "children": [
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          "args",
+                                          null,
+                                          null,
+                                          "block"
+                                        ]
+                                      },
+                                      {
+                                        "type": "BLOCK",
+                                        "line": 176,
+                                        "children": [
+                                          {
+                                            "type": "UNLESS",
+                                            "line": 176,
+                                            "children": [
+                                              {
+                                                "type": "FCALL",
+                                                "line": 176,
+                                                "children": [
+                                                  "block_given?",
+                                                  null
+                                                ]
+                                              },
+                                              {
+                                                "type": "RETURN",
+                                                "line": 176,
+                                                "children": [
+                                                  {
+                                                    "type": "FCALL",
+                                                    "line": 176,
+                                                    "children": [
+                                                      "to_enum",
+                                                      {
+                                                        "type": "LIST",
+                                                        "line": 176,
+                                                        "children": [
+                                                          {
+                                                            "type": "LIT",
+                                                            "line": 176,
+                                                            "children": [
+                                                              "reject"
+                                                            ]
+                                                          },
+                                                          null
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          },
+                                          {
+                                            "type": "ITER",
+                                            "line": 178,
+                                            "children": [
+                                              {
+                                                "type": "CALL",
+                                                "line": 178,
+                                                "children": [
+                                                  {
+                                                    "type": "VCALL",
+                                                    "line": 178,
+                                                    "children": [
+                                                      "dup"
+                                                    ]
+                                                  },
+                                                  "tap",
+                                                  null
+                                                ]
+                                              },
+                                              {
+                                                "type": "SCOPE",
+                                                "line": 178,
+                                                "children": [
+                                                  [
+                                                    "hash"
+                                                  ],
+                                                  {
+                                                    "type": "ARGS",
+                                                    "line": 178,
+                                                    "children": [
+                                                      1,
+                                                      null,
+                                                      null,
+                                                      null,
+                                                      0,
+                                                      null,
+                                                      null,
+                                                      null,
+                                                      null,
+                                                      null
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "CALL",
+                                                    "line": 178,
+                                                    "children": [
+                                                      {
+                                                        "type": "DVAR",
+                                                        "line": 178,
+                                                        "children": [
+                                                          "hash"
+                                                        ]
+                                                      },
+                                                      "reject!",
+                                                      {
+                                                        "type": "BLOCK_PASS",
+                                                        "line": 178,
+                                                        "children": [
+                                                          {
+                                                            "type": "SPLAT",
+                                                            "line": 178,
+                                                            "children": [
+                                                              {
+                                                                "type": "DVAR",
+                                                                "line": 178,
+                                                                "children": [
+                                                                  "args"
+                                                                ]
+                                                              }
+                                                            ]
+                                                          },
+                                                          {
+                                                            "type": "DVAR",
+                                                            "line": 178,
+                                                            "children": [
+                                                              "block"
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 181,
+                                "children": [
+                                  "compact",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 181,
+                                    "children": [
+                                      [
+
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 181,
+                                        "children": [
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "CALL",
+                                        "line": 182,
+                                        "children": [
+                                          {
+                                            "type": "VCALL",
+                                            "line": 182,
+                                            "children": [
+                                              "dup"
+                                            ]
+                                          },
+                                          "tap",
+                                          {
+                                            "type": "BLOCK_PASS",
+                                            "line": 182,
+                                            "children": [
+                                              null,
+                                              {
+                                                "type": "LIT",
+                                                "line": 182,
+                                                "children": [
+                                                  "compact!"
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "IF",
+                                "line": 185,
+                                "children": [
+                                  {
+                                    "type": "OPCALL",
+                                    "line": 189,
+                                    "children": [
+                                      {
+                                        "type": "CALL",
+                                        "line": 189,
+                                        "children": [
+                                          {
+                                            "type": "COLON2",
+                                            "line": 189,
+                                            "children": [
+                                              {
+                                                "type": "CONST",
+                                                "line": 189,
+                                                "children": [
+                                                  "Gem"
+                                                ]
+                                              },
+                                              "Version"
+                                            ]
+                                          },
+                                          "new",
+                                          {
+                                            "type": "LIST",
+                                            "line": 189,
+                                            "children": [
+                                              {
+                                                "type": "CONST",
+                                                "line": 189,
+                                                "children": [
+                                                  "RUBY_VERSION"
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      ">=",
+                                      {
+                                        "type": "LIST",
+                                        "line": 189,
+                                        "children": [
+                                          {
+                                            "type": "CALL",
+                                            "line": 189,
+                                            "children": [
+                                              {
+                                                "type": "COLON2",
+                                                "line": 189,
+                                                "children": [
+                                                  {
+                                                    "type": "CONST",
+                                                    "line": 189,
+                                                    "children": [
+                                                      "Gem"
+                                                    ]
+                                                  },
+                                                  "Version"
+                                                ]
+                                              },
+                                              "new",
+                                              {
+                                                "type": "LIST",
+                                                "line": 189,
+                                                "children": [
+                                                  {
+                                                    "type": "STR",
+                                                    "line": 189,
+                                                    "children": [
+                                                      "3.0"
+                                                    ]
+                                                  },
+                                                  null
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          null
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "DEFN",
+                                    "line": 185,
+                                    "children": [
+                                      "except",
+                                      {
+                                        "type": "SCOPE",
+                                        "line": 185,
+                                        "children": [
+                                          [
+                                            "keys"
+                                          ],
+                                          {
+                                            "type": "ARGS",
+                                            "line": 185,
+                                            "children": [
+                                              0,
+                                              null,
+                                              null,
+                                              null,
+                                              0,
+                                              null,
+                                              "keys",
+                                              null,
+                                              null,
+                                              null
+                                            ]
+                                          },
+                                          {
+                                            "type": "BLOCK",
+                                            "line": 186,
+                                            "children": [
+                                              {
+                                                "type": "CALL",
+                                                "line": 186,
+                                                "children": [
+                                                  {
+                                                    "type": "LVAR",
+                                                    "line": 186,
+                                                    "children": [
+                                                      "keys"
+                                                    ]
+                                                  },
+                                                  "map!",
+                                                  {
+                                                    "type": "BLOCK_PASS",
+                                                    "line": 186,
+                                                    "children": [
+                                                      null,
+                                                      {
+                                                        "type": "FCALL",
+                                                        "line": 186,
+                                                        "children": [
+                                                          "method",
+                                                          {
+                                                            "type": "LIST",
+                                                            "line": 186,
+                                                            "children": [
+                                                              {
+                                                                "type": "LIT",
+                                                                "line": 186,
+                                                                "children": [
+                                                                  "convert_key"
+                                                                ]
+                                                              },
+                                                              null
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "CALL",
+                                                "line": 188,
+                                                "children": [
+                                                  {
+                                                    "type": "CALL",
+                                                    "line": 188,
+                                                    "children": [
+                                                      {
+                                                        "type": "SELF",
+                                                        "line": 188,
+                                                        "children": [
+
+                                                        ]
+                                                      },
+                                                      "class",
+                                                      null
+                                                    ]
+                                                  },
+                                                  "[]",
+                                                  {
+                                                    "type": "LIST",
+                                                    "line": 188,
+                                                    "children": [
+                                                      {
+                                                        "type": "SUPER",
+                                                        "line": 188,
+                                                        "children": [
+                                                          {
+                                                            "type": "SPLAT",
+                                                            "line": 188,
+                                                            "children": [
+                                                              {
+                                                                "type": "LVAR",
+                                                                "line": 188,
+                                                                "children": [
+                                                                  "keys"
+                                                                ]
+                                                              }
+                                                            ]
+                                                          }
+                                                        ]
+                                                      },
+                                                      null
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  null
+                                ]
+                              },
+                              {
+                                "type": "VCALL",
+                                "line": 191,
+                                "children": [
+                                  "private"
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 193,
+                                "children": [
+                                  "convert_key",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 193,
+                                    "children": [
+                                      [
+                                        "key"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 193,
+                                        "children": [
+                                          1,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "IF",
+                                        "line": 194,
+                                        "children": [
+                                          {
+                                            "type": "CALL",
+                                            "line": 194,
+                                            "children": [
+                                              {
+                                                "type": "LVAR",
+                                                "line": 194,
+                                                "children": [
+                                                  "key"
+                                                ]
+                                              },
+                                              "is_a?",
+                                              {
+                                                "type": "LIST",
+                                                "line": 194,
+                                                "children": [
+                                                  {
+                                                    "type": "CONST",
+                                                    "line": 194,
+                                                    "children": [
+                                                      "Symbol"
+                                                    ]
+                                                  },
+                                                  null
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "type": "CALL",
+                                            "line": 194,
+                                            "children": [
+                                              {
+                                                "type": "LVAR",
+                                                "line": 194,
+                                                "children": [
+                                                  "key"
+                                                ]
+                                              },
+                                              "to_s",
+                                              null
+                                            ]
+                                          },
+                                          {
+                                            "type": "LVAR",
+                                            "line": 194,
+                                            "children": [
+                                              "key"
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "DEFN",
+                                "line": 197,
+                                "children": [
+                                  "convert_value",
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 197,
+                                    "children": [
+                                      [
+                                        "value"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 197,
+                                        "children": [
+                                          1,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "CASE",
+                                        "line": 198,
+                                        "children": [
+                                          {
+                                            "type": "LVAR",
+                                            "line": 198,
+                                            "children": [
+                                              "value"
+                                            ]
+                                          },
+                                          {
+                                            "type": "WHEN",
+                                            "line": 199,
+                                            "children": [
+                                              {
+                                                "type": "LIST",
+                                                "line": 199,
+                                                "children": [
+                                                  {
+                                                    "type": "CONST",
+                                                    "line": 199,
+                                                    "children": [
+                                                      "Hash"
+                                                    ]
+                                                  },
+                                                  null
+                                                ]
+                                              },
+                                              {
+                                                "type": "IF",
+                                                "line": 200,
+                                                "children": [
+                                                  {
+                                                    "type": "CALL",
+                                                    "line": 200,
+                                                    "children": [
+                                                      {
+                                                        "type": "LVAR",
+                                                        "line": 200,
+                                                        "children": [
+                                                          "value"
+                                                        ]
+                                                      },
+                                                      "is_a?",
+                                                      {
+                                                        "type": "LIST",
+                                                        "line": 200,
+                                                        "children": [
+                                                          {
+                                                            "type": "CALL",
+                                                            "line": 200,
+                                                            "children": [
+                                                              {
+                                                                "type": "SELF",
+                                                                "line": 200,
+                                                                "children": [
+
+                                                                ]
+                                                              },
+                                                              "class",
+                                                              null
+                                                            ]
+                                                          },
+                                                          null
+                                                        ]
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "LVAR",
+                                                    "line": 200,
+                                                    "children": [
+                                                      "value"
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "CALL",
+                                                    "line": 200,
+                                                    "children": [
+                                                      {
+                                                        "type": "CALL",
+                                                        "line": 200,
+                                                        "children": [
+                                                          {
+                                                            "type": "SELF",
+                                                            "line": 200,
+                                                            "children": [
+
+                                                            ]
+                                                          },
+                                                          "class",
+                                                          null
+                                                        ]
+                                                      },
+                                                      "[]",
+                                                      {
+                                                        "type": "LIST",
+                                                        "line": 200,
+                                                        "children": [
+                                                          {
+                                                            "type": "LVAR",
+                                                            "line": 200,
+                                                            "children": [
+                                                              "value"
+                                                            ]
+                                                          },
+                                                          null
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "WHEN",
+                                                "line": 201,
+                                                "children": [
+                                                  {
+                                                    "type": "LIST",
+                                                    "line": 201,
+                                                    "children": [
+                                                      {
+                                                        "type": "CONST",
+                                                        "line": 201,
+                                                        "children": [
+                                                          "Array"
+                                                        ]
+                                                      },
+                                                      null
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "CALL",
+                                                    "line": 202,
+                                                    "children": [
+                                                      {
+                                                        "type": "LVAR",
+                                                        "line": 202,
+                                                        "children": [
+                                                          "value"
+                                                        ]
+                                                      },
+                                                      "map",
+                                                      {
+                                                        "type": "BLOCK_PASS",
+                                                        "line": 202,
+                                                        "children": [
+                                                          null,
+                                                          {
+                                                            "type": "FCALL",
+                                                            "line": 202,
+                                                            "children": [
+                                                              "method",
+                                                              {
+                                                                "type": "LIST",
+                                                                "line": 202,
+                                                                "children": [
+                                                                  {
+                                                                    "type": "LIT",
+                                                                    "line": 202,
+                                                                    "children": [
+                                                                      "convert_value"
+                                                                    ]
+                                                                  },
+                                                                  null
+                                                                ]
+                                                              }
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "LVAR",
+                                                    "line": 204,
+                                                    "children": [
+                                                      "value"
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

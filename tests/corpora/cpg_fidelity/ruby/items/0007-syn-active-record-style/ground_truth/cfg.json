@@ -1,0 +1,173 @@
+{
+  "ruby_version": "3.2.3",
+  "methods": [
+    {
+      "method": "initialize",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "IASGN",
+              "line": 9
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "active_admins",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "LASGN",
+              "line": 13
+            },
+            {
+              "type": "LASGN",
+              "line": 14
+            },
+            {
+              "type": "FCALL",
+              "line": 15
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "base_scope",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 19
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "apply_scope",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 23
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "find",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 27
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "convention": "lower-bound",
+  "methods": [
+    {
+      "method": "initialize",
+      "edges": [
+
+      ]
+    },
+    {
+      "method": "fetch",
+      "edges": [
+        {
+          "var": "field",
+          "use_line": 24,
+          "def_line": 23
+        }
+      ]
+    },
+    {
+      "method": "store",
+      "edges": [
+        {
+          "var": "field",
+          "use_line": 28,
+          "def_line": 27
+        },
+        {
+          "var": "value",
+          "use_line": 28,
+          "def_line": 27
+        }
+      ]
+    }
+  ],
+  "ruby_version": "3.2.3"
+}
