@@ -4,4 +4,8 @@
 # Types: feat, fix, docs, style, refactor, test, chore, ci, perf
 # Scope: CMP-* identifier preferred (e.g., feat(CMP-SCM-01): add GitHub SCM adapter)
 
-npx --no-install commitlint --edit "$1"
+# Enforced via the repo's pre-commit `conventional-pre-commit` hook (Python),
+# which validates the same Conventional-Commits format as commitlint but runs
+# offline — the npx/commitlint path needs network + an npm install this
+# environment does not have. Keep the rule, drop the network dependency.
+pre-commit run conventional-pre-commit --hook-stage commit-msg --commit-msg-filename "$1"
