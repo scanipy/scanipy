@@ -1,0 +1,1097 @@
+{
+  "hooks.py": {
+    "_type": "Module",
+    "body": [
+      {
+        "_type": "Expr",
+        "value": {
+          "_type": "Constant",
+          "value": "\nrequests.hooks\n~~~~~~~~~~~~~~\n\nThis module provides the capabilities for the Requests hooks system.\n\nAvailable hooks:\n\n``response``:\n    The response generated from a Request.\n",
+          "kind": null,
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 11,
+          "end_col_offset": 3
+        },
+        "lineno": 1,
+        "col_offset": 0,
+        "end_lineno": 11,
+        "end_col_offset": 3
+      },
+      {
+        "_type": "ImportFrom",
+        "module": "__future__",
+        "names": [
+          {
+            "_type": "alias",
+            "name": "annotations",
+            "asname": null,
+            "lineno": 13,
+            "col_offset": 23,
+            "end_lineno": 13,
+            "end_col_offset": 34
+          }
+        ],
+        "level": 0,
+        "lineno": 13,
+        "col_offset": 0,
+        "end_lineno": 13,
+        "end_col_offset": 34
+      },
+      {
+        "_type": "ImportFrom",
+        "module": "collections.abc",
+        "names": [
+          {
+            "_type": "alias",
+            "name": "Callable",
+            "asname": null,
+            "lineno": 15,
+            "col_offset": 28,
+            "end_lineno": 15,
+            "end_col_offset": 36
+          },
+          {
+            "_type": "alias",
+            "name": "Iterable",
+            "asname": null,
+            "lineno": 15,
+            "col_offset": 38,
+            "end_lineno": 15,
+            "end_col_offset": 46
+          }
+        ],
+        "level": 0,
+        "lineno": 15,
+        "col_offset": 0,
+        "end_lineno": 15,
+        "end_col_offset": 46
+      },
+      {
+        "_type": "ImportFrom",
+        "module": "typing",
+        "names": [
+          {
+            "_type": "alias",
+            "name": "TYPE_CHECKING",
+            "asname": null,
+            "lineno": 16,
+            "col_offset": 19,
+            "end_lineno": 16,
+            "end_col_offset": 32
+          },
+          {
+            "_type": "alias",
+            "name": "Any",
+            "asname": null,
+            "lineno": 16,
+            "col_offset": 34,
+            "end_lineno": 16,
+            "end_col_offset": 37
+          }
+        ],
+        "level": 0,
+        "lineno": 16,
+        "col_offset": 0,
+        "end_lineno": 16,
+        "end_col_offset": 37
+      },
+      {
+        "_type": "If",
+        "test": {
+          "_type": "Name",
+          "id": "TYPE_CHECKING",
+          "ctx": {
+            "_type": "Load"
+          },
+          "lineno": 18,
+          "col_offset": 3,
+          "end_lineno": 18,
+          "end_col_offset": 16
+        },
+        "body": [
+          {
+            "_type": "ImportFrom",
+            "module": null,
+            "names": [
+              {
+                "_type": "alias",
+                "name": "_types",
+                "asname": "_t",
+                "lineno": 19,
+                "col_offset": 18,
+                "end_lineno": 19,
+                "end_col_offset": 30
+              }
+            ],
+            "level": 1,
+            "lineno": 19,
+            "col_offset": 4,
+            "end_lineno": 19,
+            "end_col_offset": 30
+          },
+          {
+            "_type": "ImportFrom",
+            "module": "models",
+            "names": [
+              {
+                "_type": "alias",
+                "name": "Response",
+                "asname": null,
+                "lineno": 20,
+                "col_offset": 24,
+                "end_lineno": 20,
+                "end_col_offset": 32
+              }
+            ],
+            "level": 1,
+            "lineno": 20,
+            "col_offset": 4,
+            "end_lineno": 20,
+            "end_col_offset": 32
+          }
+        ],
+        "orelse": [],
+        "lineno": 18,
+        "col_offset": 0,
+        "end_lineno": 20,
+        "end_col_offset": 32
+      },
+      {
+        "_type": "AnnAssign",
+        "target": {
+          "_type": "Name",
+          "id": "HOOKS",
+          "ctx": {
+            "_type": "Store"
+          },
+          "lineno": 22,
+          "col_offset": 0,
+          "end_lineno": 22,
+          "end_col_offset": 5
+        },
+        "annotation": {
+          "_type": "Subscript",
+          "value": {
+            "_type": "Name",
+            "id": "list",
+            "ctx": {
+              "_type": "Load"
+            },
+            "lineno": 22,
+            "col_offset": 7,
+            "end_lineno": 22,
+            "end_col_offset": 11
+          },
+          "slice": {
+            "_type": "Name",
+            "id": "str",
+            "ctx": {
+              "_type": "Load"
+            },
+            "lineno": 22,
+            "col_offset": 12,
+            "end_lineno": 22,
+            "end_col_offset": 15
+          },
+          "ctx": {
+            "_type": "Load"
+          },
+          "lineno": 22,
+          "col_offset": 7,
+          "end_lineno": 22,
+          "end_col_offset": 16
+        },
+        "value": {
+          "_type": "List",
+          "elts": [
+            {
+              "_type": "Constant",
+              "value": "response",
+              "kind": null,
+              "lineno": 22,
+              "col_offset": 20,
+              "end_lineno": 22,
+              "end_col_offset": 30
+            }
+          ],
+          "ctx": {
+            "_type": "Load"
+          },
+          "lineno": 22,
+          "col_offset": 19,
+          "end_lineno": 22,
+          "end_col_offset": 31
+        },
+        "simple": 1,
+        "lineno": 22,
+        "col_offset": 0,
+        "end_lineno": 22,
+        "end_col_offset": 31
+      },
+      {
+        "_type": "FunctionDef",
+        "name": "default_hooks",
+        "args": {
+          "_type": "arguments",
+          "posonlyargs": [],
+          "args": [],
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": null,
+          "defaults": []
+        },
+        "body": [
+          {
+            "_type": "Return",
+            "value": {
+              "_type": "DictComp",
+              "key": {
+                "_type": "Name",
+                "id": "event",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 26,
+                "col_offset": 12,
+                "end_lineno": 26,
+                "end_col_offset": 17
+              },
+              "value": {
+                "_type": "List",
+                "elts": [],
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 26,
+                "col_offset": 19,
+                "end_lineno": 26,
+                "end_col_offset": 21
+              },
+              "generators": [
+                {
+                  "_type": "comprehension",
+                  "target": {
+                    "_type": "Name",
+                    "id": "event",
+                    "ctx": {
+                      "_type": "Store"
+                    },
+                    "lineno": 26,
+                    "col_offset": 26,
+                    "end_lineno": 26,
+                    "end_col_offset": 31
+                  },
+                  "iter": {
+                    "_type": "Name",
+                    "id": "HOOKS",
+                    "ctx": {
+                      "_type": "Load"
+                    },
+                    "lineno": 26,
+                    "col_offset": 35,
+                    "end_lineno": 26,
+                    "end_col_offset": 40
+                  },
+                  "ifs": [],
+                  "is_async": 0
+                }
+              ],
+              "lineno": 26,
+              "col_offset": 11,
+              "end_lineno": 26,
+              "end_col_offset": 41
+            },
+            "lineno": 26,
+            "col_offset": 4,
+            "end_lineno": 26,
+            "end_col_offset": 41
+          }
+        ],
+        "decorator_list": [],
+        "returns": {
+          "_type": "Subscript",
+          "value": {
+            "_type": "Name",
+            "id": "dict",
+            "ctx": {
+              "_type": "Load"
+            },
+            "lineno": 25,
+            "col_offset": 23,
+            "end_lineno": 25,
+            "end_col_offset": 27
+          },
+          "slice": {
+            "_type": "Tuple",
+            "elts": [
+              {
+                "_type": "Name",
+                "id": "str",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 25,
+                "col_offset": 28,
+                "end_lineno": 25,
+                "end_col_offset": 31
+              },
+              {
+                "_type": "Subscript",
+                "value": {
+                  "_type": "Name",
+                  "id": "list",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 25,
+                  "col_offset": 33,
+                  "end_lineno": 25,
+                  "end_col_offset": 37
+                },
+                "slice": {
+                  "_type": "Attribute",
+                  "value": {
+                    "_type": "Name",
+                    "id": "_t",
+                    "ctx": {
+                      "_type": "Load"
+                    },
+                    "lineno": 25,
+                    "col_offset": 38,
+                    "end_lineno": 25,
+                    "end_col_offset": 40
+                  },
+                  "attr": "HookType",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 25,
+                  "col_offset": 38,
+                  "end_lineno": 25,
+                  "end_col_offset": 49
+                },
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 25,
+                "col_offset": 33,
+                "end_lineno": 25,
+                "end_col_offset": 50
+              }
+            ],
+            "ctx": {
+              "_type": "Load"
+            },
+            "lineno": 25,
+            "col_offset": 28,
+            "end_lineno": 25,
+            "end_col_offset": 50
+          },
+          "ctx": {
+            "_type": "Load"
+          },
+          "lineno": 25,
+          "col_offset": 23,
+          "end_lineno": 25,
+          "end_col_offset": 51
+        },
+        "type_comment": null,
+        "type_params": [],
+        "lineno": 25,
+        "col_offset": 0,
+        "end_lineno": 26,
+        "end_col_offset": 41
+      },
+      {
+        "_type": "FunctionDef",
+        "name": "dispatch_hook",
+        "args": {
+          "_type": "arguments",
+          "posonlyargs": [],
+          "args": [
+            {
+              "_type": "arg",
+              "arg": "key",
+              "annotation": {
+                "_type": "Name",
+                "id": "str",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 33,
+                "col_offset": 9,
+                "end_lineno": 33,
+                "end_col_offset": 12
+              },
+              "type_comment": null,
+              "lineno": 33,
+              "col_offset": 4,
+              "end_lineno": 33,
+              "end_col_offset": 12
+            },
+            {
+              "_type": "arg",
+              "arg": "hooks",
+              "annotation": {
+                "_type": "BinOp",
+                "left": {
+                  "_type": "Attribute",
+                  "value": {
+                    "_type": "Name",
+                    "id": "_t",
+                    "ctx": {
+                      "_type": "Load"
+                    },
+                    "lineno": 34,
+                    "col_offset": 11,
+                    "end_lineno": 34,
+                    "end_col_offset": 13
+                  },
+                  "attr": "HooksInputType",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 34,
+                  "col_offset": 11,
+                  "end_lineno": 34,
+                  "end_col_offset": 28
+                },
+                "op": {
+                  "_type": "BitOr"
+                },
+                "right": {
+                  "_type": "Constant",
+                  "value": null,
+                  "kind": null,
+                  "lineno": 34,
+                  "col_offset": 31,
+                  "end_lineno": 34,
+                  "end_col_offset": 35
+                },
+                "lineno": 34,
+                "col_offset": 11,
+                "end_lineno": 34,
+                "end_col_offset": 35
+              },
+              "type_comment": null,
+              "lineno": 34,
+              "col_offset": 4,
+              "end_lineno": 34,
+              "end_col_offset": 35
+            },
+            {
+              "_type": "arg",
+              "arg": "hook_data",
+              "annotation": {
+                "_type": "Name",
+                "id": "Response",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 35,
+                "col_offset": 15,
+                "end_lineno": 35,
+                "end_col_offset": 23
+              },
+              "type_comment": null,
+              "lineno": 35,
+              "col_offset": 4,
+              "end_lineno": 35,
+              "end_col_offset": 23
+            }
+          ],
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": {
+            "_type": "arg",
+            "arg": "kwargs",
+            "annotation": {
+              "_type": "Name",
+              "id": "Any",
+              "ctx": {
+                "_type": "Load"
+              },
+              "lineno": 36,
+              "col_offset": 14,
+              "end_lineno": 36,
+              "end_col_offset": 17
+            },
+            "type_comment": null,
+            "lineno": 36,
+            "col_offset": 6,
+            "end_lineno": 36,
+            "end_col_offset": 17
+          },
+          "defaults": []
+        },
+        "body": [
+          {
+            "_type": "Expr",
+            "value": {
+              "_type": "Constant",
+              "value": "Dispatches a hook dictionary on a given piece of data.",
+              "kind": null,
+              "lineno": 38,
+              "col_offset": 4,
+              "end_lineno": 38,
+              "end_col_offset": 64
+            },
+            "lineno": 38,
+            "col_offset": 4,
+            "end_lineno": 38,
+            "end_col_offset": 64
+          },
+          {
+            "_type": "Assign",
+            "targets": [
+              {
+                "_type": "Name",
+                "id": "hooks_dict",
+                "ctx": {
+                  "_type": "Store"
+                },
+                "lineno": 39,
+                "col_offset": 4,
+                "end_lineno": 39,
+                "end_col_offset": 14
+              }
+            ],
+            "value": {
+              "_type": "BoolOp",
+              "op": {
+                "_type": "Or"
+              },
+              "values": [
+                {
+                  "_type": "Name",
+                  "id": "hooks",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 39,
+                  "col_offset": 17,
+                  "end_lineno": 39,
+                  "end_col_offset": 22
+                },
+                {
+                  "_type": "Dict",
+                  "keys": [],
+                  "values": [],
+                  "lineno": 39,
+                  "col_offset": 26,
+                  "end_lineno": 39,
+                  "end_col_offset": 28
+                }
+              ],
+              "lineno": 39,
+              "col_offset": 17,
+              "end_lineno": 39,
+              "end_col_offset": 28
+            },
+            "type_comment": null,
+            "lineno": 39,
+            "col_offset": 4,
+            "end_lineno": 39,
+            "end_col_offset": 28
+          },
+          {
+            "_type": "AnnAssign",
+            "target": {
+              "_type": "Name",
+              "id": "hook_list",
+              "ctx": {
+                "_type": "Store"
+              },
+              "lineno": 40,
+              "col_offset": 4,
+              "end_lineno": 40,
+              "end_col_offset": 13
+            },
+            "annotation": {
+              "_type": "BinOp",
+              "left": {
+                "_type": "BinOp",
+                "left": {
+                  "_type": "Subscript",
+                  "value": {
+                    "_type": "Name",
+                    "id": "Iterable",
+                    "ctx": {
+                      "_type": "Load"
+                    },
+                    "lineno": 40,
+                    "col_offset": 15,
+                    "end_lineno": 40,
+                    "end_col_offset": 23
+                  },
+                  "slice": {
+                    "_type": "Attribute",
+                    "value": {
+                      "_type": "Name",
+                      "id": "_t",
+                      "ctx": {
+                        "_type": "Load"
+                      },
+                      "lineno": 40,
+                      "col_offset": 24,
+                      "end_lineno": 40,
+                      "end_col_offset": 26
+                    },
+                    "attr": "HookType",
+                    "ctx": {
+                      "_type": "Load"
+                    },
+                    "lineno": 40,
+                    "col_offset": 24,
+                    "end_lineno": 40,
+                    "end_col_offset": 35
+                  },
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 40,
+                  "col_offset": 15,
+                  "end_lineno": 40,
+                  "end_col_offset": 36
+                },
+                "op": {
+                  "_type": "BitOr"
+                },
+                "right": {
+                  "_type": "Attribute",
+                  "value": {
+                    "_type": "Name",
+                    "id": "_t",
+                    "ctx": {
+                      "_type": "Load"
+                    },
+                    "lineno": 40,
+                    "col_offset": 39,
+                    "end_lineno": 40,
+                    "end_col_offset": 41
+                  },
+                  "attr": "HookType",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 40,
+                  "col_offset": 39,
+                  "end_lineno": 40,
+                  "end_col_offset": 50
+                },
+                "lineno": 40,
+                "col_offset": 15,
+                "end_lineno": 40,
+                "end_col_offset": 50
+              },
+              "op": {
+                "_type": "BitOr"
+              },
+              "right": {
+                "_type": "Constant",
+                "value": null,
+                "kind": null,
+                "lineno": 40,
+                "col_offset": 53,
+                "end_lineno": 40,
+                "end_col_offset": 57
+              },
+              "lineno": 40,
+              "col_offset": 15,
+              "end_lineno": 40,
+              "end_col_offset": 57
+            },
+            "value": {
+              "_type": "Call",
+              "func": {
+                "_type": "Attribute",
+                "value": {
+                  "_type": "Name",
+                  "id": "hooks_dict",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 40,
+                  "col_offset": 60,
+                  "end_lineno": 40,
+                  "end_col_offset": 70
+                },
+                "attr": "get",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 40,
+                "col_offset": 60,
+                "end_lineno": 40,
+                "end_col_offset": 74
+              },
+              "args": [
+                {
+                  "_type": "Name",
+                  "id": "key",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 40,
+                  "col_offset": 75,
+                  "end_lineno": 40,
+                  "end_col_offset": 78
+                }
+              ],
+              "keywords": [],
+              "lineno": 40,
+              "col_offset": 60,
+              "end_lineno": 40,
+              "end_col_offset": 79
+            },
+            "simple": 1,
+            "lineno": 40,
+            "col_offset": 4,
+            "end_lineno": 40,
+            "end_col_offset": 79
+          },
+          {
+            "_type": "If",
+            "test": {
+              "_type": "Name",
+              "id": "hook_list",
+              "ctx": {
+                "_type": "Load"
+              },
+              "lineno": 41,
+              "col_offset": 7,
+              "end_lineno": 41,
+              "end_col_offset": 16
+            },
+            "body": [
+              {
+                "_type": "If",
+                "test": {
+                  "_type": "Call",
+                  "func": {
+                    "_type": "Name",
+                    "id": "isinstance",
+                    "ctx": {
+                      "_type": "Load"
+                    },
+                    "lineno": 42,
+                    "col_offset": 11,
+                    "end_lineno": 42,
+                    "end_col_offset": 21
+                  },
+                  "args": [
+                    {
+                      "_type": "Name",
+                      "id": "hook_list",
+                      "ctx": {
+                        "_type": "Load"
+                      },
+                      "lineno": 42,
+                      "col_offset": 22,
+                      "end_lineno": 42,
+                      "end_col_offset": 31
+                    },
+                    {
+                      "_type": "Name",
+                      "id": "Callable",
+                      "ctx": {
+                        "_type": "Load"
+                      },
+                      "lineno": 42,
+                      "col_offset": 33,
+                      "end_lineno": 42,
+                      "end_col_offset": 41
+                    }
+                  ],
+                  "keywords": [],
+                  "lineno": 42,
+                  "col_offset": 11,
+                  "end_lineno": 42,
+                  "end_col_offset": 42
+                },
+                "body": [
+                  {
+                    "_type": "Assign",
+                    "targets": [
+                      {
+                        "_type": "Name",
+                        "id": "hook_list",
+                        "ctx": {
+                          "_type": "Store"
+                        },
+                        "lineno": 43,
+                        "col_offset": 12,
+                        "end_lineno": 43,
+                        "end_col_offset": 21
+                      }
+                    ],
+                    "value": {
+                      "_type": "List",
+                      "elts": [
+                        {
+                          "_type": "Name",
+                          "id": "hook_list",
+                          "ctx": {
+                            "_type": "Load"
+                          },
+                          "lineno": 43,
+                          "col_offset": 25,
+                          "end_lineno": 43,
+                          "end_col_offset": 34
+                        }
+                      ],
+                      "ctx": {
+                        "_type": "Load"
+                      },
+                      "lineno": 43,
+                      "col_offset": 24,
+                      "end_lineno": 43,
+                      "end_col_offset": 35
+                    },
+                    "type_comment": null,
+                    "lineno": 43,
+                    "col_offset": 12,
+                    "end_lineno": 43,
+                    "end_col_offset": 35
+                  }
+                ],
+                "orelse": [],
+                "lineno": 42,
+                "col_offset": 8,
+                "end_lineno": 43,
+                "end_col_offset": 35
+              },
+              {
+                "_type": "For",
+                "target": {
+                  "_type": "Name",
+                  "id": "hook",
+                  "ctx": {
+                    "_type": "Store"
+                  },
+                  "lineno": 44,
+                  "col_offset": 12,
+                  "end_lineno": 44,
+                  "end_col_offset": 16
+                },
+                "iter": {
+                  "_type": "Name",
+                  "id": "hook_list",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 44,
+                  "col_offset": 20,
+                  "end_lineno": 44,
+                  "end_col_offset": 29
+                },
+                "body": [
+                  {
+                    "_type": "Assign",
+                    "targets": [
+                      {
+                        "_type": "Name",
+                        "id": "_hook_data",
+                        "ctx": {
+                          "_type": "Store"
+                        },
+                        "lineno": 45,
+                        "col_offset": 12,
+                        "end_lineno": 45,
+                        "end_col_offset": 22
+                      }
+                    ],
+                    "value": {
+                      "_type": "Call",
+                      "func": {
+                        "_type": "Name",
+                        "id": "hook",
+                        "ctx": {
+                          "_type": "Load"
+                        },
+                        "lineno": 45,
+                        "col_offset": 25,
+                        "end_lineno": 45,
+                        "end_col_offset": 29
+                      },
+                      "args": [
+                        {
+                          "_type": "Name",
+                          "id": "hook_data",
+                          "ctx": {
+                            "_type": "Load"
+                          },
+                          "lineno": 45,
+                          "col_offset": 30,
+                          "end_lineno": 45,
+                          "end_col_offset": 39
+                        }
+                      ],
+                      "keywords": [
+                        {
+                          "_type": "keyword",
+                          "arg": null,
+                          "value": {
+                            "_type": "Name",
+                            "id": "kwargs",
+                            "ctx": {
+                              "_type": "Load"
+                            },
+                            "lineno": 45,
+                            "col_offset": 43,
+                            "end_lineno": 45,
+                            "end_col_offset": 49
+                          },
+                          "lineno": 45,
+                          "col_offset": 41,
+                          "end_lineno": 45,
+                          "end_col_offset": 49
+                        }
+                      ],
+                      "lineno": 45,
+                      "col_offset": 25,
+                      "end_lineno": 45,
+                      "end_col_offset": 50
+                    },
+                    "type_comment": null,
+                    "lineno": 45,
+                    "col_offset": 12,
+                    "end_lineno": 45,
+                    "end_col_offset": 50
+                  },
+                  {
+                    "_type": "If",
+                    "test": {
+                      "_type": "Compare",
+                      "left": {
+                        "_type": "Name",
+                        "id": "_hook_data",
+                        "ctx": {
+                          "_type": "Load"
+                        },
+                        "lineno": 46,
+                        "col_offset": 15,
+                        "end_lineno": 46,
+                        "end_col_offset": 25
+                      },
+                      "ops": [
+                        {
+                          "_type": "IsNot"
+                        }
+                      ],
+                      "comparators": [
+                        {
+                          "_type": "Constant",
+                          "value": null,
+                          "kind": null,
+                          "lineno": 46,
+                          "col_offset": 33,
+                          "end_lineno": 46,
+                          "end_col_offset": 37
+                        }
+                      ],
+                      "lineno": 46,
+                      "col_offset": 15,
+                      "end_lineno": 46,
+                      "end_col_offset": 37
+                    },
+                    "body": [
+                      {
+                        "_type": "Assign",
+                        "targets": [
+                          {
+                            "_type": "Name",
+                            "id": "hook_data",
+                            "ctx": {
+                              "_type": "Store"
+                            },
+                            "lineno": 47,
+                            "col_offset": 16,
+                            "end_lineno": 47,
+                            "end_col_offset": 25
+                          }
+                        ],
+                        "value": {
+                          "_type": "Name",
+                          "id": "_hook_data",
+                          "ctx": {
+                            "_type": "Load"
+                          },
+                          "lineno": 47,
+                          "col_offset": 28,
+                          "end_lineno": 47,
+                          "end_col_offset": 38
+                        },
+                        "type_comment": null,
+                        "lineno": 47,
+                        "col_offset": 16,
+                        "end_lineno": 47,
+                        "end_col_offset": 38
+                      }
+                    ],
+                    "orelse": [],
+                    "lineno": 46,
+                    "col_offset": 12,
+                    "end_lineno": 47,
+                    "end_col_offset": 38
+                  }
+                ],
+                "orelse": [],
+                "type_comment": null,
+                "lineno": 44,
+                "col_offset": 8,
+                "end_lineno": 47,
+                "end_col_offset": 38
+              }
+            ],
+            "orelse": [],
+            "lineno": 41,
+            "col_offset": 4,
+            "end_lineno": 47,
+            "end_col_offset": 38
+          },
+          {
+            "_type": "Return",
+            "value": {
+              "_type": "Name",
+              "id": "hook_data",
+              "ctx": {
+                "_type": "Load"
+              },
+              "lineno": 48,
+              "col_offset": 11,
+              "end_lineno": 48,
+              "end_col_offset": 20
+            },
+            "lineno": 48,
+            "col_offset": 4,
+            "end_lineno": 48,
+            "end_col_offset": 20
+          }
+        ],
+        "decorator_list": [],
+        "returns": {
+          "_type": "Name",
+          "id": "Response",
+          "ctx": {
+            "_type": "Load"
+          },
+          "lineno": 37,
+          "col_offset": 5,
+          "end_lineno": 37,
+          "end_col_offset": 13
+        },
+        "type_comment": null,
+        "type_params": [],
+        "lineno": 32,
+        "col_offset": 0,
+        "end_lineno": 48,
+        "end_col_offset": 20
+      }
+    ],
+    "type_ignores": []
+  }
+}

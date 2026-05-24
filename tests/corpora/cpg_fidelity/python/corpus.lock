@@ -1,0 +1,172 @@
+built_at: '2026-05-24T17:54:10Z'
+built_by: corpus-agent/CMP-CORP-CPG-python
+corpus_digest: sha256:6bb991d32109abafcef1d81afdfcb1a3bb499e2a814721232df59eafb845215e
+corpus_id: CMP-CORP-CPG-python
+corpus_version: 0.1.0
+deviation: CLAR-CORP-07
+ground_truth_method: "AST: cpython `ast` (host interpreter; programs in the 3.10-compatible\
+  \ subset) with stable field ordering + source positions. CFG/callgraph/PDG: in-repo\
+  \ pipeline/extract_ground_truth.py. Call edges are (caller, callee, line) triples\
+  \ tagged static|dynamic; `dynamic` sites (getattr/dict-dispatch/cross-module/FFI/runtime\
+  \ receivers) are recorded but EXCLUDED from the gate's precision/recall (DOC \xA7\
+  3.4 step 3). v0.1.0 deviates from the DOC-pinned scalpel/Pyan3/Pyre toolchain (CLAR-CORP-07);\
+  \ see README.md \xA7Status + \xA73."
+language: python
+language_level: '3.10'
+programs:
+  - commit_sha: sha256:b4af529cf6a1deb45d0ac9756dd4a08c0b72227b2627f7306c9fffc19b6fab80
+    construct_coverage:
+      - decorators
+      - type-hints
+    extraction_tools: &id001
+      extractor: scanipy-cpg-python-extractor/0.1.0 (in-repo; pipeline/extract_ground_truth.py)
+      python: 3.12.3
+      target_pyan3: 1.2.0
+      target_pyre: 0.0.301
+      target_python: 3.10.13
+      target_scalpel: 1.0.4
+    files: 1
+    files_parsed: 1
+    id: 0001-decorators-svc
+    license: Apache-2.0
+    loc: 35
+    sha256_ground_truth: sha256:769f5a9660b6b979f67bb753df7b96b81b2709737fba77edf92ca607dfaafadd
+    sha256_source_tree: sha256:b4af529cf6a1deb45d0ac9756dd4a08c0b72227b2627f7306c9fffc19b6fab80
+    source_url: local:programs/0001-decorators-svc/source
+    synthetic: true
+  - commit_sha: sha256:f283ee59176e0833649021538d5134fe823960ede30e79668f28115ef0b468f9
+    construct_coverage:
+      - async-await
+      - type-hints
+    extraction_tools: *id001
+    files: 1
+    files_parsed: 1
+    id: 0002-async-await
+    license: Apache-2.0
+    loc: 27
+    sha256_ground_truth: sha256:5bd7ff42bdd08bf231836648ef85afa2dfc7597533cfa0d3795e141d3faf594b
+    sha256_source_tree: sha256:f283ee59176e0833649021538d5134fe823960ede30e79668f28115ef0b468f9
+    source_url: local:programs/0002-async-await/source
+    synthetic: true
+  - commit_sha: sha256:3ce463202d37c159ba3ea1bcd2b998480ac91b4a516eefe263c6b5995e67b501
+    construct_coverage:
+      - type-hints
+    extraction_tools: *id001
+    files: 1
+    files_parsed: 1
+    id: 0003-type-hints
+    license: Apache-2.0
+    loc: 24
+    sha256_ground_truth: sha256:ab3c2f4de340244985159d1a06950bee8adce2072dda28fa7ac30a21dd1a7467
+    sha256_source_tree: sha256:3ce463202d37c159ba3ea1bcd2b998480ac91b4a516eefe263c6b5995e67b501
+    source_url: local:programs/0003-type-hints/source
+    synthetic: true
+  - commit_sha: sha256:174765769fbf8b0ef27450f37347f878996367abf335e02ab4b68d2beb1659b2
+    construct_coverage:
+      - duck-typing-callsite
+    extraction_tools: *id001
+    files: 1
+    files_parsed: 1
+    id: 0004-duck-typing
+    license: Apache-2.0
+    loc: 21
+    sha256_ground_truth: sha256:c9b0fb9cc75043abb5485706240548c3a4a396adacea99a6b860525d11884c63
+    sha256_source_tree: sha256:174765769fbf8b0ef27450f37347f878996367abf335e02ab4b68d2beb1659b2
+    source_url: local:programs/0004-duck-typing/source
+    synthetic: true
+  - commit_sha: sha256:d2f22fae8f29e424976d386ee1cd3d4feeb5cbd1b4100fb0062379e84cb7c974
+    construct_coverage:
+      - duck-typing-callsite
+      - dynamic-dispatch
+    extraction_tools: *id001
+    files: 1
+    files_parsed: 1
+    id: 0005-dynamic-dispatch
+    license: Apache-2.0
+    loc: 32
+    sha256_ground_truth: sha256:fd525a4e711036806b11bd62a9482253afc92ce0978a772a7dc9ae5e55e16bc7
+    sha256_source_tree: sha256:d2f22fae8f29e424976d386ee1cd3d4feeb5cbd1b4100fb0062379e84cb7c974
+    source_url: local:programs/0005-dynamic-dispatch/source
+    synthetic: true
+  - commit_sha: sha256:0f185069539cad430d3e710b7ea523b2bbb7064ac4c38486d211dde5d0784abe
+    construct_coverage:
+      - dynamic-dispatch
+      - metaclasses
+    extraction_tools: *id001
+    files: 1
+    files_parsed: 1
+    id: 0006-metaclasses
+    license: Apache-2.0
+    loc: 35
+    sha256_ground_truth: sha256:de4d1af73526ef33e4a678823b5241f72aa1b42dc06b904602f518bc40b8df9c
+    sha256_source_tree: sha256:0f185069539cad430d3e710b7ea523b2bbb7064ac4c38486d211dde5d0784abe
+    source_url: local:programs/0006-metaclasses/source
+    synthetic: true
+  - commit_sha: sha256:4dcd621bf3d107ff6ffd4a70b03ae7f8a1f6df1eb414d25e1aa052fb9d80c2fa
+    construct_coverage:
+      - import-star
+    extraction_tools: *id001
+    files: 2
+    files_parsed: 2
+    id: 0007-import-star
+    license: Apache-2.0
+    loc: 22
+    sha256_ground_truth: sha256:3e5db9097e068322e4d0eca1cbe10351a34a7691f8bc334fcb570ee9743d57e6
+    sha256_source_tree: sha256:4dcd621bf3d107ff6ffd4a70b03ae7f8a1f6df1eb414d25e1aa052fb9d80c2fa
+    source_url: local:programs/0007-import-star/source
+    synthetic: true
+  - commit_sha: sha256:a7c1cc5f4bd238db6cf9f608eb5d7a860505604d4a4482c495a797ba4ab709f9
+    construct_coverage:
+      - dataclasses-pydantic
+      - type-hints
+    extraction_tools: *id001
+    files: 1
+    files_parsed: 1
+    id: 0008-dataclasses-pydantic
+    license: Apache-2.0
+    loc: 27
+    sha256_ground_truth: sha256:4901d853c7b03e233b6661897e07b7600df6e37fa9c74041c80b3fb8e05b4d7b
+    sha256_source_tree: sha256:a7c1cc5f4bd238db6cf9f608eb5d7a860505604d4a4482c495a797ba4ab709f9
+    source_url: local:programs/0008-dataclasses-pydantic/source
+    synthetic: true
+  - commit_sha: sha256:9989c210b78d8fb966308584962880bef3365253b185024b1a9d12f6a9bc81ad
+    construct_coverage:
+      - notebooks-converted
+    extraction_tools: *id001
+    files: 1
+    files_parsed: 1
+    id: 0009-notebooks-converted
+    license: Apache-2.0
+    loc: 31
+    sha256_ground_truth: sha256:0d3621187d76efea319fe5e6083a79ec5bc2353aec1a41c7948bbe326b0ebd1d
+    sha256_source_tree: sha256:9989c210b78d8fb966308584962880bef3365253b185024b1a9d12f6a9bc81ad
+    source_url: local:programs/0009-notebooks-converted/source
+    synthetic: true
+  - commit_sha: sha256:4a2d8cce822dc77ef1ad6c085db35b52bee23ca87a20dd2f152134bd7fc8b3e9
+    construct_coverage:
+      - c-extension-wrapper
+      - type-hints
+    extraction_tools: *id001
+    files: 1
+    files_parsed: 1
+    id: 0010-cext-wrapper
+    license: Apache-2.0
+    loc: 23
+    sha256_ground_truth: sha256:420381f8f01b01f39b8db1f583a73e65c0c1a16ed0e9930707a3512a5e6e159f
+    sha256_source_tree: sha256:4a2d8cce822dc77ef1ad6c085db35b52bee23ca87a20dd2f152134bd7fc8b3e9
+    source_url: local:programs/0010-cext-wrapper/source
+    synthetic: true
+  - commit_sha: cd90742ed94d901759e26766197d0ce7c7bd9c8e
+    construct_coverage:
+      - dynamic-dispatch
+      - type-hints
+    extraction_tools: *id001
+    files: 1
+    files_parsed: 1
+    id: 0011-requests-hooks-sourced
+    license: Apache-2.0
+    loc: 48
+    sha256_ground_truth: sha256:14bbfb7af10df665209cd545deb54c4c413dc2966e97471df5f9df3f09bd2bb7
+    sha256_source_tree: sha256:84f7edb0d6af0769c1f36e6de9f3fe5849a1961515f64466d93819046625d2ca
+    source_url: https://github.com/psf/requests
+    synthetic: false

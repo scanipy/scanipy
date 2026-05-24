@@ -1,0 +1,48 @@
+{
+  "dispatch.py": {
+    "add": {
+      "nodes": [
+        "L11:Return"
+      ],
+      "edges": []
+    },
+    "sub": {
+      "nodes": [
+        "L15:Return"
+      ],
+      "edges": []
+    },
+    "op": {
+      "nodes": [
+        "L19:Return"
+      ],
+      "edges": []
+    },
+    "dispatch_by_name": {
+      "nodes": [
+        "L26:Assign",
+        "L27:Return"
+      ],
+      "edges": [
+        {
+          "from": "L26:Assign",
+          "to": "L27:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    },
+    "dispatch_getattr": {
+      "nodes": [
+        "L31:Assign",
+        "L32:Return"
+      ],
+      "edges": [
+        {
+          "from": "L31:Assign",
+          "to": "L32:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "duck.py": {
+    "Reader.read": {
+      "edges": []
+    },
+    "consume": {
+      "edges": [
+        {
+          "from_line": 16,
+          "to_line": 17,
+          "kind": "data",
+          "var": "r"
+        }
+      ]
+    },
+    "consume_unknown": {
+      "edges": [
+        {
+          "from_line": 20,
+          "to_line": 21,
+          "kind": "data",
+          "var": "obj"
+        }
+      ]
+    }
+  }
+}

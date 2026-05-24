@@ -1,0 +1,29 @@
+{
+  "duck.py": {
+    "Reader.read": {
+      "nodes": [
+        "L12:Return"
+      ],
+      "edges": []
+    },
+    "consume": {
+      "nodes": [
+        "L16:Assign",
+        "L17:Return"
+      ],
+      "edges": [
+        {
+          "from": "L16:Assign",
+          "to": "L17:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    },
+    "consume_unknown": {
+      "nodes": [
+        "L21:Return"
+      ],
+      "edges": []
+    }
+  }
+}
