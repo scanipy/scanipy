@@ -1,0 +1,66 @@
+{
+  "index.js": [
+    {
+      "edges": [
+        {
+          "from": "index.js::exports@10#entry",
+          "kind": "seq",
+          "to": "index.js::exports@10#n0"
+        },
+        {
+          "from": "index.js::exports@10#n0",
+          "kind": "seq",
+          "to": "index.js::exports@10#n1"
+        },
+        {
+          "from": "index.js::exports@10#n0",
+          "kind": "seq",
+          "to": "index.js::exports@10#n2"
+        },
+        {
+          "from": "index.js::exports@10#n2",
+          "kind": "seq",
+          "to": "index.js::exports@10#n3"
+        },
+        {
+          "from": "index.js::exports@10#n2",
+          "kind": "seq",
+          "to": "index.js::exports@10#n4"
+        }
+      ],
+      "function": "index.js::exports@10",
+      "nodes": [
+        {
+          "id": "index.js::exports@10#entry",
+          "kind": "Entry",
+          "line": 10
+        },
+        {
+          "id": "index.js::exports@10#n0",
+          "kind": "IfStatement",
+          "line": 11
+        },
+        {
+          "id": "index.js::exports@10#n1",
+          "kind": "ReturnStatement",
+          "line": 12
+        },
+        {
+          "id": "index.js::exports@10#n2",
+          "kind": "IfStatement",
+          "line": 14
+        },
+        {
+          "id": "index.js::exports@10#n3",
+          "kind": "ReturnStatement",
+          "line": 15
+        },
+        {
+          "id": "index.js::exports@10#n4",
+          "kind": "ReturnStatement",
+          "line": 17
+        }
+      ]
+    }
+  ]
+}

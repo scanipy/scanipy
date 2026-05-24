@@ -1,0 +1,52 @@
+{
+  "index.js": [
+    {
+      "callee": null,
+      "caller": "<module>",
+      "line": 5,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.js::readConfig@7",
+      "line": 8,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.js::parseConfig@11",
+      "line": 12,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.js::<anonymous>@16",
+      "line": 17,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.js::<anonymous>@16",
+      "line": 17,
+      "tag": "dynamic"
+    },
+    {
+      "callee": "compose",
+      "caller": "index.js::loadConfig@21",
+      "line": 22,
+      "tag": "static"
+    },
+    {
+      "callee": null,
+      "caller": "index.js::loadConfig@21",
+      "line": 23,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.js::applyAll@26",
+      "line": 29,
+      "tag": "dynamic"
+    }
+  ]
+}

@@ -1,0 +1,221 @@
+{
+  "index.mjs": [
+    {
+      "edges": [
+        {
+          "from": "index.mjs::delay@3#entry",
+          "kind": "seq",
+          "to": "index.mjs::delay@3#n0"
+        }
+      ],
+      "function": "index.mjs::delay@3",
+      "nodes": [
+        {
+          "id": "index.mjs::delay@3#entry",
+          "kind": "Entry",
+          "line": 3
+        },
+        {
+          "id": "index.mjs::delay@3#n0",
+          "kind": "ReturnStatement",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.mjs::<anonymous>@4#entry",
+          "kind": "seq",
+          "to": "index.mjs::<anonymous>@4#expr"
+        }
+      ],
+      "function": "index.mjs::<anonymous>@4",
+      "nodes": [
+        {
+          "id": "index.mjs::<anonymous>@4#entry",
+          "kind": "Entry",
+          "line": 4
+        },
+        {
+          "id": "index.mjs::<anonymous>@4#expr",
+          "kind": "Return",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.mjs::fetchValue@7#entry",
+          "kind": "seq",
+          "to": "index.mjs::fetchValue@7#n0"
+        },
+        {
+          "from": "index.mjs::fetchValue@7#n0",
+          "kind": "await",
+          "to": "index.mjs::fetchValue@7#n0"
+        },
+        {
+          "from": "index.mjs::fetchValue@7#n0",
+          "kind": "seq",
+          "to": "index.mjs::fetchValue@7#n1"
+        }
+      ],
+      "function": "index.mjs::fetchValue@7",
+      "nodes": [
+        {
+          "id": "index.mjs::fetchValue@7#entry",
+          "kind": "Entry",
+          "line": 7
+        },
+        {
+          "id": "index.mjs::fetchValue@7#n0",
+          "kind": "ExpressionStatement",
+          "line": 8
+        },
+        {
+          "id": "index.mjs::fetchValue@7#n1",
+          "kind": "ReturnStatement",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.mjs::fetchAll@12#entry",
+          "kind": "seq",
+          "to": "index.mjs::fetchAll@12#n0"
+        },
+        {
+          "from": "index.mjs::fetchAll@12#n0",
+          "kind": "seq",
+          "to": "index.mjs::fetchAll@12#n1"
+        },
+        {
+          "from": "index.mjs::fetchAll@12#n1",
+          "kind": "await",
+          "to": "index.mjs::fetchAll@12#n1"
+        },
+        {
+          "from": "index.mjs::fetchAll@12#n1",
+          "kind": "seq",
+          "to": "index.mjs::fetchAll@12#n2"
+        },
+        {
+          "from": "index.mjs::fetchAll@12#n2",
+          "kind": "await",
+          "to": "index.mjs::fetchAll@12#n2"
+        },
+        {
+          "from": "index.mjs::fetchAll@12#n2",
+          "kind": "seq",
+          "to": "index.mjs::fetchAll@12#n3"
+        },
+        {
+          "from": "index.mjs::fetchAll@12#n3",
+          "kind": "loop-back",
+          "to": "index.mjs::fetchAll@12#n1"
+        },
+        {
+          "from": "index.mjs::fetchAll@12#n1",
+          "kind": "seq",
+          "to": "index.mjs::fetchAll@12#n4"
+        }
+      ],
+      "function": "index.mjs::fetchAll@12",
+      "nodes": [
+        {
+          "id": "index.mjs::fetchAll@12#entry",
+          "kind": "Entry",
+          "line": 12
+        },
+        {
+          "id": "index.mjs::fetchAll@12#n0",
+          "kind": "VariableDeclaration",
+          "line": 13
+        },
+        {
+          "id": "index.mjs::fetchAll@12#n1",
+          "kind": "ForOfStatement",
+          "line": 14
+        },
+        {
+          "id": "index.mjs::fetchAll@12#n2",
+          "kind": "VariableDeclaration",
+          "line": 15
+        },
+        {
+          "id": "index.mjs::fetchAll@12#n3",
+          "kind": "ExpressionStatement",
+          "line": 16
+        },
+        {
+          "id": "index.mjs::fetchAll@12#n4",
+          "kind": "ReturnStatement",
+          "line": 18
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.mjs::run@21#entry",
+          "kind": "seq",
+          "to": "index.mjs::run@21#n0"
+        },
+        {
+          "from": "index.mjs::run@21#n0",
+          "kind": "await",
+          "to": "index.mjs::run@21#n0"
+        },
+        {
+          "from": "index.mjs::run@21#n0",
+          "kind": "seq",
+          "to": "index.mjs::run@21#n1"
+        }
+      ],
+      "function": "index.mjs::run@21",
+      "nodes": [
+        {
+          "id": "index.mjs::run@21#entry",
+          "kind": "Entry",
+          "line": 21
+        },
+        {
+          "id": "index.mjs::run@21#n0",
+          "kind": "VariableDeclaration",
+          "line": 22
+        },
+        {
+          "id": "index.mjs::run@21#n1",
+          "kind": "ReturnStatement",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.mjs::<anonymous>@23#entry",
+          "kind": "seq",
+          "to": "index.mjs::<anonymous>@23#expr"
+        }
+      ],
+      "function": "index.mjs::<anonymous>@23",
+      "nodes": [
+        {
+          "id": "index.mjs::<anonymous>@23#entry",
+          "kind": "Entry",
+          "line": 23
+        },
+        {
+          "id": "index.mjs::<anonymous>@23#expr",
+          "kind": "Return",
+          "line": 23
+        }
+      ]
+    }
+  ]
+}

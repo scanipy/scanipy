@@ -1,0 +1,60 @@
+{
+  "index.mjs": [
+    {
+      "edges": [],
+      "function": "index.mjs::delay@3"
+    },
+    {
+      "edges": [],
+      "function": "index.mjs::<anonymous>@4"
+    },
+    {
+      "edges": [],
+      "function": "index.mjs::fetchValue@7"
+    },
+    {
+      "edges": [
+        {
+          "def_line": 14,
+          "kind": "data",
+          "use_line": 15,
+          "var": "k"
+        },
+        {
+          "def_line": 13,
+          "kind": "data",
+          "use_line": 16,
+          "var": "out"
+        },
+        {
+          "def_line": 15,
+          "kind": "data",
+          "use_line": 16,
+          "var": "v"
+        },
+        {
+          "def_line": 13,
+          "kind": "data",
+          "use_line": 18,
+          "var": "out"
+        }
+      ],
+      "function": "index.mjs::fetchAll@12"
+    },
+    {
+      "edges": [
+        {
+          "def_line": 22,
+          "kind": "data",
+          "use_line": 23,
+          "var": "values"
+        }
+      ],
+      "function": "index.mjs::run@21"
+    },
+    {
+      "edges": [],
+      "function": "index.mjs::<anonymous>@23"
+    }
+  ]
+}
