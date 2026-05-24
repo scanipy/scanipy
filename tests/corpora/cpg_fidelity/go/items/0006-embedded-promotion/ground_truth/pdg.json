@@ -1,0 +1,135 @@
+{
+  "deriver": "x/tools/go/ssa def-use (intra-procedural data dependence)",
+  "edges": [
+    {
+      "func": "(*corpusitem/0006-embedded-promotion.Logger).Log",
+      "def": "t0",
+      "use": "t1=*t0"
+    },
+    {
+      "func": "(*corpusitem/0006-embedded-promotion.Logger).Log",
+      "def": "t1",
+      "use": "t2=t1 + msg"
+    },
+    {
+      "func": "(*corpusitem/0006-embedded-promotion.Logger).Log",
+      "def": "t2",
+      "use": "return t2"
+    },
+    {
+      "func": "(*corpusitem/0006-embedded-promotion.Service).Handle",
+      "def": "t0",
+      "use": "t1=*t0"
+    },
+    {
+      "func": "(*corpusitem/0006-embedded-promotion.Service).Handle",
+      "def": "t1",
+      "use": "t2=(Base).Describe(t1)"
+    },
+    {
+      "func": "(*corpusitem/0006-embedded-promotion.Service).Handle",
+      "def": "t2",
+      "use": "t5=t2 + \":\":string"
+    },
+    {
+      "func": "(*corpusitem/0006-embedded-promotion.Service).Handle",
+      "def": "t3",
+      "use": "t4=*t3"
+    },
+    {
+      "func": "(*corpusitem/0006-embedded-promotion.Service).Handle",
+      "def": "t4",
+      "use": "t7=(*Logger).Log(t4, t6)"
+    },
+    {
+      "func": "(*corpusitem/0006-embedded-promotion.Service).Handle",
+      "def": "t5",
+      "use": "t6=t5 + req"
+    },
+    {
+      "func": "(*corpusitem/0006-embedded-promotion.Service).Handle",
+      "def": "t6",
+      "use": "t7=(*Logger).Log(t4, t6)"
+    },
+    {
+      "func": "(*corpusitem/0006-embedded-promotion.Service).Handle",
+      "def": "t7",
+      "use": "return t7"
+    },
+    {
+      "func": "(corpusitem/0006-embedded-promotion.Base).Describe",
+      "def": "t0",
+      "use": "*t0 = b"
+    },
+    {
+      "func": "(corpusitem/0006-embedded-promotion.Base).Describe",
+      "def": "t0",
+      "use": "t1=\u0026t0.Name [#0]"
+    },
+    {
+      "func": "(corpusitem/0006-embedded-promotion.Base).Describe",
+      "def": "t1",
+      "use": "t2=*t1"
+    },
+    {
+      "func": "(corpusitem/0006-embedded-promotion.Base).Describe",
+      "def": "t2",
+      "use": "return t2"
+    },
+    {
+      "func": "corpusitem/0006-embedded-promotion.Run",
+      "def": "t0",
+      "use": "t1=\u0026t0.Base [#0]"
+    },
+    {
+      "func": "corpusitem/0006-embedded-promotion.Run",
+      "def": "t0",
+      "use": "t3=\u0026t0.Logger [#1]"
+    },
+    {
+      "func": "corpusitem/0006-embedded-promotion.Run",
+      "def": "t0",
+      "use": "t6=(*Service).Handle(t0, \"req\":string)"
+    },
+    {
+      "func": "corpusitem/0006-embedded-promotion.Run",
+      "def": "t1",
+      "use": "t2=\u0026t1.Name [#0]"
+    },
+    {
+      "func": "corpusitem/0006-embedded-promotion.Run",
+      "def": "t2",
+      "use": "*t2 = \"svc\":string"
+    },
+    {
+      "func": "corpusitem/0006-embedded-promotion.Run",
+      "def": "t3",
+      "use": "*t3 = t4"
+    },
+    {
+      "func": "corpusitem/0006-embedded-promotion.Run",
+      "def": "t4",
+      "use": "*t3 = t4"
+    },
+    {
+      "func": "corpusitem/0006-embedded-promotion.Run",
+      "def": "t4",
+      "use": "t5=\u0026t4.Prefix [#0]"
+    },
+    {
+      "func": "corpusitem/0006-embedded-promotion.Run",
+      "def": "t5",
+      "use": "*t5 = \"[\":string"
+    },
+    {
+      "func": "corpusitem/0006-embedded-promotion.Run",
+      "def": "t6",
+      "use": "return t6"
+    },
+    {
+      "func": "corpusitem/0006-embedded-promotion.init",
+      "def": "t0",
+      "use": "if t0 goto 2 else 1"
+    }
+  ]
+}

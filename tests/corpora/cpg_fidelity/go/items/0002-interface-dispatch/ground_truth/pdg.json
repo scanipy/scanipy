@@ -1,0 +1,295 @@
+{
+  "deriver": "x/tools/go/ssa def-use (intra-procedural data dependence)",
+  "edges": [
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Circle).Area",
+      "def": "t0",
+      "use": "*t0 = c"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Circle).Area",
+      "def": "t0",
+      "use": "t1=\u0026t0.R [#0]"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Circle).Area",
+      "def": "t0",
+      "use": "t4=\u0026t0.R [#0]"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Circle).Area",
+      "def": "t1",
+      "use": "t2=*t1"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Circle).Area",
+      "def": "t2",
+      "use": "t3=3.14159:float64 * t2"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Circle).Area",
+      "def": "t3",
+      "use": "t6=t3 * t5"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Circle).Area",
+      "def": "t4",
+      "use": "t5=*t4"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Circle).Area",
+      "def": "t5",
+      "use": "t6=t3 * t5"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Circle).Area",
+      "def": "t6",
+      "use": "return t6"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Rect).Area",
+      "def": "t0",
+      "use": "*t0 = r"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Rect).Area",
+      "def": "t0",
+      "use": "t1=\u0026t0.W [#0]"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Rect).Area",
+      "def": "t0",
+      "use": "t3=\u0026t0.H [#1]"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Rect).Area",
+      "def": "t1",
+      "use": "t2=*t1"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Rect).Area",
+      "def": "t2",
+      "use": "t5=t2 * t4"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Rect).Area",
+      "def": "t3",
+      "use": "t4=*t3"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Rect).Area",
+      "def": "t4",
+      "use": "t5=t2 * t4"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Rect).Area",
+      "def": "t5",
+      "use": "return t5"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Triangle).Area",
+      "def": "t0",
+      "use": "*t0 = t"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Triangle).Area",
+      "def": "t0",
+      "use": "t1=\u0026t0.B [#0]"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Triangle).Area",
+      "def": "t0",
+      "use": "t4=\u0026t0.H [#1]"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Triangle).Area",
+      "def": "t1",
+      "use": "t2=*t1"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Triangle).Area",
+      "def": "t2",
+      "use": "t3=0.5:float64 * t2"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Triangle).Area",
+      "def": "t3",
+      "use": "t6=t3 * t5"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Triangle).Area",
+      "def": "t4",
+      "use": "t5=*t4"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Triangle).Area",
+      "def": "t5",
+      "use": "t6=t3 * t5"
+    },
+    {
+      "func": "(corpusitem/0002-interface-dispatch.Triangle).Area",
+      "def": "t6",
+      "use": "return t6"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t0",
+      "use": "t12=slice t0[:]"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t0",
+      "use": "t1=\u0026t0[0:int]"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t0",
+      "use": "t7=\u0026t0[1:int]"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t1",
+      "use": "*t1 = t6"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t10",
+      "use": "t11=make Shape \u003c- Circle (t10)"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t11",
+      "use": "*t7 = t11"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t12",
+      "use": "t13=TotalArea(t12)"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t13",
+      "use": "return t13"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t2",
+      "use": "t3=\u0026t2.W [#0]"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t2",
+      "use": "t4=\u0026t2.H [#1]"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t2",
+      "use": "t5=*t2"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t3",
+      "use": "*t3 = 2:float64"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t4",
+      "use": "*t4 = 3:float64"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t5",
+      "use": "t6=make Shape \u003c- Rect (t5)"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t6",
+      "use": "*t1 = t6"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t7",
+      "use": "*t7 = t11"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t8",
+      "use": "t10=*t8"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t8",
+      "use": "t9=\u0026t8.R [#0]"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.Run",
+      "def": "t9",
+      "use": "*t9 = 1:float64"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.TotalArea",
+      "def": "t0",
+      "use": "t4=t3 \u003c t0"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.TotalArea",
+      "def": "t1",
+      "use": "return t1"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.TotalArea",
+      "def": "t1",
+      "use": "t8=t1 + t7"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.TotalArea",
+      "def": "t2",
+      "use": "t3=t2 + 1:int"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.TotalArea",
+      "def": "t3",
+      "use": "t2=phi [0: -1:int, 2: t3] #rangeindex"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.TotalArea",
+      "def": "t3",
+      "use": "t4=t3 \u003c t0"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.TotalArea",
+      "def": "t3",
+      "use": "t5=\u0026shapes[t3]"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.TotalArea",
+      "def": "t4",
+      "use": "if t4 goto 2 else 3"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.TotalArea",
+      "def": "t5",
+      "use": "t6=*t5"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.TotalArea",
+      "def": "t6",
+      "use": "t7=invoke t6.Area()"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.TotalArea",
+      "def": "t7",
+      "use": "t8=t1 + t7"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.TotalArea",
+      "def": "t8",
+      "use": "t1=phi [0: 0:float64, 2: t8] #sum"
+    },
+    {
+      "func": "corpusitem/0002-interface-dispatch.init",
+      "def": "t0",
+      "use": "if t0 goto 2 else 1"
+    }
+  ]
+}

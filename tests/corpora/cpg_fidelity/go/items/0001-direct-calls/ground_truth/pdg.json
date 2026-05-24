@@ -1,0 +1,45 @@
+{
+  "deriver": "x/tools/go/ssa def-use (intra-procedural data dependence)",
+  "edges": [
+    {
+      "func": "corpusitem/0001-direct-calls.Run",
+      "def": "t0",
+      "use": "t1=double(t0)"
+    },
+    {
+      "func": "corpusitem/0001-direct-calls.Run",
+      "def": "t1",
+      "use": "t2=quadruple(t1)"
+    },
+    {
+      "func": "corpusitem/0001-direct-calls.Run",
+      "def": "t2",
+      "use": "return t2"
+    },
+    {
+      "func": "corpusitem/0001-direct-calls.add",
+      "def": "t0",
+      "use": "return t0"
+    },
+    {
+      "func": "corpusitem/0001-direct-calls.double",
+      "def": "t0",
+      "use": "return t0"
+    },
+    {
+      "func": "corpusitem/0001-direct-calls.init",
+      "def": "t0",
+      "use": "if t0 goto 2 else 1"
+    },
+    {
+      "func": "corpusitem/0001-direct-calls.quadruple",
+      "def": "t0",
+      "use": "t1=double(t0)"
+    },
+    {
+      "func": "corpusitem/0001-direct-calls.quadruple",
+      "def": "t1",
+      "use": "return t1"
+    }
+  ]
+}

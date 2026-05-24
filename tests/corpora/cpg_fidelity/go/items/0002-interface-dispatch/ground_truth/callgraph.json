@@ -1,0 +1,40 @@
+{
+  "deriver": "x/tools/go/callgraph/cha",
+  "edges": [
+    {
+      "caller": "corpusitem/0002-interface-dispatch.Run",
+      "callee": "corpusitem/0002-interface-dispatch.TotalArea",
+      "dynamic": false
+    },
+    {
+      "caller": "corpusitem/0002-interface-dispatch.TotalArea",
+      "callee": "(*corpusitem/0002-interface-dispatch.Circle).Area",
+      "dynamic": true
+    },
+    {
+      "caller": "corpusitem/0002-interface-dispatch.TotalArea",
+      "callee": "(*corpusitem/0002-interface-dispatch.Rect).Area",
+      "dynamic": true
+    },
+    {
+      "caller": "corpusitem/0002-interface-dispatch.TotalArea",
+      "callee": "(*corpusitem/0002-interface-dispatch.Triangle).Area",
+      "dynamic": true
+    },
+    {
+      "caller": "corpusitem/0002-interface-dispatch.TotalArea",
+      "callee": "(corpusitem/0002-interface-dispatch.Circle).Area",
+      "dynamic": true
+    },
+    {
+      "caller": "corpusitem/0002-interface-dispatch.TotalArea",
+      "callee": "(corpusitem/0002-interface-dispatch.Rect).Area",
+      "dynamic": true
+    },
+    {
+      "caller": "corpusitem/0002-interface-dispatch.TotalArea",
+      "callee": "(corpusitem/0002-interface-dispatch.Triangle).Area",
+      "dynamic": true
+    }
+  ]
+}

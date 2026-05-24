@@ -1,0 +1,30 @@
+{
+  "deriver": "x/tools/go/callgraph/cha",
+  "edges": [
+    {
+      "caller": "corpusitem/0001-direct-calls.Run",
+      "callee": "corpusitem/0001-direct-calls.add",
+      "dynamic": false
+    },
+    {
+      "caller": "corpusitem/0001-direct-calls.Run",
+      "callee": "corpusitem/0001-direct-calls.double",
+      "dynamic": false
+    },
+    {
+      "caller": "corpusitem/0001-direct-calls.Run",
+      "callee": "corpusitem/0001-direct-calls.quadruple",
+      "dynamic": false
+    },
+    {
+      "caller": "corpusitem/0001-direct-calls.double",
+      "callee": "corpusitem/0001-direct-calls.add",
+      "dynamic": false
+    },
+    {
+      "caller": "corpusitem/0001-direct-calls.quadruple",
+      "callee": "corpusitem/0001-direct-calls.double",
+      "dynamic": false
+    }
+  ]
+}

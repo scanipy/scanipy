@@ -1,0 +1,20 @@
+{
+  "deriver": "x/tools/go/callgraph/cha",
+  "edges": [
+    {
+      "caller": "corpusitem/0003-closures-method-values.Run",
+      "callee": "corpusitem/0003-closures-method-values.apply",
+      "dynamic": false
+    },
+    {
+      "caller": "corpusitem/0003-closures-method-values.Run",
+      "callee": "corpusitem/0003-closures-method-values.makeAdder",
+      "dynamic": false
+    },
+    {
+      "caller": "corpusitem/0003-closures-method-values.apply",
+      "callee": "corpusitem/0003-closures-method-values.makeAdder$1",
+      "dynamic": false
+    }
+  ]
+}
