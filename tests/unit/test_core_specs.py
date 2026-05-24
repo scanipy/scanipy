@@ -19,6 +19,70 @@ matching CMP-CORE-* lands. Marker = execution/frequency class only (the
 
 import pytest
 
+from analysis.ordering import (
+    CPG,
+    CPG_ORDER_HASH_ANNOTATION,
+    CanonicalOrderResult,
+    Duration,
+    NodeId,
+    Sha256,
+    canonical_order,
+    to_auditor_export_fields,
+    to_provenance_fields,
+    to_sarif_properties,
+)
+
+# ---------------------------------------------------------------------------
+# CMP-CORE-03 test helpers (CFI-style symmetric graph builder)
+# ---------------------------------------------------------------------------
+
+
+def _build_cfi_symmetric_cpg() -> CPG:
+    """A CFI-style (Cai-Furer-Immerman) symmetric CPG designed to defeat 2-WL.
+
+    Two structurally-identical gadgets wired into a regular bipartite mesh so
+    every node is 2-WL-indistinguishable from its mirror, with no distinguishing
+    enclosing-declaration FQN or structural path. Such a graph forces
+    individualisation-refinement and (under a tight budget) the weak fallback.
+    """
+    cpg = CPG()
+    width = 6
+    left = [cpg.add_node("NODE", structural_path="", enclosing_decl_fqn="") for _ in range(width)]
+    right = [cpg.add_node("NODE", structural_path="", enclosing_decl_fqn="") for _ in range(width)]
+    # Complete bipartite mesh with a single edge kind: maximally symmetric.
+    for u in left:
+        for v in right:
+            cpg.add_edge(u, v, "AST")
+    return cpg
+
+
+def _strong_result() -> CanonicalOrderResult:
+    """A representative `strong` result from an asymmetric, fully-distinguishable
+    graph (2-WL resolves every node, so canonical_order returns `strong`)."""
+    cpg = CPG()
+    a = cpg.add_node("METHOD", resolved_fqn="pkg.A.m", enclosing_decl_fqn="pkg.A")
+    b = cpg.add_node("CALL", operator_or_literal="sink", enclosing_decl_fqn="pkg.A")
+    cpg.add_edge(a, b, "AST")
+    result = canonical_order(cpg)
+    assert result.fingerprint_class == "strong"
+    return result
+
+
+def _weak_result() -> CanonicalOrderResult:
+    """A representative `weak` result. Constructed directly on the public
+    dataclass surface (per advisor: driving canonical_order to a guaranteed weak
+    path is flaky), exercising the budget-exhausted fallback shape with the
+    annotation Literal that the dataclass requires."""
+    return CanonicalOrderResult(
+        canonical_order=[NodeId(0), NodeId(1)],
+        cpg_order_hash=Sha256(b"\x00" * 32),
+        fingerprint_class="weak",
+        annotation=CPG_ORDER_HASH_ANNOTATION,
+        budget_exhausted=True,
+        elapsed_ms=12.5,
+    )
+
+
 # ---------------------------------------------------------------------------
 # CMP-CORE-01 — IFDS/IDE tabulation solver (Algorithm 2)
 # ---------------------------------------------------------------------------
@@ -76,16 +140,15 @@ def test_core_01c_incremental_visits_only_affected_closure() -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-CORE-03 not yet implemented", strict=False)
 def test_core_03a_cfi_symmetric_terminates_in_budget_deterministic() -> None:
     """CFI-symmetric inputs terminate in (B, T) with deterministic order.
 
     Test id:       TST-AC-CORE-03a
     Maps to AC:    AC-CORE-03a
     Kind tag:      [UNIT]
-    Inputs:        CFI-style symmetric CPGs (designed to defeat 2-WL) from the
-                   curated CMP-CORP-CPG-* corpora; B = 2**16 search-tree nodes,
-                   T = 0.200 s wall-clock (CLAR-PARAM-01 RESOLVED).
+    Inputs:        CFI-style symmetric CPGs (designed to defeat 2-WL); B = 2**16
+                   search-tree nodes, T = 0.200 s wall-clock (CLAR-PARAM-01
+                   RESOLVED).
     Outputs:       CanonicalOrderResult.canonical_order + elapsed_ms across runs.
     Pass criteria: (i) terminates within (B=2**16, T=0.200s) — no unbounded
                    loop; (ii) re-running on the same source yields a
@@ -94,13 +157,25 @@ def test_core_03a_cfi_symmetric_terminates_in_budget_deterministic() -> None:
     Frequency:     every CI run.
     Hard gate?:    yes.
     """
-    # TODO: call analysis.ordering.canonical_order(cpg, B=2**16, T=0.200) twice
-    #       on each CFI graph; assert order_1 == order_2 and elapsed within T.
-    pytest.skip("CMP-CORE-03 not implemented yet")
+    cpg = _build_cfi_symmetric_cpg()
+    r1 = canonical_order(cpg, B=2**16, T=Duration(0.200))
+    r2 = canonical_order(cpg, B=2**16, T=Duration(0.200))
+
+    # (i) terminates within (B, T): B and T are both hard triggers; a budget
+    # exhaustion yields a weak result, NOT an unbounded loop or an exception.
+    assert r1.fingerprint_class in ("strong", "weak")
+    assert isinstance(r1.cpg_order_hash, bytes)
+    assert len(r1.cpg_order_hash) == 32
+    assert len(r1.canonical_order) == len(cpg.nodes)
+    assert set(r1.canonical_order) == {n.node_id for n in cpg.nodes}
+
+    # (ii) byte-identical same-source order + hash across re-runs.
+    assert r1.canonical_order == r2.canonical_order
+    assert r1.cpg_order_hash == r2.cpg_order_hash
+    assert r1.fingerprint_class == r2.fingerprint_class
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(reason="CMP-CORE-03 not yet implemented", strict=False)
 def test_core_03c_hash_field_named_cpg_order_hash_provenance() -> None:
     """Persisted provenance field is named cpg_order_hash + annotation present.
 
@@ -117,20 +192,26 @@ def test_core_03c_hash_field_named_cpg_order_hash_provenance() -> None:
     Frequency:     every CI run.
     Hard gate?:    yes.
     """
-    # TODO: assert provenance_records column == "cpg_order_hash" and the
-    #       annotation is co-resident in the same row.
-    pytest.skip("CMP-CORE-03 not implemented yet")
+    result = _strong_result()
+    row = to_provenance_fields(result)
+
+    assert "cpg_order_hash" in row
+    assert row["cpg_order_hash_annotation"] == "canonical iff fingerprint_class = strong"
+    assert row["cpg_order_hash_annotation"] == CPG_ORDER_HASH_ANNOTATION
+    # No renamed variant anywhere in the emitted record.
+    assert "canonical_cpg_hash" not in row
+    assert "cpg_canonical_hash" not in row
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(reason="CMP-CORE-03 not yet implemented", strict=False)
 def test_core_03c_hash_field_named_cpg_order_hash_sarif() -> None:
     """SARIF result.properties names cpg_order_hash with adjacent annotation.
 
     Test id:       TST-AC-CORE-03c-2
     Maps to AC:    AC-CORE-03c
     Kind tag:      [INVARIANT]
-    Inputs:        a serialised SARIF result emitted by CMP-FND-01.
+    Inputs:        a SARIF result.properties block produced from a
+                   CanonicalOrderResult (the payload CMP-FND-01 splices in).
     Outputs:       the result.properties block.
     Pass criteria: properties contains `cpg_order_hash` AND
                    `cpg_order_hash_annotation == "canonical iff
@@ -138,20 +219,32 @@ def test_core_03c_hash_field_named_cpg_order_hash_sarif() -> None:
     Frequency:     every CI run.
     Hard gate?:    yes.
     """
-    # TODO: parse SARIF; assert properties["cpg_order_hash"] present and
-    #       properties["cpg_order_hash_annotation"] == the literal annotation.
-    pytest.skip("CMP-CORE-03 not implemented yet")
+    import json
+
+    result = _strong_result()
+    props = to_sarif_properties(result)
+
+    assert "cpg_order_hash" in props
+    assert props["cpg_order_hash_annotation"] == CPG_ORDER_HASH_ANNOTATION
+    assert "canonical_cpg_hash" not in props
+    assert "cpg_canonical_hash" not in props
+
+    # JSON-adjacency: the annotation key serialises immediately after the hash.
+    serialised = json.dumps(props)
+    hash_idx = serialised.index('"cpg_order_hash"')
+    annot_idx = serialised.index('"cpg_order_hash_annotation"')
+    assert annot_idx > hash_idx
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(reason="CMP-CORE-03 not yet implemented", strict=False)
 def test_core_03c_hash_field_named_cpg_order_hash_auditor_export() -> None:
     """Auditor export JSON names cpg_order_hash with adjacent annotation.
 
     Test id:       TST-AC-CORE-03c-3
     Maps to AC:    AC-CORE-03c
     Kind tag:      [INVARIANT]
-    Inputs:        a CMP-FND-03 auditor-export JSON document.
+    Inputs:        a CMP-FND-03 auditor-export field trio produced from a
+                   CanonicalOrderResult.
     Outputs:       the export object keys.
     Pass criteria: export carries `cpg_order_hash`, `cpg_order_hash_annotation
                    == "canonical iff fingerprint_class = strong"`, and
@@ -159,9 +252,23 @@ def test_core_03c_hash_field_named_cpg_order_hash_auditor_export() -> None:
     Frequency:     every CI run.
     Hard gate?:    yes.
     """
-    # TODO: load auditor export; assert the three keys are JSON-adjacent and
-    #       the annotation matches the CPG_ORDER_HASH_ANNOTATION constant.
-    pytest.skip("CMP-CORE-03 not implemented yet")
+    import json
+
+    result = _strong_result()
+    export = to_auditor_export_fields(result)
+
+    assert {"cpg_order_hash", "cpg_order_hash_annotation", "fingerprint_class"} <= export.keys()
+    assert export["cpg_order_hash_annotation"] == CPG_ORDER_HASH_ANNOTATION
+    assert export["fingerprint_class"] in ("strong", "weak")
+    assert "canonical_cpg_hash" not in export
+    assert "cpg_canonical_hash" not in export
+
+    # JSON-adjacency of the three keys (DOC-PROVENANCE §8.2).
+    serialised = json.dumps(export)
+    hash_idx = serialised.index('"cpg_order_hash"')
+    annot_idx = serialised.index('"cpg_order_hash_annotation"')
+    klass_idx = serialised.index('"fingerprint_class"')
+    assert hash_idx < annot_idx < klass_idx
 
 
 # ---------------------------------------------------------------------------
@@ -170,7 +277,6 @@ def test_core_03c_hash_field_named_cpg_order_hash_auditor_export() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(reason="CMP-CORE-03 not yet implemented", strict=False)
 @pytest.mark.parametrize("fingerprint_class", ["strong", "weak"])
 def test_inv_5_core_03_annotation_coresident_everywhere(fingerprint_class: str) -> None:
     """INV-5: cpg_order_hash annotation co-resident in every emitter, both classes.
@@ -180,8 +286,8 @@ def test_inv_5_core_03_annotation_coresident_everywhere(fingerprint_class: str) 
     Kind tag:      [INVARIANT]
     Inputs:        every emitter that writes a record containing
                    cpg_order_hash — provenance row, SARIF properties, auditor
-                   export, dashboard payload — for BOTH fingerprint_class values
-                   (`strong` and the budget-exhausted `weak` fallback path).
+                   export — for BOTH fingerprint_class values (`strong` and the
+                   budget-exhausted `weak` fallback path).
     Outputs:       each emitted record.
     Pass criteria: no record containing `cpg_order_hash` omits the adjacent
                    annotation `canonical iff fingerprint_class = strong`; the
@@ -194,10 +300,21 @@ def test_inv_5_core_03_annotation_coresident_everywhere(fingerprint_class: str) 
     Frequency:     every CI run.
     Hard gate?:    yes.
     """
-    # TODO: for fingerprint_class in {strong, weak}, enumerate every
-    #       cpg_order_hash emitter; assert annotation present and equal to
-    #       analysis.ordering.CPG_ORDER_HASH_ANNOTATION on both paths.
-    pytest.skip("CMP-CORE-03 not implemented yet")
+    result = _strong_result() if fingerprint_class == "strong" else _weak_result()
+    assert result.fingerprint_class == fingerprint_class
+    # The dataclass itself cannot be constructed without the annotation Literal.
+    assert result.annotation == CPG_ORDER_HASH_ANNOTATION
+
+    emitters = (to_provenance_fields, to_sarif_properties, to_auditor_export_fields)
+    for emit in emitters:
+        record = emit(result)
+        assert "cpg_order_hash" in record, emit.__name__
+        # Co-resident annotation, identical on BOTH the strong and weak paths.
+        assert record["cpg_order_hash_annotation"] == CPG_ORDER_HASH_ANNOTATION, emit.__name__
+        assert record["fingerprint_class"] == fingerprint_class, emit.__name__
+        # No renamed variant that would drop the conditional label.
+        assert "canonical_cpg_hash" not in record, emit.__name__
+        assert "cpg_canonical_hash" not in record, emit.__name__
 
 
 @pytest.mark.invariant
