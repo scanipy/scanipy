@@ -97,10 +97,28 @@ def _obl_sanitize() -> bool:
     return is_distributive(build_sanitize(frozenset((_KILL_A, _KILL_B))), _D)
 
 
-def _obl_propagate() -> bool:
-    # All four PropagateBody forms share the gen-conditioned-on-source algebra;
-    # the form determines only which abstract positions src/tgt model.
-    return is_distributive(build_propagate(_PSRC, _PTGT), _D)
+# Distinct in-domain (source, target) fact positions per PropagateBody form.
+# build_propagate's distributivity is independent of which facts model the
+# positions (see flow.build_propagate docstring + RHS'95 §3), so giving each
+# form its own distinct pair makes every `propagate:<form>` obligation a
+# concrete, non-identical exhaustive check rather than four registrations of a
+# single closure. All facts are within _D = (0..7), so no check is vacuous.
+_PF1, _PF2 = 5, 6  # two further reserved positions, distinct from _GEN.._PTGT
+_PROPAGATE_FORM_FACTS: dict[str, tuple[int, int]] = {
+    "arg_ret": (_PSRC, _PTGT),
+    "arg_field": (_PSRC, _PF1),
+    "field_ret": (_PF1, _PTGT),
+    "field_field": (_PF1, _PF2),
+}
+
+
+def _make_propagate_obl(source: int, target: int) -> ProofObligation:
+    """Build the per-form distributivity obligation for propagate(source→target)."""
+
+    def _obl() -> bool:
+        return is_distributive(build_propagate(source, target), _D)
+
+    return _obl
 
 
 def _obl_clause_union() -> bool:
@@ -125,7 +143,8 @@ def install_default_obligations() -> None:
     register_proof("sink", _obl_sink)
     register_proof("sanitize", _obl_sanitize)
     for form in PROPAGATE_FORMS:
-        register_proof(f"propagate:{form}", _obl_propagate)
+        src, tgt = _PROPAGATE_FORM_FACTS[form]
+        register_proof(f"propagate:{form}", _make_propagate_obl(src, tgt))
     register_proof("compose:clause_union", _obl_clause_union)
 
 
