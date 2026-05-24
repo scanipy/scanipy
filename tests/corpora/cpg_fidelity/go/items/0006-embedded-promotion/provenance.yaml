@@ -1,0 +1,10 @@
+source_url: vendored
+source_commit: synthesized
+origin: SYNTHESIZED
+license: Apache-2.0
+authored_for: CMP-CORP-CPG-go
+categories: [embedding, method-promotion, pointer-embedding]
+note: >-
+  Hand-authored Go source written for this corpus to isolate one CPG-fidelity
+  idiom. Source is synthesized; ground truth is tool-derived (not hand-labelled)
+  via tools/derive under the pinned toolchain (see methodology.md).

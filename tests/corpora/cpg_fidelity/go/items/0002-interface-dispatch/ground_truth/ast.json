@@ -1,0 +1,59 @@
+{
+  "deriver": "go/parser+go/ast",
+  "files": [
+    {
+      "file": "main.go",
+      "node_kinds": {
+        "ArrayType": 2,
+        "AssignStmt": 2,
+        "BasicLit": 5,
+        "BinaryExpr": 5,
+        "BlockStmt": 6,
+        "CallExpr": 2,
+        "Comment": 17,
+        "CommentGroup": 10,
+        "CompositeLit": 3,
+        "DeclStmt": 1,
+        "Field": 14,
+        "FieldList": 19,
+        "File": 1,
+        "FuncDecl": 5,
+        "FuncType": 6,
+        "GenDecl": 5,
+        "Ident": 60,
+        "InterfaceType": 1,
+        "RangeStmt": 1,
+        "ReturnStmt": 5,
+        "SelectorExpr": 7,
+        "StructType": 3,
+        "TypeSpec": 4,
+        "ValueSpec": 1
+      },
+      "top_level_decls": [
+        "Circle",
+        "Circle.Area",
+        "Rect",
+        "Rect.Area",
+        "Run",
+        "Shape",
+        "TotalArea",
+        "Triangle",
+        "Triangle.Area"
+      ],
+      "func_decls": [
+        "Circle.Area",
+        "Rect.Area",
+        "Run",
+        "TotalArea",
+        "Triangle.Area"
+      ],
+      "type_decls": [
+        "Circle",
+        "Rect",
+        "Shape",
+        "Triangle"
+      ],
+      "total_nodes": 185
+    }
+  ]
+}

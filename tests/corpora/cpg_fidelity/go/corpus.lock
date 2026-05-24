@@ -1,0 +1,156 @@
+built_by: corpus-agent/CMP-CORP-CPG-go
+corpus_digest: sha256:0f05689700e37528d95573d9f04efb62b9d28bf4b722299dbac0e161d66077ed
+corpus_id: CORP-CPG-go
+corpus_version: 0.1.0
+created_at: '2026-05-24T17:55:28Z'
+ground_truth_method: "Ground truth is tool-derived, never hand-labelled (DOC \xA7\
+  3.3): AST from go/parser+go/ast; CFG from x/tools/go/ssa basic blocks; call graph\
+  \ from x/tools/go/callgraph/cha (recall-safe over-approximation for dynamic dispatch,\
+  \ matching the Stage-C soundness direction, INV-6); PDG dependence edges from intra-procedural\
+  \ SSA def-use. Re-derive with tools/derive under the pinned toolchain. See methodology.md."
+ground_truth_toolchain:
+  ast_deriver: go/parser+go/ast
+  callgraph_deriver: x/tools/go/callgraph/cha
+  cfg_deriver: x/tools/go/ssa
+  go: go1.22.2
+  pdg_deriver: x/tools/go/ssa def-use (intra-procedural data dependence)
+  x_tools: v0.21.0
+items:
+  - categories:
+      - static-calls
+      - monomorphic
+      - intra-package
+    ground_truth:
+      ast_nodes: 93
+      call_edges:
+        dynamic: 0
+        static: 5
+        total: 5
+      pdg_edges: 8
+      ssa_funcs: 5
+      status: complete
+    id: 0001-direct-calls
+    item_digest: sha256:ba06060d8870ce83d0360d173583ec1f8dfd86c2d81b805e2ab85f8da8d82816
+    license: Apache-2.0
+    origin: SYNTHESIZED
+    source_commit: synthesized
+    source_url: vendored
+  - categories:
+      - interfaces
+      - dynamic-dispatch
+      - cha-cone
+    ground_truth:
+      ast_nodes: 185
+      call_edges:
+        dynamic: 6
+        static: 1
+        total: 7
+      pdg_edges: 58
+      ssa_funcs: 6
+      status: complete
+    id: 0002-interface-dispatch
+    item_digest: sha256:2092bfdfc34ffb1be3de5f398773289f8b7d4c55acae01257f7b12cd2dba77b9
+    license: Apache-2.0
+    origin: SYNTHESIZED
+    source_commit: synthesized
+    source_url: vendored
+  - categories:
+      - closures
+      - higher-order
+      - method-values
+      - indirect-calls
+    ground_truth:
+      ast_nodes: 145
+      call_edges:
+        dynamic: 0
+        static: 3
+        total: 3
+      pdg_edges: 18
+      ssa_funcs: 6
+      status: complete
+    id: 0003-closures-method-values
+    item_digest: sha256:7c1c6e7fabf0ddcb572283f8fbe6c2658a13f0f15fd3a2dc6c25bc05df14f3a8
+    license: Apache-2.0
+    origin: SYNTHESIZED
+    source_commit: synthesized
+    source_url: vendored
+  - categories:
+      - goroutines
+      - channels
+      - concurrency
+      - async-call-edge
+    ground_truth:
+      ast_nodes: 93
+      call_edges:
+        dynamic: 0
+        static: 2
+        total: 2
+      pdg_edges: 18
+      ssa_funcs: 4
+      status: complete
+    id: 0004-goroutines-channels
+    item_digest: sha256:b200571823bfa50a9fe4fb57e37f25c79d79c039dac1cbab4828e9344d951c95
+    license: Apache-2.0
+    origin: SYNTHESIZED
+    source_commit: synthesized
+    source_url: vendored
+  - categories:
+      - generics
+      - type-parameters
+      - instantiation
+    ground_truth:
+      ast_nodes: 112
+      call_edges:
+        dynamic: 0
+        static: 6
+        total: 6
+      pdg_edges: 29
+      ssa_funcs: 4
+      status: complete
+    id: 0005-generics
+    item_digest: sha256:154c2296210d4c2e7c40a8a43b12a91fafe135ebac9d08601d9b1f7dccc8288e
+    license: Apache-2.0
+    origin: SYNTHESIZED
+    source_commit: synthesized
+    source_url: vendored
+  - categories:
+      - embedding
+      - method-promotion
+      - pointer-embedding
+    ground_truth:
+      ast_nodes: 146
+      call_edges:
+        dynamic: 0
+        static: 3
+        total: 3
+      pdg_edges: 26
+      ssa_funcs: 5
+      status: complete
+    id: 0006-embedded-promotion
+    item_digest: sha256:67ddf02f9c802ce2650a8c39b60116865e0754db4100360ddab9992b8d392621
+    license: Apache-2.0
+    origin: SYNTHESIZED
+    source_commit: synthesized
+    source_url: vendored
+  - categories:
+      - real-world
+      - parse-fidelity
+      - runes
+      - slices
+      - single-function
+    ground_truth:
+      ast_nodes: 67
+      call_edges:
+        dynamic: 0
+        static: 0
+        total: 0
+      pdg_edges: 29
+      ssa_funcs: 2
+      status: complete
+    id: 0007-upstream-reverse
+    item_digest: sha256:93942083a169f810cc8ca13c721a37c2595f5d717dbb6da52a70e20f814ba353
+    license: BSD-3-Clause
+    origin: SOURCED
+    source_commit: 7f05d217867b2af52b0a28c6d1c91df97e1b5b39
+    source_url: https://github.com/golang/example
+language: go
