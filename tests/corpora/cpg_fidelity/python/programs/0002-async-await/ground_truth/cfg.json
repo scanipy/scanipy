@@ -1,0 +1,93 @@
+{
+  "pipeline.py": {
+    "fetch": {
+      "nodes": [
+        "L11:Assign",
+        "L12:Return"
+      ],
+      "edges": [
+        {
+          "from": "L11:Assign",
+          "to": "L12:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    },
+    "gen": {
+      "nodes": [
+        "L16:Assign",
+        "L17:While",
+        "L18:Expr",
+        "L19:Assign"
+      ],
+      "edges": [
+        {
+          "from": "L16:Assign",
+          "to": "L17:While",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L17:While",
+          "to": "L18:Expr",
+          "kind": "loop-body"
+        },
+        {
+          "from": "L18:Expr",
+          "to": "L19:Assign",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L19:Assign",
+          "to": "L17:While",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L19:Assign",
+          "to": "L17:While",
+          "kind": "loop-back"
+        }
+      ]
+    },
+    "run": {
+      "nodes": [
+        "L23:Assign",
+        "L24:AsyncFor",
+        "L25:Assign",
+        "L26:Assign",
+        "L27:Return"
+      ],
+      "edges": [
+        {
+          "from": "L23:Assign",
+          "to": "L24:AsyncFor",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L24:AsyncFor",
+          "to": "L25:Assign",
+          "kind": "loop-body"
+        },
+        {
+          "from": "L25:Assign",
+          "to": "L26:Assign",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L26:Assign",
+          "to": "L24:AsyncFor",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L26:Assign",
+          "to": "L24:AsyncFor",
+          "kind": "loop-back"
+        },
+        {
+          "from": "L24:AsyncFor",
+          "to": "L27:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    }
+  }
+}

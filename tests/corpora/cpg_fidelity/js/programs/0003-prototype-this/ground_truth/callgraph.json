@@ -1,0 +1,22 @@
+{
+  "index.js": [
+    {
+      "callee": "increment",
+      "caller": "index.js::makeBound@19",
+      "line": 20,
+      "tag": "static"
+    },
+    {
+      "callee": "add",
+      "caller": "index.js::applyAdd@23",
+      "line": 24,
+      "tag": "static"
+    },
+    {
+      "callee": null,
+      "caller": "<module>",
+      "line": 27,
+      "tag": "dynamic"
+    }
+  ]
+}

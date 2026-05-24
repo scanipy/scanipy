@@ -1,0 +1,38 @@
+{
+  "index.tsx": [
+    {
+      "edges": [],
+      "function": "index.tsx::sealed@3"
+    },
+    {
+      "edges": [],
+      "function": "index.tsx::constructor@10"
+    },
+    {
+      "edges": [],
+      "function": "index.tsx::greeting@12"
+    },
+    {
+      "edges": [
+        {
+          "def_line": 18,
+          "kind": "data",
+          "use_line": 19,
+          "var": "g"
+        }
+      ],
+      "function": "index.tsx::renderName@17"
+    },
+    {
+      "edges": [
+        {
+          "def_line": 23,
+          "kind": "data",
+          "use_line": 24,
+          "var": "text"
+        }
+      ],
+      "function": "index.tsx::App@22"
+    }
+  ]
+}

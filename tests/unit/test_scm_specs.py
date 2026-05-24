@@ -338,8 +338,72 @@ _SCM05_CASES = (
 )
 
 
+# --- SCM-05a test scaffolding -------------------------------------------------
+# A deterministic, sleep-free harness: a fake response with a case-insensitive
+# header map, and a recorder that runs `with_retry` under asyncio while
+# capturing the realised sleep sequence (the decorator's `_sleep` test seam).
+
+
+class _FakeResponse:
+    """Minimal httpx.Response-shaped stub for the classify_* hooks."""
+
+    def __init__(
+        self,
+        *,
+        status_code: int = 200,
+        headers: dict[str, str] | None = None,
+        text: str = "",
+    ) -> None:
+        self.status_code = status_code
+        self.headers = headers or {}
+        self.text = text
+
+
+def _run_retry(*, policy, classify, responses, jitter_seed: int = 0):
+    """Drive with_retry over a scripted response/exception sequence.
+
+    `responses` is a list whose items are either _FakeResponse instances (the
+    decorated call returns them) or Exception instances (the decorated call
+    raises them). The final scripted item is repeated if attempts outlast it.
+    Returns (outcome, sleeps) where outcome is the return value or the raised
+    exception, and sleeps is the captured sleep sequence (seam, no real wait).
+    """
+    import asyncio
+    import random
+
+    from integrations.scm._http import with_retry
+
+    sleeps: list[float] = []
+
+    async def _record_sleep(seconds: float) -> None:
+        sleeps.append(seconds)
+
+    script = list(responses)
+    state = {"i": 0}
+
+    async def _call():
+        idx = min(state["i"], len(script) - 1)
+        state["i"] += 1
+        item = script[idx]
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+    decorated = with_retry(
+        policy=policy,
+        classify=classify,
+        _sleep=_record_sleep,
+        _rng=random.Random(jitter_seed),
+    )(_call)
+
+    try:
+        outcome: object = asyncio.run(decorated())
+    except Exception as exc:  # the test inspects the terminal error object
+        outcome = exc
+    return outcome, sleeps
+
+
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-SCM-05 (shared retry/backoff) not yet implemented", strict=False)
 @pytest.mark.parametrize("case", _SCM05_CASES)
 def test_scm_05a_retry_behaviour(case: str) -> None:
     """with_retry honours the backoff curve and per-provider rate-limit semantics.
@@ -363,9 +427,434 @@ def test_scm_05a_retry_behaviour(case: str) -> None:
     Frequency: every CI run
     Hard gate?: yes
     """
-    # TODO: from integrations.scm._http import with_retry, classify_github, RetryPolicy, ...
-    # exercise the decorator under `case` and assert sleep curve + terminal outcome.
-    pytest.skip("CMP-SCM-05 not implemented yet")
+    from datetime import UTC, datetime, timedelta
+    from email.utils import format_datetime
+
+    from integrations.scm._http import (
+        JitterMode,
+        RetryPolicy,
+        classify_azure_devops,
+        classify_bitbucket,
+        classify_github,
+        classify_gitlab,
+    )
+    from integrations.scm.base import (
+        SCMAuthError,
+        SCMNotFoundError,
+        SCMRateLimitError,
+        SCMTransientError,
+    )
+
+    if case == "curve_exponential_full_jitter_max_attempts":
+        # All attempts rate-limited (no Retry-After) → curve drives the sleeps;
+        # full jitter keeps each sleep in [0, base[i]] with base growing
+        # exponentially and clamped at max_backoff_s. max_attempts honoured
+        # (one fewer sleep than attempts), terminal error is SCMRateLimitError.
+        policy = RetryPolicy(
+            initial_backoff_s=1.0,
+            max_backoff_s=10.0,
+            backoff_factor=2.0,
+            jitter=JitterMode.FULL,
+            max_attempts=5,
+            honor_retry_after=True,
+        )
+        limited = _FakeResponse(status_code=429)  # gitlab-style, no Retry-After
+        outcome, sleeps = _run_retry(policy=policy, classify=classify_gitlab, responses=[limited])
+        assert isinstance(outcome, SCMRateLimitError)
+        assert len(sleeps) == policy.max_attempts - 1  # 4 sleeps for 5 attempts
+        bases = [min(1.0 * 2.0**i, 10.0) for i in range(len(sleeps))]
+        assert bases == [1.0, 2.0, 4.0, 8.0]  # exponential, clamped at 10
+        for slept, base in zip(sleeps, bases, strict=True):
+            assert 0.0 <= slept <= base  # full jitter is bounded by the curve
+
+    elif case == "retry_after_seconds_overrides_curve":
+        # Retry-After: 7 (delta-seconds) overrides the jittered curve exactly.
+        policy = RetryPolicy(max_attempts=3, jitter=JitterMode.FULL, honor_retry_after=True)
+        limited = _FakeResponse(status_code=429, headers={"Retry-After": "7"})
+        outcome, sleeps = _run_retry(policy=policy, classify=classify_gitlab, responses=[limited])
+        assert isinstance(outcome, SCMRateLimitError)
+        assert sleeps == [7.0, 7.0]  # provider wait wins over the curve, every retry
+
+    elif case == "retry_after_http_date_overrides_curve":
+        # Retry-After as an HTTP-date ~30s in the future overrides the curve.
+        future = datetime.now(UTC) + timedelta(seconds=30)
+        limited = _FakeResponse(
+            status_code=429, headers={"Retry-After": format_datetime(future, usegmt=True)}
+        )
+        policy = RetryPolicy(max_attempts=2, honor_retry_after=True)
+        outcome, sleeps = _run_retry(policy=policy, classify=classify_gitlab, responses=[limited])
+        assert isinstance(outcome, SCMRateLimitError)
+        assert len(sleeps) == 1
+        assert 20.0 <= sleeps[0] <= 31.0  # ~30s honoured (slack for parse/now drift)
+
+    elif case == "github_primary_ratelimit_remaining_zero_reset":
+        # 403 + X-RateLimit-Remaining:0 + X-RateLimit-Reset (epoch) → primary
+        # limit; reset honoured as the wait. Recovers on the second response.
+        reset = datetime.now(UTC).timestamp() + 12.0
+        limited = _FakeResponse(
+            status_code=403,
+            headers={"X-RateLimit-Remaining": "0", "X-RateLimit-Reset": str(reset)},
+        )
+        ok = _FakeResponse(status_code=200)
+        policy = RetryPolicy(max_attempts=4, honor_retry_after=True)
+        outcome, sleeps = _run_retry(
+            policy=policy, classify=classify_github, responses=[limited, ok]
+        )
+        assert isinstance(outcome, _FakeResponse) and outcome.status_code == 200
+        assert len(sleeps) == 1
+        assert 6.0 <= sleeps[0] <= 13.0  # X-RateLimit-Reset (~12s) honoured
+
+    elif case == "github_secondary_ratelimit_body_marker":
+        # 403 with a secondary/abuse body marker → secondary class, Retry-After
+        # honoured, on_attempt reason carries the secondary tag.
+        limited = _FakeResponse(
+            status_code=403,
+            headers={"Retry-After": "5"},
+            text="You have exceeded a secondary rate limit. Please wait.",
+        )
+        ok = _FakeResponse(status_code=200)
+        verdict = classify_github(limited)
+        assert verdict.is_rate_limited and verdict.is_secondary
+        reasons: list[str] = []
+        policy = RetryPolicy(max_attempts=3, honor_retry_after=True, honor_secondary=True)
+        from integrations.scm._http import with_retry
+
+        sleeps: list[float] = []
+
+        async def _seam(s: float) -> None:
+            sleeps.append(s)
+
+        script = [limited, ok]
+        idx = {"i": 0}
+
+        async def _call() -> _FakeResponse:
+            i = min(idx["i"], len(script) - 1)
+            idx["i"] += 1
+            return script[i]
+
+        import asyncio
+
+        decorated = with_retry(
+            policy=policy,
+            classify=classify_github,
+            on_attempt=lambda _i, _s, reason: reasons.append(reason),
+            _sleep=_seam,
+        )(_call)
+        result = asyncio.run(decorated())
+        assert result.status_code == 200
+        assert sleeps == [5.0]  # secondary Retry-After honoured
+        assert reasons == ["rate-limited-secondary"]
+
+    elif case == "gitlab_429_retry_after":
+        # GitLab 429 + Retry-After:3; no secondary class exists for GitLab.
+        limited = _FakeResponse(status_code=429, headers={"Retry-After": "3"})
+        v = classify_gitlab(limited)
+        assert v.is_rate_limited and v.retry_after_s == 3.0 and v.is_secondary is False
+        ok = _FakeResponse(status_code=200)
+        policy = RetryPolicy(max_attempts=3, honor_retry_after=True)
+        outcome, sleeps = _run_retry(
+            policy=policy, classify=classify_gitlab, responses=[limited, ok]
+        )
+        assert isinstance(outcome, _FakeResponse) and outcome.status_code == 200
+        assert sleeps == [3.0]
+
+    elif case == "bitbucket_429_abuse_vs_primary":
+        # Bitbucket differentiates abuse (secondary) from primary by header.
+        primary = _FakeResponse(status_code=429, headers={"Retry-After": "2"})
+        abuse = _FakeResponse(
+            status_code=429,
+            headers={"Retry-After": "2", "X-Bitbucket-Type": "abuse"},
+        )
+        v_primary = classify_bitbucket(primary)
+        v_abuse = classify_bitbucket(abuse)
+        assert v_primary.is_rate_limited and v_primary.is_secondary is False
+        assert v_abuse.is_rate_limited and v_abuse.is_secondary is True
+        ok = _FakeResponse(status_code=200)
+        policy = RetryPolicy(max_attempts=3, honor_retry_after=True)
+        outcome, sleeps = _run_retry(
+            policy=policy, classify=classify_bitbucket, responses=[abuse, ok]
+        )
+        assert isinstance(outcome, _FakeResponse) and outcome.status_code == 200
+        assert sleeps == [2.0]
+
+    elif case == "azure_devops_429_max_retry_after_and_delay":
+        # ADO 429 with both Retry-After and X-RateLimit-Delay → max wins.
+        limited = _FakeResponse(
+            status_code=429,
+            headers={"Retry-After": "4", "X-RateLimit-Delay": "9"},
+        )
+        v = classify_azure_devops(limited)
+        assert v.is_rate_limited and v.retry_after_s == 9.0  # max(4, 9)
+        ok = _FakeResponse(status_code=200)
+        policy = RetryPolicy(max_attempts=3, honor_retry_after=True)
+        outcome, sleeps = _run_retry(
+            policy=policy, classify=classify_azure_devops, responses=[limited, ok]
+        )
+        assert isinstance(outcome, _FakeResponse) and outcome.status_code == 200
+        assert sleeps == [9.0]
+
+    elif case == "total_deadline_exhaustion_raises_ratelimit":
+        # A short total_deadline_s is breached mid-curve → SCMRateLimitError,
+        # raised before max_attempts is reached.
+        policy = RetryPolicy(
+            initial_backoff_s=5.0,
+            max_backoff_s=60.0,
+            backoff_factor=2.0,
+            jitter=JitterMode.NONE,
+            max_attempts=6,
+            honor_retry_after=True,
+            total_deadline_s=8.0,  # first sleep is 5s; second would breach 8s
+        )
+        limited = _FakeResponse(status_code=429)  # no Retry-After → curve drives
+        outcome, sleeps = _run_retry(policy=policy, classify=classify_gitlab, responses=[limited])
+        assert isinstance(outcome, SCMRateLimitError)
+        assert sleeps == [5.0]  # one sleep landed; the next would exceed the deadline
+
+    elif case == "non_retryable_exceptions_propagate":
+        # SCMAuthError and SCMNotFoundError propagate with zero retries; a
+        # transient error, by contrast, is retried and re-raised after the budget.
+        policy = RetryPolicy(max_attempts=4, jitter=JitterMode.NONE)
+        for exc_type in (SCMAuthError, SCMNotFoundError):
+            outcome, sleeps = _run_retry(
+                policy=policy, classify=classify_github, responses=[exc_type("nope")]
+            )
+            assert isinstance(outcome, exc_type)
+            assert sleeps == []  # never slept; never retried
+        # Transient is retryable and re-raised (NOT mapped to SCMRateLimitError).
+        outcome, sleeps = _run_retry(
+            policy=policy,
+            classify=classify_github,
+            responses=[SCMTransientError("5xx")],
+        )
+        assert isinstance(outcome, SCMTransientError)
+        assert len(sleeps) == policy.max_attempts - 1
+
+    else:  # pragma: no cover — guards against an unhandled case name
+        raise AssertionError(f"unhandled SCM-05a case: {case}")
+
+
+# ---------------------------------------------------------------------------
+# TST-AC-SCM-05a supplementary unit coverage — RetryPolicy value type, the
+# per-provider default policies, classify_* non-rate-limited paths, the
+# honor_retry_after=False branch, and the on_attempt observability hook. These
+# close the branch-coverage of integrations/scm/_http.py beyond the ten §9
+# enumerated cases (still AC-SCM-05a; not new scope).
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_scm_05a_retrypolicy_defaults_and_immutability() -> None:
+    """RetryPolicy carries the DOC §3.1 defaults and is a frozen value type."""
+    import dataclasses
+
+    from integrations.scm._http import JitterMode, RetryPolicy
+
+    p = RetryPolicy()
+    assert p.initial_backoff_s == 1.0
+    assert p.max_backoff_s == 60.0
+    assert p.backoff_factor == 2.0
+    assert p.jitter is JitterMode.FULL
+    assert p.max_attempts == 6
+    assert p.honor_429 and p.honor_secondary and p.honor_retry_after
+    assert p.total_deadline_s is None
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        p.max_attempts = 9  # type: ignore[misc]
+
+
+@pytest.mark.unit
+def test_scm_05a_provider_default_policies() -> None:
+    """Per-provider defaults (DOC §3.2): GitLab/ADO drop the secondary class."""
+    from integrations.scm._http import (
+        AZURE_DEVOPS_DEFAULT,
+        BITBUCKET_DEFAULT,
+        GITHUB_DEFAULT,
+        GITLAB_DEFAULT,
+    )
+
+    assert GITHUB_DEFAULT.honor_secondary is True
+    assert BITBUCKET_DEFAULT.honor_secondary is True
+    assert GITLAB_DEFAULT.honor_secondary is False
+    assert AZURE_DEVOPS_DEFAULT.honor_secondary is False
+    for pol in (GITHUB_DEFAULT, GITLAB_DEFAULT, BITBUCKET_DEFAULT, AZURE_DEVOPS_DEFAULT):
+        assert pol.max_attempts == 6
+        assert pol.honor_429 is True
+        assert pol.total_deadline_s is None
+
+
+@pytest.mark.unit
+def test_scm_05a_honor_secondary_false_passes_through() -> None:
+    """honor_secondary=False: a secondary-classed response is returned, not retried (DOC §3.1)."""
+    from integrations.scm._http import RetryPolicy, classify_github
+
+    policy = RetryPolicy(max_attempts=4, honor_secondary=False)
+    secondary = _FakeResponse(
+        status_code=403,
+        headers={"Retry-After": "5"},
+        text="You have exceeded a secondary rate limit. Please wait.",
+    )
+    assert classify_github(secondary).is_secondary is True
+    outcome, sleeps = _run_retry(policy=policy, classify=classify_github, responses=[secondary])
+    assert outcome is secondary  # passed through, not retried
+    assert sleeps == []
+
+
+@pytest.mark.unit
+def test_scm_05a_honor_429_false_passes_through() -> None:
+    """honor_429=False: a primary 429 is returned, not retried (DOC §3.1)."""
+    from integrations.scm._http import RetryPolicy, classify_gitlab
+
+    policy = RetryPolicy(max_attempts=4, honor_429=False)
+    limited = _FakeResponse(status_code=429, headers={"Retry-After": "3"})
+    v = classify_gitlab(limited)
+    assert v.is_rate_limited is True and v.is_secondary is False
+    outcome, sleeps = _run_retry(policy=policy, classify=classify_gitlab, responses=[limited])
+    assert outcome is limited  # passed through, not retried
+    assert sleeps == []
+
+
+@pytest.mark.unit
+def test_scm_05a_classify_not_rate_limited_on_2xx() -> None:
+    """Every classify_* returns is_rate_limited=False on a clean 200."""
+    from integrations.scm._http import (
+        classify_azure_devops,
+        classify_bitbucket,
+        classify_github,
+        classify_gitlab,
+    )
+
+    ok = _FakeResponse(status_code=200, headers={"X-RateLimit-Remaining": "4999"})
+    for fn in (classify_github, classify_gitlab, classify_bitbucket, classify_azure_devops):
+        v = fn(ok)
+        assert v.is_rate_limited is False
+        assert v.retry_after_s is None
+        assert v.is_secondary is False
+
+
+@pytest.mark.unit
+def test_scm_05a_classify_github_403_without_remaining_zero_is_not_limited() -> None:
+    """A bare 403 (no Remaining:0, no secondary marker) is not a rate limit."""
+    from integrations.scm._http import classify_github
+
+    resp = _FakeResponse(status_code=403, text="forbidden")
+    assert classify_github(resp).is_rate_limited is False
+
+
+@pytest.mark.unit
+def test_scm_05a_honor_retry_after_false_falls_back_to_curve() -> None:
+    """With honor_retry_after=False the curve is used even when Retry-After set."""
+    from integrations.scm._http import JitterMode, RetryPolicy, classify_gitlab
+    from integrations.scm.base import SCMRateLimitError
+
+    policy = RetryPolicy(
+        initial_backoff_s=1.0,
+        backoff_factor=2.0,
+        jitter=JitterMode.NONE,
+        max_attempts=3,
+        honor_retry_after=False,
+    )
+    limited = _FakeResponse(status_code=429, headers={"Retry-After": "99"})
+    outcome, sleeps = _run_retry(policy=policy, classify=classify_gitlab, responses=[limited])
+    assert isinstance(outcome, SCMRateLimitError)
+    assert sleeps == [1.0, 2.0]  # curve, NOT the 99s Retry-After
+
+
+@pytest.mark.unit
+def test_scm_05a_equal_jitter_bounds() -> None:
+    """JitterMode.EQUAL yields sleeps in [base/2, base]."""
+    from integrations.scm._http import JitterMode, RetryPolicy, classify_gitlab
+
+    policy = RetryPolicy(
+        initial_backoff_s=4.0,
+        backoff_factor=1.0,  # base stays 4.0 each attempt
+        jitter=JitterMode.EQUAL,
+        max_attempts=4,
+    )
+    limited = _FakeResponse(status_code=429)
+    _, sleeps = _run_retry(
+        policy=policy,
+        classify=classify_gitlab,
+        responses=[limited],
+        jitter_seed=42,  # fixed seed, consistent with the rest of the suite
+    )
+    for slept in sleeps:
+        assert 2.0 <= slept <= 4.0  # base/2 .. base
+
+
+@pytest.mark.unit
+def test_scm_05a_retry_after_unparseable_falls_back_to_curve() -> None:
+    """A malformed Retry-After is ignored; the curve drives the backoff."""
+    from integrations.scm._http import JitterMode, RetryPolicy, classify_gitlab
+    from integrations.scm.base import SCMRateLimitError
+
+    policy = RetryPolicy(
+        initial_backoff_s=1.0, backoff_factor=2.0, jitter=JitterMode.NONE, max_attempts=2
+    )
+    limited = _FakeResponse(status_code=429, headers={"Retry-After": "not-a-date"})
+    outcome, sleeps = _run_retry(policy=policy, classify=classify_gitlab, responses=[limited])
+    assert isinstance(outcome, SCMRateLimitError)
+    assert sleeps == [1.0]  # unparseable header → curve
+
+
+@pytest.mark.unit
+def test_scm_05a_header_lookup_is_case_insensitive_on_plain_dict() -> None:
+    """A lowercase-keyed plain dict still resolves Retry-After (case-fold scan)."""
+    from integrations.scm._http import classify_gitlab
+
+    resp = _FakeResponse(status_code=429, headers={"retry-after": "6"})
+    v = classify_gitlab(resp)
+    assert v.is_rate_limited and v.retry_after_s == 6.0
+
+
+@pytest.mark.unit
+def test_scm_05a_retry_after_naive_http_date_assumed_utc() -> None:
+    """An HTTP-date without an explicit zone is treated as UTC, not rejected."""
+    from datetime import UTC, datetime, timedelta
+
+    from integrations.scm._http import classify_gitlab
+
+    future = datetime.now(UTC) + timedelta(seconds=20)
+    naive_date = future.strftime("%a, %d %b %Y %H:%M:%S")  # no GMT/zone suffix
+    resp = _FakeResponse(status_code=429, headers={"Retry-After": naive_date})
+    v = classify_gitlab(resp)
+    assert v.is_rate_limited
+    assert v.retry_after_s is not None and 10.0 <= v.retry_after_s <= 21.0
+
+
+@pytest.mark.unit
+def test_scm_05a_github_malformed_reset_yields_no_wait() -> None:
+    """A non-numeric X-RateLimit-Reset is ignored (retry_after_s is None)."""
+    from integrations.scm._http import classify_github
+
+    resp = _FakeResponse(
+        status_code=403,
+        headers={"X-RateLimit-Remaining": "0", "X-RateLimit-Reset": "soon"},
+    )
+    v = classify_github(resp)
+    assert v.is_rate_limited and v.is_secondary is False
+    assert v.retry_after_s is None
+
+
+@pytest.mark.unit
+def test_scm_05a_empty_retry_after_is_none() -> None:
+    """An empty/whitespace Retry-After parses to None (no provider wait)."""
+    from integrations.scm._http import classify_gitlab
+
+    resp = _FakeResponse(status_code=429, headers={"Retry-After": "   "})
+    v = classify_gitlab(resp)
+    assert v.is_rate_limited and v.retry_after_s is None
+
+
+@pytest.mark.unit
+def test_scm_05a_success_first_try_no_sleep() -> None:
+    """A clean first response returns immediately with no retries or sleeps."""
+    from integrations.scm._http import RetryPolicy, classify_github
+
+    ok = _FakeResponse(status_code=200)
+    outcome, sleeps = _run_retry(
+        policy=RetryPolicy(max_attempts=5), classify=classify_github, responses=[ok]
+    )
+    assert isinstance(outcome, _FakeResponse) and outcome.status_code == 200
+    assert sleeps == []
 
 
 # ---------------------------------------------------------------------------

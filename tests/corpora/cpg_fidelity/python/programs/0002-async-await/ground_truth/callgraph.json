@@ -1,0 +1,18 @@
+{
+  "pipeline.py": {
+    "edges": [
+      {
+        "caller": "run",
+        "callee": "gen",
+        "line": 24,
+        "kind": "static"
+      },
+      {
+        "caller": "run",
+        "callee": "fetch",
+        "line": 25,
+        "kind": "static"
+      }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "schema": "cpg-fidelity/callgraph/v1",
+  "program_id": "0001-interface-dispatch",
+  "notes": "Edges resolved by class-hierarchy analysis (CHA). Interface call sites a.area()/b.area() resolve to every concrete implementor of Shape (Circle.area, Square.area). over_approximate=false: in this closed program both implementors are the only candidates, so CHA is exact.",
+  "edges": [
+    {"caller_method": "corpus.cpg.p0001.Shapes.total(Shape,Shape)", "callee_method": "corpus.cpg.p0001.Shapes$Circle.area()", "line": 37, "kind": "virtual", "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0001.Shapes.total(Shape,Shape)", "callee_method": "corpus.cpg.p0001.Shapes$Square.area()", "line": 37, "kind": "virtual", "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0001.Shapes.main(String[])", "callee_method": "corpus.cpg.p0001.Shapes$Circle.<init>(double)", "line": 41, "kind": "special", "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0001.Shapes.main(String[])", "callee_method": "corpus.cpg.p0001.Shapes$Square.<init>(double)", "line": 42, "kind": "special", "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0001.Shapes.main(String[])", "callee_method": "corpus.cpg.p0001.Shapes.total(Shape,Shape)", "line": 43, "kind": "static", "over_approximate": false}
+  ]
+}

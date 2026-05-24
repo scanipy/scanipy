@@ -1,0 +1,10 @@
+commit_sha: sha256:0f185069539cad430d3e710b7ea523b2bbb7064ac4c38486d211dde5d0784abe
+construct_coverage:
+  - dynamic-dispatch
+  - metaclasses
+license: Apache-2.0
+path_in_source: source/
+python_minor: '3.10'
+sha256_source_tree: sha256:0f185069539cad430d3e710b7ea523b2bbb7064ac4c38486d211dde5d0784abe
+source_url: local:programs/0006-metaclasses/source
+synthetic: true

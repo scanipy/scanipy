@@ -1,0 +1,10 @@
+commit_sha: sha256:b4af529cf6a1deb45d0ac9756dd4a08c0b72227b2627f7306c9fffc19b6fab80
+construct_coverage:
+  - decorators
+  - type-hints
+license: Apache-2.0
+path_in_source: source/
+python_minor: '3.10'
+sha256_source_tree: sha256:b4af529cf6a1deb45d0ac9756dd4a08c0b72227b2627f7306c9fffc19b6fab80
+source_url: local:programs/0001-decorators-svc/source
+synthetic: true

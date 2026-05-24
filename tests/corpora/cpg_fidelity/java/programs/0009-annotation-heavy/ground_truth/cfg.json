@@ -1,0 +1,12 @@
+{
+  "schema": "cpg-fidelity/cfg/v1",
+  "program_id": "0009-annotation-heavy",
+  "method": "Per-method intraprocedural CFG by-inspection. Annotation-type element methods have no body (no CFG).",
+  "methods": [
+    {"method": "corpus.cpg.p0009.Annotated$Service.compute(String)", "nodes": ["return key.length()"], "edges": []},
+    {"method": "corpus.cpg.p0009.Annotated.main(String[])", "nodes": [
+      "Service s = new Service()",
+      "System.out.println(s.compute(\"hello\"))"
+    ], "edges": [[0, 1]]}
+  ]
+}

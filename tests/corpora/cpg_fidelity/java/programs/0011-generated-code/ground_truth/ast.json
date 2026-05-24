@@ -1,0 +1,23 @@
+{
+  "schema": "cpg-fidelity/ast/v1",
+  "program_id": "0011-generated-code",
+  "method": "javac -Xprint traversal; parse_success verified by javac (JDK 21, -source 17).",
+  "files": [
+    {
+      "file": "UserDto.java",
+      "parse_success": true,
+      "type_decls": [
+        {"name": "UserDto", "kind": "CLASS", "annotations": ["@Generated(\"com.example.codegen.DtoGenerator\")"]}
+      ],
+      "methods": [
+        {"name": "UserDto.<init>(String,int)"},
+        {"name": "UserDto.getName()"},
+        {"name": "UserDto.getAge()"},
+        {"name": "UserDto.equals(Object)"},
+        {"name": "UserDto.hashCode()"},
+        {"name": "UserDto.main(String[])"}
+      ],
+      "generated_annotation": true
+    }
+  ]
+}

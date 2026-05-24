@@ -1,0 +1,675 @@
+{
+  "dispatch.py": {
+    "_type": "Module",
+    "body": [
+      {
+        "_type": "Expr",
+        "value": {
+          "_type": "Constant",
+          "value": "Dynamic-dispatch coverage: getattr / dict-of-functions / runtime targets.\n\nConstruct under test: call sites whose target is not statically fixed (DOC \u00a74.3\n`dynamic-dispatch`). Every call site here is tagged `dynamic` by the extractor and\nEXCLUDED from precision/recall; `CMP-SNAP-03 CW-DETECT` is their owner. `op` IS a\nstatic edge (direct local call) to anchor the static partition.\n",
+          "kind": null,
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 7,
+          "end_col_offset": 3
+        },
+        "lineno": 1,
+        "col_offset": 0,
+        "end_lineno": 7,
+        "end_col_offset": 3
+      },
+      {
+        "_type": "FunctionDef",
+        "name": "add",
+        "args": {
+          "_type": "arguments",
+          "posonlyargs": [],
+          "args": [
+            {
+              "_type": "arg",
+              "arg": "a",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 10,
+              "col_offset": 8,
+              "end_lineno": 10,
+              "end_col_offset": 9
+            },
+            {
+              "_type": "arg",
+              "arg": "b",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 10,
+              "col_offset": 11,
+              "end_lineno": 10,
+              "end_col_offset": 12
+            }
+          ],
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": null,
+          "defaults": []
+        },
+        "body": [
+          {
+            "_type": "Return",
+            "value": {
+              "_type": "BinOp",
+              "left": {
+                "_type": "Name",
+                "id": "a",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 11,
+                "col_offset": 11,
+                "end_lineno": 11,
+                "end_col_offset": 12
+              },
+              "op": {
+                "_type": "Add"
+              },
+              "right": {
+                "_type": "Name",
+                "id": "b",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 11,
+                "col_offset": 15,
+                "end_lineno": 11,
+                "end_col_offset": 16
+              },
+              "lineno": 11,
+              "col_offset": 11,
+              "end_lineno": 11,
+              "end_col_offset": 16
+            },
+            "lineno": 11,
+            "col_offset": 4,
+            "end_lineno": 11,
+            "end_col_offset": 16
+          }
+        ],
+        "decorator_list": [],
+        "returns": null,
+        "type_comment": null,
+        "type_params": [],
+        "lineno": 10,
+        "col_offset": 0,
+        "end_lineno": 11,
+        "end_col_offset": 16
+      },
+      {
+        "_type": "FunctionDef",
+        "name": "sub",
+        "args": {
+          "_type": "arguments",
+          "posonlyargs": [],
+          "args": [
+            {
+              "_type": "arg",
+              "arg": "a",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 14,
+              "col_offset": 8,
+              "end_lineno": 14,
+              "end_col_offset": 9
+            },
+            {
+              "_type": "arg",
+              "arg": "b",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 14,
+              "col_offset": 11,
+              "end_lineno": 14,
+              "end_col_offset": 12
+            }
+          ],
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": null,
+          "defaults": []
+        },
+        "body": [
+          {
+            "_type": "Return",
+            "value": {
+              "_type": "BinOp",
+              "left": {
+                "_type": "Name",
+                "id": "a",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 15,
+                "col_offset": 11,
+                "end_lineno": 15,
+                "end_col_offset": 12
+              },
+              "op": {
+                "_type": "Sub"
+              },
+              "right": {
+                "_type": "Name",
+                "id": "b",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 15,
+                "col_offset": 15,
+                "end_lineno": 15,
+                "end_col_offset": 16
+              },
+              "lineno": 15,
+              "col_offset": 11,
+              "end_lineno": 15,
+              "end_col_offset": 16
+            },
+            "lineno": 15,
+            "col_offset": 4,
+            "end_lineno": 15,
+            "end_col_offset": 16
+          }
+        ],
+        "decorator_list": [],
+        "returns": null,
+        "type_comment": null,
+        "type_params": [],
+        "lineno": 14,
+        "col_offset": 0,
+        "end_lineno": 15,
+        "end_col_offset": 16
+      },
+      {
+        "_type": "FunctionDef",
+        "name": "op",
+        "args": {
+          "_type": "arguments",
+          "posonlyargs": [],
+          "args": [
+            {
+              "_type": "arg",
+              "arg": "a",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 18,
+              "col_offset": 7,
+              "end_lineno": 18,
+              "end_col_offset": 8
+            },
+            {
+              "_type": "arg",
+              "arg": "b",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 18,
+              "col_offset": 10,
+              "end_lineno": 18,
+              "end_col_offset": 11
+            }
+          ],
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": null,
+          "defaults": []
+        },
+        "body": [
+          {
+            "_type": "Return",
+            "value": {
+              "_type": "Call",
+              "func": {
+                "_type": "Name",
+                "id": "add",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 19,
+                "col_offset": 11,
+                "end_lineno": 19,
+                "end_col_offset": 14
+              },
+              "args": [
+                {
+                  "_type": "Name",
+                  "id": "a",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 19,
+                  "col_offset": 15,
+                  "end_lineno": 19,
+                  "end_col_offset": 16
+                },
+                {
+                  "_type": "Name",
+                  "id": "b",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 19,
+                  "col_offset": 18,
+                  "end_lineno": 19,
+                  "end_col_offset": 19
+                }
+              ],
+              "keywords": [],
+              "lineno": 19,
+              "col_offset": 11,
+              "end_lineno": 19,
+              "end_col_offset": 20
+            },
+            "lineno": 19,
+            "col_offset": 4,
+            "end_lineno": 19,
+            "end_col_offset": 20
+          }
+        ],
+        "decorator_list": [],
+        "returns": null,
+        "type_comment": null,
+        "type_params": [],
+        "lineno": 18,
+        "col_offset": 0,
+        "end_lineno": 19,
+        "end_col_offset": 20
+      },
+      {
+        "_type": "Assign",
+        "targets": [
+          {
+            "_type": "Name",
+            "id": "TABLE",
+            "ctx": {
+              "_type": "Store"
+            },
+            "lineno": 22,
+            "col_offset": 0,
+            "end_lineno": 22,
+            "end_col_offset": 5
+          }
+        ],
+        "value": {
+          "_type": "Dict",
+          "keys": [
+            {
+              "_type": "Constant",
+              "value": "add",
+              "kind": null,
+              "lineno": 22,
+              "col_offset": 9,
+              "end_lineno": 22,
+              "end_col_offset": 14
+            },
+            {
+              "_type": "Constant",
+              "value": "sub",
+              "kind": null,
+              "lineno": 22,
+              "col_offset": 21,
+              "end_lineno": 22,
+              "end_col_offset": 26
+            }
+          ],
+          "values": [
+            {
+              "_type": "Name",
+              "id": "add",
+              "ctx": {
+                "_type": "Load"
+              },
+              "lineno": 22,
+              "col_offset": 16,
+              "end_lineno": 22,
+              "end_col_offset": 19
+            },
+            {
+              "_type": "Name",
+              "id": "sub",
+              "ctx": {
+                "_type": "Load"
+              },
+              "lineno": 22,
+              "col_offset": 28,
+              "end_lineno": 22,
+              "end_col_offset": 31
+            }
+          ],
+          "lineno": 22,
+          "col_offset": 8,
+          "end_lineno": 22,
+          "end_col_offset": 32
+        },
+        "type_comment": null,
+        "lineno": 22,
+        "col_offset": 0,
+        "end_lineno": 22,
+        "end_col_offset": 32
+      },
+      {
+        "_type": "FunctionDef",
+        "name": "dispatch_by_name",
+        "args": {
+          "_type": "arguments",
+          "posonlyargs": [],
+          "args": [
+            {
+              "_type": "arg",
+              "arg": "name",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 25,
+              "col_offset": 21,
+              "end_lineno": 25,
+              "end_col_offset": 25
+            },
+            {
+              "_type": "arg",
+              "arg": "a",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 25,
+              "col_offset": 27,
+              "end_lineno": 25,
+              "end_col_offset": 28
+            },
+            {
+              "_type": "arg",
+              "arg": "b",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 25,
+              "col_offset": 30,
+              "end_lineno": 25,
+              "end_col_offset": 31
+            }
+          ],
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": null,
+          "defaults": []
+        },
+        "body": [
+          {
+            "_type": "Assign",
+            "targets": [
+              {
+                "_type": "Name",
+                "id": "fn",
+                "ctx": {
+                  "_type": "Store"
+                },
+                "lineno": 26,
+                "col_offset": 4,
+                "end_lineno": 26,
+                "end_col_offset": 6
+              }
+            ],
+            "value": {
+              "_type": "Subscript",
+              "value": {
+                "_type": "Name",
+                "id": "TABLE",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 26,
+                "col_offset": 9,
+                "end_lineno": 26,
+                "end_col_offset": 14
+              },
+              "slice": {
+                "_type": "Name",
+                "id": "name",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 26,
+                "col_offset": 15,
+                "end_lineno": 26,
+                "end_col_offset": 19
+              },
+              "ctx": {
+                "_type": "Load"
+              },
+              "lineno": 26,
+              "col_offset": 9,
+              "end_lineno": 26,
+              "end_col_offset": 20
+            },
+            "type_comment": null,
+            "lineno": 26,
+            "col_offset": 4,
+            "end_lineno": 26,
+            "end_col_offset": 20
+          },
+          {
+            "_type": "Return",
+            "value": {
+              "_type": "Call",
+              "func": {
+                "_type": "Name",
+                "id": "fn",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 27,
+                "col_offset": 11,
+                "end_lineno": 27,
+                "end_col_offset": 13
+              },
+              "args": [
+                {
+                  "_type": "Name",
+                  "id": "a",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 27,
+                  "col_offset": 14,
+                  "end_lineno": 27,
+                  "end_col_offset": 15
+                },
+                {
+                  "_type": "Name",
+                  "id": "b",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 27,
+                  "col_offset": 17,
+                  "end_lineno": 27,
+                  "end_col_offset": 18
+                }
+              ],
+              "keywords": [],
+              "lineno": 27,
+              "col_offset": 11,
+              "end_lineno": 27,
+              "end_col_offset": 19
+            },
+            "lineno": 27,
+            "col_offset": 4,
+            "end_lineno": 27,
+            "end_col_offset": 19
+          }
+        ],
+        "decorator_list": [],
+        "returns": null,
+        "type_comment": null,
+        "type_params": [],
+        "lineno": 25,
+        "col_offset": 0,
+        "end_lineno": 27,
+        "end_col_offset": 19
+      },
+      {
+        "_type": "FunctionDef",
+        "name": "dispatch_getattr",
+        "args": {
+          "_type": "arguments",
+          "posonlyargs": [],
+          "args": [
+            {
+              "_type": "arg",
+              "arg": "module_like",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 30,
+              "col_offset": 21,
+              "end_lineno": 30,
+              "end_col_offset": 32
+            },
+            {
+              "_type": "arg",
+              "arg": "name",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 30,
+              "col_offset": 34,
+              "end_lineno": 30,
+              "end_col_offset": 38
+            },
+            {
+              "_type": "arg",
+              "arg": "value",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 30,
+              "col_offset": 40,
+              "end_lineno": 30,
+              "end_col_offset": 45
+            }
+          ],
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": null,
+          "defaults": []
+        },
+        "body": [
+          {
+            "_type": "Assign",
+            "targets": [
+              {
+                "_type": "Name",
+                "id": "handler",
+                "ctx": {
+                  "_type": "Store"
+                },
+                "lineno": 31,
+                "col_offset": 4,
+                "end_lineno": 31,
+                "end_col_offset": 11
+              }
+            ],
+            "value": {
+              "_type": "Call",
+              "func": {
+                "_type": "Name",
+                "id": "getattr",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 31,
+                "col_offset": 14,
+                "end_lineno": 31,
+                "end_col_offset": 21
+              },
+              "args": [
+                {
+                  "_type": "Name",
+                  "id": "module_like",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 31,
+                  "col_offset": 22,
+                  "end_lineno": 31,
+                  "end_col_offset": 33
+                },
+                {
+                  "_type": "Name",
+                  "id": "name",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 31,
+                  "col_offset": 35,
+                  "end_lineno": 31,
+                  "end_col_offset": 39
+                }
+              ],
+              "keywords": [],
+              "lineno": 31,
+              "col_offset": 14,
+              "end_lineno": 31,
+              "end_col_offset": 40
+            },
+            "type_comment": null,
+            "lineno": 31,
+            "col_offset": 4,
+            "end_lineno": 31,
+            "end_col_offset": 40
+          },
+          {
+            "_type": "Return",
+            "value": {
+              "_type": "Call",
+              "func": {
+                "_type": "Name",
+                "id": "handler",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 32,
+                "col_offset": 11,
+                "end_lineno": 32,
+                "end_col_offset": 18
+              },
+              "args": [
+                {
+                  "_type": "Name",
+                  "id": "value",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 32,
+                  "col_offset": 19,
+                  "end_lineno": 32,
+                  "end_col_offset": 24
+                }
+              ],
+              "keywords": [],
+              "lineno": 32,
+              "col_offset": 11,
+              "end_lineno": 32,
+              "end_col_offset": 25
+            },
+            "lineno": 32,
+            "col_offset": 4,
+            "end_lineno": 32,
+            "end_col_offset": 25
+          }
+        ],
+        "decorator_list": [],
+        "returns": null,
+        "type_comment": null,
+        "type_params": [],
+        "lineno": 30,
+        "col_offset": 0,
+        "end_lineno": 32,
+        "end_col_offset": 25
+      }
+    ],
+    "type_ignores": []
+  }
+}

@@ -1,0 +1,16 @@
+extracted_at: '2026-05-24T17:54:10Z'
+extracted_by: pipeline
+known_limitations: "v0.1.0 deviates from the DOC \xA73.4 pinned toolchain (scalpel\
+  \ 1.0.4 / Pyan3 1.2.0 / Pyre 0.0.301 on cpython 3.10): the AST step runs on the\
+  \ host interpreter and CFG/callgraph/PDG come from the in-repo pipeline/extract_ground_truth.py.\
+  \ Call-graph ground truth is the statically name-resolvable subset; sites the extractor\
+  \ cannot resolve statically are tagged `dynamic` and EXCLUDED from the gate's precision/recall\
+  \ (DOC \xA73.4 step 3). Tracked by CLAR-CORP-11 (WBS \xA717)."
+review_status: pipeline
+tool_versions:
+  extractor: scanipy-cpg-python-extractor/0.1.0 (in-repo; pipeline/extract_ground_truth.py)
+  python: 3.12.3
+  target_pyan3: 1.2.0
+  target_pyre: 0.0.301
+  target_python: 3.10.13
+  target_scalpel: 1.0.4
