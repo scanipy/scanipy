@@ -1,0 +1,15 @@
+{
+  "schema": "cpg-fidelity/callgraph/v1",
+  "program_id": "0006-inner-class",
+  "notes": "Enclosing-method edges: anon() constructs an anonymous Greeter (javac names it Outer$1). o.anon().greet() dispatches to Outer$1.greet. Inner is a non-static inner class instantiated via o.new Inner(). All edges are statically resolvable in this closed program.",
+  "edges": [
+    {"caller_method": "corpus.cpg.p0006.Outer.main(String[])", "callee_method": "corpus.cpg.p0006.Outer.<init>()", "line": 34, "kind": "special", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0006.Outer.main(String[])", "callee_method": "corpus.cpg.p0006.Outer$Inner.<init>(Outer)", "line": 35, "kind": "special", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0006.Outer.main(String[])", "callee_method": "corpus.cpg.p0006.Outer$StaticNested.<init>()", "line": 36, "kind": "special", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0006.Outer.main(String[])", "callee_method": "corpus.cpg.p0006.Outer$Inner.boosted()", "line": 37, "kind": "virtual", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0006.Outer.main(String[])", "callee_method": "corpus.cpg.p0006.Outer$StaticNested.constant()", "line": 37, "kind": "virtual", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0006.Outer.main(String[])", "callee_method": "corpus.cpg.p0006.Outer.anon()", "line": 37, "kind": "virtual", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0006.Outer.main(String[])", "callee_method": "corpus.cpg.p0006.Outer$1.greet()", "line": 37, "kind": "virtual", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0006.Outer.anon()", "callee_method": "corpus.cpg.p0006.Outer$1.<init>(Outer)", "line": 25, "kind": "special", "library": false, "over_approximate": false}
+  ]
+}

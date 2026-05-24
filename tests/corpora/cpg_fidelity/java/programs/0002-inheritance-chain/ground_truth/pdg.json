@@ -1,0 +1,13 @@
+{
+  "schema": "cpg-fidelity/pdg/v1",
+  "program_id": "0002-inheritance-chain",
+  "method": "Intraprocedural PDG dependence edges by-inspection.",
+  "methods": [
+    {"method": "corpus.cpg.p0002.Animals.greet(Animal)", "dependences": [
+      {"from": "param a", "to": "return a.describe()", "type": "data", "var": "a"}
+    ]},
+    {"method": "corpus.cpg.p0002.Animals.main(String[])", "dependences": [
+      {"from": "Animal a = new Puppy()", "to": "System.out.println(greet(a))", "type": "data", "var": "a"}
+    ]}
+  ]
+}

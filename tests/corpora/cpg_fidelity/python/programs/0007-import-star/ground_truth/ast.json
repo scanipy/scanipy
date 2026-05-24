@@ -1,0 +1,284 @@
+{
+  "app.py": {
+    "_type": "Module",
+    "body": [
+      {
+        "_type": "Expr",
+        "value": {
+          "_type": "Constant",
+          "value": "Import-star coverage: `from x import *` name-resolution edge cases.\n\nConstruct under test: wildcard import (DOC \u00a74.3 `import-star`). Names brought in by\n`from helpers import *` are not lexically visible to a single-file analyzer, so the\n`helper(...)` call here is tagged `dynamic` (cross-module, unresolved by this\nextractor's intra-file static resolution) and excluded from precision/recall.\n",
+          "kind": null,
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 7,
+          "end_col_offset": 3
+        },
+        "lineno": 1,
+        "col_offset": 0,
+        "end_lineno": 7,
+        "end_col_offset": 3
+      },
+      {
+        "_type": "ImportFrom",
+        "module": "helpers",
+        "names": [
+          {
+            "_type": "alias",
+            "name": "*",
+            "asname": null,
+            "lineno": 9,
+            "col_offset": 20,
+            "end_lineno": 9,
+            "end_col_offset": 21
+          }
+        ],
+        "level": 0,
+        "lineno": 9,
+        "col_offset": 0,
+        "end_lineno": 9,
+        "end_col_offset": 21
+      },
+      {
+        "_type": "FunctionDef",
+        "name": "use",
+        "args": {
+          "_type": "arguments",
+          "posonlyargs": [],
+          "args": [
+            {
+              "_type": "arg",
+              "arg": "value",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 12,
+              "col_offset": 8,
+              "end_lineno": 12,
+              "end_col_offset": 13
+            }
+          ],
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": null,
+          "defaults": []
+        },
+        "body": [
+          {
+            "_type": "Return",
+            "value": {
+              "_type": "Call",
+              "func": {
+                "_type": "Name",
+                "id": "helper",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 13,
+                "col_offset": 11,
+                "end_lineno": 13,
+                "end_col_offset": 17
+              },
+              "args": [
+                {
+                  "_type": "Name",
+                  "id": "value",
+                  "ctx": {
+                    "_type": "Load"
+                  },
+                  "lineno": 13,
+                  "col_offset": 18,
+                  "end_lineno": 13,
+                  "end_col_offset": 23
+                }
+              ],
+              "keywords": [],
+              "lineno": 13,
+              "col_offset": 11,
+              "end_lineno": 13,
+              "end_col_offset": 24
+            },
+            "lineno": 13,
+            "col_offset": 4,
+            "end_lineno": 13,
+            "end_col_offset": 24
+          }
+        ],
+        "decorator_list": [],
+        "returns": null,
+        "type_comment": null,
+        "type_params": [],
+        "lineno": 12,
+        "col_offset": 0,
+        "end_lineno": 13,
+        "end_col_offset": 24
+      }
+    ],
+    "type_ignores": []
+  },
+  "helpers.py": {
+    "_type": "Module",
+    "body": [
+      {
+        "_type": "Expr",
+        "value": {
+          "_type": "Constant",
+          "value": "Helper module for the import-star coverage program.",
+          "kind": null,
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 1,
+          "end_col_offset": 57
+        },
+        "lineno": 1,
+        "col_offset": 0,
+        "end_lineno": 1,
+        "end_col_offset": 57
+      },
+      {
+        "_type": "FunctionDef",
+        "name": "helper",
+        "args": {
+          "_type": "arguments",
+          "posonlyargs": [],
+          "args": [
+            {
+              "_type": "arg",
+              "arg": "x",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 4,
+              "col_offset": 11,
+              "end_lineno": 4,
+              "end_col_offset": 12
+            }
+          ],
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": null,
+          "defaults": []
+        },
+        "body": [
+          {
+            "_type": "Return",
+            "value": {
+              "_type": "BinOp",
+              "left": {
+                "_type": "Name",
+                "id": "x",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 5,
+                "col_offset": 11,
+                "end_lineno": 5,
+                "end_col_offset": 12
+              },
+              "op": {
+                "_type": "Add"
+              },
+              "right": {
+                "_type": "Constant",
+                "value": 1,
+                "kind": null,
+                "lineno": 5,
+                "col_offset": 15,
+                "end_lineno": 5,
+                "end_col_offset": 16
+              },
+              "lineno": 5,
+              "col_offset": 11,
+              "end_lineno": 5,
+              "end_col_offset": 16
+            },
+            "lineno": 5,
+            "col_offset": 4,
+            "end_lineno": 5,
+            "end_col_offset": 16
+          }
+        ],
+        "decorator_list": [],
+        "returns": null,
+        "type_comment": null,
+        "type_params": [],
+        "lineno": 4,
+        "col_offset": 0,
+        "end_lineno": 5,
+        "end_col_offset": 16
+      },
+      {
+        "_type": "FunctionDef",
+        "name": "other",
+        "args": {
+          "_type": "arguments",
+          "posonlyargs": [],
+          "args": [
+            {
+              "_type": "arg",
+              "arg": "x",
+              "annotation": null,
+              "type_comment": null,
+              "lineno": 8,
+              "col_offset": 10,
+              "end_lineno": 8,
+              "end_col_offset": 11
+            }
+          ],
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": null,
+          "defaults": []
+        },
+        "body": [
+          {
+            "_type": "Return",
+            "value": {
+              "_type": "BinOp",
+              "left": {
+                "_type": "Name",
+                "id": "x",
+                "ctx": {
+                  "_type": "Load"
+                },
+                "lineno": 9,
+                "col_offset": 11,
+                "end_lineno": 9,
+                "end_col_offset": 12
+              },
+              "op": {
+                "_type": "Sub"
+              },
+              "right": {
+                "_type": "Constant",
+                "value": 1,
+                "kind": null,
+                "lineno": 9,
+                "col_offset": 15,
+                "end_lineno": 9,
+                "end_col_offset": 16
+              },
+              "lineno": 9,
+              "col_offset": 11,
+              "end_lineno": 9,
+              "end_col_offset": 16
+            },
+            "lineno": 9,
+            "col_offset": 4,
+            "end_lineno": 9,
+            "end_col_offset": 16
+          }
+        ],
+        "decorator_list": [],
+        "returns": null,
+        "type_comment": null,
+        "type_params": [],
+        "lineno": 8,
+        "col_offset": 0,
+        "end_lineno": 9,
+        "end_col_offset": 16
+      }
+    ],
+    "type_ignores": []
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "schema": "cpg-fidelity/callgraph/v1",
+  "program_id": "0003-generics-box",
+  "notes": "Type erasure: Box<T> erases to Box; max's bound T extends Comparable<T> resolves compareTo to Comparable.compareTo. Calls into the JDK (List.get, List.add, Comparable.compareTo, ArrayList.<init>) are tagged library=true; the gate harness scopes precision/recall to in-corpus (library=false) edges so JDK modelling differences do not penalise the front-end.",
+  "edges": [
+    {"caller_method": "corpus.cpg.p0003.Boxes.max(List)", "callee_method": "java.util.List.get(int)", "line": 22, "kind": "interface", "library": true, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0003.Boxes.max(List)", "callee_method": "java.lang.Comparable.compareTo(Object)", "line": 24, "kind": "interface", "library": true, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0003.Boxes.main(String[])", "callee_method": "corpus.cpg.p0003.Boxes$Box.<init>(Object)", "line": 33, "kind": "special", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0003.Boxes.main(String[])", "callee_method": "java.util.ArrayList.<init>()", "line": 34, "kind": "special", "library": true, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0003.Boxes.main(String[])", "callee_method": "java.util.List.add(Object)", "line": 35, "kind": "interface", "library": true, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0003.Boxes.main(String[])", "callee_method": "java.util.List.add(Object)", "line": 36, "kind": "interface", "library": true, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0003.Boxes.main(String[])", "callee_method": "corpus.cpg.p0003.Boxes$Box.get()", "line": 37, "kind": "virtual", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0003.Boxes.main(String[])", "callee_method": "corpus.cpg.p0003.Boxes.max(List)", "line": 37, "kind": "static", "library": false, "over_approximate": false}
+  ]
+}

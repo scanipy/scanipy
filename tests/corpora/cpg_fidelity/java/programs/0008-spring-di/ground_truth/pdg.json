@@ -1,0 +1,15 @@
+{
+  "schema": "cpg-fidelity/pdg/v1",
+  "program_id": "0008-spring-di",
+  "method": "Intraprocedural PDG (data) by-inspection.",
+  "methods": [
+    {"method": "corpus.cpg.p0008.OrderApp.main(String[])", "dependences": [
+      {"from": "Repository repo = new Repository()", "to": "OrderService svc = new OrderService(repo)", "type": "data", "var": "repo"},
+      {"from": "OrderService svc = new OrderService(repo)", "to": "System.out.println(svc.lookup(7))", "type": "data", "var": "svc"}
+    ]},
+    {"method": "corpus.cpg.p0008.OrderApp$OrderService.lookup(int)", "dependences": [
+      {"from": "field this.repo", "to": "return repo.find(id)", "type": "data", "var": "repo"},
+      {"from": "param id", "to": "return repo.find(id)", "type": "data", "var": "id"}
+    ]}
+  ]
+}

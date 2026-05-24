@@ -1,0 +1,30 @@
+{
+  "dispatch.py": {
+    "edges": [
+      {
+        "caller": "dispatch_by_name",
+        "callee": "fn",
+        "line": 27,
+        "kind": "dynamic"
+      },
+      {
+        "caller": "dispatch_getattr",
+        "callee": "getattr",
+        "line": 31,
+        "kind": "dynamic"
+      },
+      {
+        "caller": "dispatch_getattr",
+        "callee": "handler",
+        "line": 32,
+        "kind": "dynamic"
+      },
+      {
+        "caller": "op",
+        "callee": "add",
+        "line": 19,
+        "kind": "static"
+      }
+    ]
+  }
+}
