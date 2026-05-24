@@ -1,0 +1,9 @@
+expected_sites:
+  - file: calculator.js
+    kind: js-require-dynamic
+    line: 19
+label: not-closed-world
+labelled_by: pipeline
+rationale: Mutation-injected js-require-dynamic reflection construct inserted at line
+  19 of a clean closed-world base. not-closed-world by construction (INV-4 safe direction).
+review_status: single-pass

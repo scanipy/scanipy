@@ -19,6 +19,8 @@ dev = [
     "types-PyYAML",
     "types-requests",
     "psycopg2-binary>=2.9",
+    "alembic>=1.13",
+    "sqlalchemy>=2.0",
     "pre-commit>=3.7",
 ]
 
@@ -57,6 +59,12 @@ select = [
 ignore = [
     "S101",   # assert used (tests use assert)
     "S603",   # subprocess call (needed for tool invocations)
+    "ANN101", # missing self annotation — deprecated, removed in ruff 0.6+
+    "ANN102", # missing cls annotation — deprecated, removed in ruff 0.6+
+    "UP042",  # `class X(str, Enum)` over `StrEnum`: several DOC-CMP specs fix the
+              # `(str, Enum)` form verbatim (e.g. DOC-CMP-SCM-01 §3.1) because
+              # `str()` of a member must stay `ClassName.MEMBER`, not the value;
+              # StrEnum would change that wire behaviour. Keep the spec'd form.
 ]
 
 [tool.ruff.lint.per-file-ignores]

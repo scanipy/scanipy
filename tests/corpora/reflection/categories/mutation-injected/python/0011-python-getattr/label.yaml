@@ -1,0 +1,9 @@
+expected_sites:
+  - file: calculator.py
+    kind: python-getattr
+    line: 20
+label: not-closed-world
+labelled_by: pipeline
+rationale: Mutation-injected python-getattr reflection construct inserted at line
+  20 of a clean closed-world base. not-closed-world by construction (INV-4 safe direction).
+review_status: single-pass
