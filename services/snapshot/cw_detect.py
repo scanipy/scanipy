@@ -83,6 +83,41 @@ _EXT_TO_LANG: dict[str, str] = {
     ext: lang for lang, exts in _LANG_EXTENSIONS.items() for ext in exts
 }
 
+# Provably-inert extensions: documentation, images, data, lockfiles, VCS/editor
+# meta. A file that is NEITHER a scanned source language NOR in this allowlist
+# is treated as structural uncertainty (⇒ degraded) — the INV-4 safe direction
+# (CLAR-SNAP-01, ratified by the Security Analyst). Config formats
+# (.xml/.yaml/.yml/.properties/.toml/.ini/.cfg/.json, and extensionless files
+# such as META-INF/services entries) are deliberately ABSENT: they can wire
+# runtime reflection (Spring AOP, service loaders, entry-points) and MUST demote
+# to `degraded` until a dedicated config sub-detector exists. Over-demotion (FP)
+# is acceptable; a false `closed-world` (FN) is forbidden.
+_INERT_EXTENSIONS: frozenset[str] = frozenset(
+    {
+        ".md",
+        ".markdown",
+        ".rst",
+        ".txt",
+        ".adoc",
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".svg",
+        ".ico",
+        ".webp",
+        ".bmp",
+        ".pdf",
+        ".csv",
+        ".tsv",
+        ".lock",
+        ".gitignore",
+        ".gitattributes",
+        ".editorconfig",
+        ".dockerignore",
+    }
+)
+
 
 @dataclass(frozen=True)
 class ReflectionSite:
@@ -336,12 +371,16 @@ def detect(
 
         file_lang = _detect_language(src_file)
         if file_lang is None:
-            # Not a source file we have a sub-detector for. We do not claim
-            # closed-world over files we cannot reason about, but we also do not
-            # want every README to demote a repo. The conservative line: a file
-            # whose extension maps to a SUPPORTED language but failed mapping is
-            # uncertainty; an extension we simply do not analyse (e.g. .md, .txt,
-            # .json) is out of analysis scope and not reflection-bearing source.
+            # INV-4 safe direction (CLAR-SNAP-01, Security-Analyst-ratified):
+            # only files we can affirmatively account for — a scanned source
+            # language OR a provably-inert extension — may leave the verdict at
+            # `closed-world`. Anything else (config formats that can wire runtime
+            # reflection: .xml Spring AOP, META-INF/services, .properties, .yaml,
+            # .toml, ...; or unknown / extensionless files) is structural
+            # uncertainty ⇒ degraded. A false `closed-world` here would be a
+            # forbidden false negative; over-demotion (FP) is acceptable.
+            if src_file.suffix.lower() not in _INERT_EXTENSIONS:
+                _add_uncertainty(state, rel_path)
             continue
 
         try:

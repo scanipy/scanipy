@@ -116,6 +116,39 @@ def test_cw_detect_closed_world_on_plain_source(tmp_path: Path) -> None:
     assert result.confidence == "high"
 
 
+@pytest.mark.unit
+def test_cw_detect_xml_config_in_java_project_fails_closed(tmp_path: Path) -> None:
+    """INV-4 / CLAR-SNAP-01: a source-clean Java tree shipping a Spring XML config
+    that wires AOP proxies MUST NOT be `closed-world`. The `.xml` is an unscanned
+    config file that can carry runtime reflection; silently skipping it would be a
+    false negative. Regression for the optimistic unrecognized-extension skip.
+    """
+    (tmp_path / "Service.java").write_text(
+        "class Service { int add(int a, int b) { return a + b; } }\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "applicationContext.xml").write_text(
+        '<beans><aop:config><aop:advisor advice-ref="x"/></aop:config>'
+        '<bean class="org.springframework.aop.framework.ProxyFactoryBean"/></beans>\n',
+        encoding="utf-8",
+    )
+    result = detect(_req(tmp_path, "java"), clock=lambda: _CLOCK)
+    assert result.verdict == "degraded", "FALSE NEGATIVE: XML-AOP config left the tree closed-world"
+    assert result.reflection_sites  # carries a structural-uncertainty site
+
+
+@pytest.mark.unit
+def test_cw_detect_inert_files_do_not_over_demote(tmp_path: Path) -> None:
+    """The inert allowlist must not demote a clean tree on docs/images: a clean
+    Java source plus README.md + a PNG stays `closed-world`.
+    """
+    (tmp_path / "Plain.java").write_text("class Plain {}\n", encoding="utf-8")
+    (tmp_path / "README.md").write_text("# Docs\n", encoding="utf-8")
+    (tmp_path / "logo.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+    result = detect(_req(tmp_path, "java"), clock=lambda: _CLOCK)
+    assert result.verdict == "closed-world"
+
+
 # --- fail-closed paths (uncertainty is reflection by construction) ---
 
 
