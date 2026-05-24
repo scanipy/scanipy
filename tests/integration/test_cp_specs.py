@@ -170,9 +170,9 @@ def test_cp03a_migrations_apply_forward_and_roll_back_cleanly() -> None:
     # 1. upgrade head — every CP-03 table materializes.
     up = _alembic(["upgrade", "head"], database_url)
     assert up.returncode == 0, f"alembic upgrade head failed:\n{up.stderr}"
-    assert _table_count() == len(
-        _CP03_TABLES
-    ), f"upgrade head did not create every CMP-CP-03 table ({_table_count()}/{len(_CP03_TABLES)})"
+    assert _table_count() == len(_CP03_TABLES), (
+        f"upgrade head did not create every CMP-CP-03 table ({_table_count()}/{len(_CP03_TABLES)})"
+    )
 
     # 2. downgrade base — no residual tables, policies, or functions.
     down = _alembic(["downgrade", "base"], database_url)
@@ -180,9 +180,9 @@ def test_cp03a_migrations_apply_forward_and_roll_back_cleanly() -> None:
     residual_tables, residual_policies, residual_functions = _residual_object_count()
     assert residual_tables == 0, f"{residual_tables} residual table(s) after downgrade"
     assert residual_policies == 0, f"{residual_policies} residual RLS policy(ies) after downgrade"
-    assert (
-        residual_functions == 0
-    ), f"{residual_functions} residual set_updated_at function(s) after downgrade"
+    assert residual_functions == 0, (
+        f"{residual_functions} residual set_updated_at function(s) after downgrade"
+    )
 
     # 3. idempotent re-application on the now-clean DB.
     reup = _alembic(["upgrade", "head"], database_url)
