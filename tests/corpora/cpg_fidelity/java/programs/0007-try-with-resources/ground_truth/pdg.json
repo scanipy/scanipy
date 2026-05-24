@@ -1,0 +1,16 @@
+{
+  "schema": "cpg-fidelity/pdg/v1",
+  "program_id": "0007-try-with-resources",
+  "method": "Intraprocedural PDG (data) by-inspection.",
+  "methods": [
+    {"method": "corpus.cpg.p0007.Resources.load(String)", "dependences": [
+      {"from": "param name", "to": "Handle h = new Handle(name)", "type": "data", "var": "name"},
+      {"from": "Handle h = new Handle(name)", "to": "ret = h.read()", "type": "data", "var": "h"},
+      {"from": "Handle h = new Handle(name)", "to": "close-normal: h.close()", "type": "data", "var": "h"},
+      {"from": "ret = h.read()", "to": "return ret", "type": "data", "var": "ret"}
+    ]},
+    {"method": "corpus.cpg.p0007.Resources$Handle.read()", "dependences": [
+      {"from": "field this.name", "to": "return \"data:\" + name", "type": "data", "var": "name"}
+    ]}
+  ]
+}
