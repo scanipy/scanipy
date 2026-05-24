@@ -1,0 +1,9 @@
+expected_sites:
+  - file: Calculator.php
+    kind: php-call-user-func
+    line: 26
+label: not-closed-world
+labelled_by: pipeline
+rationale: Mutation-injected php-call-user-func reflection construct inserted at line
+  26 of a clean closed-world base. not-closed-world by construction (INV-4 safe direction).
+review_status: single-pass

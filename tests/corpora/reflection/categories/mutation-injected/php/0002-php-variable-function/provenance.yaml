@@ -1,0 +1,8 @@
+commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
+input_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
+license: Apache-2.0
+path_in_source: Calculator.php
+recipe: variable-function
+seed: 1
+source_url: local:clean_bases/php/Calculator.php
+synthetic: true
