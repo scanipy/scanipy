@@ -1,0 +1,40 @@
+{
+  "index.js": [
+    {
+      "callee": null,
+      "caller": "<module>",
+      "line": 6,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.js::<anonymous>@6",
+      "line": 8,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.js::<anonymous>@6",
+      "line": 10,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.js::<anonymous>@6",
+      "line": 12,
+      "tag": "dynamic"
+    },
+    {
+      "callee": "square",
+      "caller": "index.js::cube@21",
+      "line": 22,
+      "tag": "static"
+    },
+    {
+      "callee": null,
+      "caller": "index.js::dispatch@27",
+      "line": 29,
+      "tag": "dynamic"
+    }
+  ]
+}

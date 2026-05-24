@@ -1,0 +1,166 @@
+{
+  "index.js": [
+    {
+      "edges": [
+        {
+          "from": "index.js::Counter@5#entry",
+          "kind": "seq",
+          "to": "index.js::Counter@5#n0"
+        }
+      ],
+      "function": "index.js::Counter@5",
+      "nodes": [
+        {
+          "id": "index.js::Counter@5#entry",
+          "kind": "Entry",
+          "line": 5
+        },
+        {
+          "id": "index.js::Counter@5#n0",
+          "kind": "ExpressionStatement",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.js::increment@9#entry",
+          "kind": "seq",
+          "to": "index.js::increment@9#n0"
+        },
+        {
+          "from": "index.js::increment@9#n0",
+          "kind": "seq",
+          "to": "index.js::increment@9#n1"
+        }
+      ],
+      "function": "index.js::increment@9",
+      "nodes": [
+        {
+          "id": "index.js::increment@9#entry",
+          "kind": "Entry",
+          "line": 9
+        },
+        {
+          "id": "index.js::increment@9#n0",
+          "kind": "ExpressionStatement",
+          "line": 10
+        },
+        {
+          "id": "index.js::increment@9#n1",
+          "kind": "ReturnStatement",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.js::add@14#entry",
+          "kind": "seq",
+          "to": "index.js::add@14#n0"
+        },
+        {
+          "from": "index.js::add@14#n0",
+          "kind": "seq",
+          "to": "index.js::add@14#n1"
+        }
+      ],
+      "function": "index.js::add@14",
+      "nodes": [
+        {
+          "id": "index.js::add@14#entry",
+          "kind": "Entry",
+          "line": 14
+        },
+        {
+          "id": "index.js::add@14#n0",
+          "kind": "ExpressionStatement",
+          "line": 15
+        },
+        {
+          "id": "index.js::add@14#n1",
+          "kind": "ReturnStatement",
+          "line": 16
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.js::makeBound@19#entry",
+          "kind": "seq",
+          "to": "index.js::makeBound@19#n0"
+        }
+      ],
+      "function": "index.js::makeBound@19",
+      "nodes": [
+        {
+          "id": "index.js::makeBound@19#entry",
+          "kind": "Entry",
+          "line": 19
+        },
+        {
+          "id": "index.js::makeBound@19#n0",
+          "kind": "ReturnStatement",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.js::applyAdd@23#entry",
+          "kind": "seq",
+          "to": "index.js::applyAdd@23#n0"
+        }
+      ],
+      "function": "index.js::applyAdd@23",
+      "nodes": [
+        {
+          "id": "index.js::applyAdd@23#entry",
+          "kind": "Entry",
+          "line": 23
+        },
+        {
+          "id": "index.js::applyAdd@23#n0",
+          "kind": "ReturnStatement",
+          "line": 24
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.js::reset@28#entry",
+          "kind": "seq",
+          "to": "index.js::reset@28#n0"
+        },
+        {
+          "from": "index.js::reset@28#n0",
+          "kind": "seq",
+          "to": "index.js::reset@28#n1"
+        }
+      ],
+      "function": "index.js::reset@28",
+      "nodes": [
+        {
+          "id": "index.js::reset@28#entry",
+          "kind": "Entry",
+          "line": 28
+        },
+        {
+          "id": "index.js::reset@28#n0",
+          "kind": "ExpressionStatement",
+          "line": 29
+        },
+        {
+          "id": "index.js::reset@28#n1",
+          "kind": "ReturnStatement",
+          "line": 30
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "index.js": [
+    {
+      "edges": [
+        {
+          "from": "index.js::escapeStringRegexp@1#entry",
+          "kind": "seq",
+          "to": "index.js::escapeStringRegexp@1#n0"
+        },
+        {
+          "from": "index.js::escapeStringRegexp@1#n0",
+          "kind": "seq",
+          "to": "index.js::escapeStringRegexp@1#n1"
+        },
+        {
+          "from": "index.js::escapeStringRegexp@1#n0",
+          "kind": "seq",
+          "to": "index.js::escapeStringRegexp@1#n2"
+        }
+      ],
+      "function": "index.js::escapeStringRegexp@1",
+      "nodes": [
+        {
+          "id": "index.js::escapeStringRegexp@1#entry",
+          "kind": "Entry",
+          "line": 1
+        },
+        {
+          "id": "index.js::escapeStringRegexp@1#n0",
+          "kind": "IfStatement",
+          "line": 2
+        },
+        {
+          "id": "index.js::escapeStringRegexp@1#n1",
+          "kind": "ThrowStatement",
+          "line": 3
+        },
+        {
+          "id": "index.js::escapeStringRegexp@1#n2",
+          "kind": "ReturnStatement",
+          "line": 8
+        }
+      ]
+    }
+  ]
+}
