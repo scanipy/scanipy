@@ -54,7 +54,7 @@ LOCK_PATH = CORPUS_ROOT / "corpus.lock"
 
 CORPUS_ID = "CMP-CORP-REFAC-01"
 CORPUS_VERSION = "0.1.0"  # AC-CORP-REFAC-01a count met (50x7); topology diversity
-# capped at 8 templates -> v0.1.0, see CLAR-CORP-04 + README "Status".
+# capped at 8 templates -> v0.1.0, see CLAR-CORP-07 + README "Status".
 BUILT_BY = "corpus-agent/CMP-CORP-REFAC-01"
 
 SEED_COUNT = 50
@@ -231,7 +231,7 @@ def assemble_lock() -> tuple[dict, list[str], list[str]]:
         "seed_count": len(seeds),
         "refactor_count": len(rt.REFACTORS),
         "pair_count": pair_count,
-        # Honesty marker (CLAR-CORP-04): seeds round-robin a small set of base
+        # Honesty marker (CLAR-CORP-07): seeds round-robin a small set of base
         # templates, so distinct (class, language) sink-topologies < seed_count.
         # v0.1.0 ships count-complete but topology-thin; v1.0.0 expands diversity.
         "distinct_topologies": distinct_topologies,
