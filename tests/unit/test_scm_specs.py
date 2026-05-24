@@ -20,6 +20,33 @@ assertions when the owning CMP reaches DONE. Closed marker set
 import pytest
 
 # ---------------------------------------------------------------------------
+# Mock CMP-CP-02 encrypt/decrypt envelope (T-CMP-SCM-01-04).
+# The real key service lands with CMP-CP-02 (DOC-CMP-SCM-01 §6); until then a
+# deterministic in-test mock exercises the round-trip property of AC-SCM-01b.
+# It must round-trip SCMCredentials back to a structurally-equal instance,
+# leaving the storage-set metadata fields (encrypted_at, key_version) as the
+# caller left them.
+# ---------------------------------------------------------------------------
+
+
+class _MockCP02:
+    """Deterministic mock of the CMP-CP-02 envelope encrypt/decrypt service."""
+
+    def __init__(self) -> None:
+        self._store: dict[str, object] = {}
+
+    def encrypt(self, cred: object) -> bytes:
+        import pickle
+
+        return pickle.dumps(cred)
+
+    def decrypt(self, blob: bytes) -> object:
+        import pickle
+
+        return pickle.loads(blob)
+
+
+# ---------------------------------------------------------------------------
 # TST-AC-SCM-01a — ABC defines all six methods with typed signatures  [UNIT]
 # CMP-SCM-01 · hard gate: yes. DOC-CMP-SCM-01 §3.2: "six methods. No more,
 # no fewer." → six per-method sub-tests + one structural "exactly six" test.
@@ -36,7 +63,6 @@ _ABC_METHODS = (
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-SCM-01 (SCMConnector ABC) not yet implemented", strict=False)
 @pytest.mark.parametrize("method_name", _ABC_METHODS)
 def test_scm_01a_abc_declares_method(method_name: str) -> None:
     """Each of the six ABC methods is declared @abstractmethod with a docstring.
@@ -51,14 +77,13 @@ def test_scm_01a_abc_declares_method(method_name: str) -> None:
     Frequency: every CI run
     Hard gate?: yes
     """
-    # TODO: from integrations.scm.base import SCMConnector
-    # assert method_name in SCMConnector.__abstractmethods__
-    # assert getattr(SCMConnector, method_name).__doc__
-    pytest.skip("CMP-SCM-01 not implemented yet")
+    from integrations.scm.base import SCMConnector
+
+    assert method_name in SCMConnector.__abstractmethods__
+    assert getattr(SCMConnector, method_name).__doc__
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-SCM-01 (SCMConnector ABC) not yet implemented", strict=False)
 def test_scm_01a_abc_declares_exactly_six_methods() -> None:
     """The ABC declares exactly six abstract methods — no more, no fewer.
 
@@ -72,9 +97,9 @@ def test_scm_01a_abc_declares_exactly_six_methods() -> None:
     Frequency: every CI run
     Hard gate?: yes
     """
-    # TODO: from integrations.scm.base import SCMConnector
-    # assert frozenset(SCMConnector.__abstractmethods__) == frozenset(_ABC_METHODS)
-    pytest.skip("CMP-SCM-01 not implemented yet")
+    from integrations.scm.base import SCMConnector
+
+    assert frozenset(SCMConnector.__abstractmethods__) == frozenset(_ABC_METHODS)
 
 
 # ---------------------------------------------------------------------------
@@ -86,8 +111,29 @@ def test_scm_01a_abc_declares_exactly_six_methods() -> None:
 _AUTH_MODES = ("pat", "app_installation", "oauth", "ssh_key")
 
 
+_MODE_PAYLOADS: dict[str, dict[str, str]] = {
+    # Mode-specific required keys — DOC-CMP-SCM-01 §4.1. All values are strings.
+    "pat": {"token": "ghp_exampletoken000"},
+    "app_installation": {
+        "app_id": "123456",
+        "installation_id": "987654",
+        # Opaque placeholder, not a real PEM (avoids the detect-private-key hook).
+        "private_key_pem": "FAKE-APP-PRIVATE-KEY-PEM-PLACEHOLDER",  # pragma: allowlist secret
+    },
+    "oauth": {
+        "access_token": "at_example",
+        "refresh_token": "rt_example",
+        "expires_at": "2026-06-01T00:00:00Z",
+    },
+    "ssh_key": {
+        # Opaque placeholder, not a real PEM (avoids the detect-private-key hook).
+        "private_key_pem": "FAKE-SSH-PRIVATE-KEY-PEM-PLACEHOLDER",  # pragma: allowlist secret
+        "known_hosts": "github.com ssh-ed25519 AAAAC3...",
+    },
+}
+
+
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-SCM-01 (SCMCredentials) not yet implemented", strict=False)
 @pytest.mark.parametrize("mode", _AUTH_MODES)
 def test_scm_01b_credentials_roundtrip(mode: str) -> None:
     """An SCMCredentials instance survives encrypt→persist→decrypt unchanged.
@@ -104,10 +150,20 @@ def test_scm_01b_credentials_roundtrip(mode: str) -> None:
     Frequency: every CI run
     Hard gate?: yes
     """
-    # TODO: from integrations.scm.base import SCMCredentials, SCMAuthMode
-    # cred = SCMCredentials(provider="github", mode=SCMAuthMode(mode), payload={...})
-    # assert mock_cp02.decrypt(mock_cp02.encrypt(cred)) == cred
-    pytest.skip("CMP-SCM-01 not implemented yet")
+    from integrations.scm.base import SCMAuthMode, SCMCredentials
+
+    payload = _MODE_PAYLOADS[mode]
+    assert all(isinstance(v, str) for v in payload.values())  # payload is strings only
+
+    cred = SCMCredentials(provider="github", mode=SCMAuthMode(mode), payload=payload)
+
+    cp02 = _MockCP02()
+    restored = cp02.decrypt(cp02.encrypt(cred))
+
+    assert restored == cred  # frozen-dataclass structural equality across the round-trip
+    assert isinstance(restored, SCMCredentials)
+    assert restored.encrypted_at is None  # storage-set metadata untouched by the round-trip
+    assert restored.key_version is None
 
 
 # ---------------------------------------------------------------------------
