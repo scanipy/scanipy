@@ -1,0 +1,101 @@
+{
+  "ruby_version": "3.2.3",
+  "methods": [
+    {
+      "method": "shout",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "OPCALL",
+              "line": 9
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "upcase_words",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 13
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "announce",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 19
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    }
+  ]
+}

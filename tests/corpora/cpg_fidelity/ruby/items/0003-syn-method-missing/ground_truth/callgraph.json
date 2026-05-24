@@ -1,0 +1,78 @@
+{
+  "convention": "lower-bound",
+  "edges": [
+    {
+      "caller": "method_missing",
+      "callee": "decode",
+      "line": 12,
+      "node": "FCALL"
+    },
+    {
+      "caller": "method_missing",
+      "callee": "key?",
+      "line": 13,
+      "node": "CALL"
+    },
+    {
+      "caller": "method_missing",
+      "callee": "[]",
+      "line": 14,
+      "node": "CALL"
+    },
+    {
+      "caller": "method_missing",
+      "callee": "super:method_missing",
+      "line": 16,
+      "node": "ZSUPER"
+    },
+    {
+      "caller": "respond_to_missing?",
+      "callee": "decode",
+      "line": 21,
+      "node": "FCALL"
+    },
+    {
+      "caller": "respond_to_missing?",
+      "callee": "key?",
+      "line": 21,
+      "node": "CALL"
+    },
+    {
+      "caller": "respond_to_missing?",
+      "callee": "super:respond_to_missing?",
+      "line": 21,
+      "node": "ZSUPER"
+    },
+    {
+      "caller": "decode",
+      "callee": "sub",
+      "line": 25,
+      "node": "CALL"
+    },
+    {
+      "caller": "decode",
+      "callee": "to_s",
+      "line": 25,
+      "node": "CALL"
+    },
+    {
+      "caller": "decode",
+      "callee": "to_sym",
+      "line": 25,
+      "node": "CALL"
+    }
+  ],
+  "dynamic_sites": [
+    {
+      "caller": "method_missing",
+      "kind": "def:method_missing",
+      "line": 11
+    },
+    {
+      "caller": "respond_to_missing?",
+      "kind": "def:respond_to_missing?",
+      "line": 20
+    }
+  ],
+  "ruby_version": "3.2.3"
+}

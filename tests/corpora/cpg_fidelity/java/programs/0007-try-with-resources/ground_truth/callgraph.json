@@ -1,0 +1,11 @@
+{
+  "schema": "cpg-fidelity/callgraph/v1",
+  "program_id": "0007-try-with-resources",
+  "notes": "try-with-resources desugars to a try/finally with an implicit Handle.close() call on both normal and exceptional exit. The implicit close edge is real and tagged synthetic=true (compiler-generated, no source line of its own; attributed to the try header line 24).",
+  "edges": [
+    {"caller_method": "corpus.cpg.p0007.Resources.load(String)", "callee_method": "corpus.cpg.p0007.Resources$Handle.<init>(String)", "line": 24, "kind": "special", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0007.Resources.load(String)", "callee_method": "corpus.cpg.p0007.Resources$Handle.read()", "line": 25, "kind": "virtual", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0007.Resources.load(String)", "callee_method": "corpus.cpg.p0007.Resources$Handle.close()", "line": 24, "kind": "virtual", "library": false, "over_approximate": false, "synthetic": true},
+    {"caller_method": "corpus.cpg.p0007.Resources.main(String[])", "callee_method": "corpus.cpg.p0007.Resources.load(String)", "line": 30, "kind": "static", "library": false, "over_approximate": false}
+  ]
+}

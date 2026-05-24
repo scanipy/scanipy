@@ -1,0 +1,11 @@
+{
+  "schema": "cpg-fidelity/cfg/v1",
+  "program_id": "0001-interface-dispatch",
+  "method": "Per-method intraprocedural CFG, by-inspection over source statements (Soot BriefUnitGraph equivalent). Nodes are statements; edges are intraprocedural control-flow successors. Straight-line methods have node_count-1 edges. ENTRY/EXIT implicit.",
+  "methods": [
+    {"method": "corpus.cpg.p0001.Shapes$Circle.area()", "nodes": ["return Math.PI * r * r"], "edges": []},
+    {"method": "corpus.cpg.p0001.Shapes$Square.area()", "nodes": ["return s * s"], "edges": []},
+    {"method": "corpus.cpg.p0001.Shapes.total(Shape,Shape)", "nodes": ["return a.area() + b.area()"], "edges": []},
+    {"method": "corpus.cpg.p0001.Shapes.main(String[])", "nodes": ["Shape c = new Circle(2.0)", "Shape s = new Square(3.0)", "System.out.println(total(c, s))"], "edges": [[0, 1], [1, 2]]}
+  ]
+}

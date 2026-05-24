@@ -1,0 +1,10 @@
+{
+  "convention": "lower-bound",
+  "edges": [
+
+  ],
+  "dynamic_sites": [
+
+  ],
+  "ruby_version": "3.2.3"
+}

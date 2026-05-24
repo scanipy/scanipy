@@ -1,0 +1,31 @@
+{
+  "index.js": [
+    {
+      "edges": [],
+      "function": "index.js::<anonymous>@6"
+    },
+    {
+      "edges": [
+        {
+          "def_line": 25,
+          "kind": "data",
+          "use_line": 29,
+          "var": "registry"
+        }
+      ],
+      "function": "index.js::<anonymous>@14"
+    },
+    {
+      "edges": [],
+      "function": "index.js::square@17"
+    },
+    {
+      "edges": [],
+      "function": "index.js::cube@21"
+    },
+    {
+      "edges": [],
+      "function": "index.js::dispatch@27"
+    }
+  ]
+}

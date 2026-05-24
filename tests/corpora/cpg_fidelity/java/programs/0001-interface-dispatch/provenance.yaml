@@ -1,0 +1,14 @@
+source_url: local:programs/0001-interface-dispatch/source
+commit_sha: synthetic
+license: Apache-2.0
+language_level: 17
+synthetic: true
+authored_for: CMP-CORP-CPG-java
+construct_coverage:
+  - interface-dispatch
+loc: 45
+description: |
+  Hand-authored closed program exercising polymorphic dispatch through an
+  interface (Shape) with two concrete implementors (Circle, Square). Ground
+  truth derived by inspection; parse-success verified by javac (JDK 21,
+  Java 17 source level).

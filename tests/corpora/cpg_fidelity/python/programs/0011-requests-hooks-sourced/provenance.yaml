@@ -1,0 +1,10 @@
+commit_sha: cd90742ed94d901759e26766197d0ce7c7bd9c8e
+construct_coverage:
+  - dynamic-dispatch
+  - type-hints
+license: Apache-2.0
+path_in_source: src/requests/hooks.py
+python_minor: '3.10'
+sha256_source_tree: sha256:84f7edb0d6af0769c1f36e6de9f3fe5849a1961515f64466d93819046625d2ca
+source_url: https://github.com/psf/requests
+synthetic: false

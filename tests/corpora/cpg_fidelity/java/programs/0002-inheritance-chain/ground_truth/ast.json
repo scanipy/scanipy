@@ -1,0 +1,25 @@
+{
+  "schema": "cpg-fidelity/ast/v1",
+  "program_id": "0002-inheritance-chain",
+  "method": "javac -Xprint traversal; parse_success verified by javac (JDK 21, -source 17).",
+  "files": [
+    {
+      "file": "Animals.java",
+      "parse_success": true,
+      "type_decls": [
+        {"name": "Animals", "kind": "CLASS"},
+        {"name": "Animals.Animal", "kind": "CLASS", "modifiers": ["abstract"]},
+        {"name": "Animals.Dog", "kind": "CLASS", "extends": "Animal"},
+        {"name": "Animals.Puppy", "kind": "CLASS", "extends": "Dog"}
+      ],
+      "methods": [
+        {"name": "Animal.speak()", "abstract": true},
+        {"name": "Animal.describe()"},
+        {"name": "Dog.speak()"},
+        {"name": "Puppy.speak()"},
+        {"name": "Animals.greet(Animal)"},
+        {"name": "Animals.main(String[])"}
+      ]
+    }
+  ]
+}

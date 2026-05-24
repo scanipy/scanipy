@@ -1,0 +1,19 @@
+{
+  "schema": "cpg-fidelity/ast/v1",
+  "program_id": "0004-lambdas",
+  "method": "javac -Xprint traversal; parse_success verified by javac (JDK 21, -source 17).",
+  "files": [
+    {
+      "file": "Lambdas.java",
+      "parse_success": true,
+      "type_decls": [{"name": "Lambdas", "kind": "CLASS"}],
+      "methods": [
+        {"name": "Lambdas.apply(Function,int)"},
+        {"name": "Lambdas.twice(int)"},
+        {"name": "Lambdas.main(String[])"}
+      ],
+      "lambda_expressions": 2,
+      "synthetic_lambda_methods": ["lambda$main$0", "lambda$main$1"]
+    }
+  ]
+}

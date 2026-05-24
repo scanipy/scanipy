@@ -1,0 +1,86 @@
+{
+  "convention": "lower-bound",
+  "methods": [
+    {
+      "method": "initialize",
+      "edges": [
+        {
+          "var": "items",
+          "use_line": 7,
+          "def_line": 6
+        }
+      ]
+    },
+    {
+      "method": "subtotal",
+      "edges": [
+        {
+          "var": "sum",
+          "use_line": 13,
+          "def_line": 13
+        },
+        {
+          "var": "sum",
+          "use_line": 15,
+          "def_line": 13
+        }
+      ]
+    },
+    {
+      "method": "add",
+      "edges": [
+        {
+          "var": "line",
+          "use_line": 19,
+          "def_line": 18
+        },
+        {
+          "var": "running",
+          "use_line": 19,
+          "def_line": 18
+        }
+      ]
+    },
+    {
+      "method": "with_tax",
+      "edges": [
+        {
+          "var": "rate",
+          "use_line": 24,
+          "def_line": 22
+        },
+        {
+          "var": "base",
+          "use_line": 25,
+          "def_line": 23
+        },
+        {
+          "var": "rate",
+          "use_line": 25,
+          "def_line": 22
+        },
+        {
+          "var": "base",
+          "use_line": 27,
+          "def_line": 23
+        }
+      ]
+    },
+    {
+      "method": "tax",
+      "edges": [
+        {
+          "var": "base",
+          "use_line": 32,
+          "def_line": 31
+        },
+        {
+          "var": "rate",
+          "use_line": 32,
+          "def_line": 31
+        }
+      ]
+    }
+  ],
+  "ruby_version": "3.2.3"
+}

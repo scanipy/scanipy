@@ -1,0 +1,485 @@
+{
+  "ruby_version": "3.2.3",
+  "tree": {
+    "type": "SCOPE",
+    "line": 1,
+    "children": [
+      [
+
+      ],
+      null,
+      {
+        "type": "CLASS",
+        "line": 6,
+        "children": [
+          {
+            "type": "COLON2",
+            "line": 6,
+            "children": [
+              null,
+              "DynamicAccessors"
+            ]
+          },
+          null,
+          {
+            "type": "SCOPE",
+            "line": 6,
+            "children": [
+              [
+
+              ],
+              null,
+              {
+                "type": "BLOCK",
+                "line": 6,
+                "children": [
+                  {
+                    "type": "BEGIN",
+                    "line": 6,
+                    "children": [
+                      null
+                    ]
+                  },
+                  {
+                    "type": "CDECL",
+                    "line": 7,
+                    "children": [
+                      "FIELDS",
+                      {
+                        "type": "CALL",
+                        "line": 7,
+                        "children": [
+                          {
+                            "type": "LIST",
+                            "line": 7,
+                            "children": [
+                              {
+                                "type": "LIT",
+                                "line": 7,
+                                "children": [
+                                  "name"
+                                ]
+                              },
+                              {
+                                "type": "LIT",
+                                "line": 7,
+                                "children": [
+                                  "email"
+                                ]
+                              },
+                              {
+                                "type": "LIT",
+                                "line": 7,
+                                "children": [
+                                  "role"
+                                ]
+                              },
+                              null
+                            ]
+                          },
+                          "freeze",
+                          null
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "ITER",
+                    "line": 9,
+                    "children": [
+                      {
+                        "type": "CALL",
+                        "line": 9,
+                        "children": [
+                          {
+                            "type": "CONST",
+                            "line": 9,
+                            "children": [
+                              "FIELDS"
+                            ]
+                          },
+                          "each",
+                          null
+                        ]
+                      },
+                      {
+                        "type": "SCOPE",
+                        "line": 9,
+                        "children": [
+                          [
+                            "field"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 9,
+                            "children": [
+                              1,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "BLOCK",
+                            "line": 10,
+                            "children": [
+                              {
+                                "type": "ITER",
+                                "line": 10,
+                                "children": [
+                                  {
+                                    "type": "FCALL",
+                                    "line": 10,
+                                    "children": [
+                                      "define_method",
+                                      {
+                                        "type": "LIST",
+                                        "line": 10,
+                                        "children": [
+                                          {
+                                            "type": "DVAR",
+                                            "line": 10,
+                                            "children": [
+                                              "field"
+                                            ]
+                                          },
+                                          null
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 10,
+                                    "children": [
+                                      [
+
+                                      ],
+                                      null,
+                                      {
+                                        "type": "FCALL",
+                                        "line": 11,
+                                        "children": [
+                                          "fetch",
+                                          {
+                                            "type": "LIST",
+                                            "line": 11,
+                                            "children": [
+                                              {
+                                                "type": "DVAR",
+                                                "line": 11,
+                                                "children": [
+                                                  "field"
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "ITER",
+                                "line": 14,
+                                "children": [
+                                  {
+                                    "type": "FCALL",
+                                    "line": 14,
+                                    "children": [
+                                      "define_method",
+                                      {
+                                        "type": "LIST",
+                                        "line": 14,
+                                        "children": [
+                                          {
+                                            "type": "DSTR",
+                                            "line": 14,
+                                            "children": [
+                                              "",
+                                              {
+                                                "type": "EVSTR",
+                                                "line": 14,
+                                                "children": [
+                                                  {
+                                                    "type": "DVAR",
+                                                    "line": 14,
+                                                    "children": [
+                                                      "field"
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "LIST",
+                                                "line": 14,
+                                                "children": [
+                                                  {
+                                                    "type": "STR",
+                                                    "line": 14,
+                                                    "children": [
+                                                      "="
+                                                    ]
+                                                  },
+                                                  null
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          null
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 14,
+                                    "children": [
+                                      [
+                                        "value"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 14,
+                                        "children": [
+                                          1,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "FCALL",
+                                        "line": 15,
+                                        "children": [
+                                          "store",
+                                          {
+                                            "type": "LIST",
+                                            "line": 15,
+                                            "children": [
+                                              {
+                                                "type": "DVAR",
+                                                "line": 15,
+                                                "children": [
+                                                  "field"
+                                                ]
+                                              },
+                                              {
+                                                "type": "DVAR",
+                                                "line": 15,
+                                                "children": [
+                                                  "value"
+                                                ]
+                                              },
+                                              null
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 19,
+                    "children": [
+                      "initialize",
+                      {
+                        "type": "SCOPE",
+                        "line": 19,
+                        "children": [
+                          [
+
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 19,
+                            "children": [
+                              0,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "IASGN",
+                            "line": 20,
+                            "children": [
+                              "@data",
+                              {
+                                "type": "HASH",
+                                "line": 20,
+                                "children": [
+                                  null
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 23,
+                    "children": [
+                      "fetch",
+                      {
+                        "type": "SCOPE",
+                        "line": 23,
+                        "children": [
+                          [
+                            "field"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 23,
+                            "children": [
+                              1,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "CALL",
+                            "line": 24,
+                            "children": [
+                              {
+                                "type": "IVAR",
+                                "line": 24,
+                                "children": [
+                                  "@data"
+                                ]
+                              },
+                              "[]",
+                              {
+                                "type": "LIST",
+                                "line": 24,
+                                "children": [
+                                  {
+                                    "type": "LVAR",
+                                    "line": 24,
+                                    "children": [
+                                      "field"
+                                    ]
+                                  },
+                                  null
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 27,
+                    "children": [
+                      "store",
+                      {
+                        "type": "SCOPE",
+                        "line": 27,
+                        "children": [
+                          [
+                            "field",
+                            "value"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 27,
+                            "children": [
+                              2,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "ATTRASGN",
+                            "line": 28,
+                            "children": [
+                              {
+                                "type": "IVAR",
+                                "line": 28,
+                                "children": [
+                                  "@data"
+                                ]
+                              },
+                              "[]=",
+                              {
+                                "type": "LIST",
+                                "line": 28,
+                                "children": [
+                                  {
+                                    "type": "LVAR",
+                                    "line": 28,
+                                    "children": [
+                                      "field"
+                                    ]
+                                  },
+                                  {
+                                    "type": "LVAR",
+                                    "line": 28,
+                                    "children": [
+                                      "value"
+                                    ]
+                                  },
+                                  null
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

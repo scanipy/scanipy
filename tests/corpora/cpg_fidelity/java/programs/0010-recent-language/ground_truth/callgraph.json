@@ -1,0 +1,12 @@
+{
+  "schema": "cpg-fidelity/callgraph/v1",
+  "program_id": "0010-recent-language",
+  "notes": "Record accessors (number(), amount(), iban()) are compiler-generated methods on the record classes; settle() calls them under instanceof pattern guards. All edges are statically exact.",
+  "edges": [
+    {"caller_method": "corpus.cpg.p0010.Payments.main(String[])", "callee_method": "corpus.cpg.p0010.Payments$Card.<init>(String,double)", "line": 34, "kind": "special", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0010.Payments.main(String[])", "callee_method": "corpus.cpg.p0010.Payments.settle(Payment)", "line": 35, "kind": "static", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0010.Payments.settle(Payment)", "callee_method": "corpus.cpg.p0010.Payments$Card.number()", "line": 24, "kind": "virtual", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0010.Payments.settle(Payment)", "callee_method": "corpus.cpg.p0010.Payments$Cash.amount()", "line": 26, "kind": "virtual", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0010.Payments.settle(Payment)", "callee_method": "corpus.cpg.p0010.Payments$Wire.iban()", "line": 28, "kind": "virtual", "library": false, "over_approximate": false}
+  ]
+}

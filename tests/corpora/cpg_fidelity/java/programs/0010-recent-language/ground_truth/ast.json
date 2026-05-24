@@ -1,0 +1,23 @@
+{
+  "schema": "cpg-fidelity/ast/v1",
+  "program_id": "0010-recent-language",
+  "method": "javac -Xprint traversal; parse_success verified by javac (JDK 21, -source 17). record and sealed are finalized Java 17 features; instanceof pattern matching is finalized Java 16.",
+  "files": [
+    {
+      "file": "Payments.java",
+      "parse_success": true,
+      "type_decls": [
+        {"name": "Payments", "kind": "CLASS"},
+        {"name": "Payments.Payment", "kind": "INTERFACE", "modifiers": ["sealed"], "permits": ["Card", "Cash", "Wire"]},
+        {"name": "Payments.Card", "kind": "RECORD", "components": ["String number", "double amount"]},
+        {"name": "Payments.Cash", "kind": "RECORD", "components": ["double amount"]},
+        {"name": "Payments.Wire", "kind": "RECORD", "components": ["String iban", "double amount"]}
+      ],
+      "methods": [
+        {"name": "Payments.settle(Payment)"},
+        {"name": "Payments.main(String[])"}
+      ],
+      "instanceof_pattern_count": 3
+    }
+  ]
+}

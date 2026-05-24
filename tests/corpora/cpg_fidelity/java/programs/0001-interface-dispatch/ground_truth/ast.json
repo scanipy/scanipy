@@ -1,0 +1,31 @@
+{
+  "schema": "cpg-fidelity/ast/v1",
+  "program_id": "0001-interface-dispatch",
+  "method": "javac -Xprint (JDK Compiler Tree API) traversal; node kinds per com.sun.source.tree.Tree.Kind; counts are stable across runs for the pinned source sha256.",
+  "files": [
+    {
+      "file": "Shapes.java",
+      "parse_success": true,
+      "top_level_decls": [
+        {"name": "corpus.cpg.p0001.Shapes", "kind": "CLASS", "modifiers": ["public", "final"]}
+      ],
+      "type_decls": [
+        {"name": "Shapes", "kind": "CLASS"},
+        {"name": "Shapes.Shape", "kind": "INTERFACE"},
+        {"name": "Shapes.Circle", "kind": "CLASS", "implements": ["Shape"]},
+        {"name": "Shapes.Square", "kind": "CLASS", "implements": ["Shape"]}
+      ],
+      "methods": [
+        {"name": "Shape.area()", "kind": "METHOD", "abstract": true},
+        {"name": "Circle.<init>(double)", "kind": "METHOD"},
+        {"name": "Circle.area()", "kind": "METHOD"},
+        {"name": "Square.<init>(double)", "kind": "METHOD"},
+        {"name": "Square.area()", "kind": "METHOD"},
+        {"name": "Shapes.total(Shape,Shape)", "kind": "METHOD"},
+        {"name": "Shapes.main(String[])", "kind": "METHOD"}
+      ],
+      "method_invocation_count": 5,
+      "new_class_count": 2
+    }
+  ]
+}
