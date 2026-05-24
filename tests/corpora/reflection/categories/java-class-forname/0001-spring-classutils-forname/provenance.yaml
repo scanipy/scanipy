@@ -1,0 +1,9 @@
+source_url: https://github.com/spring-projects/spring-framework
+commit_sha: b932df6ad25ee570909c3c2c1ed1a60bd49bbb48
+path_in_source: spring-core/src/main/java/org/springframework/util/ClassUtils.java
+license: Apache-2.0
+synthetic: false
+note: |
+  spring-framework tag v6.1.6 (annotated tag ce09323bf82116f9c5ed7143a0e4b67f14e6ec78),
+  dereferenced to commit b932df6ad25ee570909c3c2c1ed1a60bd49bbb48. Apache-2.0 licensed
+  (on the corpus allow-list). See LICENSES.md.

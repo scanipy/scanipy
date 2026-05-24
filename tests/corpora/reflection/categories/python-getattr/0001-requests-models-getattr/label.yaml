@@ -1,0 +1,14 @@
+label: not-closed-world
+expected_sites:
+  - file: models.py
+    line: 718
+    kind: python-getattr
+rationale: |
+  psf/requests requests/models.py Response.__getstate__ resolves attribute names at
+  runtime via `getattr(self, attr, None) for attr in self.__attrs__` (line 718). The
+  attribute set is data-driven (self.__attrs__), so accessed members are not
+  statically fixed; a closed-world over-approximation of field/method access is
+  unsound here. not-closed-world (INV-4 safe direction). SOURCED from a real public
+  repo, not synthetic.
+labelled_by: corpus-agent
+review_status: single-pass
