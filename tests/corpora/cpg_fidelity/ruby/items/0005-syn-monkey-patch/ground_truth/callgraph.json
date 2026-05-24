@@ -1,0 +1,45 @@
+{
+  "convention": "lower-bound",
+  "edges": [
+    {
+      "caller": "shout",
+      "callee": "+",
+      "line": 9,
+      "node": "OPCALL"
+    },
+    {
+      "caller": "shout",
+      "callee": "upcase_words",
+      "line": 9,
+      "node": "VCALL"
+    },
+    {
+      "caller": "upcase_words",
+      "callee": "join",
+      "line": 13,
+      "node": "CALL"
+    },
+    {
+      "caller": "upcase_words",
+      "callee": "map",
+      "line": 13,
+      "node": "CALL"
+    },
+    {
+      "caller": "upcase_words",
+      "callee": "split",
+      "line": 13,
+      "node": "FCALL"
+    },
+    {
+      "caller": "announce",
+      "callee": "shout",
+      "line": 19,
+      "node": "CALL"
+    }
+  ],
+  "dynamic_sites": [
+
+  ],
+  "ruby_version": "3.2.3"
+}

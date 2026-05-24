@@ -1,0 +1,55 @@
+{
+  "convention": "lower-bound",
+  "edges": [
+    {
+      "caller": "active_admins",
+      "callee": "base_scope",
+      "line": 13,
+      "node": "VCALL"
+    },
+    {
+      "caller": "active_admins",
+      "callee": "apply_scope",
+      "line": 14,
+      "node": "FCALL"
+    },
+    {
+      "caller": "active_admins",
+      "callee": "apply_scope",
+      "line": 15,
+      "node": "FCALL"
+    },
+    {
+      "caller": "base_scope",
+      "callee": "table",
+      "line": 19,
+      "node": "CALL"
+    },
+    {
+      "caller": "find",
+      "callee": "base_scope",
+      "line": 27,
+      "node": "VCALL"
+    },
+    {
+      "caller": "find",
+      "callee": "first",
+      "line": 27,
+      "node": "CALL"
+    },
+    {
+      "caller": "find",
+      "callee": "where",
+      "line": 27,
+      "node": "CALL"
+    }
+  ],
+  "dynamic_sites": [
+    {
+      "caller": "apply_scope",
+      "kind": "send",
+      "line": 23
+    }
+  ],
+  "ruby_version": "3.2.3"
+}
