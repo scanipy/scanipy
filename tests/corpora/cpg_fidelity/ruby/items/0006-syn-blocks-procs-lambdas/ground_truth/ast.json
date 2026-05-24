@@ -1,0 +1,541 @@
+{
+  "ruby_version": "3.2.3",
+  "tree": {
+    "type": "SCOPE",
+    "line": 1,
+    "children": [
+      [
+
+      ],
+      null,
+      {
+        "type": "CLASS",
+        "line": 6,
+        "children": [
+          {
+            "type": "COLON2",
+            "line": 6,
+            "children": [
+              null,
+              "Pipeline"
+            ]
+          },
+          null,
+          {
+            "type": "SCOPE",
+            "line": 6,
+            "children": [
+              [
+
+              ],
+              null,
+              {
+                "type": "BLOCK",
+                "line": 6,
+                "children": [
+                  {
+                    "type": "BEGIN",
+                    "line": 6,
+                    "children": [
+                      null
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 7,
+                    "children": [
+                      "initialize",
+                      {
+                        "type": "SCOPE",
+                        "line": 7,
+                        "children": [
+                          [
+
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 7,
+                            "children": [
+                              0,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "IASGN",
+                            "line": 8,
+                            "children": [
+                              "@steps",
+                              {
+                                "type": "ZLIST",
+                                "line": 8,
+                                "children": [
+
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 11,
+                    "children": [
+                      "add",
+                      {
+                        "type": "SCOPE",
+                        "line": 11,
+                        "children": [
+                          [
+                            "block"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 11,
+                            "children": [
+                              0,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              "block"
+                            ]
+                          },
+                          {
+                            "type": "OPCALL",
+                            "line": 12,
+                            "children": [
+                              {
+                                "type": "IVAR",
+                                "line": 12,
+                                "children": [
+                                  "@steps"
+                                ]
+                              },
+                              "<<",
+                              {
+                                "type": "LIST",
+                                "line": 12,
+                                "children": [
+                                  {
+                                    "type": "LVAR",
+                                    "line": 12,
+                                    "children": [
+                                      "block"
+                                    ]
+                                  },
+                                  null
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 15,
+                    "children": [
+                      "run",
+                      {
+                        "type": "SCOPE",
+                        "line": 15,
+                        "children": [
+                          [
+                            "input"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 15,
+                            "children": [
+                              1,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "ITER",
+                            "line": 16,
+                            "children": [
+                              {
+                                "type": "CALL",
+                                "line": 16,
+                                "children": [
+                                  {
+                                    "type": "IVAR",
+                                    "line": 16,
+                                    "children": [
+                                      "@steps"
+                                    ]
+                                  },
+                                  "reduce",
+                                  {
+                                    "type": "LIST",
+                                    "line": 16,
+                                    "children": [
+                                      {
+                                        "type": "LVAR",
+                                        "line": 16,
+                                        "children": [
+                                          "input"
+                                        ]
+                                      },
+                                      null
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "SCOPE",
+                                "line": 16,
+                                "children": [
+                                  [
+                                    "acc",
+                                    "step"
+                                  ],
+                                  {
+                                    "type": "ARGS",
+                                    "line": 16,
+                                    "children": [
+                                      2,
+                                      null,
+                                      null,
+                                      null,
+                                      0,
+                                      null,
+                                      null,
+                                      null,
+                                      null,
+                                      null
+                                    ]
+                                  },
+                                  {
+                                    "type": "FCALL",
+                                    "line": 17,
+                                    "children": [
+                                      "apply",
+                                      {
+                                        "type": "LIST",
+                                        "line": 17,
+                                        "children": [
+                                          {
+                                            "type": "DVAR",
+                                            "line": 17,
+                                            "children": [
+                                              "step"
+                                            ]
+                                          },
+                                          {
+                                            "type": "DVAR",
+                                            "line": 17,
+                                            "children": [
+                                              "acc"
+                                            ]
+                                          },
+                                          null
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 21,
+                    "children": [
+                      "apply",
+                      {
+                        "type": "SCOPE",
+                        "line": 21,
+                        "children": [
+                          [
+                            "step",
+                            "value"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 21,
+                            "children": [
+                              2,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "CALL",
+                            "line": 22,
+                            "children": [
+                              {
+                                "type": "LVAR",
+                                "line": 22,
+                                "children": [
+                                  "step"
+                                ]
+                              },
+                              "call",
+                              {
+                                "type": "LIST",
+                                "line": 22,
+                                "children": [
+                                  {
+                                    "type": "LVAR",
+                                    "line": 22,
+                                    "children": [
+                                      "value"
+                                    ]
+                                  },
+                                  null
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 25,
+                    "children": [
+                      "each_step",
+                      {
+                        "type": "SCOPE",
+                        "line": 25,
+                        "children": [
+                          [
+
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 25,
+                            "children": [
+                              0,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "ITER",
+                            "line": 26,
+                            "children": [
+                              {
+                                "type": "CALL",
+                                "line": 26,
+                                "children": [
+                                  {
+                                    "type": "IVAR",
+                                    "line": 26,
+                                    "children": [
+                                      "@steps"
+                                    ]
+                                  },
+                                  "each",
+                                  null
+                                ]
+                              },
+                              {
+                                "type": "SCOPE",
+                                "line": 26,
+                                "children": [
+                                  [
+                                    "step"
+                                  ],
+                                  {
+                                    "type": "ARGS",
+                                    "line": 26,
+                                    "children": [
+                                      1,
+                                      null,
+                                      null,
+                                      null,
+                                      0,
+                                      null,
+                                      null,
+                                      null,
+                                      null,
+                                      null
+                                    ]
+                                  },
+                                  {
+                                    "type": "YIELD",
+                                    "line": 27,
+                                    "children": [
+                                      {
+                                        "type": "LIST",
+                                        "line": 27,
+                                        "children": [
+                                          {
+                                            "type": "DVAR",
+                                            "line": 27,
+                                            "children": [
+                                              "step"
+                                            ]
+                                          },
+                                          null
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "CDECL",
+                    "line": 31,
+                    "children": [
+                      "DOUBLE",
+                      {
+                        "type": "LAMBDA",
+                        "line": 31,
+                        "children": [
+                          {
+                            "type": "SCOPE",
+                            "line": 31,
+                            "children": [
+                              [
+                                "x"
+                              ],
+                              {
+                                "type": "ARGS",
+                                "line": 31,
+                                "children": [
+                                  1,
+                                  null,
+                                  null,
+                                  null,
+                                  0,
+                                  null,
+                                  null,
+                                  null,
+                                  null,
+                                  null
+                                ]
+                              },
+                              {
+                                "type": "OPCALL",
+                                "line": 31,
+                                "children": [
+                                  {
+                                    "type": "DVAR",
+                                    "line": 31,
+                                    "children": [
+                                      "x"
+                                    ]
+                                  },
+                                  "*",
+                                  {
+                                    "type": "LIST",
+                                    "line": 31,
+                                    "children": [
+                                      {
+                                        "type": "LIT",
+                                        "line": 31,
+                                        "children": [
+                                          2
+                                        ]
+                                      },
+                                      null
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 33,
+                    "children": [
+                      "doubler",
+                      {
+                        "type": "SCOPE",
+                        "line": 33,
+                        "children": [
+                          [
+
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 33,
+                            "children": [
+                              0,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "CONST",
+                            "line": 34,
+                            "children": [
+                              "DOUBLE"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

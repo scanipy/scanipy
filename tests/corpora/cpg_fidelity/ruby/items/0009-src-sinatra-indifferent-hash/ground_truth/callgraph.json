@@ -1,0 +1,565 @@
+{
+  "convention": "lower-bound",
+  "edges": [
+    {
+      "caller": "[]",
+      "callee": "[]",
+      "line": 43,
+      "node": "CALL"
+    },
+    {
+      "caller": "[]",
+      "callee": "merge!",
+      "line": 43,
+      "node": "CALL"
+    },
+    {
+      "caller": "[]",
+      "callee": "new",
+      "line": 43,
+      "node": "VCALL"
+    },
+    {
+      "caller": "default",
+      "callee": "map!",
+      "line": 47,
+      "node": "CALL"
+    },
+    {
+      "caller": "default",
+      "callee": "method",
+      "line": 47,
+      "node": "FCALL"
+    },
+    {
+      "caller": "default",
+      "callee": "super:default",
+      "line": 49,
+      "node": "SUPER"
+    },
+    {
+      "caller": "default=",
+      "callee": "convert_value",
+      "line": 53,
+      "node": "FCALL"
+    },
+    {
+      "caller": "default=",
+      "callee": "super:default=",
+      "line": 53,
+      "node": "SUPER"
+    },
+    {
+      "caller": "assoc",
+      "callee": "convert_key",
+      "line": 57,
+      "node": "FCALL"
+    },
+    {
+      "caller": "assoc",
+      "callee": "super:assoc",
+      "line": 57,
+      "node": "SUPER"
+    },
+    {
+      "caller": "rassoc",
+      "callee": "convert_value",
+      "line": 61,
+      "node": "FCALL"
+    },
+    {
+      "caller": "rassoc",
+      "callee": "super:rassoc",
+      "line": 61,
+      "node": "SUPER"
+    },
+    {
+      "caller": "fetch",
+      "callee": "map!",
+      "line": 65,
+      "node": "CALL"
+    },
+    {
+      "caller": "fetch",
+      "callee": "method",
+      "line": 65,
+      "node": "FCALL"
+    },
+    {
+      "caller": "fetch",
+      "callee": "convert_key",
+      "line": 67,
+      "node": "FCALL"
+    },
+    {
+      "caller": "fetch",
+      "callee": "super:fetch",
+      "line": 67,
+      "node": "SUPER"
+    },
+    {
+      "caller": "[]",
+      "callee": "convert_key",
+      "line": 71,
+      "node": "FCALL"
+    },
+    {
+      "caller": "[]",
+      "callee": "super:[]",
+      "line": 71,
+      "node": "SUPER"
+    },
+    {
+      "caller": "[]=",
+      "callee": "convert_key",
+      "line": 75,
+      "node": "FCALL"
+    },
+    {
+      "caller": "[]=",
+      "callee": "convert_value",
+      "line": 75,
+      "node": "FCALL"
+    },
+    {
+      "caller": "[]=",
+      "callee": "super:[]=",
+      "line": 75,
+      "node": "SUPER"
+    },
+    {
+      "caller": "key",
+      "callee": "convert_value",
+      "line": 81,
+      "node": "FCALL"
+    },
+    {
+      "caller": "key",
+      "callee": "super:key",
+      "line": 81,
+      "node": "SUPER"
+    },
+    {
+      "caller": "key?",
+      "callee": "convert_key",
+      "line": 85,
+      "node": "FCALL"
+    },
+    {
+      "caller": "key?",
+      "callee": "super:key?",
+      "line": 85,
+      "node": "SUPER"
+    },
+    {
+      "caller": "value?",
+      "callee": "convert_value",
+      "line": 93,
+      "node": "FCALL"
+    },
+    {
+      "caller": "value?",
+      "callee": "super:value?",
+      "line": 93,
+      "node": "SUPER"
+    },
+    {
+      "caller": "delete",
+      "callee": "convert_key",
+      "line": 99,
+      "node": "FCALL"
+    },
+    {
+      "caller": "delete",
+      "callee": "super:delete",
+      "line": 99,
+      "node": "SUPER"
+    },
+    {
+      "caller": "dig",
+      "callee": "convert_key",
+      "line": 104,
+      "node": "FCALL"
+    },
+    {
+      "caller": "dig",
+      "callee": "super:dig",
+      "line": 104,
+      "node": "SUPER"
+    },
+    {
+      "caller": "fetch_values",
+      "callee": "map!",
+      "line": 108,
+      "node": "CALL"
+    },
+    {
+      "caller": "fetch_values",
+      "callee": "method",
+      "line": 108,
+      "node": "FCALL"
+    },
+    {
+      "caller": "fetch_values",
+      "callee": "super:fetch_values",
+      "line": 110,
+      "node": "SUPER"
+    },
+    {
+      "caller": "slice",
+      "callee": "map!",
+      "line": 114,
+      "node": "CALL"
+    },
+    {
+      "caller": "slice",
+      "callee": "method",
+      "line": 114,
+      "node": "FCALL"
+    },
+    {
+      "caller": "slice",
+      "callee": "[]",
+      "line": 116,
+      "node": "CALL"
+    },
+    {
+      "caller": "slice",
+      "callee": "class",
+      "line": 116,
+      "node": "CALL"
+    },
+    {
+      "caller": "slice",
+      "callee": "super:slice",
+      "line": 116,
+      "node": "SUPER"
+    },
+    {
+      "caller": "values_at",
+      "callee": "map!",
+      "line": 120,
+      "node": "CALL"
+    },
+    {
+      "caller": "values_at",
+      "callee": "method",
+      "line": 120,
+      "node": "FCALL"
+    },
+    {
+      "caller": "values_at",
+      "callee": "super:values_at",
+      "line": 122,
+      "node": "SUPER"
+    },
+    {
+      "caller": "merge!",
+      "callee": "each",
+      "line": 126,
+      "node": "CALL"
+    },
+    {
+      "caller": "merge!",
+      "callee": "class",
+      "line": 127,
+      "node": "CALL"
+    },
+    {
+      "caller": "merge!",
+      "callee": "is_a?",
+      "line": 127,
+      "node": "CALL"
+    },
+    {
+      "caller": "merge!",
+      "callee": "super:merge!",
+      "line": 128,
+      "node": "SUPER"
+    },
+    {
+      "caller": "merge!",
+      "callee": "each_pair",
+      "line": 130,
+      "node": "CALL"
+    },
+    {
+      "caller": "merge!",
+      "callee": "convert_key",
+      "line": 131,
+      "node": "FCALL"
+    },
+    {
+      "caller": "merge!",
+      "callee": "[]",
+      "line": 132,
+      "node": "FCALL"
+    },
+    {
+      "caller": "merge!",
+      "callee": "block_given?",
+      "line": 132,
+      "node": "FCALL"
+    },
+    {
+      "caller": "merge!",
+      "callee": "key?",
+      "line": 132,
+      "node": "FCALL"
+    },
+    {
+      "caller": "merge!",
+      "callee": "convert_value",
+      "line": 133,
+      "node": "FCALL"
+    },
+    {
+      "caller": "merge",
+      "callee": "dup",
+      "line": 144,
+      "node": "VCALL"
+    },
+    {
+      "caller": "merge",
+      "callee": "merge!",
+      "line": 144,
+      "node": "CALL"
+    },
+    {
+      "caller": "replace",
+      "callee": "[]",
+      "line": 148,
+      "node": "CALL"
+    },
+    {
+      "caller": "replace",
+      "callee": "class",
+      "line": 148,
+      "node": "CALL"
+    },
+    {
+      "caller": "replace",
+      "callee": "is_a?",
+      "line": 148,
+      "node": "CALL"
+    },
+    {
+      "caller": "replace",
+      "callee": "super:replace",
+      "line": 148,
+      "node": "SUPER"
+    },
+    {
+      "caller": "transform_values",
+      "callee": "dup",
+      "line": 152,
+      "node": "VCALL"
+    },
+    {
+      "caller": "transform_values",
+      "callee": "transform_values!",
+      "line": 152,
+      "node": "CALL"
+    },
+    {
+      "caller": "transform_values!",
+      "callee": "super:transform_values!",
+      "line": 156,
+      "node": "ZSUPER"
+    },
+    {
+      "caller": "transform_values!",
+      "callee": "method",
+      "line": 157,
+      "node": "FCALL"
+    },
+    {
+      "caller": "transform_values!",
+      "callee": "super:transform_values!",
+      "line": 157,
+      "node": "SUPER"
+    },
+    {
+      "caller": "transform_keys",
+      "callee": "dup",
+      "line": 161,
+      "node": "VCALL"
+    },
+    {
+      "caller": "transform_keys",
+      "callee": "transform_keys!",
+      "line": 161,
+      "node": "CALL"
+    },
+    {
+      "caller": "transform_keys!",
+      "callee": "super:transform_keys!",
+      "line": 165,
+      "node": "ZSUPER"
+    },
+    {
+      "caller": "transform_keys!",
+      "callee": "method",
+      "line": 166,
+      "node": "FCALL"
+    },
+    {
+      "caller": "transform_keys!",
+      "callee": "super:transform_keys!",
+      "line": 166,
+      "node": "SUPER"
+    },
+    {
+      "caller": "select",
+      "callee": "block_given?",
+      "line": 170,
+      "node": "FCALL"
+    },
+    {
+      "caller": "select",
+      "callee": "to_enum",
+      "line": 170,
+      "node": "FCALL"
+    },
+    {
+      "caller": "select",
+      "callee": "dup",
+      "line": 172,
+      "node": "VCALL"
+    },
+    {
+      "caller": "select",
+      "callee": "select!",
+      "line": 172,
+      "node": "CALL"
+    },
+    {
+      "caller": "select",
+      "callee": "tap",
+      "line": 172,
+      "node": "CALL"
+    },
+    {
+      "caller": "reject",
+      "callee": "block_given?",
+      "line": 176,
+      "node": "FCALL"
+    },
+    {
+      "caller": "reject",
+      "callee": "to_enum",
+      "line": 176,
+      "node": "FCALL"
+    },
+    {
+      "caller": "reject",
+      "callee": "dup",
+      "line": 178,
+      "node": "VCALL"
+    },
+    {
+      "caller": "reject",
+      "callee": "reject!",
+      "line": 178,
+      "node": "CALL"
+    },
+    {
+      "caller": "reject",
+      "callee": "tap",
+      "line": 178,
+      "node": "CALL"
+    },
+    {
+      "caller": "compact",
+      "callee": "dup",
+      "line": 182,
+      "node": "VCALL"
+    },
+    {
+      "caller": "compact",
+      "callee": "tap",
+      "line": 182,
+      "node": "CALL"
+    },
+    {
+      "caller": "except",
+      "callee": "map!",
+      "line": 186,
+      "node": "CALL"
+    },
+    {
+      "caller": "except",
+      "callee": "method",
+      "line": 186,
+      "node": "FCALL"
+    },
+    {
+      "caller": "except",
+      "callee": "[]",
+      "line": 188,
+      "node": "CALL"
+    },
+    {
+      "caller": "except",
+      "callee": "class",
+      "line": 188,
+      "node": "CALL"
+    },
+    {
+      "caller": "except",
+      "callee": "super:except",
+      "line": 188,
+      "node": "SUPER"
+    },
+    {
+      "caller": "convert_key",
+      "callee": "is_a?",
+      "line": 194,
+      "node": "CALL"
+    },
+    {
+      "caller": "convert_key",
+      "callee": "to_s",
+      "line": 194,
+      "node": "CALL"
+    },
+    {
+      "caller": "convert_value",
+      "callee": "[]",
+      "line": 200,
+      "node": "CALL"
+    },
+    {
+      "caller": "convert_value",
+      "callee": "class",
+      "line": 200,
+      "node": "CALL"
+    },
+    {
+      "caller": "convert_value",
+      "callee": "is_a?",
+      "line": 200,
+      "node": "CALL"
+    },
+    {
+      "caller": "convert_value",
+      "callee": "map",
+      "line": 202,
+      "node": "CALL"
+    },
+    {
+      "caller": "convert_value",
+      "callee": "method",
+      "line": 202,
+      "node": "FCALL"
+    }
+  ],
+  "dynamic_sites": [
+    {
+      "caller": "merge!",
+      "kind": "higher-order:yield",
+      "line": 132
+    }
+  ],
+  "ruby_version": "3.2.3"
+}

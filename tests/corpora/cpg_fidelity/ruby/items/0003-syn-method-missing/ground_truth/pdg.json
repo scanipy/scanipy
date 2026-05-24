@@ -1,0 +1,56 @@
+{
+  "convention": "lower-bound",
+  "methods": [
+    {
+      "method": "initialize",
+      "edges": [
+        {
+          "var": "attrs",
+          "use_line": 8,
+          "def_line": 7
+        }
+      ]
+    },
+    {
+      "method": "method_missing",
+      "edges": [
+        {
+          "var": "name",
+          "use_line": 12,
+          "def_line": 11
+        },
+        {
+          "var": "key",
+          "use_line": 13,
+          "def_line": 12
+        },
+        {
+          "var": "key",
+          "use_line": 14,
+          "def_line": 12
+        }
+      ]
+    },
+    {
+      "method": "respond_to_missing?",
+      "edges": [
+        {
+          "var": "name",
+          "use_line": 21,
+          "def_line": 20
+        }
+      ]
+    },
+    {
+      "method": "decode",
+      "edges": [
+        {
+          "var": "name",
+          "use_line": 25,
+          "def_line": 24
+        }
+      ]
+    }
+  ],
+  "ruby_version": "3.2.3"
+}

@@ -1,0 +1,124 @@
+built_at: '2026-05-24T17:56:18Z'
+built_by: corpus-agent/CMP-CORP-CPG-ruby
+corpus_digest: sha256:77bd2bb8c58a04ccda4bd6cef29e5d03a9aa7000dfbb3ad1be7c3f7b3aa1616e
+corpus_id: CORP-CPG-ruby
+corpus_version: 0.1.0
+ground_truth_method: 'Reproducible-by-construction: AST/CFG/call-graph/PDG derived
+  by the pinned toolchain/derive_ground_truth.rb over RubyVM::AbstractSyntaxTree (Ruby
+  3.2.3). Call graph + PDG are a documented LOWER BOUND; dynamic-dispatch sites are
+  recorded in `dynamic_sites`, never resolved into edges (INV-6). See methodology.md
+  and README.md for the full procedure and v0.1.0 scope.'
+item_count: 9
+items:
+  - categories:
+      - closed_world
+      - plain_calls
+    ground_truth_call_edges: 8
+    ground_truth_dynamic_sites: 0
+    id: 0001-syn-plain-calls
+    item_digest: sha256:d23a9f7386394a725cd5e2782637a23babc945ba33a77c53f3d748dbf3f63375
+    license: Apache-2.0
+    path_in_source: order_total.rb
+    source: synthesized
+    source_commit: null
+    source_url: vendored
+  - categories:
+      - dynamic
+      - send
+    ground_truth_call_edges: 4
+    ground_truth_dynamic_sites: 2
+    id: 0002-syn-send-dispatch
+    item_digest: sha256:dc9480e8429ef213dd9ddb8e309b27be02189469f11a84e94e4f95b9330cd3a7
+    license: Apache-2.0
+    path_in_source: dispatcher.rb
+    source: synthesized
+    source_commit: null
+    source_url: vendored
+  - categories:
+      - dynamic
+      - method_missing
+    ground_truth_call_edges: 10
+    ground_truth_dynamic_sites: 2
+    id: 0003-syn-method-missing
+    item_digest: sha256:ecf7cb4e2b8d5f3ded904bbc090b77bf8d0b0a1840831423819833a6ab3017fb
+    license: Apache-2.0
+    path_in_source: ghost_methods.rb
+    source: synthesized
+    source_commit: null
+    source_url: vendored
+  - categories:
+      - define_method
+      - dynamic
+    ground_truth_call_edges: 1
+    ground_truth_dynamic_sites: 2
+    id: 0004-syn-define-method
+    item_digest: sha256:4b758aef75cc831ddd985ee6de11daee634f8420cc753511a5713106117afab3
+    license: Apache-2.0
+    path_in_source: dynamic_accessors.rb
+    source: synthesized
+    source_commit: null
+    source_url: vendored
+  - categories:
+      - monkey_patch
+    ground_truth_call_edges: 6
+    ground_truth_dynamic_sites: 0
+    id: 0005-syn-monkey-patch
+    item_digest: sha256:c541428cd90012b64d0c8218fbf795233c817548ee97ec0667f75254ef551450
+    license: Apache-2.0
+    path_in_source: string_ext.rb
+    source: synthesized
+    source_commit: null
+    source_url: vendored
+  - categories:
+      - blocks_procs_lambdas
+      - dynamic
+    ground_truth_call_edges: 4
+    ground_truth_dynamic_sites: 2
+    id: 0006-syn-blocks-procs-lambdas
+    item_digest: sha256:89e75fe7da3fab11943fd1395b58d2f7047a0448581a546c9abb4f0187c17d4c
+    license: Apache-2.0
+    path_in_source: pipeline.rb
+    source: synthesized
+    source_commit: null
+    source_url: vendored
+  - categories:
+      - dynamic
+      - rails_active_record
+      - send
+    ground_truth_call_edges: 7
+    ground_truth_dynamic_sites: 1
+    id: 0007-syn-active-record-style
+    item_digest: sha256:375e37d743d5f34b0e7f04233ea1b5b05466bceb8b3c74ebab74ac1234793af7
+    license: Apache-2.0
+    path_in_source: user_repository.rb
+    source: synthesized
+    source_commit: null
+    source_url: vendored
+  - categories:
+      - closed_world
+      - sourced
+    ground_truth_call_edges: 0
+    ground_truth_dynamic_sites: 0
+    id: 0008-src-sinatra-version
+    item_digest: sha256:b6eb8511353b11a1af263ff5040fdd8421eb38265f933851667f7cf1be4320e3
+    license: MIT
+    path_in_source: version.rb
+    source: sourced
+    source_commit: 7b50a1bbb5324838908dfaa00ec53ad322673a29
+    source_url: https://github.com/sinatra/sinatra
+  - categories:
+      - blocks_procs_lambdas
+      - dynamic
+      - sourced
+    ground_truth_call_edges: 92
+    ground_truth_dynamic_sites: 1
+    id: 0009-src-sinatra-indifferent-hash
+    item_digest: sha256:9a00af9e5b686d26dea95823e8ebf94e5ba91a0742102d7913f115dc00aae7d7
+    license: MIT
+    path_in_source: indifferent_hash.rb
+    source: sourced
+    source_commit: 7b50a1bbb5324838908dfaa00ec53ad322673a29
+    source_url: https://github.com/sinatra/sinatra
+language: ruby
+parse_success_rate: 1.0
+ruby_version: 3.2.3
