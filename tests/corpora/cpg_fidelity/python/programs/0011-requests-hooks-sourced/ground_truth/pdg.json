@@ -1,0 +1,137 @@
+{
+  "hooks.py": {
+    "default_hooks": {
+      "edges": []
+    },
+    "dispatch_hook": {
+      "edges": [
+        {
+          "from_line": 32,
+          "to_line": 39,
+          "kind": "data",
+          "var": "hooks"
+        },
+        {
+          "from_line": 32,
+          "to_line": 40,
+          "kind": "data",
+          "var": "key"
+        },
+        {
+          "from_line": 32,
+          "to_line": 41,
+          "kind": "data",
+          "var": "hook_data"
+        },
+        {
+          "from_line": 39,
+          "to_line": 40,
+          "kind": "data",
+          "var": "hooks_dict"
+        },
+        {
+          "from_line": 40,
+          "to_line": 41,
+          "kind": "data",
+          "var": "hook_list"
+        },
+        {
+          "from_line": 41,
+          "to_line": 42,
+          "kind": "control"
+        },
+        {
+          "from_line": 41,
+          "to_line": 42,
+          "kind": "data",
+          "var": "hook_list"
+        },
+        {
+          "from_line": 41,
+          "to_line": 44,
+          "kind": "control"
+        },
+        {
+          "from_line": 41,
+          "to_line": 44,
+          "kind": "data",
+          "var": "_hook_data"
+        },
+        {
+          "from_line": 41,
+          "to_line": 44,
+          "kind": "data",
+          "var": "hook"
+        },
+        {
+          "from_line": 41,
+          "to_line": 44,
+          "kind": "data",
+          "var": "hook_data"
+        },
+        {
+          "from_line": 42,
+          "to_line": 43,
+          "kind": "control"
+        },
+        {
+          "from_line": 42,
+          "to_line": 43,
+          "kind": "data",
+          "var": "hook_list"
+        },
+        {
+          "from_line": 43,
+          "to_line": 44,
+          "kind": "data",
+          "var": "hook_list"
+        },
+        {
+          "from_line": 44,
+          "to_line": 45,
+          "kind": "control"
+        },
+        {
+          "from_line": 44,
+          "to_line": 45,
+          "kind": "data",
+          "var": "hook"
+        },
+        {
+          "from_line": 44,
+          "to_line": 45,
+          "kind": "data",
+          "var": "hook_data"
+        },
+        {
+          "from_line": 44,
+          "to_line": 46,
+          "kind": "control"
+        },
+        {
+          "from_line": 45,
+          "to_line": 46,
+          "kind": "data",
+          "var": "_hook_data"
+        },
+        {
+          "from_line": 45,
+          "to_line": 47,
+          "kind": "data",
+          "var": "_hook_data"
+        },
+        {
+          "from_line": 46,
+          "to_line": 47,
+          "kind": "control"
+        },
+        {
+          "from_line": 47,
+          "to_line": 48,
+          "kind": "data",
+          "var": "hook_data"
+        }
+      ]
+    }
+  }
+}

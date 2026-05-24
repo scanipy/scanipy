@@ -1,0 +1,94 @@
+{
+  "meta.py": {
+    "PluginMeta.__new__": {
+      "edges": [
+        {
+          "from_line": 12,
+          "to_line": 13,
+          "kind": "data",
+          "var": "bases"
+        },
+        {
+          "from_line": 12,
+          "to_line": 13,
+          "kind": "data",
+          "var": "mcs"
+        },
+        {
+          "from_line": 12,
+          "to_line": 13,
+          "kind": "data",
+          "var": "name"
+        },
+        {
+          "from_line": 12,
+          "to_line": 13,
+          "kind": "data",
+          "var": "ns"
+        },
+        {
+          "from_line": 12,
+          "to_line": 14,
+          "kind": "data",
+          "var": "name"
+        },
+        {
+          "from_line": 13,
+          "to_line": 14,
+          "kind": "data",
+          "var": "cls"
+        },
+        {
+          "from_line": 13,
+          "to_line": 15,
+          "kind": "data",
+          "var": "cls"
+        }
+      ]
+    },
+    "Base.run": {
+      "edges": []
+    },
+    "Worker.run": {
+      "edges": []
+    },
+    "register": {
+      "edges": [
+        {
+          "from_line": 28,
+          "to_line": 29,
+          "kind": "data",
+          "var": "cls"
+        },
+        {
+          "from_line": 28,
+          "to_line": 29,
+          "kind": "data",
+          "var": "name"
+        },
+        {
+          "from_line": 28,
+          "to_line": 30,
+          "kind": "data",
+          "var": "name"
+        }
+      ]
+    },
+    "make": {
+      "edges": [
+        {
+          "from_line": 33,
+          "to_line": 34,
+          "kind": "data",
+          "var": "name"
+        },
+        {
+          "from_line": 34,
+          "to_line": 35,
+          "kind": "data",
+          "var": "cls"
+        }
+      ]
+    }
+  }
+}

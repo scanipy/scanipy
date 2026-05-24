@@ -1,0 +1,10 @@
+{
+  "schema": "cpg-fidelity/callgraph/v1",
+  "program_id": "0009-annotation-heavy",
+  "notes": "Annotation declarations dominate parse cost but contribute no call edges. The only runtime calls are compute -> String.length and main -> Service.<init>/compute.",
+  "edges": [
+    {"caller_method": "corpus.cpg.p0009.Annotated.main(String[])", "callee_method": "corpus.cpg.p0009.Annotated$Service.<init>()", "line": 37, "kind": "special", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0009.Annotated.main(String[])", "callee_method": "corpus.cpg.p0009.Annotated$Service.compute(String)", "line": 38, "kind": "virtual", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0009.Annotated$Service.compute(String)", "callee_method": "java.lang.String.length()", "line": 32, "kind": "virtual", "library": true, "over_approximate": false}
+  ]
+}

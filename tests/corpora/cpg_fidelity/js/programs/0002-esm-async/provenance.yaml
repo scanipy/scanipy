@@ -1,0 +1,11 @@
+source_url: local:synthesized/CMP-CORP-CPG-js/0002-esm-async
+commit_sha: sha256:463d9045edbd20148eaf1ab2c4d9c5419c51458a26a622e29965b47b3ba8c6c4
+license: Apache-2.0
+surface: js
+module_system: esm
+synthetic: true
+loc: 26
+construct_coverage:
+  - module-system-esm
+  - async-await
+notes: Authored for this corpus (Apache-2.0). Content-addressed source/ sha256.
