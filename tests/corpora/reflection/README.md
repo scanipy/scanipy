@@ -109,3 +109,7 @@ BSD-3-Clause, MPL-2.0 (never GPL/AGPL without explicit CTO approval).
 - `CLAR-CORP-05` — sandbox network/sourcing budget for bulk-sourcing real OSS
   reflection samples at `N ≥ 50` per category (this build could reach github.com but
   bulk hand-curation + dual review is out of one agent-run scope).
+- `CLAR-CORP-06` — the v0.1.0 mutation pipeline's per-item `seed` does not produce
+  structurally-distinct source trees (20 items/language collapse to ~1–3 trees). The
+  v1.0.0 generator must vary structure / identifiers / call-context per seed for genuine
+  per-item coverage. Until then Gate 2 is NOT declared passing on this corpus.
