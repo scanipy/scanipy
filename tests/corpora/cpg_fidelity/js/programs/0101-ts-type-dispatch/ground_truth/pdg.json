@@ -1,0 +1,41 @@
+{
+  "index.ts": [
+    {
+      "edges": [],
+      "function": "index.ts::constructor@8"
+    },
+    {
+      "edges": [],
+      "function": "index.ts::area@9"
+    },
+    {
+      "edges": [],
+      "function": "index.ts::constructor@15"
+    },
+    {
+      "edges": [],
+      "function": "index.ts::area@16"
+    },
+    {
+      "edges": [
+        {
+          "def_line": 23,
+          "kind": "data",
+          "use_line": 25,
+          "var": "s"
+        },
+        {
+          "def_line": 25,
+          "kind": "data",
+          "use_line": 27,
+          "var": "sum"
+        }
+      ],
+      "function": "index.ts::totalArea@21"
+    },
+    {
+      "edges": [],
+      "function": "index.ts::makeShapes@30"
+    }
+  ]
+}

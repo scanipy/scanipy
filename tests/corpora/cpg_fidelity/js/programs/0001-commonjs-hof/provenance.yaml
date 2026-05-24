@@ -1,0 +1,14 @@
+source_url: local:synthesized/CMP-CORP-CPG-js/0001-commonjs-hof
+commit_sha: sha256:c9d1a6dde856eb8bdbcc3a5cfec59a24cfb367ed475c2923dd3c5e3a07fcef43
+license: Apache-2.0
+surface: js
+module_system: commonjs
+synthetic: true
+loc: 41
+construct_coverage:
+  - module-system-commonjs
+  - higher-order-functions
+  - node-builtins
+notes: |
+  Authored for this corpus (Apache-2.0). Content-addressed; commit_sha is the
+  sha256 of source/ (DOC §7 reproducibility contract for synthetic programs).

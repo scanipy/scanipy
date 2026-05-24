@@ -1,0 +1,15 @@
+source_url: local:synthesized/CMP-CORP-CPG-js/0101-ts-type-dispatch
+commit_sha: sha256:eaa5a28b5da5d076dba929e19e74b3cbe2963fff7394dae498099fab8113e034
+license: Apache-2.0
+surface: ts
+module_system: esm
+synthetic: true
+loc: 30
+construct_coverage:
+  - module-system-esm
+  - type-informed-dispatch
+notes: |
+  Authored for this corpus (Apache-2.0). TS surface; tsconfig.json included
+  (DOC §7: surface=ts requires a tsconfig for reproducible tsc). The s.area()
+  site is type-informed dispatch (target set {Circle.area, Square.area});
+  v1.0.0 resolves it via tsc --noEmit --declaration (CLAR-CORP-07).
