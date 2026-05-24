@@ -1,0 +1,9 @@
+expected_sites:
+  - file: calculator.js
+    kind: js-eval
+    line: 19
+label: not-closed-world
+labelled_by: pipeline
+rationale: Mutation-injected js-eval reflection construct inserted at line 19 of a
+  clean closed-world base. not-closed-world by construction (INV-4 safe direction).
+review_status: single-pass
