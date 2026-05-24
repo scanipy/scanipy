@@ -1,0 +1,28 @@
+slice_id: owasp-pathtraversal-java-00001
+source: owasp_benchmark
+class: path-traversal
+language: java
+cwe_ids:
+  - CWE-22
+positive: true
+fix_pair_id: null
+license: GPL-2.0
+vendored: false
+notes: |
+  OWASP BenchmarkTest00001. SOURCED ground truth: upstream expectedresults CSV row
+  "BenchmarkTest00001,pathtraver,true,22". Fetch-on-demand (GPL-2.0 off vendor allow-list).
+ground_truth_sites:
+  - file: src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00001.java
+    line: 63
+    kind: path-traversal-sink
+    note: "new FileInputStream(new File(fileName)) over a tainted path"
+provenance:
+  dataset: owasp_benchmark
+  repo: https://github.com/OWASP-Benchmark/BenchmarkJava
+  release_tag: "1.2beta"
+  commit_sha: 2734ae486356765ea4e45393a28e20bcb5047f8c
+  expected_results_csv: expectedresults-1.2beta.csv
+  upstream_path: src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00001.java
+  upstream_sha256: sha256:67124608af68142f31964c12249891ae7153678b6bbbfa86ad7394b570d8a388
+  fetch_on_demand: true
+  ground_truth_origin: upstream_csv_verbatim

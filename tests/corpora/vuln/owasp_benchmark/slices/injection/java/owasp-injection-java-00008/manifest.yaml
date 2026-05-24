@@ -1,0 +1,31 @@
+slice_id: owasp-injection-java-00008
+source: owasp_benchmark
+class: injection
+language: java
+cwe_ids:
+  - CWE-89
+positive: true
+fix_pair_id: null
+license: GPL-2.0
+vendored: false
+notes: |
+  OWASP BenchmarkTest00008. SOURCED ground truth: upstream expectedresults CSV row
+  "BenchmarkTest00008,sqli,true,89" (category=sqli, real-vulnerability=true, cwe=89).
+  Content is NOT vendored: OWASP BenchmarkJava is GPL-2.0, which is off the corpus
+  vendor allow-list (DOC §7); the slice ships fetch-on-demand. Integrity is pinned by
+  upstream_sha256 so a fetch is verifiable. See CLAR-CORP-18 for vendoring approval.
+ground_truth_sites:
+  - file: src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00008.java
+    line: 54
+    kind: sql-injection-sink
+    note: "statement.executeQuery() over a tainted SQL string"
+provenance:
+  dataset: owasp_benchmark
+  repo: https://github.com/OWASP-Benchmark/BenchmarkJava
+  release_tag: "1.2beta"
+  commit_sha: 2734ae486356765ea4e45393a28e20bcb5047f8c
+  expected_results_csv: expectedresults-1.2beta.csv
+  upstream_path: src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00008.java
+  upstream_sha256: sha256:975e01ea7b2d5be4c1b9e223d104ae736f9b609f86848559444f712583bf1fb0
+  fetch_on_demand: true
+  ground_truth_origin: upstream_csv_verbatim
