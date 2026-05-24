@@ -205,7 +205,13 @@ def test_registration_rejects_out_of_dsl_spec_passthrough_e_dsl(e_dsl_code: str)
     """
     # TODO: from detectors.registry import DetectorRegistry, DSLError
     # CLAR-PARAM-01 — non-DSL spec boundary owned upstream; codes per DOC-DSL §6
-    assert e_dsl_code.startswith("E-DSL-")
+    # When CMP-DET-02 is DONE, assert on the REGISTRY OUTPUT, never the input var:
+    #   with pytest.raises(DSLError) as exc:
+    #       DetectorRegistry().register(detector_triggering(e_dsl_code))
+    #   assert exc.value.code == e_dsl_code        # verbatim code at register()
+    #   assert DetectorRegistry().specs == []      # total rejection, no partial-load
+    # (No pre-skip assert on e_dsl_code itself — that is tautological and would leave
+    #  the registration guard permanently green once pytest.skip is removed.)
     pytest.skip("CMP-DET-02 not implemented yet")
 
 

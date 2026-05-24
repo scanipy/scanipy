@@ -6,12 +6,19 @@ Refactor-stability falsifiers for Algorithm 3 (CMP-CORE-02):
     TST-AC-CORE-02b   fingerprint CHANGES on a genuine fix + aliasing-changing
                       extract
 
-These run via .github/workflows/falsifier-cw.yml, gated behind a corpus.lock
-(CMP-CORP-REFAC-01, Phase 4) — being skip/xfail until that corpus and the
-implementation land is expected. Production code does not exist yet, so each
-test is a registered-but-dormant stub: `xfail(strict=False)` + a `pytest.skip`
-body. Marker = execution/frequency class (`falsifier`); the WBS kind tag lives
-in the docstring.
+These live in tests/falsifier/refac/ (NOT tests/falsifier/cw/): they are
+refactor-stability falsifiers keyed on the REFACTOR corpus
+(`tests/corpora/refactor/corpus.lock`, CMP-CORP-REFAC-01, Phase 4) — a different
+precondition from Gate 2's CW reflection corpus. Keeping them out of cw/ prevents
+two failure modes: (1) arming under the wrong corpus when the reflection lock
+lands first, and (2) a fingerprint regression failing Gate 2 indistinguishably
+from a CW-DETECT zero-FN violation. They arm when CMP-CORP-REFAC-01 + a dedicated
+refactor-falsifier CI step land in Phase 4 — no CI step discovers this dir today,
+and that dormancy is intentional (tracked with the corpus work package).
+
+Production code does not exist yet, so each test is a registered-but-dormant
+stub: `xfail(strict=False)` + a `pytest.skip` body. Marker = execution class
+(`falsifier`); the WBS kind tag lives in the docstring.
 """
 
 import pytest
@@ -33,8 +40,10 @@ def test_core_02a_fingerprint_invariant_under_named_refactors() -> None:
     Pass criteria: for every seeded pair, slice_fingerprint(original) ==
                    slice_fingerprint(refactored). Any mismatch falsifies the
                    refactor-invariance claim for that named pass.
-    Frequency:     every CI run (falsifier-cw.yml; corpus-gated Phase 4).
-    Hard gate?:    yes.
+    Frequency:     Phase 4 onward (dedicated refactor-falsifier step, gated on
+                   tests/corpora/refactor/corpus.lock); not discovered by any CI
+                   step today.
+    Hard gate?:    yes (once armed in Phase 4).
     """
     # TODO: load CMP-CORP-REFAC-01; for each pair assert
     #       compute_slice_fingerprint(orig) == compute_slice_fingerprint(refac).
@@ -59,8 +68,10 @@ def test_core_02b_fingerprint_changes_on_fix_and_aliasing_extract() -> None:
                    fingerprint that stays equal across a real fix would
                    wrongly auto-suppress a still-valid (or newly-changed)
                    finding — that is the failure this falsifier guards against.
-    Frequency:     every CI run (falsifier-cw.yml; corpus-gated Phase 4).
-    Hard gate?:    yes.
+    Frequency:     Phase 4 onward (dedicated refactor-falsifier step, gated on
+                   tests/corpora/refactor/corpus.lock); not discovered by any CI
+                   step today.
+    Hard gate?:    yes (once armed in Phase 4).
     """
     # TODO: assert fingerprint differs across the genuine fix and across the
     #       impure/aliasing-changing extract (pass 4 must NOT normalise it).

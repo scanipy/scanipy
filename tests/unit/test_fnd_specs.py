@@ -165,6 +165,39 @@ def test_fnd_02b_every_row_carries_nonnull_origin_sversion_envdigest() -> None:
 
 @pytest.mark.invariant
 @pytest.mark.xfail(
+    reason="CMP-FND-02 (Findings store schema) not yet implemented",
+    strict=False,
+)
+def test_inv_5_fnd_02_cpg_order_hash_annotation_persisted_at_schema() -> None:
+    """INV-5 at the persistence layer: the annotation column is NOT NULL + CHECKed.
+
+    Test id:        TST-INV-5-FND-02
+    Maps to AC:     INV-5 (conditional labels self-describing) for CMP-FND-02 —
+                    the emitter named in WBS §4.3 (CMP-FND-02 carries the findings
+                    store schema). Referenced by TST-AC-FND-02b.
+    Kind tag:       [INVARIANT]
+    Inputs:         A live ``findings`` table (Alembic-migrated per CMP-FND-02);
+                    candidate INSERTs that (a) omit ``cpg_order_hash_annotation``
+                    and (b) supply a non-conforming annotation string.
+    Outputs:        INSERT outcome (success / DB error).
+    Pass criteria:  ``findings.cpg_order_hash_annotation`` is declared ``NOT NULL``
+                    with a CHECK constraint pinning the exact literal
+                    ``"canonical iff fingerprint_class = strong"`` (DOC-DB §4.12);
+                    an INSERT omitting it raises 23502, and an INSERT with any
+                    other annotation string raises a CHECK violation (23514). This
+                    closes the persistence-layer gap so a migration that drops the
+                    annotation cannot pass Phase-1 specs.
+    Frequency:      every CI run
+    Hard gate?:     yes — schema INV-5 gate for CMP-FND-02.
+    """
+    # TODO: when CMP-FND-02 lands, assert NOT NULL + CHECK on
+    #       findings.cpg_order_hash_annotation (exact literal); INSERT variants
+    #       raise IntegrityError (23502 omit, 23514 wrong-value).
+    pytest.skip("CMP-FND-02 not implemented yet")
+
+
+@pytest.mark.invariant
+@pytest.mark.xfail(
     reason="CMP-FND-03 (Signed provenance record) not yet implemented",
     strict=False,
 )

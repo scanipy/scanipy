@@ -51,7 +51,10 @@ def test_snap_03a_zero_false_negatives_on_reflection_corpus() -> None:
                     blocker. NEVER weaken to `< 0.5` or any tolerance. False
                     positives are permitted (they cost performance, not
                     correctness) and are NOT counted here.
-    Frequency:      every CI run
+    Frequency:      nightly + pre-release (Gate 2 runs via falsifier-cw.yml on
+                    schedule + release tags + workflow_dispatch — NOT on PR pushes
+                    to main). A PR-introduced CW-DETECT regression is caught the
+                    following night, not at merge time.
     Hard gate?:     yes — Gate 2 (Falsifier CW), release blocker (CLAUDE.md §15).
     """
     # TODO: import CW-DETECT `detect` from the snapshotter module when CMP-SNAP-03
@@ -94,7 +97,8 @@ def test_snap_04a_seeded_fn_detected_triggers_exact_repartition() -> None:
                     re-partitioned count equals A (not A-1, not A+1); (iii) the U
                     unaffected findings remain `deterministic-core`. The flip is
                     one-way and append-only.
-    Frequency:      every CI run
+    Frequency:      nightly + pre-release (runs via falsifier-cw.yml — schedule +
+                    release tags + workflow_dispatch; NOT on PR pushes to main).
     Hard gate?:     yes — falsifier gate for CMP-SNAP-04 (residual-risk bound).
     """
     # TODO: import the differential oracle + repartition flow from

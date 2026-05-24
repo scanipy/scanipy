@@ -77,7 +77,6 @@ def test_tri_02a_adversarial_unbounded_continuation_rate_le_alpha() -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.pre_release
 @pytest.mark.xfail(
     reason="CMP-TRI-02 (e-process spec gate) not yet implemented — martingale stub",
     strict=False,
@@ -106,6 +105,10 @@ def test_tri_02b_martingale_property_e_tau_le_one_under_h0() -> None:
     Hard gate?:     yes — Gate 4 (CLAUDE.md §15); blocks customer-enablement deploy.
     """
     # TODO: from services.triage.spec_inference import update_e_process
+    # mc_tolerance must be defined concretely (a NameError under xfail(strict=False)
+    # records XFAIL and would leave Gate 4 green while the bound is never evaluated).
+    # Use a Monte-Carlo slack of 0.01 over n_trajectories >= 10_000 (DOC-ALGS §7.4).
+    # mc_tolerance = 0.01
     # for tau in simulated_stopping_times:
     #     e_tau_samples = []
     #     for _ in range(n_trajectories):

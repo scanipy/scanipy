@@ -17,13 +17,17 @@ core pipeline lands.
 
 Marker set is closed (`--strict-markers`). The release-blocker status lives in the
 docstring `Hard gate?` field, not in a marker (`pre_release` gates execution to release
-tags and would wrongly stop this from running on every CI run).
+tags and would wrongly stop this from running on every CI run). The `invariant` marker
+is required for discovery: `attestor.yml` (Gate 3) runs `pytest tests/ -m "invariant or
+empirical"`, so a `falsifier`-only test would never be collected and Gate 3 would
+silently disappear when CMP-CP-05 lands.
 """
 
 import pytest
 
 
 @pytest.mark.falsifier
+@pytest.mark.invariant
 @pytest.mark.xfail(
     reason="CMP-CP-05 (Determinism Attestor core pipeline) not yet implemented — spec stub",
     strict=False,
