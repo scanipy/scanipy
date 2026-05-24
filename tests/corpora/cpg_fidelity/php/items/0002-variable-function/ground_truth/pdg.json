@@ -1,0 +1,12 @@
+{
+  "schema": "cpg-fidelity/pdg/v0.1.0",
+  "file": "variable_function.php",
+  "is_lower_bound": true,
+  "edges": [
+    {"function": "greet", "from": "param:name", "to": "return:14", "type": "data"},
+    {"function": "shout", "from": "param:name", "to": "return:19", "type": "data"},
+    {"function": "dispatch", "from": "param:which", "to": "assign:24", "type": "data"},
+    {"function": "dispatch", "from": "assign:24", "to": "return:26", "type": "data"},
+    {"function": "dispatch", "from": "param:name", "to": "return:26", "type": "data"}
+  ]
+}

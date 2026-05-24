@@ -1,0 +1,11 @@
+{
+  "schema": "cpg-fidelity/ast/v0.1.0",
+  "file": "Calculator.php",
+  "namespace": "Corpus\\PurePhp",
+  "decls": [
+    {"kind": "class", "name": "Calculator", "line": 10},
+    {"kind": "method", "name": "Calculator::add", "line": 12, "params": ["a", "b"]},
+    {"kind": "method", "name": "Calculator::doubleAdd", "line": 17, "params": ["a", "b"]},
+    {"kind": "function", "name": "run", "line": 22, "params": ["x"]}
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "schema": "cpg-fidelity/cfg/v0.1.0",
+  "file": "magic_call.php",
+  "functions": [
+    {
+      "name": "Service::handlePing",
+      "blocks": [
+        {"id": "B0", "kind": "entry", "succ": ["B1"]},
+        {"id": "B1", "kind": "return", "line": 15, "succ": ["B2"]},
+        {"id": "B2", "kind": "exit", "succ": []}
+      ]
+    },
+    {
+      "name": "Service::handleEcho",
+      "blocks": [
+        {"id": "B0", "kind": "entry", "succ": ["B1"]},
+        {"id": "B1", "kind": "return", "line": 20, "succ": ["B2"]},
+        {"id": "B2", "kind": "exit", "succ": []}
+      ]
+    },
+    {
+      "name": "Service::__call",
+      "blocks": [
+        {"id": "B0", "kind": "entry", "succ": ["B1"]},
+        {"id": "B1", "kind": "assign", "line": 26, "succ": ["B2"]},
+        {"id": "B2", "kind": "return", "line": 27, "succ": ["B3"]},
+        {"id": "B3", "kind": "exit", "succ": []}
+      ]
+    }
+  ]
+}

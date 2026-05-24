@@ -1,0 +1,10 @@
+{
+  "schema": "cpg-fidelity/ast/v0.1.0",
+  "file": "variable_function.php",
+  "namespace": "Corpus\\VariableFunction",
+  "decls": [
+    {"kind": "function", "name": "greet", "line": 12, "params": ["name"]},
+    {"kind": "function", "name": "shout", "line": 17, "params": ["name"]},
+    {"kind": "function", "name": "dispatch", "line": 22, "params": ["which", "name"]}
+  ]
+}

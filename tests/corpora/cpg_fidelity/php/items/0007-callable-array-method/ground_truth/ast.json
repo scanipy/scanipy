@@ -1,0 +1,11 @@
+{
+  "schema": "cpg-fidelity/ast/v0.1.0",
+  "file": "callable_array.php",
+  "namespace": "Corpus\\CallableArray",
+  "decls": [
+    {"kind": "class", "name": "Handlers", "line": 11},
+    {"kind": "method", "name": "Handlers::onStart", "line": 13, "params": []},
+    {"kind": "method", "name": "Handlers::onStop", "line": 18, "params": []},
+    {"kind": "function", "name": "trigger", "line": 23, "params": ["h", "event"]}
+  ]
+}

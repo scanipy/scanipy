@@ -1,0 +1,24 @@
+{
+  "schema": "cpg-fidelity/cfg/v0.1.0",
+  "file": "eval_dynamic.php",
+  "functions": [
+    {
+      "name": "helper",
+      "blocks": [
+        {"id": "B0", "kind": "entry", "succ": ["B1"]},
+        {"id": "B1", "kind": "return", "line": 13, "succ": ["B2"]},
+        {"id": "B2", "kind": "exit", "succ": []}
+      ]
+    },
+    {
+      "name": "compute",
+      "blocks": [
+        {"id": "B0", "kind": "entry", "succ": ["B1"]},
+        {"id": "B1", "kind": "assign", "line": 18, "succ": ["B2"]},
+        {"id": "B2", "kind": "eval", "line": 21, "succ": ["B3"]},
+        {"id": "B3", "kind": "return", "line": 22, "succ": ["B4"]},
+        {"id": "B4", "kind": "exit", "succ": []}
+      ]
+    }
+  ]
+}
