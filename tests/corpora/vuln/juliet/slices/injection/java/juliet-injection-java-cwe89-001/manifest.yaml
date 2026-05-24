@@ -12,7 +12,7 @@ notes: |
   SYNTHESIZED Juliet-shaped CWE-89 (SQL injection) test case authored for this corpus
   in the Juliet "BadSource -> sink" idiom. It is NOT a vendored NIST/SARD file: bulk
   download of the real Juliet 1.3 Java suite from NIST SARD is a fetch-at-scale task
-  deferred to CLAR-CORP-08. Ground truth is by construction: the tainted source flows
+  deferred to CLAR-CORP-19. Ground truth is by construction: the tainted source flows
   to the executeQuery sink at the recorded line. License recorded as "Public Domain
   (NIST)" to match the upstream suite this seed imitates; the synthetic content itself
   is released CC0/Public-Domain as part of this corpus.

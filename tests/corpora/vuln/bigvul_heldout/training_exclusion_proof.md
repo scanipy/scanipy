@@ -11,7 +11,7 @@ RELEASE BLOCKER** (DOC §7) and invalidates every recall number reported under
 > sample (`data/bigvul_sample.csv`, SYNTHESIZED — see README.md and `LICENSES.md`),
 > not the full upstream BigVul CSV. The **procedure, locks, digests, and disjointness
 > assertion are real and reproducible**; only the row population is a seed. Sourcing the
-> full upstream BigVul dataset and re-deriving this split at scale is `CLAR-CORP-08`.
+> full upstream BigVul dataset and re-deriving this split at scale is `CLAR-CORP-19`.
 > The procedure below is the one that will run unchanged on the full dataset.
 
 ## 1. Deterministic split procedure (DOC §3.2 item 1)

@@ -14,7 +14,7 @@ ground_truth_method: 'OWASP Benchmark: ground truth taken verbatim from the upst
 licenses:
   bigvul: MIT
   juliet: Public Domain (NIST)
-  owasp_benchmark: GPL-2.0 (fetch-on-demand; off vendor allow-list, CLAR-CORP-07)
+  owasp_benchmark: GPL-2.0 (fetch-on-demand; off vendor allow-list, CLAR-CORP-18)
 populated_slices:
   - class: ssrf
     count: 1

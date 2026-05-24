@@ -9,9 +9,9 @@ in `manifest.yaml` and it is validated by `pipeline/build_lock.py`.
 
 | Dataset | Upstream | License | Disposition |
 |---|---|---|---|
-| OWASP BenchmarkJava | OWASP-Benchmark/BenchmarkJava @ `1.2beta` (`2734ae4…`) | **GPL-2.0** | **NOT vendored** — off the allow-list. Ships fetch-on-demand: manifests pin `upstream_sha256` + path + commit; ground truth taken from `expectedresults-1.2beta.csv`. See CLAR-CORP-07. |
-| Juliet Test Suite 1.3 | NIST SARD | Public Domain (NIST) | On allow-list. v0.1.0 ships synthetic Juliet-shaped seeds; real suite vendoring deferred to CLAR-CORP-08. |
-| BigVul | Fan et al., MSR 2020 (ZeoVan/MSR_20_Code_vulnerability_CSV_Dataset) | MIT | On allow-list. v0.1.0 ships a synthetic BigVul-shaped split input; real CSV sourcing deferred to CLAR-CORP-08. |
+| OWASP BenchmarkJava | OWASP-Benchmark/BenchmarkJava @ `1.2beta` (`2734ae4…`) | **GPL-2.0** | **NOT vendored** — off the allow-list. Ships fetch-on-demand: manifests pin `upstream_sha256` + path + commit; ground truth taken from `expectedresults-1.2beta.csv`. See CLAR-CORP-18. |
+| Juliet Test Suite 1.3 | NIST SARD | Public Domain (NIST) | On allow-list. v0.1.0 ships synthetic Juliet-shaped seeds; real suite vendoring deferred to CLAR-CORP-19. |
+| BigVul | Fan et al., MSR 2020 (ZeoVan/MSR_20_Code_vulnerability_CSV_Dataset) | MIT | On allow-list. v0.1.0 ships a synthetic BigVul-shaped split input; real CSV sourcing deferred to CLAR-CORP-19. |
 
 ## Synthesized items (authored for this corpus)
 
@@ -29,7 +29,7 @@ vendor allow-list; vendoring it verbatim into a multi-tenant SaaS repo would rai
 copyleft-propagation questions. Per DOC §7 ("If license forbids redistribution: the
 slice ships as a fetch-on-demand reference, not as vendored content"), OWASP items are
 referenced by pinned commit + path + content sha256, not vendored. CTO approval to
-vendor (or a decision to keep fetch-on-demand) is tracked as **CLAR-CORP-07**.
+vendor (or a decision to keep fetch-on-demand) is tracked as **CLAR-CORP-18**.
 
 ## Forbidden-source / no-overlap rule (CRITICAL — eval/held-out integrity)
 
@@ -44,4 +44,4 @@ items must be screened for training-set overlap before addition.
 
 | Candidate | Reason refused |
 |---|---|
-| Vendoring OWASP BenchmarkJava `.java` files | GPL-2.0 off vendor allow-list; shipped fetch-on-demand pending CLAR-CORP-07. |
+| Vendoring OWASP BenchmarkJava `.java` files | GPL-2.0 off vendor allow-list; shipped fetch-on-demand pending CLAR-CORP-18. |

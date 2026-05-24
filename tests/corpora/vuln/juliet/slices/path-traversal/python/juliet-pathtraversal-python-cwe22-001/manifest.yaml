@@ -10,7 +10,7 @@ license: Public Domain (NIST)
 vendored: true
 notes: |
   SYNTHESIZED Juliet-shaped CWE-22 (path traversal) test case authored for this corpus.
-  NOT a vendored NIST/SARD file (bulk Juliet sourcing deferred to CLAR-CORP-08). Ground
+  NOT a vendored NIST/SARD file (bulk Juliet sourcing deferred to CLAR-CORP-19). Ground
   truth by construction: the tainted request parameter flows to the open() sink at the
   recorded line. Synthetic content released CC0/Public-Domain as part of this corpus.
 ground_truth_sites:
