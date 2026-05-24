@@ -161,7 +161,7 @@ def test_core_03a_cfi_symmetric_terminates_in_budget_deterministic() -> None:
     r1 = canonical_order(cpg, B=2**16, T=Duration(0.200))
     r2 = canonical_order(cpg, B=2**16, T=Duration(0.200))
 
-    # (i) terminates within (B, T): B is the authoritative trigger; a budget
+    # (i) terminates within (B, T): B and T are both hard triggers; a budget
     # exhaustion yields a weak result, NOT an unbounded loop or an exception.
     assert r1.fingerprint_class in ("strong", "weak")
     assert isinstance(r1.cpg_order_hash, bytes)
