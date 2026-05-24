@@ -228,7 +228,9 @@ def classify_github(response: object) -> RateLimitVerdict:
     """
     status = getattr(response, "status_code", None)
     body = (getattr(response, "text", "") or "").lower()
-    is_secondary = ("secondary rate limit" in body) or ("abuse detection" in body)
+    is_secondary = status in (403, 429) and (
+        ("secondary rate limit" in body) or ("abuse detection" in body)
+    )
     if is_secondary:
         retry_after = _parse_retry_after(_header(response, "Retry-After"))
         return RateLimitVerdict(is_rate_limited=True, retry_after_s=retry_after, is_secondary=True)
@@ -352,6 +354,13 @@ def with_retry(
                     verdict = classify(result)
                     if not verdict.is_rate_limited:
                         return result  # success
+                    # Policy flags gate which rate-limit classes are retried
+                    # (DOC §3.1). A class the policy declines to honour is
+                    # treated as a pass-through, not a retry.
+                    if verdict.is_secondary and not policy.honor_secondary:
+                        return result
+                    if not verdict.is_secondary and not policy.honor_429:
+                        return result
                     last_verdict = verdict
                     last_transient = None
                     reason = (
