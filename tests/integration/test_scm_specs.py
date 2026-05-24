@@ -18,6 +18,10 @@ every concrete connector plugs into: SCM-02a (GitHub) and SCM-03a (GL/BB/ADO) ar
 invocations of that one harness against their connector instance.
 """
 
+import asyncio
+import hashlib
+import hmac
+
 import pytest
 
 # ---------------------------------------------------------------------------
@@ -38,6 +42,90 @@ _CONFORMANCE_OPERATIONS = (
     "resolve_commit",
 )
 
+_FIXTURE_SHA = "a" * 40  # a canary 40-hex SHA for the provider-neutral harness
+
+
+def _make_stub_connector_cls():
+    """Build a minimal, fully-conformant in-memory SCMConnector subclass.
+
+    No network I/O: every method returns the documented shape. `sign_webhook`
+    is the conformance harness's test hook (DOC §3.3) — an HMAC-SHA256 over the
+    body so the positive/negative verify_webhook cases are distinguishable.
+    """
+    from datetime import UTC, datetime
+    from pathlib import Path
+    from typing import ClassVar
+
+    from integrations.scm.base import (
+        CloneMetadata,
+        RepoRef,
+        SCMConnector,
+        WebhookSubscription,
+    )
+
+    class _StubConnector(SCMConnector):
+        provider_id: ClassVar[str] = "stub"
+
+        async def list_repos(self, *, org_or_workspace, page_size=100):
+            yield RepoRef(
+                provider="stub",
+                owner=org_or_workspace,
+                name="repo",
+                clone_url="https://stub.example/r.git",
+                default_branch="main",
+            )
+
+        async def clone(self, repo_ref, *, commit_sha, dest_dir: Path, shallow=True):
+            return CloneMetadata(
+                provider="stub",
+                repo_ref=repo_ref,
+                commit_sha=commit_sha,
+                parent_shas=(),
+                cloned_at=datetime.now(UTC),
+                bytes_on_disk=0,
+                shallow=shallow,
+            )
+
+        async def register_webhook(self, repo_ref, *, target_url, events, secret):
+            return WebhookSubscription(
+                provider="stub",
+                repo_ref=repo_ref,
+                webhook_id="wh_1",
+                target_url=target_url,
+                events=events,
+                secret_ref="ref-to-encrypted-blob",  # pragma: allowlist secret
+                created_at=datetime.now(UTC),
+            )
+
+        def verify_webhook(self, *, raw_body, headers, secret):
+            expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+            return hmac.compare_digest(headers.get("X-Stub-Signature", ""), expected)
+
+        async def get_default_branch(self, repo_ref):
+            return "main"
+
+        async def resolve_commit(self, repo_ref, *, ref):
+            return _FIXTURE_SHA
+
+        # Conformance test hook (DOC §3.3): sign a body under the connector scheme.
+        def sign_webhook(self, *, raw_body, secret):
+            sig = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+            return {"X-Stub-Signature": sig}
+
+    return _StubConnector
+
+
+def _fixture_repo():
+    from integrations.scm.base import RepoRef
+
+    return RepoRef(
+        provider="stub",
+        owner="acme",
+        name="repo",
+        clone_url="https://stub.example/r.git",
+        default_branch="main",
+    )
+
 
 # ---------------------------------------------------------------------------
 # TST-AC-SCM-01c — reusable conformance-suite harness skeleton  [CONFORMANCE]
@@ -47,7 +135,6 @@ _CONFORMANCE_OPERATIONS = (
 
 
 @pytest.mark.integration
-@pytest.mark.xfail(reason="CMP-SCM-01 (conformance suite) not yet implemented", strict=False)
 def test_scm_01c_conformance_suite_exists_and_is_invokable() -> None:
     """run_conformance_suite exists and returns a ConformanceReport for a connector.
 
@@ -63,14 +150,72 @@ def test_scm_01c_conformance_suite_exists_and_is_invokable() -> None:
     Frequency: every CI run
     Hard gate?: yes
     """
-    # TODO: from integrations.scm.conformance import run_conformance_suite, ConformanceReport
-    # report = await run_conformance_suite(stub_connector, fixture_repo=..., canary_commit_sha=...)
-    # assert isinstance(report, ConformanceReport)
-    pytest.skip("CMP-SCM-01 not implemented yet")
+    from integrations.scm.base import SCMAuthMode, SCMCredentials
+    from integrations.scm.conformance import ConformanceReport, run_conformance_suite
+
+    connector = _make_stub_connector_cls()(
+        SCMCredentials(provider="github", mode=SCMAuthMode.PAT, payload={"token": "t"})
+    )
+    report = asyncio.run(
+        run_conformance_suite(
+            connector,
+            fixture_repo=_fixture_repo(),
+            canary_commit_sha=_FIXTURE_SHA,
+        )
+    )
+    assert isinstance(report, ConformanceReport)
+    assert report.provider == "stub"
+    assert report.is_conformant  # the fully-conformant stub yields no failures
+    assert frozenset(report.passed) == frozenset(_CONFORMANCE_OPERATIONS)
+
+
+def _broken_connector_cls(operation: str):
+    """Subclass the conformant stub and break exactly `operation`."""
+    base = _make_stub_connector_cls()
+
+    class _Broken(base):  # type: ignore[valid-type, misc]
+        if operation == "list_repos":
+
+            async def list_repos(self, *, org_or_workspace, page_size=100):
+                raise RuntimeError("list_repos boom")
+                yield  # pragma: no cover — unreachable; keeps this an async generator
+
+        elif operation == "clone":
+
+            async def clone(self, repo_ref, *, commit_sha, dest_dir, shallow=True):
+                raise RuntimeError("clone boom")
+
+        elif operation == "register_webhook":
+
+            async def register_webhook(self, repo_ref, *, target_url, events, secret):
+                raise RuntimeError("register_webhook boom")
+
+        elif operation == "verify_webhook_positive":
+
+            def verify_webhook(self, *, raw_body, headers, secret):
+                # Reject the genuine body too → the positive case fails.
+                return False
+
+        elif operation == "verify_webhook_negative":
+
+            def verify_webhook(self, *, raw_body, headers, secret):
+                # Accept everything → the tampered-body negative case fails.
+                return True
+
+        elif operation == "get_default_branch":
+
+            async def get_default_branch(self, repo_ref):
+                return ""  # empty → wrong shape
+
+        elif operation == "resolve_commit":
+
+            async def resolve_commit(self, repo_ref, *, ref):
+                return "not-a-sha"
+
+    return _Broken
 
 
 @pytest.mark.integration
-@pytest.mark.xfail(reason="CMP-SCM-01 (conformance suite) not yet implemented", strict=False)
 @pytest.mark.parametrize("operation", _CONFORMANCE_OPERATIONS)
 def test_scm_01c_conformance_suite_covers_operation(operation: str) -> None:
     """The conformance suite drives each operation in the fixed sequence.
@@ -89,8 +234,25 @@ def test_scm_01c_conformance_suite_covers_operation(operation: str) -> None:
     Frequency: every CI run
     Hard gate?: yes
     """
-    # TODO: build a connector that fails only `operation`; assert the report flags it.
-    pytest.skip("CMP-SCM-01 not implemented yet")
+    from integrations.scm.base import SCMAuthMode, SCMCredentials
+    from integrations.scm.conformance import run_conformance_suite
+
+    creds = SCMCredentials(provider="github", mode=SCMAuthMode.PAT, payload={"token": "t"})
+    connector = _broken_connector_cls(operation)(creds)
+    report = asyncio.run(
+        run_conformance_suite(
+            connector,
+            fixture_repo=_fixture_repo(),
+            canary_commit_sha=_FIXTURE_SHA,
+        )
+    )
+
+    failed_ops = {f.method for f in report.failures}
+    assert operation in failed_ops  # the broken operation is flagged by name
+    assert operation not in report.passed
+    assert not report.is_conformant
+    # Only the targeted operation fails; the suite exercises each independently.
+    assert failed_ops == {operation}
 
 
 # ---------------------------------------------------------------------------
