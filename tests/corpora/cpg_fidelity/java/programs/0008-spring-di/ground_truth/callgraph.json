@@ -1,0 +1,12 @@
+{
+  "schema": "cpg-fidelity/callgraph/v1",
+  "program_id": "0008-spring-di",
+  "notes": "main() wires the beans explicitly (constructor injection by hand), so those edges are statically exact. A Spring container resolves @Autowired OrderService(Repository) reflectively at runtime; a Spring-aware front-end synthesizes a container->OrderService.<init> edge that a plain static analysis cannot see. That synthetic wiring edge is tagged over_approximate=true and EXCLUDED from precision counting per DOC-CMP-CORP-CPG-java §3.3 (it must be INCLUDED in recall).",
+  "edges": [
+    {"caller_method": "corpus.cpg.p0008.OrderApp.main(String[])", "callee_method": "corpus.cpg.p0008.OrderApp$Repository.<init>()", "line": 46, "kind": "special", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0008.OrderApp.main(String[])", "callee_method": "corpus.cpg.p0008.OrderApp$OrderService.<init>(Repository)", "line": 47, "kind": "special", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0008.OrderApp.main(String[])", "callee_method": "corpus.cpg.p0008.OrderApp$OrderService.lookup(int)", "line": 48, "kind": "virtual", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0008.OrderApp$OrderService.lookup(int)", "callee_method": "corpus.cpg.p0008.OrderApp$Repository.find(int)", "line": 41, "kind": "virtual", "library": false, "over_approximate": false},
+    {"caller_method": "spring:container", "callee_method": "corpus.cpg.p0008.OrderApp$OrderService.<init>(Repository)", "line": 36, "kind": "reflective-di", "library": false, "over_approximate": true}
+  ]
+}

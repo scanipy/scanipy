@@ -1,0 +1,12 @@
+{
+  "schema": "cpg-fidelity/callgraph/v1",
+  "program_id": "0005-method-references",
+  "notes": "Method references compile to invokedynamic; the functional target is the referenced method. run(f,in) dispatches f.apply -> MethodRefs.shout (the MethodRefs::shout ref). make(s) dispatches s.get -> String.trim (the \"x\"::trim bound ref, library). shout itself calls String.toUpperCase. A precise (1-CFA) analysis links each call site to its single referenced method; a 0-CFA merge would union them (over_approximate). Here recorded precisely.",
+  "edges": [
+    {"caller_method": "corpus.cpg.p0005.MethodRefs.main(String[])", "callee_method": "corpus.cpg.p0005.MethodRefs.run(Function,String)", "line": 22, "kind": "static", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0005.MethodRefs.main(String[])", "callee_method": "corpus.cpg.p0005.MethodRefs.make(Supplier)", "line": 23, "kind": "static", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0005.MethodRefs.run(Function,String)", "callee_method": "corpus.cpg.p0005.MethodRefs.shout(String)", "line": 14, "kind": "indy", "library": false, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0005.MethodRefs.make(Supplier)", "callee_method": "java.lang.String.trim()", "line": 18, "kind": "indy", "library": true, "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0005.MethodRefs.shout(String)", "callee_method": "java.lang.String.toUpperCase()", "line": 10, "kind": "virtual", "library": true, "over_approximate": false}
+  ]
+}

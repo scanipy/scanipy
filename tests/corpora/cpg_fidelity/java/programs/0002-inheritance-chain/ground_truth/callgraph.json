@@ -1,0 +1,12 @@
+{
+  "schema": "cpg-fidelity/callgraph/v1",
+  "program_id": "0002-inheritance-chain",
+  "notes": "describe() calls speak(); CHA resolves the virtual call to every concrete override of the abstract Animal.speak() -> Dog.speak, Puppy.speak. greet() calls describe() (only definition, in Animal). over_approximate=false: both overrides are real candidates in this closed program.",
+  "edges": [
+    {"caller_method": "corpus.cpg.p0002.Animals.greet(Animal)", "callee_method": "corpus.cpg.p0002.Animals$Animal.describe()", "line": 29, "kind": "virtual", "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0002.Animals$Animal.describe()", "callee_method": "corpus.cpg.p0002.Animals$Dog.speak()", "line": 10, "kind": "virtual", "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0002.Animals$Animal.describe()", "callee_method": "corpus.cpg.p0002.Animals$Puppy.speak()", "line": 10, "kind": "virtual", "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0002.Animals.main(String[])", "callee_method": "corpus.cpg.p0002.Animals$Puppy.<init>()", "line": 33, "kind": "special", "over_approximate": false},
+    {"caller_method": "corpus.cpg.p0002.Animals.main(String[])", "callee_method": "corpus.cpg.p0002.Animals.greet(Animal)", "line": 34, "kind": "static", "over_approximate": false}
+  ]
+}
