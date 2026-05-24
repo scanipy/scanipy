@@ -4,7 +4,7 @@ license: Apache-2.0
 surface: js
 module_system: commonjs
 synthetic: true
-loc: 41
+loc: 34
 construct_coverage:
   - module-system-commonjs
   - higher-order-functions
