@@ -3,8 +3,8 @@
   "file": "variable_function.php",
   "namespace": "Corpus\\VariableFunction",
   "decls": [
-    {"kind": "function", "name": "greet", "line": 12, "params": ["name"]},
-    {"kind": "function", "name": "shout", "line": 17, "params": ["name"]},
-    {"kind": "function", "name": "dispatch", "line": 22, "params": ["which", "name"]}
+    {"kind": "function", "name": "greet", "line": 11, "params": ["name"]},
+    {"kind": "function", "name": "shout", "line": 16, "params": ["name"]},
+    {"kind": "function", "name": "dispatch", "line": 21, "params": ["which", "name"]}
   ]
 }

@@ -3,7 +3,7 @@
   "file": "include_dynamic.php",
   "namespace": "Corpus\\IncludeDynamic",
   "decls": [
-    {"kind": "function", "name": "loadModule", "line": 11, "params": ["name"]},
-    {"kind": "function", "name": "bootstrap", "line": 18, "params": ["env"]}
+    {"kind": "function", "name": "loadModule", "line": 12, "params": ["name"]},
+    {"kind": "function", "name": "bootstrap", "line": 19, "params": ["env"]}
   ]
 }

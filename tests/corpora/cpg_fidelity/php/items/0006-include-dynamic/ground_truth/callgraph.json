@@ -3,9 +3,9 @@
   "file": "include_dynamic.php",
   "is_lower_bound": true,
   "dynamic": true,
-  "notes": "bootstrap -> loadModule (line 21) is a static edge. The include at line 15 resolves a runtime path; the symbols it pulls into scope are not statically known, so no cross-file callee edge is asserted. include_sites records the location.",
+  "notes": "bootstrap -> loadModule (line 21) is a static edge. The include at line 16 resolves a runtime path; the symbols it pulls into scope are not statically known, so no cross-file callee edge is asserted. include_sites records the location.",
   "include_sites": [
-    {"function": "loadModule", "line": 15, "kind": "include"}
+    {"function": "loadModule", "line": 16, "kind": "include"}
   ],
   "edges": [
     {"caller": "bootstrap", "callee": "loadModule", "line": 21, "resolution": "static"}

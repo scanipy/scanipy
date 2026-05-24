@@ -3,7 +3,7 @@
   "file": "eval_dynamic.php",
   "namespace": "Corpus\\EvalDynamic",
   "decls": [
-    {"kind": "function", "name": "helper", "line": 11, "params": ["n"]},
-    {"kind": "function", "name": "compute", "line": 16, "params": ["op", "n"]}
+    {"kind": "function", "name": "helper", "line": 12, "params": ["n"]},
+    {"kind": "function", "name": "compute", "line": 17, "params": ["op", "n"]}
   ]
 }

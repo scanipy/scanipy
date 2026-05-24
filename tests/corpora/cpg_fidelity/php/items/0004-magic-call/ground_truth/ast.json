@@ -3,9 +3,9 @@
   "file": "magic_call.php",
   "namespace": "Corpus\\MagicCall",
   "decls": [
-    {"kind": "class", "name": "Service", "line": 11},
-    {"kind": "method", "name": "Service::handlePing", "line": 13, "params": []},
-    {"kind": "method", "name": "Service::handleEcho", "line": 18, "params": ["s"]},
-    {"kind": "method", "name": "Service::__call", "line": 23, "params": ["name", "args"]}
+    {"kind": "class", "name": "Service", "line": 12},
+    {"kind": "method", "name": "Service::handlePing", "line": 14, "params": []},
+    {"kind": "method", "name": "Service::handleEcho", "line": 19, "params": ["s"]},
+    {"kind": "method", "name": "Service::__call", "line": 24, "params": ["name", "args"]}
   ]
 }

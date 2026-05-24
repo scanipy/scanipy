@@ -22,9 +22,9 @@
       "name": "run",
       "blocks": [
         {"id": "B0", "kind": "entry", "succ": ["B1"]},
-        {"id": "B1", "kind": "cond", "line": 25, "succ": ["B2", "B3"]},
-        {"id": "B2", "kind": "return", "line": 26, "succ": ["B4"]},
-        {"id": "B3", "kind": "return", "line": 28, "succ": ["B4"]},
+        {"id": "B1", "kind": "cond", "line": 26, "succ": ["B2", "B3"]},
+        {"id": "B2", "kind": "return", "line": 27, "succ": ["B4"]},
+        {"id": "B3", "kind": "return", "line": 29, "succ": ["B4"]},
         {"id": "B4", "kind": "exit", "succ": []}
       ]
     }

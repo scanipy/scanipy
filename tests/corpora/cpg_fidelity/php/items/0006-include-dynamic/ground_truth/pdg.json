@@ -3,8 +3,8 @@
   "file": "include_dynamic.php",
   "is_lower_bound": true,
   "edges": [
-    {"function": "loadModule", "from": "param:name", "to": "include:15", "type": "data"},
-    {"function": "loadModule", "from": "assign:13", "to": "include:15", "type": "data"},
+    {"function": "loadModule", "from": "param:name", "to": "include:16", "type": "data"},
+    {"function": "loadModule", "from": "assign:14", "to": "include:16", "type": "data"},
     {"function": "bootstrap", "from": "param:env", "to": "call:21", "type": "data"}
   ]
 }
