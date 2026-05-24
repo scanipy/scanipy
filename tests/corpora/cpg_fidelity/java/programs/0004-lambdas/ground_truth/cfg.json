@@ -1,0 +1,17 @@
+{
+  "schema": "cpg-fidelity/cfg/v1",
+  "program_id": "0004-lambdas",
+  "method": "Per-method intraprocedural CFG by-inspection. Lambda bodies are single-expression returns.",
+  "methods": [
+    {"method": "corpus.cpg.p0004.Lambdas.apply(Function,int)", "nodes": ["return f.apply(x)"], "edges": []},
+    {"method": "corpus.cpg.p0004.Lambdas.twice(int)", "nodes": ["return n * 2"], "edges": []},
+    {"method": "corpus.cpg.p0004.Lambdas.lambda$main$0(Integer)", "nodes": ["return x + 1"], "edges": []},
+    {"method": "corpus.cpg.p0004.Lambdas.lambda$main$1(Integer)", "nodes": ["return twice(n)"], "edges": []},
+    {"method": "corpus.cpg.p0004.Lambdas.main(String[])", "nodes": [
+      "Function inc = x -> x + 1",
+      "int a = apply(inc, 10)",
+      "int b = apply(n -> twice(n), 5)",
+      "System.out.println(a + b)"
+    ], "edges": [[0, 1], [1, 2], [2, 3]]}
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "schema": "cpg-fidelity/cfg/v1",
+  "program_id": "0003-generics-box",
+  "method": "Per-method intraprocedural CFG by-inspection. max() contains a for-each loop with a guarded assignment; node 1 is the loop header (has-next test).",
+  "methods": [
+    {"method": "corpus.cpg.p0003.Boxes$Box.<init>(Object)", "nodes": ["this.value = value"], "edges": []},
+    {"method": "corpus.cpg.p0003.Boxes$Box.get()", "nodes": ["return value"], "edges": []},
+    {"method": "corpus.cpg.p0003.Boxes.max(List)", "nodes": [
+      "T best = items.get(0)",
+      "loop-header: for (T item : items)",
+      "if (item.compareTo(best) > 0)",
+      "best = item",
+      "return best"
+    ], "edges": [[0, 1], [1, 2], [1, 4], [2, 3], [2, 1], [3, 1]]},
+    {"method": "corpus.cpg.p0003.Boxes.main(String[])", "nodes": [
+      "Box<String> b = new Box<>(\"hi\")",
+      "List<Integer> nums = new ArrayList<>()",
+      "nums.add(3)",
+      "nums.add(7)",
+      "System.out.println(b.get() + max(nums))"
+    ], "edges": [[0, 1], [1, 2], [2, 3], [3, 4]]}
+  ]
+}
