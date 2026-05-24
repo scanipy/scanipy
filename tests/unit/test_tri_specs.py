@@ -88,7 +88,11 @@ def test_tri_01b_ranking_writes_only_triage_columns() -> None:
                     column set ⊆ {finding_id, triage_score, triage_reason,
                     model_id, model_version, S_version, env_digest}. An attempted
                     UPDATE on any `findings` column fails with a Postgres
-                    permission error; no insert targets `provenance_records`,
+                    permission error; an attempted DELETE FROM `findings` also
+                    fails with a permission error for `scanipy_triage` (INV-3:
+                    triage ranking never deletes findings — a role retaining
+                    DELETE while UPDATE is revoked would still let triage destroy
+                    findings); no insert targets `provenance_records`,
                     `spec_versions`, or `proposed_specs`.
     Frequency:      every CI run
     Hard gate?:     yes — component acceptance gate for CMP-TRI-01 (INV-3).
@@ -96,6 +100,7 @@ def test_tri_01b_ranking_writes_only_triage_columns() -> None:
     # TODO: assert set(written.keys()) <= ALLOWED_TRIAGE_COLUMNS
     # TODO: assert written.table == "triage_scores"
     # TODO: with pytest.raises(PermissionError): triage_role.update("findings", ...)
+    # TODO: with pytest.raises(PermissionError): triage_role.delete("findings", ...)
     pytest.skip("CMP-TRI-01 not implemented yet")
 
 

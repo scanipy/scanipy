@@ -171,25 +171,32 @@ def test_core_03c_hash_field_named_cpg_order_hash_auditor_export() -> None:
 
 @pytest.mark.invariant
 @pytest.mark.xfail(reason="CMP-CORE-03 not yet implemented", strict=False)
-def test_inv_5_core_03_annotation_coresident_everywhere() -> None:
-    """INV-5: cpg_order_hash annotation co-resident in every emitter.
+@pytest.mark.parametrize("fingerprint_class", ["strong", "weak"])
+def test_inv_5_core_03_annotation_coresident_everywhere(fingerprint_class: str) -> None:
+    """INV-5: cpg_order_hash annotation co-resident in every emitter, both classes.
 
     Test id:       TST-INV-5-CORE-03
     Maps to AC:    INV-5 (owner CMP-CORE-03)
     Kind tag:      [INVARIANT]
     Inputs:        every emitter that writes a record containing
                    cpg_order_hash — provenance row, SARIF properties, auditor
-                   export, dashboard payload.
+                   export, dashboard payload — for BOTH fingerprint_class values
+                   (`strong` and the budget-exhausted `weak` fallback path).
     Outputs:       each emitted record.
     Pass criteria: no record containing `cpg_order_hash` omits the adjacent
                    annotation `canonical iff fingerprint_class = strong`; the
                    annotation comes from the single CPG_ORDER_HASH_ANNOTATION
-                   constant (never reconstructed from substrings).
+                   constant (never reconstructed from substrings). The annotation
+                   is present and identical on the `weak` path too — it is the
+                   weak path that makes the annotation load-bearing (the hash is
+                   NOT canonical there), so dropping it on weak is the failure
+                   this case guards against.
     Frequency:     every CI run.
     Hard gate?:    yes.
     """
-    # TODO: enumerate every cpg_order_hash emitter; assert annotation present
-    #       and equal to analysis.ordering.CPG_ORDER_HASH_ANNOTATION.
+    # TODO: for fingerprint_class in {strong, weak}, enumerate every
+    #       cpg_order_hash emitter; assert annotation present and equal to
+    #       analysis.ordering.CPG_ORDER_HASH_ANNOTATION on both paths.
     pytest.skip("CMP-CORE-03 not implemented yet")
 
 
