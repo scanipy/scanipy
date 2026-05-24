@@ -24,6 +24,7 @@ from analysis.ifds.dsl.flow import (
     union_flow,
 )
 from analysis.ifds.dsl.proofs import (
+    _PROPAGATE_FORM_FACTS,
     REQUIRED_OBLIGATION_IDS,
     all_obligations_discharged,
     discharge,
@@ -76,16 +77,17 @@ def test_distributivity_sanitize() -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize("form", ["arg_ret", "arg_field", "field_ret", "field_field"])
+@pytest.mark.parametrize("form", _PROPAGATE_FORM_FACTS)
 def test_distributivity_propagate(form: str) -> None:
-    """propagate(s -> t): gen-of-t conditioned on s is distributive, all 4 forms.
+    """propagate(s -> t): gen-of-t conditioned on s is distributive, per form.
 
-    Each PropagateBody form is its own obligation (DOC-DSL §3.4). The algebra is
-    identical across forms; the form fixes only which abstract positions s/t
-    model.
+    Each PropagateBody form is its own obligation (DOC-DSL §3.4), exercised here
+    with that form's distinct in-domain (source, target) facts — the same map
+    the registered obligations use (``proofs._PROPAGATE_FORM_FACTS``) — so the
+    four variants are genuinely distinct checks, not one closure run four times.
     """
-    assert form in {"arg_ret", "arg_field", "field_ret", "field_field"}
-    assert is_distributive(build_propagate(3, 4), _D)
+    source, target = _PROPAGATE_FORM_FACTS[form]
+    assert is_distributive(build_propagate(source, target), _D)
 
 
 @pytest.mark.unit
