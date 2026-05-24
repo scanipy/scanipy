@@ -1,0 +1,52 @@
+{
+  "deriver": "go/parser+go/ast",
+  "files": [
+    {
+      "file": "main.go",
+      "node_kinds": {
+        "AssignStmt": 2,
+        "BasicLit": 4,
+        "BinaryExpr": 3,
+        "BlockStmt": 4,
+        "CallExpr": 3,
+        "Comment": 14,
+        "CommentGroup": 8,
+        "CompositeLit": 3,
+        "Field": 13,
+        "FieldList": 14,
+        "File": 1,
+        "FuncDecl": 4,
+        "FuncType": 4,
+        "GenDecl": 3,
+        "Ident": 46,
+        "ReturnStmt": 4,
+        "SelectorExpr": 5,
+        "StarExpr": 3,
+        "StructType": 3,
+        "TypeSpec": 3,
+        "UnaryExpr": 2
+      },
+      "top_level_decls": [
+        "*Logger.Log",
+        "*Service.Handle",
+        "Base",
+        "Base.Describe",
+        "Logger",
+        "Run",
+        "Service"
+      ],
+      "func_decls": [
+        "*Logger.Log",
+        "*Service.Handle",
+        "Base.Describe",
+        "Run"
+      ],
+      "type_decls": [
+        "Base",
+        "Logger",
+        "Service"
+      ],
+      "total_nodes": 146
+    }
+  ]
+}

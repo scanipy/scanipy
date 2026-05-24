@@ -1,0 +1,35 @@
+{
+  "deriver": "go/parser+go/ast",
+  "files": [
+    {
+      "file": "reverse.go",
+      "node_kinds": {
+        "ArrayType": 1,
+        "AssignStmt": 4,
+        "BasicLit": 5,
+        "BinaryExpr": 5,
+        "BlockStmt": 2,
+        "CallExpr": 4,
+        "Comment": 2,
+        "CommentGroup": 2,
+        "Field": 2,
+        "FieldList": 2,
+        "File": 1,
+        "ForStmt": 1,
+        "FuncDecl": 1,
+        "FuncType": 1,
+        "Ident": 29,
+        "IndexExpr": 4,
+        "ReturnStmt": 1
+      },
+      "top_level_decls": [
+        "String"
+      ],
+      "func_decls": [
+        "String"
+      ],
+      "type_decls": null,
+      "total_nodes": 67
+    }
+  ]
+}

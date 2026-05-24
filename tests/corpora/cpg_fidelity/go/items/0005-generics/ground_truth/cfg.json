@@ -1,0 +1,82 @@
+{
+  "deriver": "x/tools/go/ssa",
+  "funcs": [
+    {
+      "func": "corpusitem/0005-generics.Run",
+      "blocks": [
+        {
+          "index": 0,
+          "succs": null,
+          "num_instructions": 17
+        }
+      ]
+    },
+    {
+      "func": "corpusitem/0005-generics.Sum",
+      "blocks": [
+        {
+          "index": 0,
+          "succs": [
+            1
+          ],
+          "num_instructions": 2
+        },
+        {
+          "index": 1,
+          "succs": [
+            2,
+            3
+          ],
+          "num_instructions": 5
+        },
+        {
+          "index": 2,
+          "succs": [
+            1
+          ],
+          "num_instructions": 4
+        },
+        {
+          "index": 3,
+          "succs": null,
+          "num_instructions": 1
+        }
+      ]
+    },
+    {
+      "func": "corpusitem/0005-generics.add",
+      "blocks": [
+        {
+          "index": 0,
+          "succs": null,
+          "num_instructions": 2
+        }
+      ]
+    },
+    {
+      "func": "corpusitem/0005-generics.init",
+      "blocks": [
+        {
+          "index": 0,
+          "succs": [
+            1,
+            2
+          ],
+          "num_instructions": 2
+        },
+        {
+          "index": 1,
+          "succs": [
+            2
+          ],
+          "num_instructions": 2
+        },
+        {
+          "index": 2,
+          "succs": null,
+          "num_instructions": 1
+        }
+      ]
+    }
+  ]
+}
