@@ -1,0 +1,20 @@
+{
+  "schema": "cpg-fidelity/cfg/v1",
+  "program_id": "0010-recent-language",
+  "method": "Per-method intraprocedural CFG by-inspection. settle() is an if / else-if / else-if chain over three instanceof patterns with a fall-through throw.",
+  "methods": [
+    {"method": "corpus.cpg.p0010.Payments.settle(Payment)", "nodes": [
+      "if (p instanceof Card c)",
+      "return \"card:\" + c.number()",
+      "else if (p instanceof Cash cash)",
+      "return \"cash:\" + cash.amount()",
+      "else if (p instanceof Wire w)",
+      "return \"wire:\" + w.iban()",
+      "throw new IllegalStateException(...)"
+    ], "edges": [[0, 1], [0, 2], [2, 3], [2, 4], [4, 5], [4, 6]]},
+    {"method": "corpus.cpg.p0010.Payments.main(String[])", "nodes": [
+      "Payment p = new Card(\"4111\", 9.99)",
+      "System.out.println(settle(p))"
+    ], "edges": [[0, 1]]}
+  ]
+}

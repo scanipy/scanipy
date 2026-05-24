@@ -1,0 +1,10 @@
+commit_sha: sha256:a7c1cc5f4bd238db6cf9f608eb5d7a860505604d4a4482c495a797ba4ab709f9
+construct_coverage:
+  - dataclasses-pydantic
+  - type-hints
+license: Apache-2.0
+path_in_source: source/
+python_minor: '3.10'
+sha256_source_tree: sha256:a7c1cc5f4bd238db6cf9f608eb5d7a860505604d4a4482c495a797ba4ab709f9
+source_url: local:programs/0008-dataclasses-pydantic/source
+synthetic: true
