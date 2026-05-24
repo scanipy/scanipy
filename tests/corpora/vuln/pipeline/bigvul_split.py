@@ -46,6 +46,10 @@ def derive_row_id(commit_sha: str, file_path: str, func_name: str) -> str:
     h.update(file_path.encode("utf-8"))
     h.update(b"\0")
     h.update(func_name.encode("utf-8"))
+    # Intentional 128-bit (32 hex) prefix: at full BigVul scale (~180k rows) the
+    # birthday-collision probability is ~1e-31 — negligible — and a shorter id keeps
+    # heldout_split.lock compact. Do not "fix" to the full digest: it would change the
+    # held-out row_id set and break the preserved-across-releases lock (AC-CORP-VULN-01a).
     return "bigvul:" + h.hexdigest()[:32]
 
 
@@ -54,7 +58,7 @@ def _is_heldout(row_id: str) -> bool:
     return digest_int % HELDOUT_MODULUS == HELDOUT_RESIDUE
 
 
-def _digest_of_id_set(row_ids: list[str]) -> str:
+def _digest_of_id_set(row_ids: tuple[str, ...]) -> str:
     """sha256 over the SORTED, newline-joined row_id set — canonical + reproducible."""
     canonical = "\n".join(sorted(row_ids)).encode("utf-8")
     return "sha256:" + hashlib.sha256(canonical).hexdigest()
@@ -62,8 +66,10 @@ def _digest_of_id_set(row_ids: list[str]) -> str:
 
 @dataclass(frozen=True)
 class SplitResult:
-    heldout_ids: list[str]
-    training_ids: list[str]
+    # Tuples (not lists) so frozen=True yields a genuinely immutable id contract:
+    # the held-out / training-eligible partition must not be mutable after split.
+    heldout_ids: tuple[str, ...]
+    training_ids: tuple[str, ...]
     heldout_digest: str
     training_digest: str
 
@@ -95,8 +101,8 @@ def split_rows(rows: list[dict]) -> SplitResult:
     # Total order for reproducible enumeration (DOC §3.2 item 2).
     enriched.sort(key=lambda t: (t[0], t[1], t[2], t[3]))
 
-    heldout_ids = [rid for (_, _, _, rid) in enriched if _is_heldout(rid)]
-    training_ids = [rid for (_, _, _, rid) in enriched if not _is_heldout(rid)]
+    heldout_ids = tuple(rid for (_, _, _, rid) in enriched if _is_heldout(rid))
+    training_ids = tuple(rid for (_, _, _, rid) in enriched if not _is_heldout(rid))
 
     result = SplitResult(
         heldout_ids=heldout_ids,

@@ -46,9 +46,13 @@ carry none. `pipeline/build_lock.py` refuses to emit the lock on any violation.
 
 ## Per-(class, language) slicing + INV-6 (DOC §3.3)
 
-A slice is **populated only when its `(class, language)` pair has cleared `CMP-CP-06`**.
-A pair with no slice is **`front-end-blocked`** (INV-6), never a recall failure. At GA
-only Stage-A languages (Java, Python) carry slices for the four core classes.
+Algorithm 2 benchmarking consumes only slices whose `(class, language)` pair has cleared
+`CMP-CP-06` (INV-6). Scaffolding seeds may exist in a slice directory before the gate
+passes — v0.1.0 ships Java/Python seeds while `CMP-CP-06` is still unproven — and such
+seeds are **excluded from any precision/recall claim** until their pair clears the gate.
+A pair with no gate-cleared slice is reported **`front-end-blocked`** (INV-6), never as a
+recall failure. At GA only gate-cleared Stage-A languages (Java, Python) contribute
+recall numbers for the four core classes.
 
 ## Relabelling discipline
 
