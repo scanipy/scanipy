@@ -47,7 +47,11 @@ repos:
   # Python — ruff (lint + format)
   # ---------------------------------------------------------------------------
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.10
+    # Pinned to match the ruff CI installs (`ruff>=0.4.10` resolves to 0.15.x)
+    # and the pre-push hook's system ruff. The old 0.4.10 pin reformatted files
+    # to a style that the 0.15.x `ruff format --check` in pre-push/CI then
+    # rejected (e.g. assert-message wrapping) — an unwinnable commit↔push fight.
+    rev: v0.15.14
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
