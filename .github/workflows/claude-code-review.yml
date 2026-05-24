@@ -26,11 +26,23 @@ jobs:
 
       - name: Run Claude Code Review
         id: claude-review
-        uses: anthropics/claude-code-action@v1
+        # Pinned to a SHA (v1.0.133) rather than the floating @v1 tag so the
+        # reviewer is reproducible and a future @v1 retag cannot silently change
+        # behaviour. Bump deliberately.
+        uses: anthropics/claude-code-action@787c5a0ce96a9a6cfb050ea0c8f4c05f2447c251 # v1.0.133
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
+          # Force tag mode with an action-owned tracking comment. Without this the
+          # action ran in prompt/agent mode and relied on the agent itself calling
+          # the GitHub comment tool to post the verdict — which intermittently hit
+          # permission denials (observed: completes "success" but posts NO verdict
+          # on re-triggers; see PR #211). track_progress makes the action own the
+          # comment lifecycle so the APPROVE / REQUEST-CHANGES verdict is posted
+          # reliably on every run (RULE-10 depends on the posted verdict, not the
+          # green check-conclusion).
+          track_progress: true
           # This job is the CANONICAL Scanipy v3.2 code reviewer (RULE-10).
           # The former /code-review-cmp Skill is retired; its doctrine lives here.
           prompt: |
