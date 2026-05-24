@@ -6,7 +6,7 @@ synthetic: true
 authored_for: CMP-CORP-CPG-java
 construct_coverage:
   - interface-dispatch
-loc: 47
+loc: 45
 description: |
   Hand-authored closed program exercising polymorphic dispatch through an
   interface (Shape) with two concrete implementors (Circle, Square). Ground
