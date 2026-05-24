@@ -260,7 +260,13 @@ def upgrade() -> None:
                 CHECK (scope IN ('global', 'customer')),
             CONSTRAINT spec_versions_provenance_chk
                 CHECK (spec_provenance IN
-                    ('global-unrevalidated', 'global-revalidated', 'customer'))
+                    ('global-unrevalidated', 'global-revalidated', 'customer')),
+            -- INV-2 integrity: a customer-scoped spec MUST carry its org_id;
+            -- a global spec MUST NOT. Matches the two partial unique indexes
+            -- below (per-org for customer, global-singleton for global).
+            CONSTRAINT spec_versions_scope_org_chk
+                CHECK ((scope = 'global'   AND org_id IS NULL)
+                    OR (scope = 'customer' AND org_id IS NOT NULL))
         );
         CREATE UNIQUE INDEX spec_versions_org_version_key
             ON spec_versions (org_id, "S_version") WHERE org_id IS NOT NULL;
