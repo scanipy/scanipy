@@ -1,0 +1,32 @@
+slice_id: bigvul-ssrf-python-heldout-001
+source: bigvul_heldout
+class: ssrf
+language: python
+cwe_ids:
+  - CWE-918
+positive: true
+fix_pair_id: null
+license: MIT
+vendored: true
+notes: |
+  SYNTHESIZED BigVul-shaped CWE-918 (SSRF) held-out item. Represents the one row that
+  the deterministic split selected as HELD-OUT from data/bigvul_sample.csv. This item is
+  load-bearing for the held-out / training-disjointness contract: bigvul_row_id below
+  MUST appear in heldout_split.lock::heldout_row_ids and MUST NOT appear in the
+  training-eligible complement (verified by pipeline/test_corpus_integrity.py).
+  The real BigVul function content is NOT vendored here (bulk dataset sourcing deferred
+  to CLAR-CORP-08); this synthetic stand-in carries ground truth by construction.
+bigvul_row_id: bigvul:100d0b9ffa07ebda3a9e0ed2894e1823
+ground_truth_sites:
+  - file: proxy.py
+    line: 11
+    kind: ssrf-sink
+    note: "urllib.request.urlopen(target) over a user-controlled URL"
+provenance:
+  dataset: bigvul_heldout
+  upstream_dataset: "BigVul (Fan et al., MSR 2020)"
+  upstream_reference: https://github.com/ZeoVan/MSR_20_Code_vulnerability_CSV_Dataset
+  split_lock_ref: ../../../heldout_split.lock
+  split_procedure: "sha256(row_id) % 10 == 9 -> held-out (training-disjoint)"
+  ground_truth_origin: synthetic_by_construction
+  synthetic: true

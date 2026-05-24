@@ -1,0 +1,243 @@
+bigvul_heldout_digest: sha256:8ca711ce12bd131a43008556370ac2c0917e53761b35d1135d777c90f871d58d
+bigvul_heldout_lock_ref: bigvul_heldout/heldout_split.lock
+built_at: '2026-05-24T17:53:39Z'
+built_by: corpus-agent/CMP-CORP-VULN-01
+corpus_digest: sha256:7bac9f7ed9914468455685f9d166235583b60587959de8786a2efd4a38e0c1e9
+corpus_id: CMP-CORP-VULN-01
+corpus_version: 0.1.0
+ground_truth_method: 'OWASP Benchmark: ground truth taken verbatim from the upstream
+  expectedresults CSV (test name -> category -> real-vuln flag -> CWE); no hand relabelling.
+  Juliet: ground truth = NSA/SARD CWE tag preserved from the test case. BigVul held-out:
+  positives = upstream vulnerability-introducing rows; split is deterministic + training-disjoint
+  (training_exclusion_proof.md). v0.1.0 ships a small genuinely-referenced OWASP seed
+  + synthetic Juliet/BigVul shaped seeds + the full pipeline; see README.md.'
+licenses:
+  bigvul: MIT
+  juliet: Public Domain (NIST)
+  owasp_benchmark: GPL-2.0 (fetch-on-demand; off vendor allow-list, CLAR-CORP-07)
+populated_slices:
+  - class: ssrf
+    count: 1
+    language: python
+    source: bigvul_heldout
+  - class: injection
+    count: 1
+    language: java
+    source: juliet
+  - class: path-traversal
+    count: 1
+    language: python
+    source: juliet
+  - class: injection
+    count: 3
+    language: java
+    source: owasp_benchmark
+  - class: path-traversal
+    count: 2
+    language: java
+    source: owasp_benchmark
+slices:
+  - class: injection
+    count: 3
+    items:
+      - class: injection
+        cwe_ids:
+          - CWE-89
+        ground_truth_sites:
+          - file: src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00008.java
+            kind: sql-injection-sink
+            line: 54
+            note: statement.executeQuery() over a tainted SQL string
+        language: java
+        license: GPL-2.0
+        positive: true
+        provenance:
+          commit_sha: 2734ae486356765ea4e45393a28e20bcb5047f8c
+          dataset: owasp_benchmark
+          expected_results_csv: expectedresults-1.2beta.csv
+          fetch_on_demand: true
+          ground_truth_origin: upstream_csv_verbatim
+          release_tag: 1.2beta
+          repo: https://github.com/OWASP-Benchmark/BenchmarkJava
+          upstream_path: src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00008.java
+          upstream_sha256: sha256:975e01ea7b2d5be4c1b9e223d104ae736f9b609f86848559444f712583bf1fb0
+        slice_id: owasp-injection-java-00008
+        source: owasp_benchmark
+        vendored: false
+      - class: injection
+        cwe_ids:
+          - CWE-89
+        ground_truth_sites:
+          - file: src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00018.java
+            kind: sql-injection-sink
+            line: 57
+            note: statement.executeUpdate(sql) over a tainted SQL string
+        language: java
+        license: GPL-2.0
+        positive: true
+        provenance:
+          commit_sha: 2734ae486356765ea4e45393a28e20bcb5047f8c
+          dataset: owasp_benchmark
+          expected_results_csv: expectedresults-1.2beta.csv
+          fetch_on_demand: true
+          ground_truth_origin: upstream_csv_verbatim
+          release_tag: 1.2beta
+          repo: https://github.com/OWASP-Benchmark/BenchmarkJava
+          upstream_path: src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00018.java
+          upstream_sha256: sha256:e3a97c315ff300a1caabbf448469eda60005cc0e581ec554f3d052f38f6a94be
+        slice_id: owasp-injection-java-00018
+        source: owasp_benchmark
+        vendored: false
+      - class: injection
+        cwe_ids:
+          - CWE-89
+        ground_truth_sites: []
+        language: java
+        license: GPL-2.0
+        positive: false
+        provenance:
+          commit_sha: 2734ae486356765ea4e45393a28e20bcb5047f8c
+          dataset: owasp_benchmark
+          expected_results_csv: expectedresults-1.2beta.csv
+          fetch_on_demand: true
+          ground_truth_origin: upstream_csv_verbatim
+          release_tag: 1.2beta
+          repo: https://github.com/OWASP-Benchmark/BenchmarkJava
+          upstream_path: src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00052.java
+          upstream_sha256: sha256:bb1621c5345a0a41a44a068a74e2698737df8e0032f8a21f2bcd98bf63228a53
+        slice_id: owasp-injection-java-00052-fix
+        source: owasp_benchmark
+        vendored: false
+    language: java
+    source: owasp_benchmark
+  - class: path-traversal
+    count: 2
+    items:
+      - class: path-traversal
+        cwe_ids:
+          - CWE-22
+        ground_truth_sites:
+          - file: src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00001.java
+            kind: path-traversal-sink
+            line: 63
+            note: new FileInputStream(new File(fileName)) over a tainted path
+        language: java
+        license: GPL-2.0
+        positive: true
+        provenance:
+          commit_sha: 2734ae486356765ea4e45393a28e20bcb5047f8c
+          dataset: owasp_benchmark
+          expected_results_csv: expectedresults-1.2beta.csv
+          fetch_on_demand: true
+          ground_truth_origin: upstream_csv_verbatim
+          release_tag: 1.2beta
+          repo: https://github.com/OWASP-Benchmark/BenchmarkJava
+          upstream_path: src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00001.java
+          upstream_sha256: sha256:67124608af68142f31964c12249891ae7153678b6bbbfa86ad7394b570d8a388
+        slice_id: owasp-pathtraversal-java-00001
+        source: owasp_benchmark
+        vendored: false
+      - class: path-traversal
+        cwe_ids:
+          - CWE-22
+        ground_truth_sites: []
+        language: java
+        license: GPL-2.0
+        positive: false
+        provenance:
+          commit_sha: 2734ae486356765ea4e45393a28e20bcb5047f8c
+          dataset: owasp_benchmark
+          expected_results_csv: expectedresults-1.2beta.csv
+          fetch_on_demand: true
+          ground_truth_origin: upstream_csv_verbatim
+          release_tag: 1.2beta
+          repo: https://github.com/OWASP-Benchmark/BenchmarkJava
+          upstream_path: src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00063.java
+          upstream_sha256: sha256:18680b3299bda578af9227848dc5da0d9227feb23586d23c89714182b10c50f6
+        slice_id: owasp-pathtraversal-java-00063-fix
+        source: owasp_benchmark
+        vendored: false
+    language: java
+    source: owasp_benchmark
+  - class: injection
+    count: 1
+    items:
+      - class: injection
+        cwe_ids:
+          - CWE-89
+        ground_truth_sites:
+          - file: SqliConnectExecuteQuery01.java
+            kind: sql-injection-sink
+            line: 9
+            note: Statement.executeQuery(query) where query is built from the BadSource
+        language: java
+        license: Public Domain (NIST)
+        positive: true
+        provenance:
+          dataset: juliet
+          ground_truth_origin: synthetic_by_construction
+          imitates_suite: Juliet Test Suite v1.3 for Java (NIST SARD)
+          synthetic: true
+          upstream_reference: https://samate.nist.gov/SARD/test-suites/112
+        slice_id: juliet-injection-java-cwe89-001
+        source: juliet
+        vendored: true
+    language: java
+    source: juliet
+  - class: path-traversal
+    count: 1
+    items:
+      - class: path-traversal
+        cwe_ids:
+          - CWE-22
+        ground_truth_sites:
+          - file: path_traversal_open_01.py
+            kind: path-traversal-sink
+            line: 10
+            note: open(path) where path is built from an unsanitized request parameter
+        language: python
+        license: Public Domain (NIST)
+        positive: true
+        provenance:
+          dataset: juliet
+          ground_truth_origin: synthetic_by_construction
+          imitates_suite: Juliet Test Suite (NIST SARD), Python-idiom adaptation
+          synthetic: true
+          upstream_reference: https://samate.nist.gov/SARD/
+        slice_id: juliet-pathtraversal-python-cwe22-001
+        source: juliet
+        vendored: true
+    language: python
+    source: juliet
+  - class: ssrf
+    count: 1
+    items:
+      - class: ssrf
+        cwe_ids:
+          - CWE-918
+        ground_truth_sites:
+          - file: proxy.py
+            kind: ssrf-sink
+            line: 11
+            note: urllib.request.urlopen(target) over a user-controlled URL
+        language: python
+        license: MIT
+        positive: true
+        provenance:
+          dataset: bigvul_heldout
+          ground_truth_origin: synthetic_by_construction
+          split_lock_ref: ../../../heldout_split.lock
+          split_procedure: sha256(row_id) % 10 == 9 -> held-out (training-disjoint)
+          synthetic: true
+          upstream_dataset: BigVul (Fan et al., MSR 2020)
+          upstream_reference: https://github.com/ZeoVan/MSR_20_Code_vulnerability_CSV_Dataset
+        slice_id: bigvul-ssrf-python-heldout-001
+        source: bigvul_heldout
+        vendored: true
+    language: python
+    source: bigvul_heldout
+sources:
+  - owasp_benchmark
+  - juliet
+  - bigvul_heldout
+training_exclusion_proof_ref: bigvul_heldout/training_exclusion_proof.md

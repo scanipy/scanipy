@@ -1,0 +1,26 @@
+slice_id: juliet-pathtraversal-python-cwe22-001
+source: juliet
+class: path-traversal
+language: python
+cwe_ids:
+  - CWE-22
+positive: true
+fix_pair_id: null
+license: Public Domain (NIST)
+vendored: true
+notes: |
+  SYNTHESIZED Juliet-shaped CWE-22 (path traversal) test case authored for this corpus.
+  NOT a vendored NIST/SARD file (bulk Juliet sourcing deferred to CLAR-CORP-08). Ground
+  truth by construction: the tainted request parameter flows to the open() sink at the
+  recorded line. Synthetic content released CC0/Public-Domain as part of this corpus.
+ground_truth_sites:
+  - file: path_traversal_open_01.py
+    line: 10
+    kind: path-traversal-sink
+    note: "open(path) where path is built from an unsanitized request parameter"
+provenance:
+  dataset: juliet
+  imitates_suite: "Juliet Test Suite (NIST SARD), Python-idiom adaptation"
+  upstream_reference: https://samate.nist.gov/SARD/
+  ground_truth_origin: synthetic_by_construction
+  synthetic: true
