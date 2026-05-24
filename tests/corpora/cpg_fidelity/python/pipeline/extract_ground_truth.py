@@ -24,7 +24,7 @@ cpython 3.10 ``ast`` + scalpel 1.0.4 (CFG/SDG) + Pyan3 1.2.0 + Pyre 0.0.301
 and the pinned interpreter is 3.10; this build runs the AST step on the host
 interpreter and replaces the scalpel/Pyan3/Pyre steps with this in-repo,
 zero-dependency extractor.** This is a deliberate, documented deviation tracked
-by ``CLAR-CORP-07`` (WBS §17). The trade-off:
+by ``CLAR-CORP-11`` (WBS §17). The trade-off:
 
   * AST ground truth is faithful (it is just cpython ``ast``), but it is recorded
     under the *host* ``python`` version (see ``extraction.yaml``), not the pinned

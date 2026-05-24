@@ -3,13 +3,13 @@ built_by: corpus-agent/CMP-CORP-CPG-python
 corpus_digest: sha256:6bb991d32109abafcef1d81afdfcb1a3bb499e2a814721232df59eafb845215e
 corpus_id: CMP-CORP-CPG-python
 corpus_version: 0.1.0
-deviation: CLAR-CORP-07
+deviation: CLAR-CORP-11
 ground_truth_method: "AST: cpython `ast` (host interpreter; programs in the 3.10-compatible\
   \ subset) with stable field ordering + source positions. CFG/callgraph/PDG: in-repo\
   \ pipeline/extract_ground_truth.py. Call edges are (caller, callee, line) triples\
   \ tagged static|dynamic; `dynamic` sites (getattr/dict-dispatch/cross-module/FFI/runtime\
   \ receivers) are recorded but EXCLUDED from the gate's precision/recall (DOC \xA7\
-  3.4 step 3). v0.1.0 deviates from the DOC-pinned scalpel/Pyan3/Pyre toolchain (CLAR-CORP-07);\
+  3.4 step 3). v0.1.0 deviates from the DOC-pinned scalpel/Pyan3/Pyre toolchain (CLAR-CORP-11);\
   \ see README.md \xA7Status + \xA73."
 language: python
 language_level: '3.10'

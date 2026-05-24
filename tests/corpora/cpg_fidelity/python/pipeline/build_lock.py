@@ -41,7 +41,7 @@ PROGRAMS_DIR = CORPUS_ROOT / "programs"
 LOCK_PATH = CORPUS_ROOT / "corpus.lock"
 
 CORPUS_ID = "CMP-CORP-CPG-python"
-CORPUS_VERSION = "0.1.0"  # README §Status: NOT the v1.0.0 release bar (see CLAR-CORP-07)
+CORPUS_VERSION = "0.1.0"  # README §Status: NOT the v1.0.0 release bar (see CLAR-CORP-11)
 BUILT_BY = "corpus-agent/CMP-CORP-CPG-python"
 LANGUAGE_LEVEL = "3.10"  # programs are written in the 3.10-compatible subset
 
@@ -64,13 +64,13 @@ REQUIRED_TAGS = {
 # v0.1.0 extraction toolchain. The DOC pins scalpel 1.0.4 / Pyan3 1.2.0 / Pyre
 # 0.0.301 on cpython 3.10; this build runs the AST step on the host interpreter
 # and uses the in-repo extractor for CFG/callgraph/PDG. Deviation tracked by
-# CLAR-CORP-07 (WBS §17). `python` is recorded honestly from the host.
+# CLAR-CORP-11 (WBS §17). `python` is recorded honestly from the host.
 import platform as _platform  # noqa: E402
 
 EXTRACTION_TOOLS = {
     "python": _platform.python_version(),
     "extractor": "scanipy-cpg-python-extractor/0.1.0 (in-repo; pipeline/extract_ground_truth.py)",
-    # Pinned target toolchain the v1.0.0 bar must re-extract under (CLAR-CORP-07):
+    # Pinned target toolchain the v1.0.0 bar must re-extract under (CLAR-CORP-11):
     "target_scalpel": "1.0.4",
     "target_pyan3": "1.2.0",
     "target_pyre": "0.0.301",
@@ -228,7 +228,7 @@ def emit_program_metadata(now: str) -> list[str]:
                 "the in-repo pipeline/extract_ground_truth.py. Call-graph ground truth "
                 "is the statically name-resolvable subset; sites the extractor cannot "
                 "resolve statically are tagged `dynamic` and EXCLUDED from the gate's "
-                "precision/recall (DOC §3.4 step 3). Tracked by CLAR-CORP-07 (WBS §17)."
+                "precision/recall (DOC §3.4 step 3). Tracked by CLAR-CORP-11 (WBS §17)."
             ),
             "review_status": "pipeline",
         }
@@ -320,10 +320,10 @@ def assemble_lock(now: str) -> tuple[dict, list[str], list[str]]:
             "are (caller, callee, line) triples tagged static|dynamic; `dynamic` sites "
             "(getattr/dict-dispatch/cross-module/FFI/runtime receivers) are recorded "
             "but EXCLUDED from the gate's precision/recall (DOC §3.4 step 3). v0.1.0 "
-            "deviates from the DOC-pinned scalpel/Pyan3/Pyre toolchain (CLAR-CORP-07); "
+            "deviates from the DOC-pinned scalpel/Pyan3/Pyre toolchain (CLAR-CORP-11); "
             "see README.md §Status + §3."
         ),
-        "deviation": "CLAR-CORP-07",
+        "deviation": "CLAR-CORP-11",
         "programs": programs,
     }
     return lock, hard, warn
