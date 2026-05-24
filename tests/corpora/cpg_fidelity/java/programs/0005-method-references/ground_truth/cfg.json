@@ -1,0 +1,15 @@
+{
+  "schema": "cpg-fidelity/cfg/v1",
+  "program_id": "0005-method-references",
+  "method": "Per-method intraprocedural CFG by-inspection.",
+  "methods": [
+    {"method": "corpus.cpg.p0005.MethodRefs.shout(String)", "nodes": ["return s.toUpperCase()"], "edges": []},
+    {"method": "corpus.cpg.p0005.MethodRefs.run(Function,String)", "nodes": ["return f.apply(in)"], "edges": []},
+    {"method": "corpus.cpg.p0005.MethodRefs.make(Supplier)", "nodes": ["return s.get()"], "edges": []},
+    {"method": "corpus.cpg.p0005.MethodRefs.main(String[])", "nodes": [
+      "String a = run(MethodRefs::shout, \"hi\")",
+      "String b = make(\"x\"::trim)",
+      "System.out.println(a + b)"
+    ], "edges": [[0, 1], [1, 2]]}
+  ]
+}

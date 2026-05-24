@@ -1,0 +1,18 @@
+{
+  "schema": "cpg-fidelity/pdg/v1",
+  "program_id": "0005-method-references",
+  "method": "Intraprocedural PDG (data) by-inspection.",
+  "methods": [
+    {"method": "corpus.cpg.p0005.MethodRefs.run(Function,String)", "dependences": [
+      {"from": "param f", "to": "return f.apply(in)", "type": "data", "var": "f"},
+      {"from": "param in", "to": "return f.apply(in)", "type": "data", "var": "in"}
+    ]},
+    {"method": "corpus.cpg.p0005.MethodRefs.shout(String)", "dependences": [
+      {"from": "param s", "to": "return s.toUpperCase()", "type": "data", "var": "s"}
+    ]},
+    {"method": "corpus.cpg.p0005.MethodRefs.main(String[])", "dependences": [
+      {"from": "String a = run(MethodRefs::shout, \"hi\")", "to": "System.out.println(a + b)", "type": "data", "var": "a"},
+      {"from": "String b = make(\"x\"::trim)", "to": "System.out.println(a + b)", "type": "data", "var": "b"}
+    ]}
+  ]
+}
