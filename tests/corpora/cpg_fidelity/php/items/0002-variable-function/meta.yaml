@@ -1,0 +1,9 @@
+categories:
+  - variable_functions
+dynamic: true
+id: 0002-variable-function
+license: Apache-2.0
+primary_file: variable_function.php
+source_commit: content-addressed
+source_url: vendored
+synthetic: true

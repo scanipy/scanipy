@@ -1,0 +1,30 @@
+{
+  "schema": "cpg-fidelity/cfg/v0.1.0",
+  "file": "call_user_func.php",
+  "functions": [
+    {
+      "name": "formatUpper",
+      "blocks": [
+        {"id": "B0", "kind": "entry", "succ": ["B1"]},
+        {"id": "B1", "kind": "return", "line": 13, "succ": ["B2"]},
+        {"id": "B2", "kind": "exit", "succ": []}
+      ]
+    },
+    {
+      "name": "apply",
+      "blocks": [
+        {"id": "B0", "kind": "entry", "succ": ["B1"]},
+        {"id": "B1", "kind": "return", "line": 19, "succ": ["B2"]},
+        {"id": "B2", "kind": "exit", "succ": []}
+      ]
+    },
+    {
+      "name": "applyArgs",
+      "blocks": [
+        {"id": "B0", "kind": "entry", "succ": ["B1"]},
+        {"id": "B1", "kind": "return", "line": 25, "succ": ["B2"]},
+        {"id": "B2", "kind": "exit", "succ": []}
+      ]
+    }
+  ]
+}

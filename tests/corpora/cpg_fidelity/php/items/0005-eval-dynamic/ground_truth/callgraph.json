@@ -1,0 +1,11 @@
+{
+  "schema": "cpg-fidelity/callgraph/v0.1.0",
+  "file": "eval_dynamic.php",
+  "is_lower_bound": true,
+  "dynamic": true,
+  "notes": "eval() at line 21 executes a runtime-constructed string. The call to helper() lives only inside that string and is NOT a static AST subtree, so no callee edge is asserted from the eval site (undecidable; INV-4/INV-6 safe direction). eval_sites records the location so the gate can account for the irreducible blind spot rather than scoring it as a recall failure.",
+  "eval_sites": [
+    {"function": "compute", "line": 21, "kind": "eval"}
+  ],
+  "edges": []
+}

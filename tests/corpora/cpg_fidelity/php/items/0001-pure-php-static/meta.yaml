@@ -1,0 +1,9 @@
+categories:
+  - pure_php
+dynamic: false
+id: 0001-pure-php-static
+license: Apache-2.0
+primary_file: Calculator.php
+source_commit: content-addressed
+source_url: vendored
+synthetic: true
