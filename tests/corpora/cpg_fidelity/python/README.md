@@ -21,16 +21,16 @@ This is a **provisional, scaffolding** build that delivers:
   genuinely SOURCED from a public repo with a pinned commit.
 
 It deliberately does **not** yet meet the v1.0.0 bar, which is gated on
-**`CLAR-CORP-07`** (the ground-truth toolchain decision):
+**`CLAR-CORP-11`** (the ground-truth toolchain decision):
 
 | Track | This build (v0.1.0) | v1.0.0 release bar |
 |---|---|---|
 | Ground-truth extractor | in-repo `extract_ground_truth.py` on host cpython 3.12 | DOC §3.4 pinned scalpel 1.0.4 + Pyan3 1.2.0 + Pyre 0.0.301 on cpython 3.10 |
 | Programs | 11 (1 sourced, 10 synthesized) | larger, with more sourced real-world trees per tag |
-| `CMP-CP-06` Python verdict | **NOT authoritative** on this ground truth (CLAR-CORP-07) | authoritative once toolchain ratified/provisioned |
+| `CMP-CP-06` Python verdict | **NOT authoritative** on this ground truth (CLAR-CORP-11) | authoritative once toolchain ratified/provisioned |
 
 **The `CMP-CP-06` Python gate verdict MUST NOT be declared authoritative on the
-v0.1.0 extractor-derived ground truth** until `CLAR-CORP-07` resolves — see §5.
+v0.1.0 extractor-derived ground truth** until `CLAR-CORP-11` resolves — see §5.
 
 ## What is SOURCED vs SYNTHESIZED
 
@@ -146,7 +146,7 @@ digest pins the evaluation set, not the wall clock. The gate report records both
 | CLAR-ID | Status | Effect on this corpus |
 |---|---|---|
 | `CLAR-CORP-02` | RESOLVED 2026-05-23 | Python thresholds pinned (parse ≥99.5%, prec ≥90%, rec ≥85%, PDG ≥80%). |
-| `CLAR-CORP-07` | OPEN | Ground-truth toolchain: v0.1.0 uses the in-repo extractor on host cpython 3.12 instead of the DOC-pinned scalpel/Pyan3/Pyre on cpython 3.10. v1.0.0 must either provision the pinned toolchain and re-extract (bumping `corpus_version`) **or** ratify the in-repo extractor and amend `DOC-CMP-CORP-CPG-python §3.4`. Until resolved, the `CMP-CP-06` Python verdict is **not authoritative** on this ground truth. |
+| `CLAR-CORP-11` | OPEN | Ground-truth toolchain: v0.1.0 uses the in-repo extractor on host cpython 3.12 instead of the DOC-pinned scalpel/Pyan3/Pyre on cpython 3.10. v1.0.0 must either provision the pinned toolchain and re-extract (bumping `corpus_version`) **or** ratify the in-repo extractor and amend `DOC-CMP-CORP-CPG-python §3.4`. Until resolved, the `CMP-CP-06` Python verdict is **not authoritative** on this ground truth. |
 | `CLAR-OWNER-01` | DEFERRED | Corpus owner unassigned. |
 
 ## 6. References
@@ -154,4 +154,4 @@ digest pins the evaluation set, not the wall clock. The gate report records both
 - `DOC-CMP-CORP-CPG-python.md` — build specification.
 - `docs/cross-cutting/DOC-STAGING.md §3`, `.claude/rules/04-staging.md` — gate thresholds.
 - `docs/cross-cutting/DOC-INV.md §8`, `.claude/rules/01-invariants.md §INV-6` — per-language honesty.
-- `WBS.md §16` — `AC-CORP-CPG-python-a/b`. `WBS.md §17` — `CLAR-CORP-02`, `CLAR-CORP-07`.
+- `WBS.md §16` — `AC-CORP-CPG-python-a/b`. `WBS.md §17` — `CLAR-CORP-02`, `CLAR-CORP-11`.
