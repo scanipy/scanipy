@@ -1,0 +1,312 @@
+"""SCM-family unit / negative / regression-unit test specs — Phase 1 stubs.
+
+Covers the [UNIT], [NEGATIVE], and unit-flavoured [REGRESSION] acceptance
+criteria of the SCM Integration subsystem (WBS §4.2):
+
+  TST-AC-SCM-01a  ABC defines all six methods with typed signatures   [UNIT]
+  TST-AC-SCM-01b  SCMCredentials round-trips four auth modes           [UNIT]
+  TST-AC-SCM-02b  v2 retry/rate-limit/tiered-star byte-for-byte        [REGRESSION]
+  TST-AC-SCM-02c  integrations/github shim re-export                   [REGRESSION]
+  TST-AC-SCM-03b  per-provider webhook forgery rejection               [NEGATIVE]
+  TST-AC-SCM-05a  exponential backoff + provider rate-limit honouring  [UNIT]
+
+Mirrors tests/unit/test_dsl_proofs.py: each spec is a registered stub marked
+`xfail(strict=False)` so the CI job exists and is exercisable while the
+implementation is absent. Replace the `pytest.skip(...)` body with real
+assertions when the owning CMP reaches DONE. Closed marker set
+(--strict-markers): kind tags live in docstrings, never as markers.
+"""
+
+import pytest
+
+# ---------------------------------------------------------------------------
+# TST-AC-SCM-01a — ABC defines all six methods with typed signatures  [UNIT]
+# CMP-SCM-01 · hard gate: yes. DOC-CMP-SCM-01 §3.2: "six methods. No more,
+# no fewer." → six per-method sub-tests + one structural "exactly six" test.
+# ---------------------------------------------------------------------------
+
+_ABC_METHODS = (
+    "list_repos",
+    "clone",
+    "register_webhook",
+    "verify_webhook",
+    "get_default_branch",
+    "resolve_commit",
+)
+
+
+@pytest.mark.unit
+@pytest.mark.xfail(reason="CMP-SCM-01 (SCMConnector ABC) not yet implemented", strict=False)
+@pytest.mark.parametrize("method_name", _ABC_METHODS)
+def test_scm_01a_abc_declares_method(method_name: str) -> None:
+    """Each of the six ABC methods is declared @abstractmethod with a docstring.
+
+    Test id: TST-AC-SCM-01a-1..6 (one per parametrised method)
+    Maps to AC: AC-SCM-01a
+    Kind tag: [UNIT]
+    Inputs: integrations.scm.base.SCMConnector class object; method_name fixture.
+    Outputs: each name resolves to an abstract method carrying a contract docstring.
+    Pass criteria: method_name in SCMConnector.__abstractmethods__ AND the attribute
+      has a non-empty __doc__ documenting its contract (DOC-CMP-SCM-01 §3.2).
+    Frequency: every CI run
+    Hard gate?: yes
+    """
+    # TODO: from integrations.scm.base import SCMConnector
+    # assert method_name in SCMConnector.__abstractmethods__
+    # assert getattr(SCMConnector, method_name).__doc__
+    pytest.skip("CMP-SCM-01 not implemented yet")
+
+
+@pytest.mark.unit
+@pytest.mark.xfail(reason="CMP-SCM-01 (SCMConnector ABC) not yet implemented", strict=False)
+def test_scm_01a_abc_declares_exactly_six_methods() -> None:
+    """The ABC declares exactly six abstract methods — no more, no fewer.
+
+    Test id: TST-AC-SCM-01a-7
+    Maps to AC: AC-SCM-01a
+    Kind tag: [UNIT]
+    Inputs: integrations.scm.base.SCMConnector.__abstractmethods__.
+    Outputs: the abstract-method set equals the documented six.
+    Pass criteria: frozenset(SCMConnector.__abstractmethods__) == frozenset(_ABC_METHODS)
+      (DOC-CMP-SCM-01 §3.2 "six methods. No more, no fewer").
+    Frequency: every CI run
+    Hard gate?: yes
+    """
+    # TODO: from integrations.scm.base import SCMConnector
+    # assert frozenset(SCMConnector.__abstractmethods__) == frozenset(_ABC_METHODS)
+    pytest.skip("CMP-SCM-01 not implemented yet")
+
+
+# ---------------------------------------------------------------------------
+# TST-AC-SCM-01b — SCMCredentials round-trips four auth modes  [UNIT]
+# CMP-SCM-01 · hard gate: yes. CMP-CP-02 mocked until available (DOC §6).
+# Four modes (DOC-CMP-SCM-01 §4.1) → four round-trip sub-tests.
+# ---------------------------------------------------------------------------
+
+_AUTH_MODES = ("pat", "app_installation", "oauth", "ssh_key")
+
+
+@pytest.mark.unit
+@pytest.mark.xfail(reason="CMP-SCM-01 (SCMCredentials) not yet implemented", strict=False)
+@pytest.mark.parametrize("mode", _AUTH_MODES)
+def test_scm_01b_credentials_roundtrip(mode: str) -> None:
+    """An SCMCredentials instance survives encrypt→persist→decrypt unchanged.
+
+    Test id: TST-AC-SCM-01b-1..4 (one per auth mode)
+    Maps to AC: AC-SCM-01b
+    Kind tag: [UNIT]
+    Inputs: SCMCredentials(provider, mode, payload) with the mode-specific payload
+      keys from DOC-CMP-SCM-01 §4.1; a deterministic mock CMP-CP-02 encrypt/decrypt
+      envelope (T-CMP-SCM-01-04) until the real key service lands.
+    Outputs: a deserialised SCMCredentials structurally equal to the original.
+    Pass criteria: decrypt(encrypt(cred)) == cred under dataclass structural equality,
+      for all four modes; payload values are strings only (no binary).
+    Frequency: every CI run
+    Hard gate?: yes
+    """
+    # TODO: from integrations.scm.base import SCMCredentials, SCMAuthMode
+    # cred = SCMCredentials(provider="github", mode=SCMAuthMode(mode), payload={...})
+    # assert mock_cp02.decrypt(mock_cp02.encrypt(cred)) == cred
+    pytest.skip("CMP-SCM-01 not implemented yet")
+
+
+# ---------------------------------------------------------------------------
+# TST-AC-SCM-02b — v2 retry/rate-limit/tiered-star byte-for-byte  [REGRESSION]
+# CMP-SCM-02 · hard gate: yes. BLOCKED on CLAR-SCM-01: the v2 baseline source
+# (vendored copy / git-history snapshot / golden-fixture archive) is unpinned,
+# so the byte-for-byte pass criterion cannot be authored. Skip with a
+# PASS-CRITERION-UNSPECIFIED marker rather than guessing a baseline.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+@pytest.mark.xfail(reason="CMP-SCM-02 byte-for-byte baseline blocked on CLAR-SCM-01", strict=False)
+def test_scm_02b_retry_behaviour_matches_v2_baseline() -> None:
+    """GitHub connector retry/backoff curve matches the v2 baseline byte-for-byte.
+
+    Test id: TST-AC-SCM-02b-1
+    Maps to AC: AC-SCM-02b
+    Kind tag: [REGRESSION]
+    Inputs: captured v2 retry/backoff trace (sleep sequence per simulated 429 /
+      secondary-limit response) — baseline location UNPINNED.
+    Outputs: replayed v3.2 GitHubConnector trace identical to the v2 baseline.
+    Pass criteria: PASS-CRITERION-UNSPECIFIED: v2 baseline location not pinned —
+      needs CLAR-SCM-01 (DOC-CMP-SCM-02 §10). Cannot author byte-for-byte oracle
+      until the baseline (vendored / git-history / golden-fixture) is named.
+    Frequency: every CI run
+    Hard gate?: yes
+    """
+    # TODO: blocked — CLAR-SCM-01 must name the v2 baseline before this is authored.
+    pytest.skip("PASS-CRITERION-UNSPECIFIED: v2 baseline location not pinned — needs CLAR-SCM-01")
+
+
+@pytest.mark.unit
+@pytest.mark.xfail(reason="CMP-SCM-02 byte-for-byte baseline blocked on CLAR-SCM-01", strict=False)
+def test_scm_02b_rate_limit_honouring_matches_v2_baseline() -> None:
+    """GitHub connector rate-limit honouring matches the v2 baseline byte-for-byte.
+
+    Test id: TST-AC-SCM-02b-2
+    Maps to AC: AC-SCM-02b
+    Kind tag: [REGRESSION]
+    Inputs: captured v2 primary + secondary rate-limit handling behaviour —
+      baseline location UNPINNED.
+    Outputs: replayed v3.2 behaviour identical to the v2 baseline.
+    Pass criteria: PASS-CRITERION-UNSPECIFIED: v2 baseline location not pinned —
+      needs CLAR-SCM-01 (DOC-CMP-SCM-02 §10).
+    Frequency: every CI run
+    Hard gate?: yes
+    """
+    # TODO: blocked — CLAR-SCM-01 must name the v2 baseline before this is authored.
+    pytest.skip("PASS-CRITERION-UNSPECIFIED: v2 baseline location not pinned — needs CLAR-SCM-01")
+
+
+@pytest.mark.unit
+@pytest.mark.xfail(reason="CMP-SCM-02 byte-for-byte baseline blocked on CLAR-SCM-01", strict=False)
+def test_scm_02b_tiered_star_listing_matches_v2_baseline() -> None:
+    """GitHub tiered-star repo discovery matches the v2 baseline byte-for-byte.
+
+    Test id: TST-AC-SCM-02b-3
+    Maps to AC: AC-SCM-02b
+    Kind tag: [REGRESSION]
+    Inputs: captured v2 list_repos_tiered_star result shaping / star-tier ordering
+      (DOC-CMP-SCM-02 §3.3) — baseline location UNPINNED.
+    Outputs: replayed v3.2 tiered-star output identical to the v2 baseline.
+    Pass criteria: PASS-CRITERION-UNSPECIFIED: v2 baseline location not pinned —
+      needs CLAR-SCM-01 (DOC-CMP-SCM-02 §10).
+    Frequency: every CI run
+    Hard gate?: yes
+    """
+    # TODO: blocked — CLAR-SCM-01 must name the v2 baseline before this is authored.
+    pytest.skip("PASS-CRITERION-UNSPECIFIED: v2 baseline location not pinned — needs CLAR-SCM-01")
+
+
+# ---------------------------------------------------------------------------
+# TST-AC-SCM-02c — integrations/github shim re-export  [REGRESSION]
+# CMP-SCM-02 · hard gate: yes. NOT blocked by CLAR-SCM-01 — the shim's
+# caller-visible contract is fully specified in DOC-CMP-SCM-02 §3.5.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+@pytest.mark.xfail(reason="CMP-SCM-02 (github shim) not yet implemented", strict=False)
+def test_scm_02c_shim_exports_search_repositories() -> None:
+    """integrations.github.search_repositories imports as a caller-transparent shim.
+
+    Test id: TST-AC-SCM-02c-1
+    Maps to AC: AC-SCM-02c
+    Kind tag: [REGRESSION]
+    Inputs: `from integrations.github import search_repositories` (the v2 public symbol).
+    Outputs: a callable resolved at the legacy import path.
+    Pass criteria: the import succeeds and search_repositories is callable; the symbol
+      lives at integrations/github/__init__.py (DOC-CMP-SCM-02 §3.5).
+    Frequency: every CI run
+    Hard gate?: yes
+    """
+    # TODO: from integrations.github import search_repositories
+    # assert callable(search_repositories)
+    pytest.skip("CMP-SCM-02 not implemented yet")
+
+
+@pytest.mark.unit
+@pytest.mark.xfail(reason="CMP-SCM-02 (github shim) not yet implemented", strict=False)
+def test_scm_02c_shim_signature_unchanged() -> None:
+    """The shim preserves the v2 public signature with no caller-visible change.
+
+    Test id: TST-AC-SCM-02c-2
+    Maps to AC: AC-SCM-02c
+    Kind tag: [REGRESSION]
+    Inputs: inspect.signature(integrations.github.search_repositories).
+    Outputs: the call signature a v2 caller relies on (e.g. `scanipy --query …`).
+    Pass criteria: signature matches the v2 public contract; a v2 invocation observes
+      no behavioural difference (DOC-CMP-SCM-02 §3.5 — delegates to
+      GitHubConnector.list_repos_tiered_star, signature unchanged).
+    Frequency: every CI run
+    Hard gate?: yes
+    """
+    # TODO: confirm inspect.signature(search_repositories) matches the v2 baseline
+    #       signature (the parameter list is part of CLAR-SCM-01's captured baseline,
+    #       but the *existence and shape* contract is specified in DOC §3.5).
+    pytest.skip("CMP-SCM-02 not implemented yet")
+
+
+# ---------------------------------------------------------------------------
+# TST-AC-SCM-03b — per-provider webhook forgery rejection  [NEGATIVE]
+# CMP-SCM-03 · hard gate: yes. Three providers (GL/BB/ADO); GitHub is SCM-02.
+# DOC-CMP-SCM-03 §3.3 / §7: a tampered byte → verify_webhook returns False.
+# ---------------------------------------------------------------------------
+
+_SCM03_PROVIDERS = ("gitlab", "bitbucket", "azure-devops")
+
+
+@pytest.mark.unit
+@pytest.mark.xfail(reason="CMP-SCM-03 (GL/BB/ADO connectors) not yet implemented", strict=False)
+@pytest.mark.parametrize("provider", _SCM03_PROVIDERS)
+def test_scm_03b_forged_webhook_rejected(provider: str) -> None:
+    """A forged/tampered webhook payload makes verify_webhook return False.
+
+    Test id: TST-AC-SCM-03b-1..3 (one per provider)
+    Maps to AC: AC-SCM-03b
+    Kind tag: [NEGATIVE]
+    Inputs: a genuine payload + valid provider signature, then one tampered body byte
+      (signature recomputed over the original body). Per-provider scheme from
+      DOC-CMP-SCM-03 §3.3 (GitLab X-Gitlab-Token; Bitbucket X-Hub-Signature HMAC-SHA256;
+      ADO HMAC-SHA256 service-hook).
+    Outputs: verify_webhook(raw_body=tampered, headers, secret) -> bool.
+    Pass criteria: returns False; raises no exception; emits no "verified" log line
+      (DOC-CMP-SCM-03 §7 — predicate, not fault path).
+    Frequency: every CI run
+    Hard gate?: yes
+    """
+    # TODO: connector = {gitlab: GitLabConnector, ...}[provider](mock_creds)
+    # assert connector.verify_webhook(raw_body=tampered, headers=hdrs, secret=s) is False
+    pytest.skip("CMP-SCM-03 not implemented yet")
+
+
+# ---------------------------------------------------------------------------
+# TST-AC-SCM-05a — backoff + provider rate-limit honouring  [UNIT]
+# CMP-SCM-05 · hard gate: yes. DOC-CMP-SCM-05 §9 enumerates 10 sub-cases →
+# ten parametrised sub-tests.
+# ---------------------------------------------------------------------------
+
+_SCM05_CASES = (
+    "curve_exponential_full_jitter_max_attempts",
+    "retry_after_seconds_overrides_curve",
+    "retry_after_http_date_overrides_curve",
+    "github_primary_ratelimit_remaining_zero_reset",
+    "github_secondary_ratelimit_body_marker",
+    "gitlab_429_retry_after",
+    "bitbucket_429_abuse_vs_primary",
+    "azure_devops_429_max_retry_after_and_delay",
+    "total_deadline_exhaustion_raises_ratelimit",
+    "non_retryable_exceptions_propagate",
+)
+
+
+@pytest.mark.unit
+@pytest.mark.xfail(reason="CMP-SCM-05 (shared retry/backoff) not yet implemented", strict=False)
+@pytest.mark.parametrize("case", _SCM05_CASES)
+def test_scm_05a_retry_behaviour(case: str) -> None:
+    """with_retry honours the backoff curve and per-provider rate-limit semantics.
+
+    Test id: TST-AC-SCM-05a-1..10 (one per DOC-CMP-SCM-05 §9 sub-case)
+    Maps to AC: AC-SCM-05a
+    Kind tag: [UNIT]
+    Inputs: simulated provider responses (429 / secondary / Retry-After seconds &
+      HTTP-date / X-RateLimit-* / 5xx / auth) fed to the with_retry decorator with the
+      matching classify_* hook (DOC-CMP-SCM-05 §3.2-§3.4). Deterministic jitter source.
+    Outputs: the realised sleep sequence and terminal outcome (return / raise) of the
+      decorated call.
+    Pass criteria: per case —
+      curve: base[i]=min(initial*factor**i, max), full-jitter bounded, max_attempts honoured;
+      retry_after_*: provider-honoured wait overrides the curve;
+      github_primary: X-RateLimit-Remaining:0 + X-RateLimit-Reset honoured;
+      github_secondary: body marker triggers secondary backoff;
+      gitlab/bitbucket/ado: provider Retry-After / X-RateLimit-Delay (max wins) honoured;
+      total_deadline_exhaustion: raises SCMRateLimitError;
+      non_retryable: SCMAuthError / SCMNotFoundError propagate without retry.
+    Frequency: every CI run
+    Hard gate?: yes
+    """
+    # TODO: from integrations.scm._http import with_retry, classify_github, RetryPolicy, ...
+    # exercise the decorator under `case` and assert sleep curve + terminal outcome.
+    pytest.skip("CMP-SCM-05 not implemented yet")

@@ -1,0 +1,481 @@
+"""FND-family unit + invariant specs — TST-AC-FND-* (unit/invariant-shaped) + TST-INV-*.
+
+Spec-first TDD: production code for the Findings & Provenance subsystem does
+not exist yet, so every spec below is a registered-but-dormant stub. Each
+carries an ``@pytest.mark.xfail(strict=False)`` so the suite collects and runs
+without blocking; the body calls ``pytest.skip`` until the owning CMP is DONE,
+at which point the skip is removed and the stubbed assertion goes live.
+
+Pattern mirrors ``tests/unit/test_dsl_proofs.py`` (the canonical convention).
+
+FND is the provenance-threading heart: the four required fields
+(``origin``, ``S_version``, ``env_digest``, ``cpg_order_hash`` + the literal
+annotation ``canonical iff fingerprint_class = strong``) are anchored at the
+SARIF emitter (CMP-FND-01), the schema (CMP-FND-02), and the signed chain
+(CMP-FND-03). Concrete pass criteria below are taken verbatim from
+DOC-CMP-FND-0{1,2,3}, DOC-DB §4.12/§4.13, DOC-SARIF, and DOC-PROVENANCE.
+
+Covers (from WBS §4.2 / §4.3):
+  - TST-AC-FND-01a   [UNIT]      — outputs validate against SARIF 2.1.0 schema
+  - TST-AC-FND-01b   [UNIT]      — result ordering is canonical CPG order (CORE-03)
+  - TST-AC-FND-02a   [INVARIANT] — baseline lookup never auto-suppresses weak/oracle
+  - TST-AC-FND-02b   [INVARIANT] — non-null origin, S_version, env_digest (schema)
+  - TST-AC-FND-03b   [INVARIANT] — annotation in auditor export (INV-5)
+  - TST-AC-FND-03c   [INVARIANT] — re-partition events appear in the record
+  - TST-INV-1-FND-01 [INVARIANT] — origin partition at the normalizer (two-Run)
+  - TST-INV-1-FND-02 [INVARIANT] — origin partition at the store (NOT NULL + enum)
+  - TST-INV-1-FND-03 [INVARIANT] — origin partition at provenance (link 9, append-only)
+  - TST-INV-2-FND-01 [INVARIANT] — non-null S_version + env_digest at the normalizer
+  - TST-INV-2-FND-02 [INVARIANT] — non-null S_version + env_digest at schema level
+  - TST-INV-2-FND-03 [INVARIANT] — S_version + env_digest as links in the signed chain
+  - TST-INV-5-FND-03 [INVARIANT] — annotation literal in chain + auditor export
+"""
+
+import pytest
+
+
+@pytest.mark.unit
+@pytest.mark.xfail(
+    reason="CMP-FND-01 (Findings normalizer) not yet implemented",
+    strict=False,
+)
+def test_fnd_01a_outputs_validate_against_sarif_210() -> None:
+    """Every detector output validates against the SARIF 2.1.0 schema.
+
+    Test id:        TST-AC-FND-01a
+    Maps to AC:     AC-FND-01a — "All detector outputs validate against SARIF
+                    2.1.0 schema."
+    Kind tag:       [UNIT]
+    Inputs:         A ``frozenset[Finding]`` spanning both partitions, fed to
+                    ``analysis.sarif.canonical_emit.normalize(...)`` with pinned
+                    scan_id/snapshot_id/codebase_id/commit_sha/S_version/
+                    env_digest/precondition_status, llm_triage_flag=False. The
+                    OASIS SARIF v2.1.0 JSON schema (DOC-SARIF §11) + the vendored
+                    Scanipy extension schema (schemas/sarif-extension/v1.0.0.json).
+    Outputs:        ``SARIFLog.canonical_bytes`` — a two-Run log (runs[0]=core,
+                    runs[1]=oracle), minified, UTF-8/LF.
+    Pass criteria:  ``SARIFLog.canonical_bytes`` validates against the OASIS
+                    SARIF 2.1.0 schema with zero errors; every Result carries the
+                    required ``scanipy.*`` properties (DOC-CMP-FND-01 §7.1). A
+                    schema failure raises ``SARIFSchemaViolation`` (halt, no
+                    partial emit).
+    Frequency:      every CI run
+    Hard gate?:     yes — DOC-SARIF §12 gate 1 (release blocker).
+    """
+    # TODO: from analysis.sarif.canonical_emit import normalize when CMP-FND-01 is DONE
+    # log = normalize(findings, scan_id=..., ..., llm_triage_flag=False)
+    # assert sarif_210_validator.validate(log.canonical_bytes) == []
+    pytest.skip("CMP-FND-01 not implemented yet")
+
+
+@pytest.mark.unit
+@pytest.mark.xfail(
+    reason="CMP-FND-01 (Findings normalizer) not yet implemented",
+    strict=False,
+)
+def test_fnd_01b_result_ordering_is_canonical_cpg_order() -> None:
+    """Result ordering within each Run is the canonical CPG order from CORE-03.
+
+    Test id:        TST-AC-FND-01b
+    Maps to AC:     AC-FND-01b — "Result ordering is the canonical order from
+                    CMP-CORE-03."
+    Kind tag:       [UNIT]
+    Inputs:         A ``frozenset[Finding]`` deliberately constructed with
+                    findings out of canonical order; ``normalize(...)`` output.
+    Outputs:        Two SARIF Runs, each with its ``results`` array.
+    Pass criteria:  Within each Run, ``results`` is sorted ascending by the
+                    canonical key tuple ``(cpg_order_hash, rule_id, uri,
+                    start_line)`` (DOC-SARIF §7); a re-parse of
+                    ``canonical_bytes`` confirms the serialiser never reordered.
+                    Independent of input iteration order. A failure raises
+                    ``CanonicalEmissionFailure``.
+    Frequency:      every CI run
+    Hard gate?:     yes — DOC-SARIF §12 gate 4.
+    """
+    # TODO: assert results sorted by (cpg_order_hash, rule_id, uri, start_line)
+    # for run in normalize(findings, ...).runs:
+    #     keys = [_result_sort_key(r) for r in _parse(run.canonical_bytes)["results"]]
+    #     assert keys == sorted(keys)
+    pytest.skip("CMP-FND-01 not implemented yet")
+
+
+@pytest.mark.invariant
+@pytest.mark.xfail(
+    reason="CMP-FND-02 (Findings store schema) not yet implemented",
+    strict=False,
+)
+def test_fnd_02a_baseline_lookup_never_autosuppresses_weak_or_oracle() -> None:
+    """Cross-scan baseline lookup is correct and never auto-suppresses across refactor.
+
+    Test id:        TST-AC-FND-02a
+    Maps to AC:     AC-FND-02a — "Cross-scan baseline lookup by
+                    `(codebase_id, slice_fingerprint)` is correct and never
+                    auto-suppresses a `weak` or `oracle-passthrough` finding
+                    across a refactor."
+    Kind tag:       [INVARIANT]
+    Inputs:         Two scans of the same codebase across a refactor; baseline
+                    rows in ``findings`` keyed by ``(codebase_id,
+                    slice_fingerprint)`` using ``findings_codebase_slice_idx``.
+                    The set includes a ``fingerprint_class='weak'`` finding and
+                    an ``origin='oracle-passthrough'`` finding.
+    Outputs:        Baseline-match decisions per finding (matched / new).
+    Pass criteria:  The lookup uses the ``findings_codebase_slice_idx`` index and
+                    returns the correct baseline row for ``strong`` findings; AND
+                    no finding with ``fingerprint_class='weak'`` OR
+                    ``origin='oracle-passthrough'`` is auto-suppressed (its
+                    ``status`` is never flipped to ``suppressed`` by the baseline
+                    matcher across the refactor). INV-5: weak slices are not
+                    refactor-stable, so they must not be auto-matched away.
+    Frequency:      every CI run
+    Hard gate?:     yes — component acceptance gate for CMP-FND-02.
+    """
+    # TODO: from services.scan.models.findings import Finding; query baseline by
+    # (codebase_id, slice_fingerprint); assert weak/oracle never set to suppressed
+    pytest.skip("CMP-FND-02 not implemented yet")
+
+
+@pytest.mark.invariant
+@pytest.mark.xfail(
+    reason="CMP-FND-02 (Findings store schema) not yet implemented",
+    strict=False,
+)
+def test_fnd_02b_every_row_carries_nonnull_origin_sversion_envdigest() -> None:
+    """Every findings row carries non-null origin, S_version, env_digest.
+
+    Test id:        TST-AC-FND-02b
+    Maps to AC:     AC-FND-02b — "Every row carries a non-null `origin`,
+                    `S_version`, `env_digest` (INV-1, INV-2)."
+    Kind tag:       [INVARIANT]
+    Inputs:         A live ``findings`` table (Alembic-migrated per CMP-FND-02);
+                    a candidate INSERT omitting each of the three columns in turn.
+    Outputs:        INSERT outcome (success / DB error).
+    Pass criteria:  The ``origin``, ``S_version``, ``env_digest`` columns are all
+                    declared ``NOT NULL`` (DOC-DB §4.12); an INSERT omitting any
+                    one raises a NOT NULL violation (SQLSTATE 23502); a SELECT
+                    over the production table returns zero rows with a NULL in any
+                    of the three. ``cpg_order_hash`` and its annotation are NOT
+                    under this AC (covered by TST-INV-5-FND-02).
+    Frequency:      every CI run
+    Hard gate?:     yes — schema NOT NULL gate for CMP-FND-02.
+    """
+    # TODO: attempt INSERT missing origin/S_version/env_digest; assert IntegrityError
+    # assert session.query(Finding).filter(Finding.origin.is_(None)).count() == 0
+    pytest.skip("CMP-FND-02 not implemented yet")
+
+
+@pytest.mark.invariant
+@pytest.mark.xfail(
+    reason="CMP-FND-02 (Findings store schema) not yet implemented",
+    strict=False,
+)
+def test_inv_5_fnd_02_cpg_order_hash_annotation_persisted_at_schema() -> None:
+    """INV-5 at the persistence layer: the annotation column is NOT NULL + CHECKed.
+
+    Test id:        TST-INV-5-FND-02
+    Maps to AC:     INV-5 (conditional labels self-describing) for CMP-FND-02 —
+                    the emitter named in WBS §4.3 (CMP-FND-02 carries the findings
+                    store schema). Referenced by TST-AC-FND-02b.
+    Kind tag:       [INVARIANT]
+    Inputs:         A live ``findings`` table (Alembic-migrated per CMP-FND-02);
+                    candidate INSERTs that (a) omit ``cpg_order_hash_annotation``
+                    and (b) supply a non-conforming annotation string.
+    Outputs:        INSERT outcome (success / DB error).
+    Pass criteria:  ``findings.cpg_order_hash_annotation`` is declared ``NOT NULL``
+                    with a CHECK constraint pinning the exact literal
+                    ``"canonical iff fingerprint_class = strong"`` (DOC-DB §4.12);
+                    an INSERT omitting it raises 23502, and an INSERT with any
+                    other annotation string raises a CHECK violation (23514). This
+                    closes the persistence-layer gap so a migration that drops the
+                    annotation cannot pass Phase-1 specs.
+    Frequency:      every CI run
+    Hard gate?:     yes — schema INV-5 gate for CMP-FND-02.
+    """
+    # TODO: when CMP-FND-02 lands, assert NOT NULL + CHECK on
+    #       findings.cpg_order_hash_annotation (exact literal); INSERT variants
+    #       raise IntegrityError (23502 omit, 23514 wrong-value).
+    pytest.skip("CMP-FND-02 not implemented yet")
+
+
+@pytest.mark.invariant
+@pytest.mark.xfail(
+    reason="CMP-FND-03 (Signed provenance record) not yet implemented",
+    strict=False,
+)
+def test_fnd_03b_cpg_order_hash_annotation_in_auditor_export() -> None:
+    """The cpg_order_hash field carries its conditional-canonicality annotation.
+
+    Test id:        TST-AC-FND-03b
+    Maps to AC:     AC-FND-03b — "The `cpg_order_hash` field carries its
+                    conditional-canonicality annotation in the auditor export
+                    (INV-5)."
+    Kind tag:       [INVARIANT]
+    Inputs:         A signed ``provenance_records`` row exported via
+                    ``services.scan.provenance.export_auditor_record(record_id)``
+                    (DOC-PROVENANCE §8.1).
+    Outputs:        The auditor-export ``dict`` / JSON document.
+    Pass criteria:  The export contains key ``cpg_order_hash_annotation`` with
+                    the exact literal ``"canonical iff fingerprint_class =
+                    strong"``, JSON-adjacent to ``cpg_order_hash`` (DOC-PROVENANCE
+                    §8.2). A grep of the export for any abbreviated, translated,
+                    or truncated annotation variant returns no hit; emitting the
+                    hash without the annotation is an INV-5 violation.
+    Frequency:      every CI run
+    Hard gate?:     yes — INV-5 gate for CMP-FND-03.
+    """
+    # TODO: export = export_auditor_record(rid)
+    # assert export["cpg_order_hash_annotation"] == "canonical iff fingerprint_class = strong"
+    pytest.skip("CMP-FND-03 not implemented yet")
+
+
+@pytest.mark.invariant
+@pytest.mark.xfail(
+    reason="CMP-FND-03 (Signed provenance record) not yet implemented",
+    strict=False,
+)
+def test_fnd_03c_repartition_events_appear_in_the_record() -> None:
+    """Differential-oracle re-partition events appear in the provenance record.
+
+    Test id:        TST-AC-FND-03c
+    Maps to AC:     AC-FND-03c — "Differential-oracle re-partition events appear
+                    in the record."
+    Kind tag:       [INVARIANT]
+    Inputs:         A base ``record_type='chain'`` provenance row for a
+                    ``deterministic-core`` finding; a seeded CMP-SNAP-04
+                    re-partition event for that finding via
+                    ``append_repartition_event(parent_record_id=...,
+                    repartition_oracle_id=..., repartition_reason=...)``.
+    Outputs:        A new ``provenance_records`` row + the auditor export.
+    Pass criteria:  A new row exists with ``record_type='repartition'``,
+                    ``parent_record_id`` = the base record id,
+                    ``origin='oracle-passthrough'``, ``cpg_order_hash`` NULL
+                    (not recomputed, DOC-PROVENANCE §4.1); the base record is
+                    NEVER mutated (append-only); the auditor export's
+                    ``repartition_history`` array surfaces the event.
+    Frequency:      every CI run
+    Hard gate?:     yes — INV-1 / append-only gate for CMP-FND-03.
+    """
+    # TODO: append_repartition_event(...); assert new row record_type=='repartition'
+    # and base row bytes unchanged and export["repartition_history"] is non-empty
+    pytest.skip("CMP-FND-03 not implemented yet")
+
+
+@pytest.mark.invariant
+@pytest.mark.xfail(
+    reason="CMP-FND-01 (Findings normalizer) not yet implemented",
+    strict=False,
+)
+def test_inv_1_fnd_01_origin_partition_at_normalizer() -> None:
+    """INV-1 at the normalizer: per-finding origin drives the two-Run partition.
+
+    Test id:        TST-INV-1-FND-01
+    Maps to AC:     INV-1 (CMP-FND-01 emitter) — every finding carries
+                    ``origin ∈ {deterministic-core, oracle-passthrough}``; the
+                    two-Run emission is the wire-level expression of the partition.
+    Kind tag:       [INVARIANT]
+    Inputs:         A ``frozenset[Finding]`` with a mix of
+                    ``origin='deterministic-core'`` and
+                    ``origin='oracle-passthrough'`` findings; ``normalize(...)``.
+    Outputs:        ``SARIFLog`` with ``runs=(core, oracle)``.
+    Pass criteria:  Every ``deterministic-core`` finding lands in ``runs[0]``
+                    (partition='core'); every ``oracle-passthrough`` finding
+                    lands in ``runs[1]`` (partition='oracle'); no Run mixes
+                    partitions; every ``Result.properties["scanipy.origin"]`` is
+                    set verbatim from the Finding and is never the value
+                    ``"mixed"`` (DOC-CMP-FND-01 §5.1).
+    Frequency:      every CI run
+    Hard gate?:     yes — INV-1 emitter gate; feeds CMP-CP-05 (AC-CP-05a).
+    """
+    # TODO: log = normalize(findings, ...)
+    # assert all(r["properties"]["scanipy.origin"] == "deterministic-core"
+    #            for r in core_results) and "mixed" not in all_origins
+    pytest.skip("CMP-FND-01 not implemented yet")
+
+
+@pytest.mark.invariant
+@pytest.mark.xfail(
+    reason="CMP-FND-02 (Findings store schema) not yet implemented",
+    strict=False,
+)
+def test_inv_1_fnd_02_origin_partition_at_store() -> None:
+    """INV-1 at the store: origin NOT NULL + enum CHECK rejects null and 'mixed'.
+
+    Test id:        TST-INV-1-FND-02
+    Maps to AC:     INV-1 (CMP-FND-02 schema) — schema-level discharge of the
+                    determinism partition.
+    Kind tag:       [INVARIANT]
+    Inputs:         A live ``findings`` table; candidate INSERTs (a) omitting
+                    ``origin``, (b) with ``origin='mixed'``.
+    Outputs:        INSERT outcome (success / DB error).
+    Pass criteria:  INSERT omitting ``origin`` raises a NOT NULL violation
+                    (SQLSTATE 23502); INSERT with ``origin='mixed'`` is rejected
+                    by the ``findings_origin_check`` CHECK constraint (only
+                    ``deterministic-core`` / ``oracle-passthrough`` permitted);
+                    ``determinism_partition`` and ``engine`` enforce their enums
+                    likewise (DOC-DB §4.12, DOC-CMP-FND-02 §5.1). The violation is
+                    unrecoverable at the schema layer (no silent default-stuffing).
+    Frequency:      every CI run
+    Hard gate?:     yes — schema INV-1 gate for CMP-FND-02.
+    """
+    # TODO: with pytest.raises(IntegrityError): insert(origin=None)
+    # with pytest.raises(IntegrityError): insert(origin="mixed")
+    pytest.skip("CMP-FND-02 not implemented yet")
+
+
+@pytest.mark.invariant
+@pytest.mark.xfail(
+    reason="CMP-FND-03 (Signed provenance record) not yet implemented",
+    strict=False,
+)
+def test_inv_1_fnd_03_origin_partition_at_provenance() -> None:
+    """INV-1 at provenance: chain link 9 carries origin; parent never mutated.
+
+    Test id:        TST-INV-1-FND-03
+    Maps to AC:     INV-1 (CMP-FND-03 chain) — link 9 records per-finding origin;
+                    re-partition is an append, not a mutation.
+    Kind tag:       [INVARIANT]
+    Inputs:         A ``record_type='chain'`` provenance row; a subsequent
+                    ``append_repartition_event`` for the same finding.
+    Outputs:        Provenance rows + their canonical bytes.
+    Pass criteria:  Every ``chain``/``repartition`` provenance row has a non-null
+                    ``origin`` (row-level CHECK ``record_type NOT IN
+                    ('chain','repartition') OR origin IS NOT NULL``, DOC-DB
+                    §4.13); the re-partition record carries
+                    ``origin='oracle-passthrough'``; the parent base record's
+                    ``canonical_bytes`` are byte-identical before and after the
+                    append (append-only, no UPDATE/DELETE grants).
+    Frequency:      every CI run
+    Hard gate?:     yes — INV-1 / append-only gate for CMP-FND-03.
+    """
+    # TODO: assert base_bytes_before == base_bytes_after; repartition.origin ==
+    # "oracle-passthrough"; every finding-bearing record has non-null origin
+    pytest.skip("CMP-FND-03 not implemented yet")
+
+
+@pytest.mark.invariant
+@pytest.mark.xfail(
+    reason="CMP-FND-01 (Findings normalizer) not yet implemented",
+    strict=False,
+)
+def test_inv_2_fnd_01_nonnull_sversion_envdigest_at_normalizer() -> None:
+    """INV-2 at the normalizer: S_version + env_digest threaded to every result.
+
+    Test id:        TST-INV-2-FND-01
+    Maps to AC:     INV-2 (CMP-FND-01 emitter) — every emitted finding carries a
+                    non-null ``S_version`` and ``env_digest``, propagated unchanged
+                    from the worker-emitted finding into the normalized SARIF.
+    Kind tag:       [INVARIANT]
+    Inputs:         A ``frozenset[Finding]`` whose members carry pinned
+                    ``S_version`` and ``env_digest`` values, fed to
+                    ``analysis.sarif.canonical_emit.normalize(...)`` with the run
+                    pins (scan_id/snapshot_id/codebase_id/commit_sha/S_version/
+                    env_digest/precondition_status, llm_triage_flag=False).
+    Outputs:        ``SARIFLog`` with two Runs; per-Result ``properties`` block.
+    Pass criteria:  Every normalized ``Result.properties`` carries
+                    ``scanipy.s_version`` and ``scanipy.env_digest``; both are
+                    non-null/non-empty; AND each equals the source Finding's
+                    ``S_version`` / ``env_digest`` verbatim (propagated unchanged,
+                    DOC-CMP-FND-01 §5.2 / DOC-SARIF §7). The normalizer never
+                    invents, defaults, or drops either field; a missing field on an
+                    input Finding raises (no silent null-stuffing).
+    Frequency:      every CI run
+    Hard gate?:     yes — INV-2 emitter gate; feeds CMP-CP-05.
+    """
+    # TODO: log = normalize(findings, ...)
+    # for r in all_results: assert r["properties"]["scanipy.s_version"] and \
+    #     r["properties"]["scanipy.env_digest"]  # both non-null, == source Finding
+    pytest.skip("CMP-FND-01 not implemented yet")
+
+
+@pytest.mark.invariant
+@pytest.mark.xfail(
+    reason="CMP-FND-02 (Findings store schema) not yet implemented",
+    strict=False,
+)
+def test_inv_2_fnd_02_nonnull_sversion_envdigest_at_schema_level() -> None:
+    """INV-2 at the store: S_version + env_digest NOT NULL; env_digest format CHECK.
+
+    Test id:        TST-INV-2-FND-02
+    Maps to AC:     INV-2 (CMP-FND-02 schema) — versioned parameters enforced at
+                    the SQL constraint level.
+    Kind tag:       [INVARIANT]
+    Inputs:         A live ``findings`` table; candidate INSERTs (a) omitting
+                    ``S_version``, (b) omitting ``env_digest``, (c) with a
+                    malformed ``env_digest`` (not ``sha256:hex64``).
+    Outputs:        INSERT outcome (success / DB error).
+    Pass criteria:  INSERT omitting ``S_version`` or ``env_digest`` raises a NOT
+                    NULL violation (SQLSTATE 23502); INSERT with ``env_digest``
+                    not matching ``^sha256:[0-9a-f]{64}$`` is rejected by the
+                    ``findings_env_digest_format`` CHECK (DOC-DB §4.12,
+                    DOC-CMP-FND-02 §5.2).
+    Frequency:      every CI run
+    Hard gate?:     yes — schema INV-2 gate for CMP-FND-02.
+    """
+    # TODO: with pytest.raises(IntegrityError): insert(S_version=None)
+    # with pytest.raises(IntegrityError): insert(env_digest="not-a-digest")
+    pytest.skip("CMP-FND-02 not implemented yet")
+
+
+@pytest.mark.invariant
+@pytest.mark.xfail(
+    reason="CMP-FND-03 (Signed provenance record) not yet implemented",
+    strict=False,
+)
+def test_inv_2_fnd_03_sversion_envdigest_as_links_in_signed_chain() -> None:
+    """INV-2 at provenance: S_version + env_digest are links in the audit chain.
+
+    Test id:        TST-INV-2-FND-03
+    Maps to AC:     INV-2 (CMP-FND-03 chain) — the signed provenance record carries
+                    ``S_version`` and ``env_digest`` as links in the audit chain
+                    (DOC-PROVENANCE: ``... → S_version → env_digest → ...``).
+    Kind tag:       [INVARIANT]
+    Inputs:         A signed ``record_type='chain'`` provenance row built for a
+                    finding with pinned ``S_version`` / ``env_digest`` values, plus
+                    its auditor export via
+                    ``services.scan.provenance.export_auditor_record(record_id)``.
+    Outputs:        The provenance DB row + the auditor-export ``dict`` / JSON.
+    Pass criteria:  The chain row has non-null ``S_version`` and ``env_digest``
+                    columns (DOC-DB §4.13), and both appear as ordered links in the
+                    exported chain between the snapshot digest and the
+                    ``cpg_order_hash`` link (DOC-PROVENANCE chain order); AND each
+                    equals the owning finding's ``S_version`` / ``env_digest``
+                    verbatim. The signature covers both fields, so a tampered
+                    value fails verification (no out-of-band substitution).
+    Frequency:      every CI run
+    Hard gate?:     yes — INV-2 chain gate for CMP-FND-03.
+    """
+    # TODO: export = export_auditor_record(rid)
+    # assert export["chain"]["S_version"] == finding.S_version  # non-null, a link
+    # assert export["chain"]["env_digest"] == finding.env_digest  # non-null, a link
+    pytest.skip("CMP-FND-03 not implemented yet")
+
+
+@pytest.mark.invariant
+@pytest.mark.xfail(
+    reason="CMP-FND-03 (Signed provenance record) not yet implemented",
+    strict=False,
+)
+def test_inv_5_fnd_03_annotation_present_in_chain_and_auditor_export() -> None:
+    """INV-5 at provenance: annotation literal present in chain row + export.
+
+    Test id:        TST-INV-5-FND-03
+    Maps to AC:     INV-5 (CMP-FND-03) — conditional-canonicality annotation is
+                    self-describing in every chain record and auditor export.
+    Kind tag:       [INVARIANT]
+    Inputs:         A signed ``provenance_records`` chain row + its auditor export
+                    (DOC-PROVENANCE §8.1); the ``CPG_ORDER_HASH_ANNOTATION``
+                    constant from ``analysis.ordering``.
+    Outputs:        The DB row and the export JSON.
+    Pass criteria:  ``provenance_records.cpg_order_hash_annotation`` equals the
+                    literal ``"canonical iff fingerprint_class = strong"``
+                    (DB literal CHECK, DOC-DB §4.13); the auditor export carries
+                    the same literal as a key JSON-adjacent to ``cpg_order_hash``;
+                    a grep for any abbreviated/translated variant returns no hit;
+                    the annotation equals ``CPG_ORDER_HASH_ANNOTATION`` (never a
+                    locally-constructed string).
+    Frequency:      every CI run
+    Hard gate?:     yes — INV-5 gate for CMP-FND-03.
+    """
+    # TODO: from analysis.ordering import CPG_ORDER_HASH_ANNOTATION
+    # assert row.cpg_order_hash_annotation == CPG_ORDER_HASH_ANNOTATION
+    # assert export["cpg_order_hash_annotation"] == CPG_ORDER_HASH_ANNOTATION
+    pytest.skip("CMP-FND-03 not implemented yet")
