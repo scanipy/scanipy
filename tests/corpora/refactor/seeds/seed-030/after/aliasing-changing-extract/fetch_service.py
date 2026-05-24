@@ -1,0 +1,16 @@
+"""URL fetch service (seeded SSRF)."""
+
+import urllib.request
+
+
+class FetchService:
+    def fetch(self, host029):
+        box = [host029]
+        self._route(box)
+        url = "http://" + host029 + "/status"
+        resp = urllib.request.urlopen(url)
+        return resp.status
+
+    @staticmethod
+    def _route(box):
+        box.append(box[0])  # aliasing-introducing extract

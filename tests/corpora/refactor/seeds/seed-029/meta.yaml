@@ -1,0 +1,47 @@
+base_sha256: sha256:75c1126103af8ecb6171c039f1c20859c4d5ef019ee0e00163b175e30bb3d758
+before_dir: before
+license: Apache-2.0
+refactor_pairs:
+  - after_dir: after/alpha-rename-local
+    ground_truth_label: should-stay
+    rationale: Consistent alpha-rename of seeded locals/params; slice preserved, fingerprint
+      must stay.
+    refactor: alpha-rename-local
+  - after_dir: after/pdg-only-formatting
+    ground_truth_label: should-stay
+    rationale: Whitespace/comment-only churn; no PDG edge changes, fingerprint must
+      stay.
+    refactor: pdg-only-formatting
+  - after_dir: after/independent-reordering
+    ground_truth_label: should-stay
+    rationale: Reorder a PDG-independent statement; canonical topo-sort no-op, fingerprint
+      must stay.
+    refactor: independent-reordering
+  - after_dir: after/pure-extract
+    ground_truth_label: should-stay
+    rationale: Extract a pure alias-stable helper; summary-inlining covers it, fingerprint
+      must stay.
+    refactor: pure-extract
+  - after_dir: after/fqn-move-package-rename
+    ground_truth_label: should-stay
+    rationale: Move class/module to a new FQN; FQN normalization covers it, fingerprint
+      must stay.
+    refactor: fqn-move-package-rename
+  - after_dir: after/genuine-fix
+    ground_truth_label: should-flip
+    rationale: Seeded sink replaced by a safe/parameterized equivalent for this class;
+      slice changes, fingerprint must flip.
+    refactor: genuine-fix
+  - after_dir: after/aliasing-changing-extract
+    ground_truth_label: should-flip
+    rationale: Extract routes taint through a freshly-aliased holder; aliasing changes,
+      fingerprint must flip.
+    refactor: aliasing-changing-extract
+seed_finding:
+  class: ssrf
+  description: tainted param `host028` flows into URL opened via openConnection
+  language: java
+  sink_file: FetchService.java
+  sink_line: 9
+seed_id: seed-029
+synthesized: true
