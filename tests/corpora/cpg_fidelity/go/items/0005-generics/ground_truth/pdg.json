@@ -1,0 +1,150 @@
+{
+  "deriver": "x/tools/go/ssa def-use (intra-procedural data dependence)",
+  "edges": [
+    {
+      "func": "corpusitem/0005-generics.Run",
+      "def": "t0",
+      "use": "t1=\u0026t0[0:int]"
+    },
+    {
+      "func": "corpusitem/0005-generics.Run",
+      "def": "t0",
+      "use": "t2=\u0026t0[1:int]"
+    },
+    {
+      "func": "corpusitem/0005-generics.Run",
+      "def": "t0",
+      "use": "t3=\u0026t0[2:int]"
+    },
+    {
+      "func": "corpusitem/0005-generics.Run",
+      "def": "t0",
+      "use": "t4=slice t0[:]"
+    },
+    {
+      "func": "corpusitem/0005-generics.Run",
+      "def": "t1",
+      "use": "*t1 = 1:int"
+    },
+    {
+      "func": "corpusitem/0005-generics.Run",
+      "def": "t10",
+      "use": "return t5, t10"
+    },
+    {
+      "func": "corpusitem/0005-generics.Run",
+      "def": "t2",
+      "use": "*t2 = 2:int"
+    },
+    {
+      "func": "corpusitem/0005-generics.Run",
+      "def": "t3",
+      "use": "*t3 = 3:int"
+    },
+    {
+      "func": "corpusitem/0005-generics.Run",
+      "def": "t4",
+      "use": "t5=Sum[int](t4)"
+    },
+    {
+      "func": "corpusitem/0005-generics.Run",
+      "def": "t5",
+      "use": "return t5, t10"
+    },
+    {
+      "func": "corpusitem/0005-generics.Run",
+      "def": "t6",
+      "use": "t7=\u0026t6[0:int]"
+    },
+    {
+      "func": "corpusitem/0005-generics.Run",
+      "def": "t6",
+      "use": "t8=\u0026t6[1:int]"
+    },
+    {
+      "func": "corpusitem/0005-generics.Run",
+      "def": "t6",
+      "use": "t9=slice t6[:]"
+    },
+    {
+      "func": "corpusitem/0005-generics.Run",
+      "def": "t7",
+      "use": "*t7 = 1.5:float64"
+    },
+    {
+      "func": "corpusitem/0005-generics.Run",
+      "def": "t8",
+      "use": "*t8 = 2.5:float64"
+    },
+    {
+      "func": "corpusitem/0005-generics.Run",
+      "def": "t9",
+      "use": "t10=Sum[float64](t9)"
+    },
+    {
+      "func": "corpusitem/0005-generics.Sum",
+      "def": "t0",
+      "use": "t4=t3 \u003c t0"
+    },
+    {
+      "func": "corpusitem/0005-generics.Sum",
+      "def": "t1",
+      "use": "return t1"
+    },
+    {
+      "func": "corpusitem/0005-generics.Sum",
+      "def": "t1",
+      "use": "t7=add[T](t1, t6)"
+    },
+    {
+      "func": "corpusitem/0005-generics.Sum",
+      "def": "t2",
+      "use": "t3=t2 + 1:int"
+    },
+    {
+      "func": "corpusitem/0005-generics.Sum",
+      "def": "t3",
+      "use": "t2=phi [0: -1:int, 2: t3] #rangeindex"
+    },
+    {
+      "func": "corpusitem/0005-generics.Sum",
+      "def": "t3",
+      "use": "t4=t3 \u003c t0"
+    },
+    {
+      "func": "corpusitem/0005-generics.Sum",
+      "def": "t3",
+      "use": "t5=\u0026xs[t3]"
+    },
+    {
+      "func": "corpusitem/0005-generics.Sum",
+      "def": "t4",
+      "use": "if t4 goto 2 else 3"
+    },
+    {
+      "func": "corpusitem/0005-generics.Sum",
+      "def": "t5",
+      "use": "t6=*t5"
+    },
+    {
+      "func": "corpusitem/0005-generics.Sum",
+      "def": "t6",
+      "use": "t7=add[T](t1, t6)"
+    },
+    {
+      "func": "corpusitem/0005-generics.Sum",
+      "def": "t7",
+      "use": "t1=phi [0: 0:T, 2: t7] #total"
+    },
+    {
+      "func": "corpusitem/0005-generics.add",
+      "def": "t0",
+      "use": "return t0"
+    },
+    {
+      "func": "corpusitem/0005-generics.init",
+      "def": "t0",
+      "use": "if t0 goto 2 else 1"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "deriver": "x/tools/go/callgraph/cha",
+  "edges": [
+    {
+      "caller": "corpusitem/0004-goroutines-channels.Run",
+      "callee": "corpusitem/0004-goroutines-channels.consume",
+      "dynamic": false
+    },
+    {
+      "caller": "corpusitem/0004-goroutines-channels.Run",
+      "callee": "corpusitem/0004-goroutines-channels.produce",
+      "dynamic": false
+    }
+  ]
+}

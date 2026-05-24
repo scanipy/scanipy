@@ -1,0 +1,95 @@
+{
+  "deriver": "x/tools/go/ssa def-use (intra-procedural data dependence)",
+  "edges": [
+    {
+      "func": "(*corpusitem/0003-closures-method-values.Counter).Inc",
+      "def": "t0",
+      "use": "t1=*t0"
+    },
+    {
+      "func": "(*corpusitem/0003-closures-method-values.Counter).Inc",
+      "def": "t1",
+      "use": "t2=t1 + delta"
+    },
+    {
+      "func": "(*corpusitem/0003-closures-method-values.Counter).Inc",
+      "def": "t2",
+      "use": "*t3 = t2"
+    },
+    {
+      "func": "(*corpusitem/0003-closures-method-values.Counter).Inc",
+      "def": "t3",
+      "use": "*t3 = t2"
+    },
+    {
+      "func": "(*corpusitem/0003-closures-method-values.Counter).Inc",
+      "def": "t4",
+      "use": "t5=*t4"
+    },
+    {
+      "func": "(*corpusitem/0003-closures-method-values.Counter).Inc",
+      "def": "t5",
+      "use": "return t5"
+    },
+    {
+      "func": "corpusitem/0003-closures-method-values.Run",
+      "def": "t0",
+      "use": "t1=apply(t0, 5:int)"
+    },
+    {
+      "func": "corpusitem/0003-closures-method-values.Run",
+      "def": "t1",
+      "use": "t4=apply(t3, t1)"
+    },
+    {
+      "func": "corpusitem/0003-closures-method-values.Run",
+      "def": "t2",
+      "use": "t3=make closure (*Counter).Inc$bound [t2]"
+    },
+    {
+      "func": "corpusitem/0003-closures-method-values.Run",
+      "def": "t3",
+      "use": "t4=apply(t3, t1)"
+    },
+    {
+      "func": "corpusitem/0003-closures-method-values.Run",
+      "def": "t4",
+      "use": "return t4"
+    },
+    {
+      "func": "corpusitem/0003-closures-method-values.apply",
+      "def": "t0",
+      "use": "return t0"
+    },
+    {
+      "func": "corpusitem/0003-closures-method-values.init",
+      "def": "t0",
+      "use": "if t0 goto 2 else 1"
+    },
+    {
+      "func": "corpusitem/0003-closures-method-values.makeAdder",
+      "def": "t0",
+      "use": "*t0 = base"
+    },
+    {
+      "func": "corpusitem/0003-closures-method-values.makeAdder",
+      "def": "t0",
+      "use": "t1=make closure makeAdder$1 [t0]"
+    },
+    {
+      "func": "corpusitem/0003-closures-method-values.makeAdder",
+      "def": "t1",
+      "use": "return t1"
+    },
+    {
+      "func": "corpusitem/0003-closures-method-values.makeAdder$1",
+      "def": "t0",
+      "use": "t1=t0 + x"
+    },
+    {
+      "func": "corpusitem/0003-closures-method-values.makeAdder$1",
+      "def": "t1",
+      "use": "return t1"
+    }
+  ]
+}

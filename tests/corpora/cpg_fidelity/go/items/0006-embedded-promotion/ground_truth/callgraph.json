@@ -1,0 +1,20 @@
+{
+  "deriver": "x/tools/go/callgraph/cha",
+  "edges": [
+    {
+      "caller": "(*corpusitem/0006-embedded-promotion.Service).Handle",
+      "callee": "(*corpusitem/0006-embedded-promotion.Logger).Log",
+      "dynamic": false
+    },
+    {
+      "caller": "(*corpusitem/0006-embedded-promotion.Service).Handle",
+      "callee": "(corpusitem/0006-embedded-promotion.Base).Describe",
+      "dynamic": false
+    },
+    {
+      "caller": "corpusitem/0006-embedded-promotion.Run",
+      "callee": "(*corpusitem/0006-embedded-promotion.Service).Handle",
+      "dynamic": false
+    }
+  ]
+}
