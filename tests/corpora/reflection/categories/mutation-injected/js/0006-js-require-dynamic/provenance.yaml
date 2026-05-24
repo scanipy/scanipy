@@ -1,0 +1,8 @@
+commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
+input_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
+license: Apache-2.0
+path_in_source: calculator.js
+recipe: require-dynamic
+seed: 5
+source_url: local:clean_bases/js/calculator.js
+synthetic: true

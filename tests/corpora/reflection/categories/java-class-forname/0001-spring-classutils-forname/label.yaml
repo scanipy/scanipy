@@ -1,0 +1,17 @@
+label: not-closed-world
+expected_sites:
+  - file: ClassUtils.java
+    line: 304
+    kind: java-class-forname
+  - file: ClassUtils.java
+    line: 313
+    kind: java-class-forname
+rationale: |
+  spring-framework spring-core ClassUtils.forName() resolves a class from a runtime
+  String name via Class.forName(name, false, clToUse) (line 304) and the nested-class
+  fallback Class.forName(nestedClassName, false, clToUse) (line 313). The loaded type
+  is not statically known; the call graph cannot be closed over it. not-closed-world
+  (INV-4 safe direction: reachable Class.forName present). SOURCED from a real public
+  repo, not synthetic.
+labelled_by: corpus-agent
+review_status: single-pass
