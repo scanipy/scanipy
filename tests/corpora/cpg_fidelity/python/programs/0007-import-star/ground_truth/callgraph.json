@@ -1,0 +1,15 @@
+{
+  "app.py": {
+    "edges": [
+      {
+        "caller": "use",
+        "callee": "helper",
+        "line": 13,
+        "kind": "dynamic"
+      }
+    ]
+  },
+  "helpers.py": {
+    "edges": []
+  }
+}

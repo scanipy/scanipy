@@ -1,0 +1,108 @@
+{
+  "pipeline.py": {
+    "fetch": {
+      "edges": [
+        {
+          "from_line": 10,
+          "to_line": 11,
+          "kind": "data",
+          "var": "item"
+        },
+        {
+          "from_line": 11,
+          "to_line": 12,
+          "kind": "data",
+          "var": "doubled"
+        }
+      ]
+    },
+    "gen": {
+      "edges": [
+        {
+          "from_line": 15,
+          "to_line": 17,
+          "kind": "data",
+          "var": "n"
+        },
+        {
+          "from_line": 16,
+          "to_line": 17,
+          "kind": "data",
+          "var": "i"
+        },
+        {
+          "from_line": 17,
+          "to_line": 18,
+          "kind": "control"
+        },
+        {
+          "from_line": 17,
+          "to_line": 18,
+          "kind": "data",
+          "var": "i"
+        },
+        {
+          "from_line": 17,
+          "to_line": 19,
+          "kind": "control"
+        },
+        {
+          "from_line": 17,
+          "to_line": 19,
+          "kind": "data",
+          "var": "i"
+        }
+      ]
+    },
+    "run": {
+      "edges": [
+        {
+          "from_line": 22,
+          "to_line": 24,
+          "kind": "data",
+          "var": "n"
+        },
+        {
+          "from_line": 23,
+          "to_line": 24,
+          "kind": "data",
+          "var": "total"
+        },
+        {
+          "from_line": 24,
+          "to_line": 25,
+          "kind": "control"
+        },
+        {
+          "from_line": 24,
+          "to_line": 25,
+          "kind": "data",
+          "var": "value"
+        },
+        {
+          "from_line": 24,
+          "to_line": 26,
+          "kind": "control"
+        },
+        {
+          "from_line": 24,
+          "to_line": 26,
+          "kind": "data",
+          "var": "total"
+        },
+        {
+          "from_line": 25,
+          "to_line": 26,
+          "kind": "data",
+          "var": "partial"
+        },
+        {
+          "from_line": 26,
+          "to_line": 27,
+          "kind": "data",
+          "var": "total"
+        }
+      ]
+    }
+  }
+}

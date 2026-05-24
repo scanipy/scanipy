@@ -1,0 +1,24 @@
+{
+  "schema": "cpg-fidelity/ast/v1",
+  "program_id": "0008-spring-di",
+  "method": "javac -Xprint traversal; parse_success verified by javac (JDK 21, -source 17).",
+  "files": [
+    {
+      "file": "OrderApp.java",
+      "parse_success": true,
+      "type_decls": [
+        {"name": "OrderApp", "kind": "CLASS"},
+        {"name": "OrderApp.Component", "kind": "ANNOTATION_TYPE"},
+        {"name": "OrderApp.Autowired", "kind": "ANNOTATION_TYPE"},
+        {"name": "OrderApp.Repository", "kind": "CLASS", "annotations": ["@Component"]},
+        {"name": "OrderApp.OrderService", "kind": "CLASS", "annotations": ["@Component"]}
+      ],
+      "methods": [
+        {"name": "Repository.find(int)"},
+        {"name": "OrderService.<init>(Repository)", "annotations": ["@Autowired"]},
+        {"name": "OrderService.lookup(int)"},
+        {"name": "OrderApp.main(String[])"}
+      ]
+    }
+  ]
+}

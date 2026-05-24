@@ -59,10 +59,6 @@ def _alembic(command: list[str], database_url: str) -> subprocess.CompletedProce
 
 
 @pytest.mark.integration
-@pytest.mark.xfail(
-    reason="CMP-CP-02 (credential encryption service) not yet implemented — spec stub",
-    strict=False,
-)
 def test_cp02a_credentials_unreadable_at_rest_and_rotatable() -> None:
     """Credentials are unreadable at rest without the managed key; rotation is supported.
 
@@ -83,12 +79,61 @@ def test_cp02a_credentials_unreadable_at_rest_and_rotatable() -> None:
     Hard gate?:   yes — Stage-A GA process gate; INV-3-adjacent credential handling.
     Notes:        RULE-9 — CMP-CP-02 touches credential material; this spec requires
                   Security Analyst sign-off before the implementing PR merges.
+
+    "Integration" here means the CP-02 service wired to its KMS / key-store /
+    audit-log collaborators end-to-end. The collaborators are deterministic
+    offline fakes (the shared FakeKMS faithfully models EncryptionContext
+    authentication and key-version-in-blob rotation) — no real AWS is called,
+    matching the QA note "may use a KMS local stub/moto for the integration
+    harness". The exhaustive falsifier matrix lives in the unit suite
+    (tests/unit/test_credential_encryption.py); this spec asserts the end-to-end
+    AC-CP-02a round-trip + rotation against the at-rest representation.
     """
-    # TODO: import CredentialEncryptionService from the CP-02 module when DONE; assert
-    # at-rest ciphertext != plaintext, decrypt without managed key fails, round-trip
-    # succeeds, and rotate_cmk(org_id) preserves decryptability. May use a KMS local
-    # stub/moto for the integration harness.
-    pytest.skip("CMP-CP-02 not implemented yet")
+    from uuid import uuid4
+
+    from services.credential_encryption import (
+        CredentialEncryptionService,
+        EncryptedCredential,
+        TenantIsolationError,
+    )
+    from tests.unit.test_credential_encryption import (
+        FakeAuditLog,
+        FakeKeyStore,
+        FakeKMS,
+    )
+
+    service = CredentialEncryptionService(
+        kms=FakeKMS(),
+        key_store=FakeKeyStore(),
+        audit_log=FakeAuditLog(),
+    )
+    org_a = uuid4()
+    org_b = uuid4()
+    plaintext = b"ghp_integration_scm_credential_value"
+
+    # Encrypt → the at-rest EncryptedCredential is what CMP-SCM-01 INSERTs into
+    # scm_credentials (DOC-DB §4.5).
+    at_rest = service.encrypt_credential(plaintext, org_a)
+    assert isinstance(at_rest, EncryptedCredential)
+
+    # (1a) At-rest ciphertext is not the plaintext.
+    assert at_rest.ciphertext_blob != plaintext
+    assert plaintext not in at_rest.ciphertext_blob
+
+    # (1b) An actor presenting the wrong tenant cannot decrypt (EncryptionContext
+    # mismatch — the CLAR-DEPLOY-16 layer-3 backstop).
+    with pytest.raises(TenantIsolationError):
+        service.decrypt_credential(at_rest, org_b)
+
+    # (1c) The owning tenant round-trips to the original plaintext.
+    assert service.decrypt_credential(at_rest, org_a) == plaintext
+
+    # (2) Forced rotation succeeds; pre-rotation ciphertext remains decryptable
+    # and post-rotation credentials encrypt+decrypt cleanly.
+    service.rotate_cmk(org_a, reason="scheduled-audit")
+    assert service.decrypt_credential(at_rest, org_a) == plaintext
+    post = service.encrypt_credential(b"rotated-token", org_a)
+    assert service.decrypt_credential(post, org_a) == b"rotated-token"
 
 
 @pytest.mark.integration

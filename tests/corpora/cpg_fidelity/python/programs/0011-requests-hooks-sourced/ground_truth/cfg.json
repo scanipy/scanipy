@@ -1,0 +1,107 @@
+{
+  "hooks.py": {
+    "default_hooks": {
+      "nodes": [
+        "L26:Return"
+      ],
+      "edges": []
+    },
+    "dispatch_hook": {
+      "nodes": [
+        "L38:Expr",
+        "L39:Assign",
+        "L40:AnnAssign",
+        "L41:If",
+        "L42:If",
+        "L43:Assign",
+        "L44:For",
+        "L45:Assign",
+        "L46:If",
+        "L47:Assign",
+        "L48:Return"
+      ],
+      "edges": [
+        {
+          "from": "L38:Expr",
+          "to": "L39:Assign",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L39:Assign",
+          "to": "L40:AnnAssign",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L40:AnnAssign",
+          "to": "L41:If",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L41:If",
+          "to": "L42:If",
+          "kind": "true"
+        },
+        {
+          "from": "L42:If",
+          "to": "L43:Assign",
+          "kind": "true"
+        },
+        {
+          "from": "L43:Assign",
+          "to": "L44:For",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L42:If",
+          "to": "L44:For",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L44:For",
+          "to": "L45:Assign",
+          "kind": "loop-body"
+        },
+        {
+          "from": "L45:Assign",
+          "to": "L46:If",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L46:If",
+          "to": "L47:Assign",
+          "kind": "true"
+        },
+        {
+          "from": "L47:Assign",
+          "to": "L44:For",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L46:If",
+          "to": "L44:For",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L47:Assign",
+          "to": "L44:For",
+          "kind": "loop-back"
+        },
+        {
+          "from": "L46:If",
+          "to": "L44:For",
+          "kind": "loop-back"
+        },
+        {
+          "from": "L44:For",
+          "to": "L48:Return",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L41:If",
+          "to": "L48:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    }
+  }
+}

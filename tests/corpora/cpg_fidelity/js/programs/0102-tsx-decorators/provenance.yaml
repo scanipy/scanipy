@@ -1,0 +1,14 @@
+source_url: local:synthesized/CMP-CORP-CPG-js/0102-tsx-decorators
+commit_sha: sha256:3cc4850851594a6e5cb5b7afce8b53ab7c999d6c4b3c0644b1640f1b73695ccb
+license: Apache-2.0
+surface: ts
+module_system: esm
+synthetic: true
+loc: 21
+construct_coverage:
+  - jsx-tsx
+  - decorators-experimental
+notes: |
+  Authored for this corpus (Apache-2.0). TSX surface with experimental
+  decorators; parse-success stressor. tsconfig.json included (jsx: preserve,
+  experimentalDecorators: true). Content-addressed source/ sha256.

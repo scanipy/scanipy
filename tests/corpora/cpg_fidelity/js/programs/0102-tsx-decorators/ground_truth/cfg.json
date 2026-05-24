@@ -1,0 +1,133 @@
+{
+  "index.tsx": [
+    {
+      "edges": [
+        {
+          "from": "index.tsx::sealed@3#entry",
+          "kind": "seq",
+          "to": "index.tsx::sealed@3#n0"
+        },
+        {
+          "from": "index.tsx::sealed@3#n0",
+          "kind": "seq",
+          "to": "index.tsx::sealed@3#n1"
+        }
+      ],
+      "function": "index.tsx::sealed@3",
+      "nodes": [
+        {
+          "id": "index.tsx::sealed@3#entry",
+          "kind": "Entry",
+          "line": 3
+        },
+        {
+          "id": "index.tsx::sealed@3#n0",
+          "kind": "ExpressionStatement",
+          "line": 4
+        },
+        {
+          "id": "index.tsx::sealed@3#n1",
+          "kind": "ExpressionStatement",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "edges": [],
+      "function": "index.tsx::constructor@10",
+      "nodes": [
+        {
+          "id": "index.tsx::constructor@10#entry",
+          "kind": "Entry",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.tsx::greeting@12#entry",
+          "kind": "seq",
+          "to": "index.tsx::greeting@12#n0"
+        }
+      ],
+      "function": "index.tsx::greeting@12",
+      "nodes": [
+        {
+          "id": "index.tsx::greeting@12#entry",
+          "kind": "Entry",
+          "line": 12
+        },
+        {
+          "id": "index.tsx::greeting@12#n0",
+          "kind": "ReturnStatement",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.tsx::renderName@17#entry",
+          "kind": "seq",
+          "to": "index.tsx::renderName@17#n0"
+        },
+        {
+          "from": "index.tsx::renderName@17#n0",
+          "kind": "seq",
+          "to": "index.tsx::renderName@17#n1"
+        }
+      ],
+      "function": "index.tsx::renderName@17",
+      "nodes": [
+        {
+          "id": "index.tsx::renderName@17#entry",
+          "kind": "Entry",
+          "line": 17
+        },
+        {
+          "id": "index.tsx::renderName@17#n0",
+          "kind": "VariableDeclaration",
+          "line": 18
+        },
+        {
+          "id": "index.tsx::renderName@17#n1",
+          "kind": "ReturnStatement",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.tsx::App@22#entry",
+          "kind": "seq",
+          "to": "index.tsx::App@22#n0"
+        },
+        {
+          "from": "index.tsx::App@22#n0",
+          "kind": "seq",
+          "to": "index.tsx::App@22#n1"
+        }
+      ],
+      "function": "index.tsx::App@22",
+      "nodes": [
+        {
+          "id": "index.tsx::App@22#entry",
+          "kind": "Entry",
+          "line": 22
+        },
+        {
+          "id": "index.tsx::App@22#n0",
+          "kind": "VariableDeclaration",
+          "line": 23
+        },
+        {
+          "id": "index.tsx::App@22#n1",
+          "kind": "ReturnStatement",
+          "line": 24
+        }
+      ]
+    }
+  ]
+}
