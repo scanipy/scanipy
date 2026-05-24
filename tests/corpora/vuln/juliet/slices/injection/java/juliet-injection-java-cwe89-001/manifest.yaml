@@ -1,0 +1,29 @@
+slice_id: juliet-injection-java-cwe89-001
+source: juliet
+class: injection
+language: java
+cwe_ids:
+  - CWE-89
+positive: true
+fix_pair_id: null
+license: Public Domain (NIST)
+vendored: true
+notes: |
+  SYNTHESIZED Juliet-shaped CWE-89 (SQL injection) test case authored for this corpus
+  in the Juliet "BadSource -> sink" idiom. It is NOT a vendored NIST/SARD file: bulk
+  download of the real Juliet 1.3 Java suite from NIST SARD is a fetch-at-scale task
+  deferred to CLAR-CORP-19. Ground truth is by construction: the tainted source flows
+  to the executeQuery sink at the recorded line. License recorded as "Public Domain
+  (NIST)" to match the upstream suite this seed imitates; the synthetic content itself
+  is released CC0/Public-Domain as part of this corpus.
+ground_truth_sites:
+  - file: SqliConnectExecuteQuery01.java
+    line: 9
+    kind: sql-injection-sink
+    note: "Statement.executeQuery(query) where query is built from the BadSource"
+provenance:
+  dataset: juliet
+  imitates_suite: "Juliet Test Suite v1.3 for Java (NIST SARD)"
+  upstream_reference: https://samate.nist.gov/SARD/test-suites/112
+  ground_truth_origin: synthetic_by_construction
+  synthetic: true
