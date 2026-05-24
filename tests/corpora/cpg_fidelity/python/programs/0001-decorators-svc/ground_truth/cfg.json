@@ -1,0 +1,69 @@
+{
+  "service.py": {
+    "trace": {
+      "nodes": [
+        "L15:FunctionDef",
+        "L19:Return"
+      ],
+      "edges": [
+        {
+          "from": "L15:FunctionDef",
+          "to": "L19:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    },
+    "trace.wrapper": {
+      "nodes": [
+        "L16:Assign",
+        "L17:Return"
+      ],
+      "edges": [
+        {
+          "from": "L16:Assign",
+          "to": "L17:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    },
+    "validate": {
+      "nodes": [
+        "L23:Assign",
+        "L24:Return"
+      ],
+      "edges": [
+        {
+          "from": "L23:Assign",
+          "to": "L24:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    },
+    "handle": {
+      "nodes": [
+        "L29:Assign",
+        "L30:Return"
+      ],
+      "edges": [
+        {
+          "from": "L29:Assign",
+          "to": "L30:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    },
+    "main": {
+      "nodes": [
+        "L34:Assign",
+        "L35:Return"
+      ],
+      "edges": [
+        {
+          "from": "L34:Assign",
+          "to": "L35:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    }
+  }
+}

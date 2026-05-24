@@ -1,0 +1,18 @@
+{
+  "schema": "cpg-fidelity/cfg/v1",
+  "program_id": "0007-try-with-resources",
+  "method": "Per-method intraprocedural CFG by-inspection. load() shows the desugared try-with-resources control flow: the implicit close() runs on both the normal-completion path and the exceptional path (where Throwable.addSuppressed may be invoked before rethrow).",
+  "methods": [
+    {"method": "corpus.cpg.p0007.Resources$Handle.<init>(String)", "nodes": ["this.name = name"], "edges": []},
+    {"method": "corpus.cpg.p0007.Resources$Handle.read()", "nodes": ["return \"data:\" + name"], "edges": []},
+    {"method": "corpus.cpg.p0007.Resources$Handle.close()", "nodes": ["// released (no-op)"], "edges": []},
+    {"method": "corpus.cpg.p0007.Resources.load(String)", "nodes": [
+      "Handle h = new Handle(name)",
+      "ret = h.read()",
+      "close-normal: h.close()",
+      "return ret",
+      "close-exceptional: h.close() then rethrow (addSuppressed)"
+    ], "edges": [[0, 1], [1, 2], [2, 3], [0, 4], [1, 4]]},
+    {"method": "corpus.cpg.p0007.Resources.main(String[])", "nodes": ["System.out.println(load(\"file\"))"], "edges": []}
+  ]
+}

@@ -1,0 +1,384 @@
+{
+  "convention": "lower-bound",
+  "methods": [
+    {
+      "method": "[]",
+      "edges": [
+        {
+          "var": "args",
+          "use_line": 43,
+          "def_line": 42
+        }
+      ]
+    },
+    {
+      "method": "default",
+      "edges": [
+        {
+          "var": "args",
+          "use_line": 47,
+          "def_line": 46
+        },
+        {
+          "var": "args",
+          "use_line": 49,
+          "def_line": 46
+        }
+      ]
+    },
+    {
+      "method": "default=",
+      "edges": [
+        {
+          "var": "value",
+          "use_line": 53,
+          "def_line": 52
+        }
+      ]
+    },
+    {
+      "method": "assoc",
+      "edges": [
+        {
+          "var": "key",
+          "use_line": 57,
+          "def_line": 56
+        }
+      ]
+    },
+    {
+      "method": "rassoc",
+      "edges": [
+        {
+          "var": "value",
+          "use_line": 61,
+          "def_line": 60
+        }
+      ]
+    },
+    {
+      "method": "fetch",
+      "edges": [
+        {
+          "var": "args",
+          "use_line": 65,
+          "def_line": 64
+        },
+        {
+          "var": "args",
+          "use_line": 67,
+          "def_line": 64
+        },
+        {
+          "var": "key",
+          "use_line": 67,
+          "def_line": 64
+        }
+      ]
+    },
+    {
+      "method": "[]",
+      "edges": [
+        {
+          "var": "key",
+          "use_line": 71,
+          "def_line": 70
+        }
+      ]
+    },
+    {
+      "method": "[]=",
+      "edges": [
+        {
+          "var": "key",
+          "use_line": 75,
+          "def_line": 74
+        },
+        {
+          "var": "value",
+          "use_line": 75,
+          "def_line": 74
+        }
+      ]
+    },
+    {
+      "method": "key",
+      "edges": [
+        {
+          "var": "value",
+          "use_line": 81,
+          "def_line": 80
+        }
+      ]
+    },
+    {
+      "method": "key?",
+      "edges": [
+        {
+          "var": "key",
+          "use_line": 85,
+          "def_line": 84
+        }
+      ]
+    },
+    {
+      "method": "value?",
+      "edges": [
+        {
+          "var": "value",
+          "use_line": 93,
+          "def_line": 92
+        }
+      ]
+    },
+    {
+      "method": "delete",
+      "edges": [
+        {
+          "var": "key",
+          "use_line": 99,
+          "def_line": 98
+        }
+      ]
+    },
+    {
+      "method": "dig",
+      "edges": [
+        {
+          "var": "key",
+          "use_line": 104,
+          "def_line": 103
+        },
+        {
+          "var": "other_keys",
+          "use_line": 104,
+          "def_line": 103
+        }
+      ]
+    },
+    {
+      "method": "fetch_values",
+      "edges": [
+        {
+          "var": "keys",
+          "use_line": 108,
+          "def_line": 107
+        },
+        {
+          "var": "keys",
+          "use_line": 110,
+          "def_line": 107
+        }
+      ]
+    },
+    {
+      "method": "slice",
+      "edges": [
+        {
+          "var": "keys",
+          "use_line": 114,
+          "def_line": 113
+        },
+        {
+          "var": "keys",
+          "use_line": 116,
+          "def_line": 113
+        }
+      ]
+    },
+    {
+      "method": "values_at",
+      "edges": [
+        {
+          "var": "keys",
+          "use_line": 120,
+          "def_line": 119
+        },
+        {
+          "var": "keys",
+          "use_line": 122,
+          "def_line": 119
+        }
+      ]
+    },
+    {
+      "method": "merge!",
+      "edges": [
+        {
+          "var": "other_hashes",
+          "use_line": 126,
+          "def_line": 125
+        },
+        {
+          "var": "key",
+          "use_line": 131,
+          "def_line": 131
+        },
+        {
+          "var": "key",
+          "use_line": 132,
+          "def_line": 131
+        },
+        {
+          "var": "value",
+          "use_line": 132,
+          "def_line": 132
+        },
+        {
+          "var": "key",
+          "use_line": 133,
+          "def_line": 131
+        },
+        {
+          "var": "value",
+          "use_line": 133,
+          "def_line": 132
+        }
+      ]
+    },
+    {
+      "method": "merge",
+      "edges": [
+        {
+          "var": "block",
+          "use_line": 144,
+          "def_line": 143
+        },
+        {
+          "var": "other_hashes",
+          "use_line": 144,
+          "def_line": 143
+        }
+      ]
+    },
+    {
+      "method": "replace",
+      "edges": [
+        {
+          "var": "other_hash",
+          "use_line": 148,
+          "def_line": 147
+        }
+      ]
+    },
+    {
+      "method": "transform_values",
+      "edges": [
+        {
+          "var": "block",
+          "use_line": 152,
+          "def_line": 151
+        }
+      ]
+    },
+    {
+      "method": "transform_values!",
+      "edges": [
+
+      ]
+    },
+    {
+      "method": "transform_keys",
+      "edges": [
+        {
+          "var": "block",
+          "use_line": 161,
+          "def_line": 160
+        }
+      ]
+    },
+    {
+      "method": "transform_keys!",
+      "edges": [
+
+      ]
+    },
+    {
+      "method": "select",
+      "edges": [
+        {
+          "var": "args",
+          "use_line": 172,
+          "def_line": 169
+        },
+        {
+          "var": "block",
+          "use_line": 172,
+          "def_line": 169
+        }
+      ]
+    },
+    {
+      "method": "reject",
+      "edges": [
+        {
+          "var": "args",
+          "use_line": 178,
+          "def_line": 175
+        },
+        {
+          "var": "block",
+          "use_line": 178,
+          "def_line": 175
+        }
+      ]
+    },
+    {
+      "method": "compact",
+      "edges": [
+
+      ]
+    },
+    {
+      "method": "except",
+      "edges": [
+        {
+          "var": "keys",
+          "use_line": 186,
+          "def_line": 185
+        },
+        {
+          "var": "keys",
+          "use_line": 188,
+          "def_line": 185
+        }
+      ]
+    },
+    {
+      "method": "convert_key",
+      "edges": [
+        {
+          "var": "key",
+          "use_line": 194,
+          "def_line": 193
+        }
+      ]
+    },
+    {
+      "method": "convert_value",
+      "edges": [
+        {
+          "var": "value",
+          "use_line": 198,
+          "def_line": 197
+        },
+        {
+          "var": "value",
+          "use_line": 200,
+          "def_line": 197
+        },
+        {
+          "var": "value",
+          "use_line": 202,
+          "def_line": 197
+        },
+        {
+          "var": "value",
+          "use_line": 204,
+          "def_line": 197
+        }
+      ]
+    }
+  ],
+  "ruby_version": "3.2.3"
+}

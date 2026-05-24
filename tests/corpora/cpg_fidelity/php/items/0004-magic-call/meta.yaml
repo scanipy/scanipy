@@ -1,0 +1,9 @@
+categories:
+  - magic_methods
+dynamic: true
+id: 0004-magic-call
+license: Apache-2.0
+primary_file: magic_call.php
+source_commit: content-addressed
+source_url: vendored
+synthetic: true

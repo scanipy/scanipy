@@ -1,0 +1,61 @@
+{
+  "meta.py": {
+    "PluginMeta.__new__": {
+      "nodes": [
+        "L13:Assign",
+        "L14:Assign",
+        "L15:Return"
+      ],
+      "edges": [
+        {
+          "from": "L13:Assign",
+          "to": "L14:Assign",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L14:Assign",
+          "to": "L15:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    },
+    "Base.run": {
+      "nodes": [
+        "L20:Return"
+      ],
+      "edges": []
+    },
+    "Worker.run": {
+      "nodes": [
+        "L25:Return"
+      ],
+      "edges": []
+    },
+    "register": {
+      "nodes": [
+        "L29:Assign",
+        "L30:Return"
+      ],
+      "edges": [
+        {
+          "from": "L29:Assign",
+          "to": "L30:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    },
+    "make": {
+      "nodes": [
+        "L34:Assign",
+        "L35:Return"
+      ],
+      "edges": [
+        {
+          "from": "L34:Assign",
+          "to": "L35:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "duck.py": {
+    "edges": [
+      {
+        "caller": "consume",
+        "callee": "Reader",
+        "line": 16,
+        "kind": "dynamic"
+      },
+      {
+        "caller": "consume",
+        "callee": "read",
+        "line": 17,
+        "kind": "static"
+      },
+      {
+        "caller": "consume_unknown",
+        "callee": "read",
+        "line": 21,
+        "kind": "static"
+      }
+    ]
+  }
+}

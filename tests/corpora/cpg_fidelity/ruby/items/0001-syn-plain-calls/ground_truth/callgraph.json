@@ -1,0 +1,57 @@
+{
+  "convention": "lower-bound",
+  "edges": [
+    {
+      "caller": "subtotal",
+      "callee": "each",
+      "line": 12,
+      "node": "CALL"
+    },
+    {
+      "caller": "subtotal",
+      "callee": "add",
+      "line": 13,
+      "node": "FCALL"
+    },
+    {
+      "caller": "add",
+      "callee": "+",
+      "line": 19,
+      "node": "OPCALL"
+    },
+    {
+      "caller": "with_tax",
+      "callee": "subtotal",
+      "line": 23,
+      "node": "VCALL"
+    },
+    {
+      "caller": "with_tax",
+      "callee": ">",
+      "line": 24,
+      "node": "OPCALL"
+    },
+    {
+      "caller": "with_tax",
+      "callee": "+",
+      "line": 25,
+      "node": "OPCALL"
+    },
+    {
+      "caller": "with_tax",
+      "callee": "tax",
+      "line": 25,
+      "node": "FCALL"
+    },
+    {
+      "caller": "tax",
+      "callee": "*",
+      "line": 32,
+      "node": "OPCALL"
+    }
+  ],
+  "dynamic_sites": [
+
+  ],
+  "ruby_version": "3.2.3"
+}

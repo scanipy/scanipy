@@ -1,0 +1,34 @@
+{
+  "index.tsx": [
+    {
+      "callee": null,
+      "caller": "index.tsx::sealed@3",
+      "line": 4,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.tsx::sealed@3",
+      "line": 5,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.tsx::renderName@17",
+      "line": 18,
+      "tag": "dynamic"
+    },
+    {
+      "callee": "greeting",
+      "caller": "index.tsx::renderName@17",
+      "line": 19,
+      "tag": "static"
+    },
+    {
+      "callee": "renderName",
+      "caller": "index.tsx::App@22",
+      "line": 23,
+      "tag": "static"
+    }
+  ]
+}

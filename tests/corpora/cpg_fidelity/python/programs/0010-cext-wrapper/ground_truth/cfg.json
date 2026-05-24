@@ -1,0 +1,42 @@
+{
+  "ffi.py": {
+    "_encode": {
+      "nodes": [
+        "L15:Assign",
+        "L16:Return"
+      ],
+      "edges": [
+        {
+          "from": "L15:Assign",
+          "to": "L16:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    },
+    "length": {
+      "nodes": [
+        "L20:Assign",
+        "L21:Assign",
+        "L22:Assign",
+        "L23:Return"
+      ],
+      "edges": [
+        {
+          "from": "L20:Assign",
+          "to": "L21:Assign",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L21:Assign",
+          "to": "L22:Assign",
+          "kind": "fallthrough"
+        },
+        {
+          "from": "L22:Assign",
+          "to": "L23:Return",
+          "kind": "fallthrough"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "schema": "cpg-fidelity/ast/v1",
+  "program_id": "0009-annotation-heavy",
+  "method": "javac -Xprint traversal; parse_success verified by javac (JDK 21, -source 17).",
+  "files": [
+    {
+      "file": "Annotated.java",
+      "parse_success": true,
+      "type_decls": [
+        {"name": "Annotated", "kind": "CLASS"},
+        {"name": "Annotated.Audited", "kind": "ANNOTATION_TYPE"},
+        {"name": "Annotated.NonNull", "kind": "ANNOTATION_TYPE"},
+        {"name": "Annotated.Service", "kind": "CLASS", "annotations": ["@Audited(value=\"service\", level=3)"]}
+      ],
+      "methods": [
+        {"name": "Audited.value()", "annotation_element": true, "default": "\"\""},
+        {"name": "Audited.level()", "annotation_element": true, "default": "1"},
+        {"name": "Service.compute(String)", "annotations": ["@Audited(\"compute\")"], "param_annotations": ["@NonNull"]},
+        {"name": "Annotated.main(String[])"}
+      ],
+      "annotation_usage_count": 8
+    }
+  ]
+}

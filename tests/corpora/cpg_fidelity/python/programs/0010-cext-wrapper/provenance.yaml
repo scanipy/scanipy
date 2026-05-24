@@ -1,0 +1,10 @@
+commit_sha: sha256:4a2d8cce822dc77ef1ad6c085db35b52bee23ca87a20dd2f152134bd7fc8b3e9
+construct_coverage:
+  - c-extension-wrapper
+  - type-hints
+license: Apache-2.0
+path_in_source: source/
+python_minor: '3.10'
+sha256_source_tree: sha256:4a2d8cce822dc77ef1ad6c085db35b52bee23ca87a20dd2f152134bd7fc8b3e9
+source_url: local:programs/0010-cext-wrapper/source
+synthetic: true

@@ -1,0 +1,192 @@
+{
+  "index.mjs": [
+    {
+      "edges": [
+        {
+          "from": "index.mjs::hashOf@5#entry",
+          "kind": "seq",
+          "to": "index.mjs::hashOf@5#n0"
+        }
+      ],
+      "function": "index.mjs::hashOf@5",
+      "nodes": [
+        {
+          "id": "index.mjs::hashOf@5#entry",
+          "kind": "Entry",
+          "line": 5
+        },
+        {
+          "id": "index.mjs::hashOf@5#n0",
+          "kind": "ReturnStatement",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.mjs::tokenize@9#entry",
+          "kind": "seq",
+          "to": "index.mjs::tokenize@9#n0"
+        },
+        {
+          "from": "index.mjs::tokenize@9#n0",
+          "kind": "yield",
+          "to": "index.mjs::tokenize@9#n0"
+        },
+        {
+          "from": "index.mjs::tokenize@9#n0",
+          "kind": "seq",
+          "to": "index.mjs::tokenize@9#n1"
+        },
+        {
+          "from": "index.mjs::tokenize@9#n1",
+          "kind": "yield",
+          "to": "index.mjs::tokenize@9#n1"
+        },
+        {
+          "from": "index.mjs::tokenize@9#n1",
+          "kind": "seq",
+          "to": "index.mjs::tokenize@9#n2"
+        },
+        {
+          "from": "index.mjs::tokenize@9#n2",
+          "kind": "yield",
+          "to": "index.mjs::tokenize@9#n2"
+        },
+        {
+          "from": "index.mjs::tokenize@9#n1",
+          "kind": "loop-back",
+          "to": "index.mjs::tokenize@9#n0"
+        }
+      ],
+      "function": "index.mjs::tokenize@9",
+      "nodes": [
+        {
+          "id": "index.mjs::tokenize@9#entry",
+          "kind": "Entry",
+          "line": 9
+        },
+        {
+          "id": "index.mjs::tokenize@9#n0",
+          "kind": "ForOfStatement",
+          "line": 10
+        },
+        {
+          "id": "index.mjs::tokenize@9#n1",
+          "kind": "IfStatement",
+          "line": 11
+        },
+        {
+          "id": "index.mjs::tokenize@9#n2",
+          "kind": "ExpressionStatement",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.mjs::hashed@17#entry",
+          "kind": "seq",
+          "to": "index.mjs::hashed@17#n0"
+        },
+        {
+          "from": "index.mjs::hashed@17#n0",
+          "kind": "yield",
+          "to": "index.mjs::hashed@17#n0"
+        },
+        {
+          "from": "index.mjs::hashed@17#n0",
+          "kind": "seq",
+          "to": "index.mjs::hashed@17#n1"
+        },
+        {
+          "from": "index.mjs::hashed@17#n1",
+          "kind": "yield",
+          "to": "index.mjs::hashed@17#n1"
+        },
+        {
+          "from": "index.mjs::hashed@17#n1",
+          "kind": "loop-back",
+          "to": "index.mjs::hashed@17#n0"
+        }
+      ],
+      "function": "index.mjs::hashed@17",
+      "nodes": [
+        {
+          "id": "index.mjs::hashed@17#entry",
+          "kind": "Entry",
+          "line": 17
+        },
+        {
+          "id": "index.mjs::hashed@17#n0",
+          "kind": "ForOfStatement",
+          "line": 18
+        },
+        {
+          "id": "index.mjs::hashed@17#n1",
+          "kind": "ExpressionStatement",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "index.mjs::digestStream@23#entry",
+          "kind": "seq",
+          "to": "index.mjs::digestStream@23#n0"
+        },
+        {
+          "from": "index.mjs::digestStream@23#n0",
+          "kind": "seq",
+          "to": "index.mjs::digestStream@23#n1"
+        },
+        {
+          "from": "index.mjs::digestStream@23#n1",
+          "kind": "seq",
+          "to": "index.mjs::digestStream@23#n2"
+        },
+        {
+          "from": "index.mjs::digestStream@23#n2",
+          "kind": "loop-back",
+          "to": "index.mjs::digestStream@23#n1"
+        },
+        {
+          "from": "index.mjs::digestStream@23#n1",
+          "kind": "seq",
+          "to": "index.mjs::digestStream@23#n3"
+        }
+      ],
+      "function": "index.mjs::digestStream@23",
+      "nodes": [
+        {
+          "id": "index.mjs::digestStream@23#entry",
+          "kind": "Entry",
+          "line": 23
+        },
+        {
+          "id": "index.mjs::digestStream@23#n0",
+          "kind": "VariableDeclaration",
+          "line": 24
+        },
+        {
+          "id": "index.mjs::digestStream@23#n1",
+          "kind": "ForOfStatement",
+          "line": 25
+        },
+        {
+          "id": "index.mjs::digestStream@23#n2",
+          "kind": "ExpressionStatement",
+          "line": 26
+        },
+        {
+          "id": "index.mjs::digestStream@23#n3",
+          "kind": "ReturnStatement",
+          "line": 28
+        }
+      ]
+    }
+  ]
+}

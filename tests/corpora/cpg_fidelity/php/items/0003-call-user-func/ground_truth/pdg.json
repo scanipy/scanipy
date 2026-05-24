@@ -1,0 +1,12 @@
+{
+  "schema": "cpg-fidelity/pdg/v0.1.0",
+  "file": "call_user_func.php",
+  "is_lower_bound": true,
+  "edges": [
+    {"function": "formatUpper", "from": "param:s", "to": "return:13", "type": "data"},
+    {"function": "apply", "from": "param:cb", "to": "return:19", "type": "data"},
+    {"function": "apply", "from": "param:s", "to": "return:19", "type": "data"},
+    {"function": "applyArgs", "from": "param:cb", "to": "return:25", "type": "data"},
+    {"function": "applyArgs", "from": "param:args", "to": "return:25", "type": "data"}
+  ]
+}

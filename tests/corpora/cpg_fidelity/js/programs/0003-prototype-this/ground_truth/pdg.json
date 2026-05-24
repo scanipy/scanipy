@@ -1,0 +1,28 @@
+{
+  "index.js": [
+    {
+      "edges": [],
+      "function": "index.js::Counter@5"
+    },
+    {
+      "edges": [],
+      "function": "index.js::increment@9"
+    },
+    {
+      "edges": [],
+      "function": "index.js::add@14"
+    },
+    {
+      "edges": [],
+      "function": "index.js::makeBound@19"
+    },
+    {
+      "edges": [],
+      "function": "index.js::applyAdd@23"
+    },
+    {
+      "edges": [],
+      "function": "index.js::reset@28"
+    }
+  ]
+}

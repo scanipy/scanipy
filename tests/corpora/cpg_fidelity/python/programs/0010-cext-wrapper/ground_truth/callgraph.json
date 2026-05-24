@@ -1,0 +1,30 @@
+{
+  "ffi.py": {
+    "edges": [
+      {
+        "caller": "_encode",
+        "callee": "encode",
+        "line": 15,
+        "kind": "dynamic"
+      },
+      {
+        "caller": "length",
+        "callee": "CDLL",
+        "line": 20,
+        "kind": "dynamic"
+      },
+      {
+        "caller": "length",
+        "callee": "_encode",
+        "line": 21,
+        "kind": "static"
+      },
+      {
+        "caller": "length",
+        "callee": "strlen",
+        "line": 22,
+        "kind": "dynamic"
+      }
+    ]
+  }
+}
