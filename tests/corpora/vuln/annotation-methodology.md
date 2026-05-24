@@ -15,7 +15,7 @@ methodology). Ground truth here is **never** hand-invented; it is one of three k
   Only the four Stage-A core classes are populated at v0.1.0.
 - Each item records the pinned upstream commit, path, and `upstream_sha256` so a
   fetch-on-demand pull is integrity-verifiable. OWASP content is **not vendored**
-  (license: GPL-2.0, off the vendor allow-list — see LICENSES.md, CLAR-CORP-07).
+  (license: GPL-2.0, off the vendor allow-list — see LICENSES.md, CLAR-CORP-18).
 
 ## 2. Juliet — NSA/SARD CWE tag preserved (SYNTHESIZED seed at v0.1.0)
 
@@ -25,7 +25,7 @@ methodology). Ground truth here is **never** hand-invented; it is one of three k
 - v0.1.0 ships **synthetic Juliet-shaped** seeds (clearly labelled `synthetic: true`)
   authored in the canonical BadSource→sink idiom; ground truth is **by construction**
   (the tainted source provably reaches the recorded sink line). Bulk download of the
-  real Juliet 1.3 suite from NIST SARD is deferred to `CLAR-CORP-08`.
+  real Juliet 1.3 suite from NIST SARD is deferred to `CLAR-CORP-19`.
 
 ## 3. BigVul held-out — upstream vuln rows + deterministic split (SYNTHESIZED seed)
 

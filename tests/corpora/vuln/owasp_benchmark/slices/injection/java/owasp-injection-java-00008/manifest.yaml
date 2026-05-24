@@ -13,7 +13,7 @@ notes: |
   "BenchmarkTest00008,sqli,true,89" (category=sqli, real-vulnerability=true, cwe=89).
   Content is NOT vendored: OWASP BenchmarkJava is GPL-2.0, which is off the corpus
   vendor allow-list (DOC §7); the slice ships fetch-on-demand. Integrity is pinned by
-  upstream_sha256 so a fetch is verifiable. See CLAR-CORP-07 for vendoring approval.
+  upstream_sha256 so a fetch is verifiable. See CLAR-CORP-18 for vendoring approval.
 ground_truth_sites:
   - file: src/main/java/org/owasp/benchmark/testcode/BenchmarkTest00008.java
     line: 54

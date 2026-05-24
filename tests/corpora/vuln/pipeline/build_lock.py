@@ -45,7 +45,7 @@ BUILT_BY = "corpus-agent/CMP-CORP-VULN-01"
 
 # License allow-list for VENDORED content (DOC §7). GPL/AGPL require explicit CTO
 # approval; OWASP BenchmarkJava is GPLv2, so OWASP items ship fetch-on-demand
-# (license="GPL-2.0", vendored=false) until CLAR-CORP-07 is resolved.
+# (license="GPL-2.0", vendored=false) until CLAR-CORP-18 is resolved.
 VENDOR_LICENSE_ALLOWLIST = {
     "MIT",
     "Apache-2.0",
@@ -187,7 +187,7 @@ def assemble_lock(write: bool = False) -> tuple[dict, list[str], list[str]]:
             if (cls, lang) not in populated_pairs:
                 warn.append(
                     f"Stage-A pair ({cls}, {lang}) has no populated slice "
-                    "(v0.1.0 partial coverage; see README + CLAR-CORP-08)"
+                    "(v0.1.0 partial coverage; see README + CLAR-CORP-19)"
                 )
 
     populated_slices = sorted(
@@ -223,7 +223,7 @@ def assemble_lock(write: bool = False) -> tuple[dict, list[str], list[str]]:
         "bigvul_heldout_digest": split["heldout_digest"],
         "training_exclusion_proof_ref": "bigvul_heldout/training_exclusion_proof.md",
         "licenses": {
-            "owasp_benchmark": "GPL-2.0 (fetch-on-demand; off vendor allow-list, CLAR-CORP-07)",
+            "owasp_benchmark": "GPL-2.0 (fetch-on-demand; off vendor allow-list, CLAR-CORP-18)",
             "juliet": "Public Domain (NIST)",
             "bigvul": "MIT",
         },
