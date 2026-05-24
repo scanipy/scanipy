@@ -63,3 +63,8 @@ workers/**/.docker/
 
 # Alembic
 db/alembic/versions/__pycache__/
+
+# Agent worktrees — transient isolated checkouts created by the Agent tool.
+# Never part of the codebase; excluded so ruff/pre-push tooling does not
+# recurse into them (they hold in-progress branches + corpus fixtures).
+.claude/worktrees/
