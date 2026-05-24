@@ -10,7 +10,7 @@ built_by: corpus-agent/CMP-CORP-CPG-js
 surface_counts:
   js: 7
   ts: 2
-ground_truth_method: "AST: @typescript-eslint/typescript-estree 6.18.0 -> one ESTree (JS+TS), canonical serialization (sorted keys, loc/range preserved). CFG: per-function statement CFG with branch/loop/await/yield edges. Call graph + PDG (v0.1.0): documented intraprocedural resolver in pipeline/extract_ground_truth.mjs; dynamic/HOF/type-informed sites tagged `dynamic` and EXCLUDED from gate precision/recall. v1.0.0 replaces with Jelly 1.4 + tsc --noEmit --declaration (CLAR-CORP-07). See README.md §3."
+ground_truth_method: "AST: @typescript-eslint/typescript-estree 6.18.0 -> one ESTree (JS+TS), canonical serialization (sorted keys, loc/range preserved). CFG: per-function statement CFG with branch/loop/await/yield edges. Call graph + PDG (v0.1.0): documented intraprocedural resolver in pipeline/extract_ground_truth.mjs; dynamic/HOF/type-informed sites tagged `dynamic` and EXCLUDED from gate precision/recall. v1.0.0 replaces with Jelly 1.4 + tsc --noEmit --declaration (CLAR-CORP-12). See README.md §3."
 programs:
   - id: "0001-commonjs-hof"
     source_url: "local:synthesized/CMP-CORP-CPG-js/0001-commonjs-hof"

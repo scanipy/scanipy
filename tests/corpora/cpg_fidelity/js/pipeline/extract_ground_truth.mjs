@@ -20,7 +20,7 @@
 //          NOTE: v0.1.0 ground truth is the documented intraprocedural resolver
 //          below, hand-verifiable on these small programs. v1.0.0 replaces it with
 //          Jelly 1.4 (+ tsc --noEmit --declaration for TS type-informed edges) per
-//          DOC §3.4 — see CLAR-CORP-07.
+//          DOC §3.4 — see CLAR-CORP-12.
 //   PDG  : intra-function def->use data-dependence edges over simple variable
 //          declarations/assignments and their later identifier reads.
 //
