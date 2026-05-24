@@ -18,8 +18,11 @@ DIFFERENT entry points — DET-01b at the parser (``parse_spec()``), DET-02a at 
 registry (``DetectorRegistry.register()``) where E-REG-001..006 also apply. This is
 legitimate non-duplication, not redundancy.
 
-Spec-first: production code does not exist yet. Every test is a registered stub
-(xfail + skip) that flips red->green when its CMP-DET-* implementation lands.
+Spec-first → green: the TST-AC-DET-01b (E-DSL-001..009) and TST-INV-4-DET-01
+rows are HYDRATED against the landed CMP-DET-01 DSL (analysis/ifds/dsl/). The
+DET-02 (registry / E-REG-*) and DET-03 (scaffolding / migration) rows remain
+registered stubs (xfail + skip) and flip red->green when their CMP-DET-*
+implementations land.
 
 Marker set is the CLOSED pyproject.toml set
 {unit, integration, falsifier, empirical, invariant, nightly, pre_release};
@@ -27,6 +30,18 @@ the WBS kind tag appears in the docstring only.
 """
 
 import pytest
+
+from analysis.ifds.dsl import DSLError, Spec, parse_spec
+
+# Well-formed header shared by the negative fixtures below: an engine=ifds
+# (deterministic-core) DSL spec. Each malformed-spec test appends exactly one
+# out-of-grammar clause so the asserted E-DSL code is the *only* defect.
+_GOOD_HEADER = 'id: "neg-fixture"\nclass: "injection"\nlanguages: ["java"]\nengine: "ifds"\n'
+
+
+def _spec(*clauses: str, header: str = _GOOD_HEADER) -> str:
+    return header + "\n".join(clauses) + "\n"
+
 
 # ─── TST-AC-DET-01b — DSL grammar admits no escape hatch ────────────────────
 # AC-DET-01b: one [NEGATIVE] test per E-DSL-001..009 at the PARSER entry point
@@ -38,7 +53,6 @@ import pytest
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-01 not yet implemented", strict=False)
 def test_dsl_rejects_raw_regex_e_dsl_001() -> None:
     """TST-AC-DET-01b / Maps to AC-DET-01b / Kind [NEGATIVE].
 
@@ -48,13 +62,14 @@ def test_dsl_rejects_raw_regex_e_dsl_001() -> None:
     Pass criteria: DSLError.code == 'E-DSL-001'; message names raw-regex escape.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: from analysis.ifds.dsl.parser import parse_spec, DSLError
-    # CLAR-PARAM-01 — non-DSL spec type boundary owned upstream; codes per DOC-DSL §6
-    pytest.skip("CMP-DET-01 not implemented yet")
+    with pytest.raises(DSLError) as exc:
+        parse_spec(_spec(r'source(re.compile(r".*\.execute\("))'))
+    assert exc.value.code == "E-DSL-001"
+    assert "regex" in exc.value.message.lower()
+    assert exc.value.suggested_fix  # structured: hint present
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-01 not yet implemented", strict=False)
 def test_dsl_rejects_embedded_semgrep_e_dsl_002() -> None:
     """TST-AC-DET-01b / Maps to AC-DET-01b / Kind [NEGATIVE].
 
@@ -63,12 +78,13 @@ def test_dsl_rejects_embedded_semgrep_e_dsl_002() -> None:
     Pass criteria: DSLError.code == 'E-DSL-002'; spec is not analyzed.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: parse_spec must reject embedded oracle pattern (CLAR-PARAM-01 boundary)
-    pytest.skip("CMP-DET-01 not implemented yet")
+    with pytest.raises(DSLError) as exc:
+        parse_spec(_spec('propagate(semgrep: { pattern: "$X = $TAINTED" })'))
+    assert exc.value.code == "E-DSL-002"
+    assert "semgrep" in exc.value.message.lower()
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-01 not yet implemented", strict=False)
 def test_dsl_rejects_embedded_cpg_query_e_dsl_003() -> None:
     """TST-AC-DET-01b / Maps to AC-DET-01b / Kind [NEGATIVE].
 
@@ -77,12 +93,13 @@ def test_dsl_rejects_embedded_cpg_query_e_dsl_003() -> None:
     Pass criteria: DSLError.code == 'E-DSL-003'; spec is not analyzed.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: parse_spec must reject embedded cpg-query expression
-    pytest.skip("CMP-DET-01 not implemented yet")
+    with pytest.raises(DSLError) as exc:
+        parse_spec(_spec('sink(cpg.method("foo").caller)'))
+    assert exc.value.code == "E-DSL-003"
+    assert "cpg-query" in exc.value.message.lower()
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-01 not yet implemented", strict=False)
 def test_dsl_rejects_raw_lambda_e_dsl_004() -> None:
     """TST-AC-DET-01b / Maps to AC-DET-01b / Kind [NEGATIVE].
 
@@ -92,12 +109,13 @@ def test_dsl_rejects_raw_lambda_e_dsl_004() -> None:
     Pass criteria: DSLError.code == 'E-DSL-004'; arbitrary code never analyzed.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: arbitrary embedded code is the canonical escape-hatch AC-DET-01b forbids
-    pytest.skip("CMP-DET-01 not implemented yet")
+    with pytest.raises(DSLError) as exc:
+        parse_spec(_spec("sanitize(lambda f: f.is_xss())"))
+    assert exc.value.code == "E-DSL-004"
+    assert "callable" in exc.value.message.lower()
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-01 not yet implemented", strict=False)
 def test_dsl_rejects_sequencing_operator_e_dsl_005() -> None:
     """TST-AC-DET-01b / Maps to AC-DET-01b / Kind [NEGATIVE].
 
@@ -106,12 +124,13 @@ def test_dsl_rejects_sequencing_operator_e_dsl_005() -> None:
     Pass criteria: DSLError.code == 'E-DSL-005'; sequencing breaks distributivity.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: sequencing is excluded by DOC-DSL §4 sanctioned compositions
-    pytest.skip("CMP-DET-01 not implemented yet")
+    with pytest.raises(DSLError) as exc:
+        parse_spec(_spec("then propagate(arg[0] → ret)"))
+    assert exc.value.code == "E-DSL-005"
+    assert "sequencing" in exc.value.message.lower()
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-01 not yet implemented", strict=False)
 def test_dsl_rejects_conditional_operator_e_dsl_006() -> None:
     """TST-AC-DET-01b / Maps to AC-DET-01b / Kind [NEGATIVE].
 
@@ -120,12 +139,13 @@ def test_dsl_rejects_conditional_operator_e_dsl_006() -> None:
     Pass criteria: DSLError.code == 'E-DSL-006'.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: conditional is excluded by DOC-DSL §4 sanctioned compositions
-    pytest.skip("CMP-DET-01 not implemented yet")
+    with pytest.raises(DSLError) as exc:
+        parse_spec(_spec("if matches(p) then propagate(arg[0] → ret)"))
+    assert exc.value.code == "E-DSL-006"
+    assert "conditional" in exc.value.message.lower()
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-01 not yet implemented", strict=False)
 def test_dsl_rejects_user_fixpoint_e_dsl_007() -> None:
     """TST-AC-DET-01b / Maps to AC-DET-01b / Kind [NEGATIVE].
 
@@ -134,12 +154,13 @@ def test_dsl_rejects_user_fixpoint_e_dsl_007() -> None:
     Pass criteria: DSLError.code == 'E-DSL-007'.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: user fixpoint is excluded by DOC-DSL §4 sanctioned compositions
-    pytest.skip("CMP-DET-01 not implemented yet")
+    with pytest.raises(DSLError) as exc:
+        parse_spec(_spec("fixpoint(propagate(arg[0] → ret))"))
+    assert exc.value.code == "E-DSL-007"
+    assert "fixpoint" in exc.value.message.lower()
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-01 not yet implemented", strict=False)
 def test_dsl_rejects_unknown_primitive_head_e_dsl_008() -> None:
     """TST-AC-DET-01b / Maps to AC-DET-01b / Kind [NEGATIVE].
 
@@ -148,12 +169,15 @@ def test_dsl_rejects_unknown_primitive_head_e_dsl_008() -> None:
     Pass criteria: DSLError.code == 'E-DSL-008'; head set is exactly the four.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: admissible primitive heads are exactly {source, sink, sanitize, propagate}
-    pytest.skip("CMP-DET-01 not implemented yet")
+    with pytest.raises(DSLError) as exc:
+        parse_spec(_spec("taint_flow(?T<:Http.getParameter)"))
+    assert exc.value.code == "E-DSL-008"
+    assert "taint_flow" in exc.value.message
+    for head in ("source", "sink", "sanitize", "propagate"):
+        assert head in exc.value.message
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-01 not yet implemented", strict=False)
 def test_dsl_rejects_non_core_engine_e_dsl_009() -> None:
     """TST-AC-DET-01b / Maps to AC-DET-01b / Kind [NEGATIVE].
 
@@ -163,8 +187,13 @@ def test_dsl_rejects_non_core_engine_e_dsl_009() -> None:
     Pass criteria: DSLError.code == 'E-DSL-009'; oracle specs never parse as DSL.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: DSL files admit only engine ∈ {ifds, ide}; oracle engines live elsewhere
-    pytest.skip("CMP-DET-01 not implemented yet")
+    bad_engine_header = (
+        'id: "neg-eng"\nclass: "xss"\nlanguages: ["javascript"]\nengine: "semgrep"\n'
+    )
+    with pytest.raises(DSLError) as exc:
+        parse_spec(_spec("sink(document.innerHTML)", header=bad_engine_header))
+    assert exc.value.code == "E-DSL-009"
+    assert "do not parse" in exc.value.message
 
 
 # ─── TST-AC-DET-02a — Registration rejects out-of-DSL specs (precise) ───────
@@ -446,7 +475,6 @@ def test_migrated_path_traversal_reproduces_cve_2025_61765() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(reason="CMP-DET-01 not yet implemented", strict=False)
 def test_inv4_closure_rejects_any_non_dsl_spec_at_registration() -> None:
     """TST-INV-4-DET-01 / Maps to INV-4 (CMP-DET-01) / Kind [INVARIANT].
 
@@ -462,5 +490,36 @@ def test_inv4_closure_rejects_any_non_dsl_spec_at_registration() -> None:
         silent acceptance forbidden).
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: CLAR-PARAM-01 — non-DSL spec type boundary owned upstream (DOC-DSL §6 codes)
-    pytest.skip("CMP-DET-01 not implemented yet")
+    semgrep_header = 'id: "neg-eng"\nclass: "xss"\nlanguages: ["javascript"]\nengine: "semgrep"\n'
+    non_dsl_corpus: list[tuple[str, str]] = [
+        ("E-DSL-001", _spec(r'source(re.compile(r".*\.execute\("))')),
+        ("E-DSL-002", _spec('propagate(semgrep: { pattern: "$X" })')),
+        ("E-DSL-003", _spec('sink(cpg.method("foo").caller)')),
+        ("E-DSL-004", _spec("sanitize(lambda f: f.is_xss())")),
+        ("E-DSL-005", _spec("then propagate(arg[0] → ret)")),
+        ("E-DSL-006", _spec("if matches(p) then sanitize(arg[0])")),
+        ("E-DSL-007", _spec("fixpoint(propagate(arg[0] → ret))")),
+        ("E-DSL-008", _spec("taint_flow(?T<:Http.getParameter)")),
+        ("E-DSL-009", _spec("sink(document.innerHTML)", header=semgrep_header)),
+    ]
+
+    # Safe direction: every out-of-grammar spec is rejected — total, no partial Spec.
+    for expected_code, text in non_dsl_corpus:
+        with pytest.raises(DSLError) as exc:
+            parse_spec(text)
+        assert exc.value.code == expected_code, f"expected {expected_code}, got {exc.value.code}"
+
+    # One-sided, not vacuous: a well-formed in-grammar spec IS admitted. A check
+    # that rejected everything would also "never analyze a non-DSL spec" but
+    # would be useless; INV-4 forbids silent acceptance, not all acceptance.
+    accepted = parse_spec(
+        _spec(
+            "source(?T<:javax.servlet.http.HttpServletRequest.getParameter(*))",
+            "propagate(arg[0] → ret)",
+            "sanitize(?T<:java.sql.PreparedStatement.setString(*))",
+            "sink(?T<:java.sql.Statement.executeQuery(arg[0]))",
+        )
+    )
+    assert isinstance(accepted, Spec)
+    assert accepted.engine == "ifds"
+    assert len(accepted.clauses) == 4
