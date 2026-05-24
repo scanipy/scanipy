@@ -1,0 +1,11 @@
+{
+  "schema": "cpg-fidelity/callgraph/v0.1.0",
+  "file": "Calculator.php",
+  "is_lower_bound": false,
+  "dynamic": false,
+  "edges": [
+    {"caller": "run", "callee": "Calculator::doubleAdd", "line": 27, "resolution": "static"},
+    {"caller": "run", "callee": "Calculator::add", "line": 29, "resolution": "static"},
+    {"caller": "Calculator::doubleAdd", "callee": "Calculator::add", "line": 19, "resolution": "static"}
+  ]
+}

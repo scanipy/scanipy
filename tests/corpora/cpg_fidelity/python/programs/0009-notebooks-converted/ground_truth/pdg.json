@@ -1,0 +1,36 @@
+{
+  "analysis.py": {
+    "step_one": {
+      "edges": [
+        {
+          "from_line": 14,
+          "to_line": 15,
+          "kind": "data",
+          "var": "x"
+        },
+        {
+          "from_line": 15,
+          "to_line": 16,
+          "kind": "data",
+          "var": "y"
+        }
+      ]
+    },
+    "step_two": {
+      "edges": [
+        {
+          "from_line": 22,
+          "to_line": 23,
+          "kind": "data",
+          "var": "x"
+        },
+        {
+          "from_line": 23,
+          "to_line": 24,
+          "kind": "data",
+          "var": "z"
+        }
+      ]
+    }
+  }
+}

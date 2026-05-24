@@ -1,0 +1,502 @@
+{
+  "ruby_version": "3.2.3",
+  "tree": {
+    "type": "SCOPE",
+    "line": 1,
+    "children": [
+      [
+
+      ],
+      null,
+      {
+        "type": "CLASS",
+        "line": 5,
+        "children": [
+          {
+            "type": "COLON2",
+            "line": 5,
+            "children": [
+              null,
+              "OrderTotal"
+            ]
+          },
+          null,
+          {
+            "type": "SCOPE",
+            "line": 5,
+            "children": [
+              [
+
+              ],
+              null,
+              {
+                "type": "BLOCK",
+                "line": 5,
+                "children": [
+                  {
+                    "type": "BEGIN",
+                    "line": 5,
+                    "children": [
+                      null
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 6,
+                    "children": [
+                      "initialize",
+                      {
+                        "type": "SCOPE",
+                        "line": 6,
+                        "children": [
+                          [
+                            "items"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 6,
+                            "children": [
+                              1,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "IASGN",
+                            "line": 7,
+                            "children": [
+                              "@items",
+                              {
+                                "type": "LVAR",
+                                "line": 7,
+                                "children": [
+                                  "items"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 10,
+                    "children": [
+                      "subtotal",
+                      {
+                        "type": "SCOPE",
+                        "line": 10,
+                        "children": [
+                          [
+                            "sum"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 10,
+                            "children": [
+                              0,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "BLOCK",
+                            "line": 11,
+                            "children": [
+                              {
+                                "type": "LASGN",
+                                "line": 11,
+                                "children": [
+                                  "sum",
+                                  {
+                                    "type": "LIT",
+                                    "line": 11,
+                                    "children": [
+                                      0
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "ITER",
+                                "line": 12,
+                                "children": [
+                                  {
+                                    "type": "CALL",
+                                    "line": 12,
+                                    "children": [
+                                      {
+                                        "type": "IVAR",
+                                        "line": 12,
+                                        "children": [
+                                          "@items"
+                                        ]
+                                      },
+                                      "each",
+                                      null
+                                    ]
+                                  },
+                                  {
+                                    "type": "SCOPE",
+                                    "line": 12,
+                                    "children": [
+                                      [
+                                        "line"
+                                      ],
+                                      {
+                                        "type": "ARGS",
+                                        "line": 12,
+                                        "children": [
+                                          1,
+                                          null,
+                                          null,
+                                          null,
+                                          0,
+                                          null,
+                                          null,
+                                          null,
+                                          null,
+                                          null
+                                        ]
+                                      },
+                                      {
+                                        "type": "DASGN",
+                                        "line": 13,
+                                        "children": [
+                                          "sum",
+                                          {
+                                            "type": "FCALL",
+                                            "line": 13,
+                                            "children": [
+                                              "add",
+                                              {
+                                                "type": "LIST",
+                                                "line": 13,
+                                                "children": [
+                                                  {
+                                                    "type": "DVAR",
+                                                    "line": 13,
+                                                    "children": [
+                                                      "sum"
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "DVAR",
+                                                    "line": 13,
+                                                    "children": [
+                                                      "line"
+                                                    ]
+                                                  },
+                                                  null
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "LVAR",
+                                "line": 15,
+                                "children": [
+                                  "sum"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 18,
+                    "children": [
+                      "add",
+                      {
+                        "type": "SCOPE",
+                        "line": 18,
+                        "children": [
+                          [
+                            "running",
+                            "line"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 18,
+                            "children": [
+                              2,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "OPCALL",
+                            "line": 19,
+                            "children": [
+                              {
+                                "type": "LVAR",
+                                "line": 19,
+                                "children": [
+                                  "running"
+                                ]
+                              },
+                              "+",
+                              {
+                                "type": "LIST",
+                                "line": 19,
+                                "children": [
+                                  {
+                                    "type": "LVAR",
+                                    "line": 19,
+                                    "children": [
+                                      "line"
+                                    ]
+                                  },
+                                  null
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 22,
+                    "children": [
+                      "with_tax",
+                      {
+                        "type": "SCOPE",
+                        "line": 22,
+                        "children": [
+                          [
+                            "rate",
+                            "base"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 22,
+                            "children": [
+                              1,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "BLOCK",
+                            "line": 23,
+                            "children": [
+                              {
+                                "type": "LASGN",
+                                "line": 23,
+                                "children": [
+                                  "base",
+                                  {
+                                    "type": "VCALL",
+                                    "line": 23,
+                                    "children": [
+                                      "subtotal"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "IF",
+                                "line": 24,
+                                "children": [
+                                  {
+                                    "type": "OPCALL",
+                                    "line": 24,
+                                    "children": [
+                                      {
+                                        "type": "LVAR",
+                                        "line": 24,
+                                        "children": [
+                                          "rate"
+                                        ]
+                                      },
+                                      ">",
+                                      {
+                                        "type": "LIST",
+                                        "line": 24,
+                                        "children": [
+                                          {
+                                            "type": "LIT",
+                                            "line": 24,
+                                            "children": [
+                                              0
+                                            ]
+                                          },
+                                          null
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "OPCALL",
+                                    "line": 25,
+                                    "children": [
+                                      {
+                                        "type": "LVAR",
+                                        "line": 25,
+                                        "children": [
+                                          "base"
+                                        ]
+                                      },
+                                      "+",
+                                      {
+                                        "type": "LIST",
+                                        "line": 25,
+                                        "children": [
+                                          {
+                                            "type": "FCALL",
+                                            "line": 25,
+                                            "children": [
+                                              "tax",
+                                              {
+                                                "type": "LIST",
+                                                "line": 25,
+                                                "children": [
+                                                  {
+                                                    "type": "LVAR",
+                                                    "line": 25,
+                                                    "children": [
+                                                      "base"
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "LVAR",
+                                                    "line": 25,
+                                                    "children": [
+                                                      "rate"
+                                                    ]
+                                                  },
+                                                  null
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          null
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "LVAR",
+                                    "line": 27,
+                                    "children": [
+                                      "base"
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 31,
+                    "children": [
+                      "tax",
+                      {
+                        "type": "SCOPE",
+                        "line": 31,
+                        "children": [
+                          [
+                            "base",
+                            "rate"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 31,
+                            "children": [
+                              2,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "OPCALL",
+                            "line": 32,
+                            "children": [
+                              {
+                                "type": "LVAR",
+                                "line": 32,
+                                "children": [
+                                  "base"
+                                ]
+                              },
+                              "*",
+                              {
+                                "type": "LIST",
+                                "line": 32,
+                                "children": [
+                                  {
+                                    "type": "LVAR",
+                                    "line": 32,
+                                    "children": [
+                                      "rate"
+                                    ]
+                                  },
+                                  null
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

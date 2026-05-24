@@ -1,0 +1,22 @@
+{
+  "index.ts": [
+    {
+      "callee": "area",
+      "caller": "index.ts::totalArea@21",
+      "line": 25,
+      "tag": "static"
+    },
+    {
+      "callee": null,
+      "caller": "index.ts::makeShapes@30",
+      "line": 31,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.ts::makeShapes@30",
+      "line": 31,
+      "tag": "dynamic"
+    }
+  ]
+}

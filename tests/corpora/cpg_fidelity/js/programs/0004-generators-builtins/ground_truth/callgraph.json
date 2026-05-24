@@ -1,0 +1,52 @@
+{
+  "index.mjs": [
+    {
+      "callee": null,
+      "caller": "index.mjs::hashOf@5",
+      "line": 6,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.mjs::hashOf@5",
+      "line": 6,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.mjs::hashOf@5",
+      "line": 6,
+      "tag": "dynamic"
+    },
+    {
+      "callee": null,
+      "caller": "index.mjs::tokenize@9",
+      "line": 10,
+      "tag": "dynamic"
+    },
+    {
+      "callee": "tokenize",
+      "caller": "index.mjs::hashed@17",
+      "line": 18,
+      "tag": "static"
+    },
+    {
+      "callee": "hashOf",
+      "caller": "index.mjs::hashed@17",
+      "line": 19,
+      "tag": "static"
+    },
+    {
+      "callee": "hashed",
+      "caller": "index.mjs::digestStream@23",
+      "line": 25,
+      "tag": "static"
+    },
+    {
+      "callee": null,
+      "caller": "index.mjs::digestStream@23",
+      "line": 26,
+      "tag": "dynamic"
+    }
+  ]
+}

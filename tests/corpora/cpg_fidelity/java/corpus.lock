@@ -1,0 +1,162 @@
+built_at: '2026-05-24T18:00:42Z'
+built_by: corpus-agent/CMP-CORP-CPG-java
+construct_tags_covered:
+  - annotation-heavy
+  - generated-code
+  - generics
+  - inheritance-chain
+  - inner-class
+  - interface-dispatch
+  - lambdas
+  - method-references
+  - recent-language
+  - spring-di
+  - try-with-resources
+construct_tags_missing: []
+construct_tags_required:
+  - annotation-heavy
+  - generated-code
+  - generics
+  - inheritance-chain
+  - inner-class
+  - interface-dispatch
+  - lambdas
+  - method-references
+  - recent-language
+  - spring-di
+  - try-with-resources
+corpus_digest: sha256:b261d974eb12c61572bc714ea5e1136f0aee5c8f0107ab46237ca1034ef3ec80
+corpus_id: CMP-CORP-CPG-java
+corpus_version: 0.1.0
+ground_truth_method: "SYNTHESIZED v0.1.0. Programs are hand-authored tiny Java modules;\
+  \ parse-success is empirically verified with javac (JDK 21, -source 17). AST detail,\
+  \ CFG, call-graph and PDG dependence edges are derived BY INSPECTION of the tiny\
+  \ programs, NOT by running the DOC-pinned Soot 4.4.1 / WALA 1.6.5 toolchain (unavailable\
+  \ in this sandbox; CLAR-CORP-07-java-tooling). JDK is 21, not the pinned 17 (CLAR-CORP-08-java-jdk).\
+  \ over_approximate edges (reflective DI, 0-CFA lambda merges) are tagged and MUST\
+  \ be excluded from precision but included in recall (DOC \xA73.3). See README.md."
+language: java
+language_level: 17
+programs:
+  - commit_sha: synthetic
+    construct_coverage:
+      - interface-dispatch
+    id: 0001-interface-dispatch
+    language_level: 17
+    license: Apache-2.0
+    loc: 45
+    sha256_ground_truth: sha256:7dfec13da790a945eceddd5587256d35501130dd3073892901e101ffd06f2c2e
+    sha256_source_tree: sha256:70db04e824638c5010258f3b597afdb0fd440b9858dea58600929e3802f9607b
+    source_url: local:programs/0001-interface-dispatch/source
+    synthetic: true
+  - commit_sha: synthetic
+    construct_coverage:
+      - inheritance-chain
+    id: 0002-inheritance-chain
+    language_level: 17
+    license: Apache-2.0
+    loc: 36
+    sha256_ground_truth: sha256:9e028d5e9392eefd47cb9861843ece31783ce428872859a06771546f0350d743
+    sha256_source_tree: sha256:d4bdc0329da88eae804030db061fd753163a4f28070e4c2c802696b423f36ae5
+    source_url: local:programs/0002-inheritance-chain/source
+    synthetic: true
+  - commit_sha: synthetic
+    construct_coverage:
+      - generics
+    id: 0003-generics-box
+    language_level: 17
+    license: Apache-2.0
+    loc: 38
+    sha256_ground_truth: sha256:718ca965fc40c9196236a95989d02d8abbae2ed829cccadac58657f42bf44108
+    sha256_source_tree: sha256:8ea54c3516c5924c0ae6abe071a159e98c290a71a0f3d32ec6a638b69b504fa9
+    source_url: local:programs/0003-generics-box/source
+    synthetic: true
+  - commit_sha: synthetic
+    construct_coverage:
+      - lambdas
+    id: 0004-lambdas
+    language_level: 17
+    license: Apache-2.0
+    loc: 22
+    sha256_ground_truth: sha256:f23226ba053f8c98ff486fb1ee06d765ccef4aef30a9523e83eb6c70734980e1
+    sha256_source_tree: sha256:1e5a72c7f4388cbcd6fcacfc6cac80b62926aca4f050df1e269eb93a773dc2f5
+    source_url: local:programs/0004-lambdas/source
+    synthetic: true
+  - commit_sha: synthetic
+    construct_coverage:
+      - method-references
+    id: 0005-method-references
+    language_level: 17
+    license: Apache-2.0
+    loc: 26
+    sha256_ground_truth: sha256:f4294d9c594fcd564f399f92a1500f8d8d9b81a75d862d56df66ed690b3acc56
+    sha256_source_tree: sha256:09ce10cb3bb5b5922e9e892d77ff8700e789945ee5fa970f639efc85858e5baa
+    source_url: local:programs/0005-method-references/source
+    synthetic: true
+  - commit_sha: synthetic
+    construct_coverage:
+      - inner-class
+    id: 0006-inner-class
+    language_level: 17
+    license: Apache-2.0
+    loc: 39
+    sha256_ground_truth: sha256:3edfb1fd0a26ee7596065bf6870908e35b7a35dad35660ae0eb69d33005e907b
+    sha256_source_tree: sha256:87815bf41b978de92b9bda7db3d93b36ace47c88f3e10cd7e73aeb413f6599c3
+    source_url: local:programs/0006-inner-class/source
+    synthetic: true
+  - commit_sha: synthetic
+    construct_coverage:
+      - try-with-resources
+    id: 0007-try-with-resources
+    language_level: 17
+    license: Apache-2.0
+    loc: 32
+    sha256_ground_truth: sha256:41a812ceaea367ae2bfa4747000dba9b7f5e0d22840245d11b1e97e9a1bce4fb
+    sha256_source_tree: sha256:07e3b615e4718fafaac7bc42ae8b34cec698245ac66c9102a8c95367cd927ee6
+    source_url: local:programs/0007-try-with-resources/source
+    synthetic: true
+  - commit_sha: synthetic
+    construct_coverage:
+      - spring-di
+    id: 0008-spring-di
+    language_level: 17
+    license: Apache-2.0
+    loc: 50
+    sha256_ground_truth: sha256:660f281ae33fe03b30a64a8752685999f037b539ea6a3769105615f668a990dd
+    sha256_source_tree: sha256:0774d266e157ea3dbab0a477024fdf2bd407f0b0aad80443bfa15f7e5aa105c1
+    source_url: local:programs/0008-spring-di/source
+    synthetic: true
+  - commit_sha: synthetic
+    construct_coverage:
+      - annotation-heavy
+    id: 0009-annotation-heavy
+    language_level: 17
+    license: Apache-2.0
+    loc: 40
+    sha256_ground_truth: sha256:340b8e223b7308ff58ddd2ffc60635633d0a68727d0e190d395da1da9db4ced4
+    sha256_source_tree: sha256:d5dd803f903273dcf7cc6957fcc05d046095d16c4831c109348fcdefb0900a70
+    source_url: local:programs/0009-annotation-heavy/source
+    synthetic: true
+  - commit_sha: synthetic
+    construct_coverage:
+      - recent-language
+    id: 0010-recent-language
+    language_level: 17
+    license: Apache-2.0
+    loc: 37
+    sha256_ground_truth: sha256:7aef33ed6e160bd1d18e0fb4961932f69bcef8f44e9b3094c60225836323cda6
+    sha256_source_tree: sha256:a500c314ea003f3d6fcc79c07d6dfda6931e4900b56609708ba68b1bda220277
+    source_url: local:programs/0010-recent-language/source
+    synthetic: true
+  - commit_sha: synthetic
+    construct_coverage:
+      - generated-code
+      - annotation-heavy
+    id: 0011-generated-code
+    language_level: 17
+    license: Apache-2.0
+    loc: 54
+    sha256_ground_truth: sha256:f5b04e8de8aff9eb53ace27fd7c303e0e653f671064460ccb61f40852fcefe96
+    sha256_source_tree: sha256:7fd1fcdea69b3501faff9c60af84e1119e7387c5a1ebcb23fefd48c30b040095
+    source_url: local:programs/0011-generated-code/source
+    synthetic: true

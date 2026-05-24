@@ -1,0 +1,42 @@
+{
+  "convention": "lower-bound",
+  "edges": [
+    {
+      "caller": "run",
+      "callee": "normalize",
+      "line": 12,
+      "node": "FCALL"
+    },
+    {
+      "caller": "run_safe",
+      "callee": "normalize",
+      "line": 17,
+      "node": "FCALL"
+    },
+    {
+      "caller": "normalize",
+      "callee": "downcase",
+      "line": 22,
+      "node": "CALL"
+    },
+    {
+      "caller": "normalize",
+      "callee": "to_s",
+      "line": 22,
+      "node": "CALL"
+    }
+  ],
+  "dynamic_sites": [
+    {
+      "caller": "run",
+      "kind": "send",
+      "line": 13
+    },
+    {
+      "caller": "run_safe",
+      "kind": "public_send",
+      "line": 18
+    }
+  ],
+  "ruby_version": "3.2.3"
+}

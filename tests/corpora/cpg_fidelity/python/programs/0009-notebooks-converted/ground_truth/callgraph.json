@@ -1,0 +1,12 @@
+{
+  "analysis.py": {
+    "edges": [
+      {
+        "caller": "step_two",
+        "callee": "step_one",
+        "line": 23,
+        "kind": "static"
+      }
+    ]
+  }
+}

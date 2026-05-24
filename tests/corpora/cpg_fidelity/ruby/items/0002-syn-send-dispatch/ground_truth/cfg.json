@@ -1,0 +1,141 @@
+{
+  "ruby_version": "3.2.3",
+  "methods": [
+    {
+      "method": "initialize",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "IASGN",
+              "line": 8
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "run",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "LASGN",
+              "line": 12
+            },
+            {
+              "type": "CALL",
+              "line": 13
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "run_safe",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "LASGN",
+              "line": 17
+            },
+            {
+              "type": "CALL",
+              "line": 18
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "normalize",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "CALL",
+              "line": 22
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    }
+  ]
+}

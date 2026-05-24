@@ -1,0 +1,358 @@
+{
+  "ruby_version": "3.2.3",
+  "tree": {
+    "type": "SCOPE",
+    "line": 1,
+    "children": [
+      [
+
+      ],
+      null,
+      {
+        "type": "CLASS",
+        "line": 6,
+        "children": [
+          {
+            "type": "COLON2",
+            "line": 6,
+            "children": [
+              null,
+              "Dispatcher"
+            ]
+          },
+          null,
+          {
+            "type": "SCOPE",
+            "line": 6,
+            "children": [
+              [
+
+              ],
+              null,
+              {
+                "type": "BLOCK",
+                "line": 6,
+                "children": [
+                  {
+                    "type": "BEGIN",
+                    "line": 6,
+                    "children": [
+                      null
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 7,
+                    "children": [
+                      "initialize",
+                      {
+                        "type": "SCOPE",
+                        "line": 7,
+                        "children": [
+                          [
+                            "handler"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 7,
+                            "children": [
+                              1,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "IASGN",
+                            "line": 8,
+                            "children": [
+                              "@handler",
+                              {
+                                "type": "LVAR",
+                                "line": 8,
+                                "children": [
+                                  "handler"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 11,
+                    "children": [
+                      "run",
+                      {
+                        "type": "SCOPE",
+                        "line": 11,
+                        "children": [
+                          [
+                            "action",
+                            "payload",
+                            "name"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 11,
+                            "children": [
+                              2,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "BLOCK",
+                            "line": 12,
+                            "children": [
+                              {
+                                "type": "LASGN",
+                                "line": 12,
+                                "children": [
+                                  "name",
+                                  {
+                                    "type": "FCALL",
+                                    "line": 12,
+                                    "children": [
+                                      "normalize",
+                                      {
+                                        "type": "LIST",
+                                        "line": 12,
+                                        "children": [
+                                          {
+                                            "type": "LVAR",
+                                            "line": 12,
+                                            "children": [
+                                              "action"
+                                            ]
+                                          },
+                                          null
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "CALL",
+                                "line": 13,
+                                "children": [
+                                  {
+                                    "type": "IVAR",
+                                    "line": 13,
+                                    "children": [
+                                      "@handler"
+                                    ]
+                                  },
+                                  "send",
+                                  {
+                                    "type": "LIST",
+                                    "line": 13,
+                                    "children": [
+                                      {
+                                        "type": "LVAR",
+                                        "line": 13,
+                                        "children": [
+                                          "name"
+                                        ]
+                                      },
+                                      {
+                                        "type": "LVAR",
+                                        "line": 13,
+                                        "children": [
+                                          "payload"
+                                        ]
+                                      },
+                                      null
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 16,
+                    "children": [
+                      "run_safe",
+                      {
+                        "type": "SCOPE",
+                        "line": 16,
+                        "children": [
+                          [
+                            "action",
+                            "payload",
+                            "name"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 16,
+                            "children": [
+                              2,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "BLOCK",
+                            "line": 17,
+                            "children": [
+                              {
+                                "type": "LASGN",
+                                "line": 17,
+                                "children": [
+                                  "name",
+                                  {
+                                    "type": "FCALL",
+                                    "line": 17,
+                                    "children": [
+                                      "normalize",
+                                      {
+                                        "type": "LIST",
+                                        "line": 17,
+                                        "children": [
+                                          {
+                                            "type": "LVAR",
+                                            "line": 17,
+                                            "children": [
+                                              "action"
+                                            ]
+                                          },
+                                          null
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "CALL",
+                                "line": 18,
+                                "children": [
+                                  {
+                                    "type": "IVAR",
+                                    "line": 18,
+                                    "children": [
+                                      "@handler"
+                                    ]
+                                  },
+                                  "public_send",
+                                  {
+                                    "type": "LIST",
+                                    "line": 18,
+                                    "children": [
+                                      {
+                                        "type": "LVAR",
+                                        "line": 18,
+                                        "children": [
+                                          "name"
+                                        ]
+                                      },
+                                      {
+                                        "type": "LVAR",
+                                        "line": 18,
+                                        "children": [
+                                          "payload"
+                                        ]
+                                      },
+                                      null
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DEFN",
+                    "line": 21,
+                    "children": [
+                      "normalize",
+                      {
+                        "type": "SCOPE",
+                        "line": 21,
+                        "children": [
+                          [
+                            "action"
+                          ],
+                          {
+                            "type": "ARGS",
+                            "line": 21,
+                            "children": [
+                              1,
+                              null,
+                              null,
+                              null,
+                              0,
+                              null,
+                              null,
+                              null,
+                              null,
+                              null
+                            ]
+                          },
+                          {
+                            "type": "CALL",
+                            "line": 22,
+                            "children": [
+                              {
+                                "type": "CALL",
+                                "line": 22,
+                                "children": [
+                                  {
+                                    "type": "LVAR",
+                                    "line": 22,
+                                    "children": [
+                                      "action"
+                                    ]
+                                  },
+                                  "to_s",
+                                  null
+                                ]
+                              },
+                              "downcase",
+                              null
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

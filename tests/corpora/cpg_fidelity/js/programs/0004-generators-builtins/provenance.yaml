@@ -1,0 +1,12 @@
+source_url: local:synthesized/CMP-CORP-CPG-js/0004-generators-builtins
+commit_sha: sha256:e8db05889a59a680610597598b715d4ea1c8b5acef016da85eed3fdabd6f172c
+license: Apache-2.0
+surface: js
+module_system: esm
+synthetic: true
+loc: 28
+construct_coverage:
+  - generators
+  - node-builtins
+  - module-system-esm
+notes: Authored for this corpus (Apache-2.0). Content-addressed source/ sha256.

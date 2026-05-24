@@ -1,0 +1,219 @@
+{
+  "ruby_version": "3.2.3",
+  "methods": [
+    {
+      "method": "initialize",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "IASGN",
+              "line": 7
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "subtotal",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "LASGN",
+              "line": 11
+            },
+            {
+              "type": "ITER",
+              "line": 12
+            },
+            {
+              "type": "LVAR",
+              "line": 15
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "add",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "OPCALL",
+              "line": 19
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    },
+    {
+      "method": "with_tax",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "LASGN",
+              "line": 23
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        },
+        {
+          "id": "b2",
+          "kind": "JOIN",
+          "line": 24,
+          "stmts": [
+
+          ]
+        },
+        {
+          "id": "b3",
+          "kind": "THEN",
+          "line": 24,
+          "stmts": [
+            {
+              "type": "OPCALL",
+              "line": 25
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "kind": "ELSE",
+          "line": 24,
+          "stmts": [
+            {
+              "type": "LVAR",
+              "line": 27
+            }
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b3"
+        },
+        {
+          "from": "b0",
+          "to": "b4"
+        },
+        {
+          "from": "b2",
+          "to": "b1"
+        },
+        {
+          "from": "b3",
+          "to": "b2"
+        },
+        {
+          "from": "b4",
+          "to": "b2"
+        }
+      ]
+    },
+    {
+      "method": "tax",
+      "entry": "b0",
+      "exit": "b1",
+      "blocks": [
+        {
+          "id": "b0",
+          "kind": "ENTRY",
+          "line": null,
+          "stmts": [
+            {
+              "type": "OPCALL",
+              "line": 32
+            }
+          ]
+        },
+        {
+          "id": "b1",
+          "kind": "EXIT",
+          "line": null,
+          "stmts": [
+
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "b0",
+          "to": "b1"
+        }
+      ]
+    }
+  ]
+}

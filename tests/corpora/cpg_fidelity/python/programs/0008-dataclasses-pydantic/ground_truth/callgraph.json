@@ -1,0 +1,18 @@
+{
+  "models.py": {
+    "edges": [
+      {
+        "caller": "build",
+        "callee": "Point",
+        "line": 25,
+        "kind": "dynamic"
+      },
+      {
+        "caller": "build",
+        "callee": "norm",
+        "line": 26,
+        "kind": "static"
+      }
+    ]
+  }
+}

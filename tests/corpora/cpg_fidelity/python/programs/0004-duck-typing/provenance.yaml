@@ -1,0 +1,9 @@
+commit_sha: sha256:174765769fbf8b0ef27450f37347f878996367abf335e02ab4b68d2beb1659b2
+construct_coverage:
+  - duck-typing-callsite
+license: Apache-2.0
+path_in_source: source/
+python_minor: '3.10'
+sha256_source_tree: sha256:174765769fbf8b0ef27450f37347f878996367abf335e02ab4b68d2beb1659b2
+source_url: local:programs/0004-duck-typing/source
+synthetic: true

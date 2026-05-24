@@ -1,0 +1,10 @@
+commit_sha: sha256:f283ee59176e0833649021538d5134fe823960ede30e79668f28115ef0b468f9
+construct_coverage:
+  - async-await
+  - type-hints
+license: Apache-2.0
+path_in_source: source/
+python_minor: '3.10'
+sha256_source_tree: sha256:f283ee59176e0833649021538d5134fe823960ede30e79668f28115ef0b468f9
+source_url: local:programs/0002-async-await/source
+synthetic: true
