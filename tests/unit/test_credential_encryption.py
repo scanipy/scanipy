@@ -244,18 +244,24 @@ def test_encrypted_credential_has_no_plaintext_field() -> None:
     names = {f.name for f in dataclasses.fields(EncryptedCredential)}
     assert "plaintext" not in names
     assert "secret" not in names
-    # display_fingerprint is the only plaintext-derived value and it is a digest.
+    # display_fingerprint digests the at-rest ciphertext, not the secret.
     assert "display_fingerprint" in names
 
 
 @pytest.mark.unit
-def test_display_fingerprint_is_sha256_hex_not_plaintext(
+def test_display_fingerprint_digests_ciphertext_not_plaintext(
     service: CredentialEncryptionService,
 ) -> None:
+    """Security: the fingerprint must NOT be a hash of the raw secret (that would
+    be a confirmation/brute-force oracle + cross-tenant dedupe signal at rest).
+    It digests the ciphertext blob instead (RULE-9 Security-Analyst finding, #225).
+    """
     from hashlib import sha256
 
     enc = service.encrypt_credential(_PLAINTEXT, uuid4())
-    assert enc.display_fingerprint == sha256(_PLAINTEXT).hexdigest()
+    assert enc.display_fingerprint == sha256(enc.ciphertext_blob).hexdigest()
+    # Must NOT equal the hash of the plaintext secret.
+    assert enc.display_fingerprint != sha256(_PLAINTEXT).hexdigest()
     assert len(enc.display_fingerprint) == 64
     assert _PLAINTEXT.decode() not in enc.display_fingerprint
 
