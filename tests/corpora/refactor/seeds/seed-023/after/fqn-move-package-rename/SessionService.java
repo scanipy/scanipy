@@ -1,0 +1,12 @@
+package com.scanipy.corpus.relocated.refac;
+
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
+
+public class SessionService {
+    public Object restore(byte[] bytes022) throws Exception {
+        ByteArrayInputStream bin = new ByteArrayInputStream(bytes022);
+        ObjectInputStream ois = new ObjectInputStream(bin);
+        return ois.readObject();
+    }
+}
