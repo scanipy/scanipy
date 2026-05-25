@@ -31,7 +31,150 @@ Covers (from WBS §4.2 / §4.3):
   - TST-INV-5-FND-03 [INVARIANT] — annotation literal in chain + auditor export
 """
 
+import os
+import subprocess
+import uuid
+from pathlib import Path
+from typing import TYPE_CHECKING
+
 import pytest
+from sqlalchemy import CheckConstraint
+
+from services.scan.models.findings import (
+    CPG_ORDER_HASH_ANNOTATION,
+    Finding,
+)
+
+if TYPE_CHECKING:
+    import psycopg2.extensions
+
+# Repo root = three levels up from tests/unit/test_fnd_specs.py.
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
+# The exact INV-5 annotation literal pinned by the
+# findings_cpg_order_hash_annotation_chk CHECK constraint (DOC-DB §4.12).
+_ANNOTATION = "canonical iff fingerprint_class = strong"
+
+
+def _check_sqltext(table: object, name: str) -> str:
+    """Return the rendered ``sqltext`` of the named CHECK constraint."""
+    for constraint in Finding.__table__.constraints:
+        if isinstance(constraint, CheckConstraint) and constraint.name == name:
+            return str(constraint.sqltext)
+    raise AssertionError(f"CHECK constraint {name!r} not found on findings table")
+
+
+def _alembic_upgrade_head(database_url: str) -> None:
+    """Apply the CP-03 migration (the FND-02 vehicle) to a live database."""
+    env = {**os.environ, "SCANIPY_DATABASE_URL": database_url}
+    result = subprocess.run(
+        ["alembic", "upgrade", "head"],
+        cwd=_REPO_ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, f"alembic upgrade head failed:\n{result.stderr}"
+
+
+def _alembic_downgrade_base(database_url: str) -> None:
+    """Tear the schema back down so the live test leaves the DB clean."""
+    env = {**os.environ, "SCANIPY_DATABASE_URL": database_url}
+    subprocess.run(
+        ["alembic", "downgrade", "base"],
+        cwd=_REPO_ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def _seed_and_insert(
+    cur: "psycopg2.extensions.cursor",
+    overrides: dict[str, object] | None = None,
+    omit: str | None = None,
+) -> None:
+    """Seed the FK chain (org->codebase->snapshot->scan) then INSERT one finding.
+
+    ``overrides`` replaces individual finding column values; ``omit`` drops a
+    column entirely (to exercise NOT NULL). Raises whatever ``psycopg2`` raises
+    on a constraint violation; the caller asserts on the SQLSTATE.
+    """
+    overrides = overrides or {}
+    sha40 = "a" * 40
+    digest = "sha256:" + ("b" * 64)
+    org_id = str(uuid.uuid4())
+    codebase_id = str(uuid.uuid4())
+    snapshot_id = str(uuid.uuid4())
+    scan_id = str(uuid.uuid4())
+
+    cur.execute("INSERT INTO orgs (id, name) VALUES (%s, %s);", (org_id, "t"))
+    cur.execute(
+        "INSERT INTO codebases (id, org_id, name, scm_provider, scm_repo_url) "
+        "VALUES (%s, %s, %s, %s, %s);",
+        (codebase_id, org_id, "c", "github", "https://example/r"),
+    )
+    cur.execute(
+        "INSERT INTO snapshots (id, org_id, codebase_id, commit_sha, env_digest, "
+        "precondition_status, cpg_tarball_uri, reverse_symbol_index_uri, "
+        "dynamic_call_graph_uri, precondition_status_record_uri) "
+        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);",
+        (
+            snapshot_id,
+            org_id,
+            codebase_id,
+            sha40,
+            digest,
+            "closed-world",
+            "s3://x",
+            "s3://y",
+            "s3://z",
+            "s3://w",
+        ),
+    )
+    cur.execute(
+        "INSERT INTO scans (id, org_id, codebase_id, snapshot_id, commit_sha, "
+        '"S_version", env_digest, detector_ids) '
+        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s);",
+        (scan_id, org_id, codebase_id, snapshot_id, sha40, "1.0.0", digest, ["d"]),
+    )
+
+    values: dict[str, object] = {
+        "id": str(uuid.uuid4()),
+        "org_id": org_id,
+        "codebase_id": codebase_id,
+        "scan_id": scan_id,
+        "snapshot_id": snapshot_id,
+        "commit_sha": sha40,
+        "class": "injection",
+        "rule_id": "R1",
+        "severity": "high",
+        "message": "m",
+        "physical_location": "{}",
+        "origin": "deterministic-core",
+        "determinism_partition": "deterministic-core",
+        "engine": "ifds",
+        "S_version": "1.0.0",
+        "env_digest": digest,
+        "cpg_order_hash": memoryview(b"\x00" * 32),
+        "cpg_order_hash_annotation": _ANNOTATION,
+        "fingerprint_class": "strong",
+        "slice_fingerprint": memoryview(b"\x01" * 32),
+        "precondition_status": "closed-world",
+        "status": "open",
+    }
+    values.update(overrides)
+    if omit is not None:
+        values.pop(omit)
+
+    cols = ", ".join('"S_version"' if k == "S_version" else f'"{k}"' for k in values)
+    placeholders = ", ".join(["%s"] * len(values))
+    cur.execute(
+        f"INSERT INTO findings ({cols}) VALUES ({placeholders});",
+        tuple(values.values()),
+    )
 
 
 @pytest.mark.unit
@@ -100,10 +243,6 @@ def test_fnd_01b_result_ordering_is_canonical_cpg_order() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-FND-02 (Findings store schema) not yet implemented",
-    strict=False,
-)
 def test_fnd_02a_baseline_lookup_never_autosuppresses_weak_or_oracle() -> None:
     """Cross-scan baseline lookup is correct and never auto-suppresses across refactor.
 
@@ -129,16 +268,43 @@ def test_fnd_02a_baseline_lookup_never_autosuppresses_weak_or_oracle() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — component acceptance gate for CMP-FND-02.
     """
-    # TODO: from services.scan.models.findings import Finding; query baseline by
-    # (codebase_id, slice_fingerprint); assert weak/oracle never set to suppressed
-    pytest.skip("CMP-FND-02 not implemented yet")
+    # --- Schema/index half (CMP-FND-02 owns this; asserted here) ---
+    # The cross-scan baseline matcher (CMP-SNAP-02 / CMP-FND-01) looks up by
+    # (codebase_id, slice_fingerprint); CMP-FND-02's contribution to AC-FND-02a
+    # is that the supporting index exists with exactly those columns in that
+    # order. Assert it on the ORM table that mirrors the shipped DDL.
+    table = Finding.__table__
+    by_name = {ix.name: ix for ix in table.indexes}
+    assert "findings_codebase_slice_idx" in by_name, (
+        "AC-FND-02a baseline-lookup index findings_codebase_slice_idx is missing"
+    )
+    baseline_idx = by_name["findings_codebase_slice_idx"]
+    assert [c.name for c in baseline_idx.columns] == [
+        "codebase_id",
+        "slice_fingerprint",
+    ], "baseline-lookup index must be keyed (codebase_id, slice_fingerprint)"
+
+    # status / fingerprint_class / origin must exist on the row so a matcher can
+    # read fingerprint_class='weak' / origin='oracle-passthrough' WITHOUT writing
+    # status='suppressed'. Assert their presence and enum domains.
+    cols = table.columns
+    assert "status" in cols and "fingerprint_class" in cols and "origin" in cols
+    assert "weak" in _check_sqltext(table, "findings_fingerprint_class_chk")
+    assert "oracle-passthrough" in _check_sqltext(table, "findings_origin_chk")
+    assert "suppressed" in _check_sqltext(table, "findings_status_chk")
+
+    # --- Behavioral baseline-matcher half: DOCUMENT-AND-DEFER ---
+    # "never auto-suppresses a weak or oracle-passthrough finding across a
+    # refactor" is a BEHAVIORAL property of the baseline matcher, which lives in
+    # the downstream CMP-SNAP-02 (incremental delta) / CMP-FND-01 (normalizer)
+    # contract -- NOT in the CMP-FND-02 schema component. The schema makes the
+    # safe behaviour possible (the index + the columns asserted above); it
+    # cannot itself flip a status. The matcher-behaviour assertion is therefore
+    # owned by TST-AC-SNAP-02* / the FND-01 baseline path and is intentionally
+    # not exercised here.
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-FND-02 (Findings store schema) not yet implemented",
-    strict=False,
-)
 def test_fnd_02b_every_row_carries_nonnull_origin_sversion_envdigest() -> None:
     """Every findings row carries non-null origin, S_version, env_digest.
 
@@ -158,16 +324,46 @@ def test_fnd_02b_every_row_carries_nonnull_origin_sversion_envdigest() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — schema NOT NULL gate for CMP-FND-02.
     """
-    # TODO: attempt INSERT missing origin/S_version/env_digest; assert IntegrityError
-    # assert session.query(Finding).filter(Finding.origin.is_(None)).count() == 0
-    pytest.skip("CMP-FND-02 not implemented yet")
+    # --- Metadata introspection (always runs, no DB) ---
+    # AC-FND-02b pins NOT NULL on exactly these three columns.
+    cols = Finding.__table__.columns
+    for name in ("origin", "S_version", "env_digest"):
+        assert not cols[name].nullable, (
+            f"AC-FND-02b: findings.{name} must be NOT NULL (INV-1/INV-2)"
+        )
+
+    # --- Live-Postgres INSERT-fails (skips with an explicit env-gap reason) ---
+    database_url = os.environ.get("SCANIPY_DATABASE_URL")
+    if not database_url:
+        pytest.skip(
+            "SCANIPY_DATABASE_URL not configured -- live PostgreSQL 16 env gap. "
+            "The NOT NULL 23502 falsifier for findings.origin/S_version/"
+            "env_digest runs in the CI postgres:16 integration job. No sqlite "
+            "shim is used: sqlite silently ignores the regex/octet_length CHECKs "
+            "and would yield a false green."
+        )
+
+    import psycopg2  # imported lazily so collection does not require the driver
+    from psycopg2 import errors
+
+    _alembic_upgrade_head(database_url)
+    try:
+        for omitted in ("origin", "S_version", "env_digest"):
+            conn = psycopg2.connect(database_url)
+            try:
+                with conn, conn.cursor() as cur:
+                    with pytest.raises(errors.NotNullViolation) as exc:
+                        _seed_and_insert(cur, omit=omitted)
+                    assert exc.value.pgcode == "23502", (
+                        f"omitting {omitted} must raise 23502 NOT NULL violation"
+                    )
+            finally:
+                conn.close()
+    finally:
+        _alembic_downgrade_base(database_url)
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-FND-02 (Findings store schema) not yet implemented",
-    strict=False,
-)
 def test_inv_5_fnd_02_cpg_order_hash_annotation_persisted_at_schema() -> None:
     """INV-5 at the persistence layer: the annotation column is NOT NULL + CHECKed.
 
@@ -190,10 +386,62 @@ def test_inv_5_fnd_02_cpg_order_hash_annotation_persisted_at_schema() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — schema INV-5 gate for CMP-FND-02.
     """
-    # TODO: when CMP-FND-02 lands, assert NOT NULL + CHECK on
-    #       findings.cpg_order_hash_annotation (exact literal); INSERT variants
-    #       raise IntegrityError (23502 omit, 23514 wrong-value).
-    pytest.skip("CMP-FND-02 not implemented yet")
+    # --- Metadata introspection (always runs, no DB) ---
+    table = Finding.__table__
+    annotation_col = table.columns["cpg_order_hash_annotation"]
+    assert not annotation_col.nullable, "INV-5: findings.cpg_order_hash_annotation must be NOT NULL"
+    # The literal CHECK pins the EXACT annotation string.
+    sqltext = _check_sqltext(table, "findings_cpg_order_hash_annotation_chk")
+    assert _ANNOTATION in sqltext, (
+        f"INV-5: the annotation CHECK must pin the exact literal {_ANNOTATION!r}; got {sqltext!r}"
+    )
+    # The model constant equals the literal (the same string the DDL pins).
+    assert CPG_ORDER_HASH_ANNOTATION == _ANNOTATION
+    # cpg_order_hash itself is NOT NULL with a 32-byte length CHECK.
+    assert not table.columns["cpg_order_hash"].nullable
+    assert "octet_length(cpg_order_hash) = 32" in _check_sqltext(
+        table, "findings_cpg_order_hash_len_chk"
+    )
+
+    # --- Live-Postgres INSERT-fails (skips with an explicit env-gap reason) ---
+    database_url = os.environ.get("SCANIPY_DATABASE_URL")
+    if not database_url:
+        pytest.skip(
+            "SCANIPY_DATABASE_URL not configured -- live PostgreSQL 16 env gap. "
+            "The 23502 (omit annotation) and 23514 (wrong annotation literal) "
+            "falsifiers run in the CI postgres:16 integration job. No sqlite "
+            "shim: sqlite ignores the literal/length CHECKs (false green)."
+        )
+
+    import psycopg2  # imported lazily so collection does not require the driver
+    from psycopg2 import errors
+
+    _alembic_upgrade_head(database_url)
+    try:
+        # (a) An explicit NULL annotation is rejected by NOT NULL (23502).
+        conn = psycopg2.connect(database_url)
+        try:
+            with conn, conn.cursor() as cur:
+                with pytest.raises(errors.NotNullViolation) as exc_null:
+                    _seed_and_insert(cur, overrides={"cpg_order_hash_annotation": None})
+                assert exc_null.value.pgcode == "23502"
+        finally:
+            conn.close()
+
+        # (b) A non-conforming annotation is rejected by the literal CHECK (23514).
+        conn = psycopg2.connect(database_url)
+        try:
+            with conn, conn.cursor() as cur:
+                with pytest.raises(errors.CheckViolation) as exc_chk:
+                    _seed_and_insert(
+                        cur,
+                        overrides={"cpg_order_hash_annotation": "canonical"},
+                    )
+                assert exc_chk.value.pgcode == "23514"
+        finally:
+            conn.close()
+    finally:
+        _alembic_downgrade_base(database_url)
 
 
 @pytest.mark.invariant
@@ -292,10 +540,6 @@ def test_inv_1_fnd_01_origin_partition_at_normalizer() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-FND-02 (Findings store schema) not yet implemented",
-    strict=False,
-)
 def test_inv_1_fnd_02_origin_partition_at_store() -> None:
     """INV-1 at the store: origin NOT NULL + enum CHECK rejects null and 'mixed'.
 
@@ -316,9 +560,58 @@ def test_inv_1_fnd_02_origin_partition_at_store() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — schema INV-1 gate for CMP-FND-02.
     """
-    # TODO: with pytest.raises(IntegrityError): insert(origin=None)
-    # with pytest.raises(IntegrityError): insert(origin="mixed")
-    pytest.skip("CMP-FND-02 not implemented yet")
+    # --- Metadata introspection (always runs, no DB) ---
+    table = Finding.__table__
+    for name in ("origin", "determinism_partition", "engine"):
+        assert not table.columns[name].nullable, f"INV-1: findings.{name} must be NOT NULL"
+    # The origin enum CHECK admits ONLY the two partitions; 'mixed' is excluded.
+    origin_chk = _check_sqltext(table, "findings_origin_chk")
+    assert "deterministic-core" in origin_chk
+    assert "oracle-passthrough" in origin_chk
+    assert "mixed" not in origin_chk, (
+        "INV-1: 'mixed' must never be an admissible finding-level origin"
+    )
+    assert "mixed" not in _check_sqltext(table, "findings_determinism_partition_chk")
+    engine_chk = _check_sqltext(table, "findings_engine_chk")
+    for eng in ("ifds", "ide", "semgrep", "cpg-query", "external"):
+        assert eng in engine_chk
+
+    # --- Live-Postgres INSERT-fails (skips with an explicit env-gap reason) ---
+    database_url = os.environ.get("SCANIPY_DATABASE_URL")
+    if not database_url:
+        pytest.skip(
+            "SCANIPY_DATABASE_URL not configured -- live PostgreSQL 16 env gap. "
+            "The 23502 (omit origin) and 23514 (origin='mixed') falsifiers run "
+            "in the CI postgres:16 integration job. No sqlite shim: sqlite "
+            "ignores the enum CHECK (false green)."
+        )
+
+    import psycopg2  # imported lazily so collection does not require the driver
+    from psycopg2 import errors
+
+    _alembic_upgrade_head(database_url)
+    try:
+        # (a) Omitting origin -> NOT NULL violation (23502).
+        conn = psycopg2.connect(database_url)
+        try:
+            with conn, conn.cursor() as cur:
+                with pytest.raises(errors.NotNullViolation) as exc_null:
+                    _seed_and_insert(cur, omit="origin")
+                assert exc_null.value.pgcode == "23502"
+        finally:
+            conn.close()
+
+        # (b) origin='mixed' -> enum CHECK violation (23514).
+        conn = psycopg2.connect(database_url)
+        try:
+            with conn, conn.cursor() as cur:
+                with pytest.raises(errors.CheckViolation) as exc_chk:
+                    _seed_and_insert(cur, overrides={"origin": "mixed"})
+                assert exc_chk.value.pgcode == "23514"
+        finally:
+            conn.close()
+    finally:
+        _alembic_downgrade_base(database_url)
 
 
 @pytest.mark.invariant
@@ -387,10 +680,6 @@ def test_inv_2_fnd_01_nonnull_sversion_envdigest_at_normalizer() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-FND-02 (Findings store schema) not yet implemented",
-    strict=False,
-)
 def test_inv_2_fnd_02_nonnull_sversion_envdigest_at_schema_level() -> None:
     """INV-2 at the store: S_version + env_digest NOT NULL; env_digest format CHECK.
 
@@ -410,9 +699,53 @@ def test_inv_2_fnd_02_nonnull_sversion_envdigest_at_schema_level() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — schema INV-2 gate for CMP-FND-02.
     """
-    # TODO: with pytest.raises(IntegrityError): insert(S_version=None)
-    # with pytest.raises(IntegrityError): insert(env_digest="not-a-digest")
-    pytest.skip("CMP-FND-02 not implemented yet")
+    # --- Metadata introspection (always runs, no DB) ---
+    table = Finding.__table__
+    for name in ("S_version", "env_digest"):
+        assert not table.columns[name].nullable, f"INV-2: findings.{name} must be NOT NULL"
+    # env_digest format CHECK pins sha256:hex64.
+    env_chk = _check_sqltext(table, "findings_env_digest_chk")
+    assert "^sha256:[0-9a-f]{64}$" in env_chk, (
+        f"INV-2: env_digest must enforce the sha256 format; got {env_chk!r}"
+    )
+
+    # --- Live-Postgres INSERT-fails (skips with an explicit env-gap reason) ---
+    database_url = os.environ.get("SCANIPY_DATABASE_URL")
+    if not database_url:
+        pytest.skip(
+            "SCANIPY_DATABASE_URL not configured -- live PostgreSQL 16 env gap. "
+            "The 23502 (omit S_version/env_digest) and 23514 (malformed "
+            "env_digest) falsifiers run in the CI postgres:16 integration job. "
+            "No sqlite shim: sqlite ignores the regex CHECK (false green)."
+        )
+
+    import psycopg2  # imported lazily so collection does not require the driver
+    from psycopg2 import errors
+
+    _alembic_upgrade_head(database_url)
+    try:
+        # (a) Omitting S_version or env_digest -> NOT NULL violation (23502).
+        for omitted in ("S_version", "env_digest"):
+            conn = psycopg2.connect(database_url)
+            try:
+                with conn, conn.cursor() as cur:
+                    with pytest.raises(errors.NotNullViolation) as exc_null:
+                        _seed_and_insert(cur, omit=omitted)
+                    assert exc_null.value.pgcode == "23502"
+            finally:
+                conn.close()
+
+        # (b) Malformed env_digest -> CHECK violation (23514).
+        conn = psycopg2.connect(database_url)
+        try:
+            with conn, conn.cursor() as cur:
+                with pytest.raises(errors.CheckViolation) as exc_chk:
+                    _seed_and_insert(cur, overrides={"env_digest": "not-a-digest"})
+                assert exc_chk.value.pgcode == "23514"
+        finally:
+            conn.close()
+    finally:
+        _alembic_downgrade_base(database_url)
 
 
 @pytest.mark.invariant
