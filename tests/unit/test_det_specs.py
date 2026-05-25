@@ -446,6 +446,114 @@ def test_registration_rejects_unknown_engine_in_derive_partition_e_reg_006() -> 
     assert exc.value.code == "E-REG-006"
 
 
+# ─── PR #235 robustness fixes (claude-review REQUEST-CHANGES) ────────────────
+# N-1: load_manifests is a one-shot boot; a second call must not silently rebuild.
+# N-2: per_language_readiness is a read-only mapping on the frozen Detector.
+# N-3: a non-mapping per_language_readiness is an atomic E-REG-001, not a leak.
+
+
+def _write_good_core_detector(root: Path, *, class_name: str = "alpha") -> None:
+    """Build a well-formed core (ifds) detector tree under ``root``."""
+    cd = root / class_name
+    (cd / "specs").mkdir(parents=True)
+    (cd / "manifest.yaml").write_text(_CORE_MANIFEST, encoding="utf-8")
+    (cd / "specs" / "ok.dsl.yaml").write_text(
+        _spec(
+            "source(?T<:javax.servlet.http.HttpServletRequest.getParameter(*))",
+            "sink(?T<:java.sql.Statement.executeQuery(arg[0]))",
+        ),
+        encoding="utf-8",
+    )
+
+
+@pytest.mark.unit
+def test_load_manifests_is_one_shot_e_reg_005(tmp_path: Path) -> None:
+    """PR #235 N-1 / Maps to AC-DET-02a / Kind [NEGATIVE].
+
+    Inputs: a second load_manifests() call on an already-frozen registry.
+    Outputs: RegistryError(code='E-REG-005'); boot is a one-shot operation and
+        the registry is not silently rebuilt + re-frozen.
+    Pass criteria: error.code == 'E-REG-005'; the first load's content is intact.
+    Frequency: every CI run. Hard gate? yes.
+    """
+    root = tmp_path / "detectors"
+    _write_good_core_detector(root)
+    reg = DetectorRegistry()
+    reg.load_manifests(str(root))  # boot completes; registry frozen
+    first = reg.all()
+
+    with pytest.raises(RegistryError) as exc:
+        reg.load_manifests(str(root))
+    assert exc.value.code == "E-REG-005"
+    # The frozen content is unchanged by the rejected second call.
+    assert reg.all() == first
+
+
+@pytest.mark.unit
+def test_per_language_readiness_non_mapping_is_atomic_e_reg_001(tmp_path: Path) -> None:
+    """PR #235 N-3 / Maps to AC-DET-02a / Kind [NEGATIVE].
+
+    Inputs: a manifest whose per_language_readiness is a YAML list, not a mapping.
+    Outputs: RegistryLoadError(code='E-REG-001'); the underlying ValueError/
+        TypeError from dict(list) is converted before it can escape the
+        atomicity handler. Registry is left empty (no partial load).
+    Pass criteria: error.code == 'E-REG-001'; diagnostic names the field;
+        reg.all() == ().
+    Frequency: every CI run. Hard gate? yes.
+    """
+    root = tmp_path / "detectors"
+    cd = root / "neg"
+    (cd / "specs").mkdir(parents=True)
+    manifest = (
+        "id: neg-fixture\n"
+        "cwes: [CWE-89]\n"
+        "languages: [java]\n"
+        "frameworks: [jdbc]\n"
+        "engine: ifds\n"
+        "severity_default: high\n"
+        "per_language_readiness: [java, python]\n"  # a list, not a mapping
+    )
+    (cd / "manifest.yaml").write_text(manifest, encoding="utf-8")
+    (cd / "specs" / "ok.dsl.yaml").write_text(
+        _spec(
+            "source(?T<:javax.servlet.http.HttpServletRequest.getParameter(*))",
+            "sink(?T<:java.sql.Statement.executeQuery(arg[0]))",
+        ),
+        encoding="utf-8",
+    )
+    reg = DetectorRegistry()
+    with pytest.raises(RegistryLoadError) as exc:
+        reg.load_manifests(str(root))
+    assert exc.value.code == "E-REG-001"
+    assert "per_language_readiness" in str(exc.value)
+    assert reg.all() == ()  # atomic: no partial-load
+
+
+@pytest.mark.unit
+def test_per_language_readiness_is_read_only(tmp_path: Path) -> None:
+    """PR #235 N-2 / Maps to AC-DET-02b / Kind [UNIT].
+
+    Inputs: a loaded Detector record.
+    Outputs: per_language_readiness is an immutable mapping — item assignment
+        raises TypeError so a consumer cannot corrupt the process-wide singleton.
+    Pass criteria: mutation attempt raises TypeError; read access still works and
+        compares equal to the authored mapping.
+    Frequency: every CI run. Hard gate? yes.
+    """
+    root = tmp_path / "detectors"
+    _write_good_core_detector(root)
+    reg = DetectorRegistry()
+    reg.load_manifests(str(root))
+    det = reg.all()[0]
+
+    # Read access is preserved and equals the authored mapping.
+    assert det.per_language_readiness == {"java": "ready"}
+
+    # Mutation through the field is rejected.
+    with pytest.raises(TypeError):
+        det.per_language_readiness["java"] = "front-end-blocked"  # type: ignore[index]
+
+
 # ─── TST-AC-DET-02b — Manifest records all required fields + derived partition ─
 
 

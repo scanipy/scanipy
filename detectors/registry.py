@@ -30,6 +30,8 @@ No SQL ``detectors`` table is added inline (RULE-4).
 
 from __future__ import annotations
 
+import types
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -121,7 +123,12 @@ class Detector:
     engine: EngineTag
     severity_default: Severity
     determinism_partition: DeterminismPartition
-    per_language_readiness: dict[str, LanguageReadiness]
+    # Read-only view: a ``frozen=True`` dataclass field that is nonetheless a
+    # mutable ``dict`` lets consumers corrupt the process-wide singleton
+    # (PR #235 N-2). Stored as a :class:`types.MappingProxyType` so the mapping
+    # is immutable; the annotation is :class:`~collections.abc.Mapping` so
+    # callers see read-only access only.
+    per_language_readiness: Mapping[str, LanguageReadiness]
     spec: Spec | None = None
     oracle_query_path: str | None = None
 
@@ -238,7 +245,16 @@ class DetectorRegistry:
 
         The load is **atomic**: on any failure the registry is left empty
         (DOC-CMP-DET-02 §7.3). After a clean load the registry is frozen.
+
+        Boot is a one-shot operation: a second call on an already-frozen
+        registry is rejected with ``E-REG-005`` (PR #235 N-1) rather than
+        silently rebuilding and re-freezing the singleton.
         """
+        if self._frozen:
+            raise RegistryError(
+                "E-REG-005",
+                "load_manifests() called on a frozen registry; boot is a one-shot operation",
+            )
         staged: dict[str, Detector] = {}
         errors: list[RegistryError] = []
 
@@ -250,12 +266,10 @@ class DetectorRegistry:
                 detector = self._build_detector(class_dir, manifest_path, staged)
                 # closure_check + manifest-level E-REG checks run inside register
                 # path semantics; here we admit into the staging area atomically.
+                # The duplicate-id check (E-REG-003) is enforced earlier inside
+                # _build_detector against ``staged`` (PR #235 F-4: removed the
+                # unreachable post-build re-check here).
                 closure_check(detector)
-                if detector.id in staged:
-                    raise RegistryError(
-                        "E-REG-003",
-                        f"detector id {detector.id!r} is already registered",
-                    )
                 staged[detector.id] = detector
         except RegistryError as exc:
             # Atomic: discard everything staged this load, leave registry empty.
@@ -381,6 +395,18 @@ class DetectorRegistry:
 
         partition = derive_partition(engine)
 
+        # ``per_language_readiness`` must be a mapping. A YAML list (or scalar)
+        # would make ``dict(...)`` raise a bare ``ValueError``/``TypeError`` that
+        # escapes ``load_manifests``'s ``except (RegistryError, DSLError)``
+        # atomicity handler, skipping the empty-registry reset (PR #235 N-3).
+        # Convert it to E-REG-001 so it is caught and the load stays atomic.
+        plr_raw = raw["per_language_readiness"]
+        if not isinstance(plr_raw, Mapping):
+            raise RegistryError(
+                "E-REG-001",
+                f"per_language_readiness must be a mapping, got {type(plr_raw).__name__!r}",
+            )
+
         return Detector(
             id=detector_id,
             cwes=tuple(str(c) for c in raw["cwes"]),
@@ -389,7 +415,9 @@ class DetectorRegistry:
             engine=engine,  # type: ignore[arg-type]  # membership checked above
             severity_default=str(raw["severity_default"]),  # type: ignore[arg-type]
             determinism_partition=partition,
-            per_language_readiness=dict(raw["per_language_readiness"]),
+            # Wrapped in a read-only proxy so the frozen Detector cannot be
+            # mutated through this field (PR #235 N-2).
+            per_language_readiness=types.MappingProxyType(dict(plr_raw)),
             spec=spec,
             oracle_query_path=oracle_query_path,
         )
