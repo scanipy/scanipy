@@ -232,13 +232,17 @@ class AzureDevOpsConnector(SCMConnector):
         prefix = "refs/heads/"
         return name[len(prefix) :] if name.startswith(prefix) else name
 
-    @staticmethod
-    def _split_owner(repo_ref: RepoRef) -> tuple[str, str]:
-        """Split a `org/project` owner into (org, project); fall back to the connector org."""
+    def _split_owner(self, repo_ref: RepoRef) -> tuple[str, str]:
+        """Split a `org/project` owner into (org, project); fall back to the connector org.
+
+        A bare owner (no `/`, e.g. an externally-constructed RepoRef) is a project
+        name; the organization is the connector's configured org — never the
+        project name itself, which would build `dev.azure.com/{proj}/{proj}/...`.
+        """
         if "/" in repo_ref.owner:
             org, project = repo_ref.owner.split("/", 1)
             return org, project
-        return repo_ref.owner, repo_ref.owner
+        return self._organization, repo_ref.owner
 
     # ---- ABC method 1 : list_repos ----------------------------------------
 

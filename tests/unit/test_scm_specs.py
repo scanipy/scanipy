@@ -384,6 +384,38 @@ def test_scm_03b_forged_webhook_rejected(provider: str) -> None:
 
 
 # ---------------------------------------------------------------------------
+# TST-AC-SCM-03a — per-provider SCMConnector conformance suite  [CONFORMANCE]
+# CMP-SCM-03 · hard gate: yes. Registered red: the connectors are
+# conformance-ready (each passes run_conformance_suite against a stub transport),
+# but the AC test driving the shared suite per provider was not authored in
+# Phase 1 (gap tracked in issue #242). Stubbed xfail so the AC is visible and
+# #11 is NOT auto-closed (References #11) until QA authors the real suite.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+@pytest.mark.xfail(reason="CMP-SCM-03 conformance test not yet authored — gap #242", strict=False)
+@pytest.mark.parametrize("provider", ["gitlab", "bitbucket", "azure-devops"])
+def test_scm_03a_connector_conformance(provider: str) -> None:
+    """Each connector passes the shared SCMConnector conformance suite.
+
+    Test id: TST-AC-SCM-03a-1..3 (one per provider)
+    Maps to AC: AC-SCM-03a
+    Kind tag: [CONFORMANCE]
+    Inputs: a GitLab / Bitbucket / Azure-DevOps connector + the shared
+      run_conformance_suite harness driven by a stub transport.
+    Outputs: is_conformant verdict per provider.
+    Pass criteria: NOT YET AUTHORED — the conformance suite test was not produced
+      in Phase 1 for SCM-03 (gap #242). The connectors are conformance-ready
+      (verified manually), but the AC remains red until QA authors this.
+    Frequency: every CI run
+    Hard gate?: yes
+    """
+    # TODO: author via run_conformance_suite per provider — blocked on gap #242 (QA).
+    pytest.skip("TST-AC-SCM-03a not authored — Phase-1 gap tracked in #242")
+
+
+# ---------------------------------------------------------------------------
 # TST-AC-SCM-05a — backoff + provider rate-limit honouring  [UNIT]
 # CMP-SCM-05 · hard gate: yes. DOC-CMP-SCM-05 §9 enumerates 10 sub-cases →
 # ten parametrised sub-tests.
