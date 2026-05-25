@@ -113,7 +113,11 @@ class Finding(Base):
     cpg_order_hash_annotation: Mapped[str] = mapped_column(
         Text,
         nullable=False,
-        server_default=CPG_ORDER_HASH_ANNOTATION,
+        # A bare-string server_default is emitted as raw, unquoted DDL; wrap the
+        # literal so the ORM renders
+        # DEFAULT 'canonical iff fingerprint_class = strong' byte-for-byte like
+        # the CP-03 migration DDL.
+        server_default=text(f"'{CPG_ORDER_HASH_ANNOTATION}'"),
     )
     fingerprint_class: Mapped[FPClass] = mapped_column(Text, nullable=False)
     slice_fingerprint: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
@@ -122,7 +126,7 @@ class Finding(Base):
     witness_blob_uri: Mapped[str | None] = mapped_column(Text, nullable=True)
     precondition_status: Mapped[PreconditionStatus] = mapped_column(Text, nullable=False)
     spec_provenance: Mapped[str | None] = mapped_column(Text, nullable=True)
-    status: Mapped[Status] = mapped_column(Text, nullable=False, server_default="open")
+    status: Mapped[Status] = mapped_column(Text, nullable=False, server_default=text("'open'"))
     suppression_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()

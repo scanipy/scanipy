@@ -31,12 +31,6 @@ Covers (from WBS §4.2 / §4.3):
   - TST-INV-5-FND-03 [INVARIANT] — annotation literal in chain + auditor export
 """
 
-import os
-import subprocess
-import uuid
-from pathlib import Path
-from typing import TYPE_CHECKING
-
 import pytest
 from sqlalchemy import CheckConstraint
 
@@ -45,14 +39,11 @@ from services.scan.models.findings import (
     Finding,
 )
 
-if TYPE_CHECKING:
-    import psycopg2.extensions
-
-# Repo root = three levels up from tests/unit/test_fnd_specs.py.
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-
 # The exact INV-5 annotation literal pinned by the
-# findings_cpg_order_hash_annotation_chk CHECK constraint (DOC-DB §4.12).
+# findings_cpg_order_hash_annotation_chk CHECK constraint (DOC-DB sec 4.12).
+# The live-PostgreSQL INSERT falsifiers that exercise this literal now live in
+# tests/integration/test_fnd_specs.py (so CI's postgres:16 job runs them); this
+# unit file keeps only the no-DB metadata-introspection assertions.
 _ANNOTATION = "canonical iff fingerprint_class = strong"
 
 
@@ -62,119 +53,6 @@ def _check_sqltext(table: object, name: str) -> str:
         if isinstance(constraint, CheckConstraint) and constraint.name == name:
             return str(constraint.sqltext)
     raise AssertionError(f"CHECK constraint {name!r} not found on findings table")
-
-
-def _alembic_upgrade_head(database_url: str) -> None:
-    """Apply the CP-03 migration (the FND-02 vehicle) to a live database."""
-    env = {**os.environ, "SCANIPY_DATABASE_URL": database_url}
-    result = subprocess.run(
-        ["alembic", "upgrade", "head"],
-        cwd=_REPO_ROOT,
-        env=env,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    assert result.returncode == 0, f"alembic upgrade head failed:\n{result.stderr}"
-
-
-def _alembic_downgrade_base(database_url: str) -> None:
-    """Tear the schema back down so the live test leaves the DB clean."""
-    env = {**os.environ, "SCANIPY_DATABASE_URL": database_url}
-    subprocess.run(
-        ["alembic", "downgrade", "base"],
-        cwd=_REPO_ROOT,
-        env=env,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-
-def _seed_and_insert(
-    cur: "psycopg2.extensions.cursor",
-    overrides: dict[str, object] | None = None,
-    omit: str | None = None,
-) -> None:
-    """Seed the FK chain (org->codebase->snapshot->scan) then INSERT one finding.
-
-    ``overrides`` replaces individual finding column values; ``omit`` drops a
-    column entirely (to exercise NOT NULL). Raises whatever ``psycopg2`` raises
-    on a constraint violation; the caller asserts on the SQLSTATE.
-    """
-    overrides = overrides or {}
-    sha40 = "a" * 40
-    digest = "sha256:" + ("b" * 64)
-    org_id = str(uuid.uuid4())
-    codebase_id = str(uuid.uuid4())
-    snapshot_id = str(uuid.uuid4())
-    scan_id = str(uuid.uuid4())
-
-    cur.execute("INSERT INTO orgs (id, name) VALUES (%s, %s);", (org_id, "t"))
-    cur.execute(
-        "INSERT INTO codebases (id, org_id, name, scm_provider, scm_repo_url) "
-        "VALUES (%s, %s, %s, %s, %s);",
-        (codebase_id, org_id, "c", "github", "https://example/r"),
-    )
-    cur.execute(
-        "INSERT INTO snapshots (id, org_id, codebase_id, commit_sha, env_digest, "
-        "precondition_status, cpg_tarball_uri, reverse_symbol_index_uri, "
-        "dynamic_call_graph_uri, precondition_status_record_uri) "
-        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);",
-        (
-            snapshot_id,
-            org_id,
-            codebase_id,
-            sha40,
-            digest,
-            "closed-world",
-            "s3://x",
-            "s3://y",
-            "s3://z",
-            "s3://w",
-        ),
-    )
-    cur.execute(
-        "INSERT INTO scans (id, org_id, codebase_id, snapshot_id, commit_sha, "
-        '"S_version", env_digest, detector_ids) '
-        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s);",
-        (scan_id, org_id, codebase_id, snapshot_id, sha40, "1.0.0", digest, ["d"]),
-    )
-
-    values: dict[str, object] = {
-        "id": str(uuid.uuid4()),
-        "org_id": org_id,
-        "codebase_id": codebase_id,
-        "scan_id": scan_id,
-        "snapshot_id": snapshot_id,
-        "commit_sha": sha40,
-        "class": "injection",
-        "rule_id": "R1",
-        "severity": "high",
-        "message": "m",
-        "physical_location": "{}",
-        "origin": "deterministic-core",
-        "determinism_partition": "deterministic-core",
-        "engine": "ifds",
-        "S_version": "1.0.0",
-        "env_digest": digest,
-        "cpg_order_hash": memoryview(b"\x00" * 32),
-        "cpg_order_hash_annotation": _ANNOTATION,
-        "fingerprint_class": "strong",
-        "slice_fingerprint": memoryview(b"\x01" * 32),
-        "precondition_status": "closed-world",
-        "status": "open",
-    }
-    values.update(overrides)
-    if omit is not None:
-        values.pop(omit)
-
-    cols = ", ".join('"S_version"' if k == "S_version" else f'"{k}"' for k in values)
-    placeholders = ", ".join(["%s"] * len(values))
-    cur.execute(
-        f"INSERT INTO findings ({cols}) VALUES ({placeholders});",
-        tuple(values.values()),
-    )
 
 
 @pytest.mark.unit
@@ -332,35 +210,11 @@ def test_fnd_02b_every_row_carries_nonnull_origin_sversion_envdigest() -> None:
             f"AC-FND-02b: findings.{name} must be NOT NULL (INV-1/INV-2)"
         )
 
-    # --- Live-Postgres INSERT-fails (skips with an explicit env-gap reason) ---
-    database_url = os.environ.get("SCANIPY_DATABASE_URL")
-    if not database_url:
-        pytest.skip(
-            "SCANIPY_DATABASE_URL not configured -- live PostgreSQL 16 env gap. "
-            "The NOT NULL 23502 falsifier for findings.origin/S_version/"
-            "env_digest runs in the CI postgres:16 integration job. No sqlite "
-            "shim is used: sqlite silently ignores the regex/octet_length CHECKs "
-            "and would yield a false green."
-        )
-
-    import psycopg2  # imported lazily so collection does not require the driver
-    from psycopg2 import errors
-
-    _alembic_upgrade_head(database_url)
-    try:
-        for omitted in ("origin", "S_version", "env_digest"):
-            conn = psycopg2.connect(database_url)
-            try:
-                with conn, conn.cursor() as cur:
-                    with pytest.raises(errors.NotNullViolation) as exc:
-                        _seed_and_insert(cur, omit=omitted)
-                    assert exc.value.pgcode == "23502", (
-                        f"omitting {omitted} must raise 23502 NOT NULL violation"
-                    )
-            finally:
-                conn.close()
-    finally:
-        _alembic_downgrade_base(database_url)
+    # NOTE: the live-PostgreSQL INSERT-fail falsifiers for this invariant
+    # (NOT NULL 23502 / CHECK 23514) live in tests/integration/
+    # test_fnd_specs.py under @pytest.mark.integration, so CI's postgres:16
+    # integration job runs them. This unit half asserts only the no-DB
+    # schema metadata above.
 
 
 @pytest.mark.invariant
@@ -403,45 +257,11 @@ def test_inv_5_fnd_02_cpg_order_hash_annotation_persisted_at_schema() -> None:
         table, "findings_cpg_order_hash_len_chk"
     )
 
-    # --- Live-Postgres INSERT-fails (skips with an explicit env-gap reason) ---
-    database_url = os.environ.get("SCANIPY_DATABASE_URL")
-    if not database_url:
-        pytest.skip(
-            "SCANIPY_DATABASE_URL not configured -- live PostgreSQL 16 env gap. "
-            "The 23502 (omit annotation) and 23514 (wrong annotation literal) "
-            "falsifiers run in the CI postgres:16 integration job. No sqlite "
-            "shim: sqlite ignores the literal/length CHECKs (false green)."
-        )
-
-    import psycopg2  # imported lazily so collection does not require the driver
-    from psycopg2 import errors
-
-    _alembic_upgrade_head(database_url)
-    try:
-        # (a) An explicit NULL annotation is rejected by NOT NULL (23502).
-        conn = psycopg2.connect(database_url)
-        try:
-            with conn, conn.cursor() as cur:
-                with pytest.raises(errors.NotNullViolation) as exc_null:
-                    _seed_and_insert(cur, overrides={"cpg_order_hash_annotation": None})
-                assert exc_null.value.pgcode == "23502"
-        finally:
-            conn.close()
-
-        # (b) A non-conforming annotation is rejected by the literal CHECK (23514).
-        conn = psycopg2.connect(database_url)
-        try:
-            with conn, conn.cursor() as cur:
-                with pytest.raises(errors.CheckViolation) as exc_chk:
-                    _seed_and_insert(
-                        cur,
-                        overrides={"cpg_order_hash_annotation": "canonical"},
-                    )
-                assert exc_chk.value.pgcode == "23514"
-        finally:
-            conn.close()
-    finally:
-        _alembic_downgrade_base(database_url)
+    # NOTE: the live-PostgreSQL INSERT-fail falsifiers for this invariant
+    # (NOT NULL 23502 / CHECK 23514) live in tests/integration/
+    # test_fnd_specs.py under @pytest.mark.integration, so CI's postgres:16
+    # integration job runs them. This unit half asserts only the no-DB
+    # schema metadata above.
 
 
 @pytest.mark.invariant
@@ -552,7 +372,7 @@ def test_inv_1_fnd_02_origin_partition_at_store() -> None:
     Outputs:        INSERT outcome (success / DB error).
     Pass criteria:  INSERT omitting ``origin`` raises a NOT NULL violation
                     (SQLSTATE 23502); INSERT with ``origin='mixed'`` is rejected
-                    by the ``findings_origin_check`` CHECK constraint (only
+                    by the ``findings_origin_chk`` CHECK constraint (only
                     ``deterministic-core`` / ``oracle-passthrough`` permitted);
                     ``determinism_partition`` and ``engine`` enforce their enums
                     likewise (DOC-DB §4.12, DOC-CMP-FND-02 §5.1). The violation is
@@ -576,42 +396,11 @@ def test_inv_1_fnd_02_origin_partition_at_store() -> None:
     for eng in ("ifds", "ide", "semgrep", "cpg-query", "external"):
         assert eng in engine_chk
 
-    # --- Live-Postgres INSERT-fails (skips with an explicit env-gap reason) ---
-    database_url = os.environ.get("SCANIPY_DATABASE_URL")
-    if not database_url:
-        pytest.skip(
-            "SCANIPY_DATABASE_URL not configured -- live PostgreSQL 16 env gap. "
-            "The 23502 (omit origin) and 23514 (origin='mixed') falsifiers run "
-            "in the CI postgres:16 integration job. No sqlite shim: sqlite "
-            "ignores the enum CHECK (false green)."
-        )
-
-    import psycopg2  # imported lazily so collection does not require the driver
-    from psycopg2 import errors
-
-    _alembic_upgrade_head(database_url)
-    try:
-        # (a) Omitting origin -> NOT NULL violation (23502).
-        conn = psycopg2.connect(database_url)
-        try:
-            with conn, conn.cursor() as cur:
-                with pytest.raises(errors.NotNullViolation) as exc_null:
-                    _seed_and_insert(cur, omit="origin")
-                assert exc_null.value.pgcode == "23502"
-        finally:
-            conn.close()
-
-        # (b) origin='mixed' -> enum CHECK violation (23514).
-        conn = psycopg2.connect(database_url)
-        try:
-            with conn, conn.cursor() as cur:
-                with pytest.raises(errors.CheckViolation) as exc_chk:
-                    _seed_and_insert(cur, overrides={"origin": "mixed"})
-                assert exc_chk.value.pgcode == "23514"
-        finally:
-            conn.close()
-    finally:
-        _alembic_downgrade_base(database_url)
+    # NOTE: the live-PostgreSQL INSERT-fail falsifiers for this invariant
+    # (NOT NULL 23502 / CHECK 23514) live in tests/integration/
+    # test_fnd_specs.py under @pytest.mark.integration, so CI's postgres:16
+    # integration job runs them. This unit half asserts only the no-DB
+    # schema metadata above.
 
 
 @pytest.mark.invariant
@@ -709,43 +498,11 @@ def test_inv_2_fnd_02_nonnull_sversion_envdigest_at_schema_level() -> None:
         f"INV-2: env_digest must enforce the sha256 format; got {env_chk!r}"
     )
 
-    # --- Live-Postgres INSERT-fails (skips with an explicit env-gap reason) ---
-    database_url = os.environ.get("SCANIPY_DATABASE_URL")
-    if not database_url:
-        pytest.skip(
-            "SCANIPY_DATABASE_URL not configured -- live PostgreSQL 16 env gap. "
-            "The 23502 (omit S_version/env_digest) and 23514 (malformed "
-            "env_digest) falsifiers run in the CI postgres:16 integration job. "
-            "No sqlite shim: sqlite ignores the regex CHECK (false green)."
-        )
-
-    import psycopg2  # imported lazily so collection does not require the driver
-    from psycopg2 import errors
-
-    _alembic_upgrade_head(database_url)
-    try:
-        # (a) Omitting S_version or env_digest -> NOT NULL violation (23502).
-        for omitted in ("S_version", "env_digest"):
-            conn = psycopg2.connect(database_url)
-            try:
-                with conn, conn.cursor() as cur:
-                    with pytest.raises(errors.NotNullViolation) as exc_null:
-                        _seed_and_insert(cur, omit=omitted)
-                    assert exc_null.value.pgcode == "23502"
-            finally:
-                conn.close()
-
-        # (b) Malformed env_digest -> CHECK violation (23514).
-        conn = psycopg2.connect(database_url)
-        try:
-            with conn, conn.cursor() as cur:
-                with pytest.raises(errors.CheckViolation) as exc_chk:
-                    _seed_and_insert(cur, overrides={"env_digest": "not-a-digest"})
-                assert exc_chk.value.pgcode == "23514"
-        finally:
-            conn.close()
-    finally:
-        _alembic_downgrade_base(database_url)
+    # NOTE: the live-PostgreSQL INSERT-fail falsifiers for this invariant
+    # (NOT NULL 23502 / CHECK 23514) live in tests/integration/
+    # test_fnd_specs.py under @pytest.mark.integration, so CI's postgres:16
+    # integration job runs them. This unit half asserts only the no-DB
+    # schema metadata above.
 
 
 @pytest.mark.invariant
