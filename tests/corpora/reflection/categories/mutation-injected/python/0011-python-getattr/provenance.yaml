@@ -1,7 +1,7 @@
 commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
 input_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
 license: Apache-2.0
-path_in_source: calculator.py
+path_in_source: source/calculator.py
 recipe: getattr
 seed: 10
 source_url: local:clean_bases/python/calculator.py

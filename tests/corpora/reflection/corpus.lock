@@ -1,12 +1,6 @@
-built_at: '2026-05-24T14:16:04Z'
+built_at: '2026-05-25T06:36:42Z'
 built_by: corpus-agent/CMP-CORP-REFL-01
 categories:
-  - hand_curated_second_pass: 0
-    items: []
-    kind: go-reflect-call
-    language: go
-    name: go-reflect-call
-    sample_size: 0
   - hand_curated_second_pass: 0
     items:
       - commit_sha: b932df6ad25ee570909c3c2c1ed1a60bd49bbb48
@@ -28,42 +22,6 @@ categories:
     name: java-class-forname
     sample_size: 1
   - hand_curated_second_pass: 0
-    items: []
-    kind: java-method-invoke
-    language: java
-    name: java-method-invoke
-    sample_size: 0
-  - hand_curated_second_pass: 0
-    items: []
-    kind: java-proxy-newproxy
-    language: java
-    name: java-proxy-newproxy
-    sample_size: 0
-  - hand_curated_second_pass: 0
-    items: []
-    kind: java-spring-dynamic-proxy
-    language: java
-    name: java-spring-dynamic-proxy
-    sample_size: 0
-  - hand_curated_second_pass: 0
-    items: []
-    kind: js-eval
-    language: js
-    name: js-eval
-    sample_size: 0
-  - hand_curated_second_pass: 0
-    items: []
-    kind: js-function-constructor
-    language: js
-    name: js-function-constructor
-    sample_size: 0
-  - hand_curated_second_pass: 0
-    items: []
-    kind: js-require-dynamic
-    language: js
-    name: js-require-dynamic
-    sample_size: 0
-  - hand_curated_second_pass: 0
     items:
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
         expected_sites:
@@ -73,7 +31,7 @@ categories:
         id: 0001-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -84,7 +42,7 @@ categories:
         id: 0002-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -95,7 +53,7 @@ categories:
         id: 0003-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -106,7 +64,7 @@ categories:
         id: 0004-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -117,7 +75,7 @@ categories:
         id: 0005-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -128,7 +86,7 @@ categories:
         id: 0006-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -139,7 +97,7 @@ categories:
         id: 0007-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -150,7 +108,7 @@ categories:
         id: 0008-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -161,7 +119,7 @@ categories:
         id: 0009-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -172,7 +130,7 @@ categories:
         id: 0010-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -183,7 +141,7 @@ categories:
         id: 0011-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -194,7 +152,7 @@ categories:
         id: 0012-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -205,7 +163,7 @@ categories:
         id: 0013-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -216,7 +174,7 @@ categories:
         id: 0014-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -227,7 +185,7 @@ categories:
         id: 0015-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -238,7 +196,7 @@ categories:
         id: 0016-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -249,7 +207,7 @@ categories:
         id: 0017-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -260,7 +218,7 @@ categories:
         id: 0018-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -271,7 +229,7 @@ categories:
         id: 0019-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
       - commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
@@ -282,12 +240,12 @@ categories:
         id: 0020-go-reflect-call
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.go
+        path_in_source: source/calculator.go
         sha256: sha256:885c454ab565a589f690b19c0d197bf0682a5b1647b3123e05254d20541d6a96
         source_url: local:clean_bases/go/calculator.go
     kind: mixed
     language: go
-    name: mutation-injected-go
+    name: mutation-injected/go
     sample_size: 20
   - hand_curated_second_pass: 0
     items:
@@ -299,7 +257,7 @@ categories:
         id: 0001-java-class-forname
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:8b0618be065657acf1ecf32dff987fffbf0466d5a64b424f0daadcd6b208563d
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -310,7 +268,7 @@ categories:
         id: 0002-java-method-invoke
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:49db024bb1cd39f025140b448c405c6c93cc0e7cff62abbe6fbd93b25b777b66
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -321,7 +279,7 @@ categories:
         id: 0003-java-class-forname
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:8b0618be065657acf1ecf32dff987fffbf0466d5a64b424f0daadcd6b208563d
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -332,7 +290,7 @@ categories:
         id: 0004-java-method-invoke
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:49db024bb1cd39f025140b448c405c6c93cc0e7cff62abbe6fbd93b25b777b66
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -343,7 +301,7 @@ categories:
         id: 0005-java-class-forname
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:8b0618be065657acf1ecf32dff987fffbf0466d5a64b424f0daadcd6b208563d
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -354,7 +312,7 @@ categories:
         id: 0006-java-method-invoke
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:49db024bb1cd39f025140b448c405c6c93cc0e7cff62abbe6fbd93b25b777b66
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -365,7 +323,7 @@ categories:
         id: 0007-java-class-forname
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:8b0618be065657acf1ecf32dff987fffbf0466d5a64b424f0daadcd6b208563d
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -376,7 +334,7 @@ categories:
         id: 0008-java-method-invoke
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:49db024bb1cd39f025140b448c405c6c93cc0e7cff62abbe6fbd93b25b777b66
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -387,7 +345,7 @@ categories:
         id: 0009-java-class-forname
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:8b0618be065657acf1ecf32dff987fffbf0466d5a64b424f0daadcd6b208563d
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -398,7 +356,7 @@ categories:
         id: 0010-java-method-invoke
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:49db024bb1cd39f025140b448c405c6c93cc0e7cff62abbe6fbd93b25b777b66
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -409,7 +367,7 @@ categories:
         id: 0011-java-class-forname
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:8b0618be065657acf1ecf32dff987fffbf0466d5a64b424f0daadcd6b208563d
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -420,7 +378,7 @@ categories:
         id: 0012-java-method-invoke
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:49db024bb1cd39f025140b448c405c6c93cc0e7cff62abbe6fbd93b25b777b66
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -431,7 +389,7 @@ categories:
         id: 0013-java-class-forname
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:8b0618be065657acf1ecf32dff987fffbf0466d5a64b424f0daadcd6b208563d
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -442,7 +400,7 @@ categories:
         id: 0014-java-method-invoke
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:49db024bb1cd39f025140b448c405c6c93cc0e7cff62abbe6fbd93b25b777b66
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -453,7 +411,7 @@ categories:
         id: 0015-java-class-forname
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:8b0618be065657acf1ecf32dff987fffbf0466d5a64b424f0daadcd6b208563d
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -464,7 +422,7 @@ categories:
         id: 0016-java-method-invoke
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:49db024bb1cd39f025140b448c405c6c93cc0e7cff62abbe6fbd93b25b777b66
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -475,7 +433,7 @@ categories:
         id: 0017-java-class-forname
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:8b0618be065657acf1ecf32dff987fffbf0466d5a64b424f0daadcd6b208563d
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -486,7 +444,7 @@ categories:
         id: 0018-java-method-invoke
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:49db024bb1cd39f025140b448c405c6c93cc0e7cff62abbe6fbd93b25b777b66
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -497,7 +455,7 @@ categories:
         id: 0019-java-class-forname
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:8b0618be065657acf1ecf32dff987fffbf0466d5a64b424f0daadcd6b208563d
         source_url: local:clean_bases/java/Calculator.java
       - commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
@@ -508,12 +466,12 @@ categories:
         id: 0020-java-method-invoke
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.java
+        path_in_source: source/Calculator.java
         sha256: sha256:49db024bb1cd39f025140b448c405c6c93cc0e7cff62abbe6fbd93b25b777b66
         source_url: local:clean_bases/java/Calculator.java
     kind: mixed
     language: java
-    name: mutation-injected-java
+    name: mutation-injected/java
     sample_size: 20
   - hand_curated_second_pass: 0
     items:
@@ -525,7 +483,7 @@ categories:
         id: 0001-js-eval
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:2fd4c63eeebf9d2c38b3de099dc1e54da85a530922ccfd8a3b204272f77345e0
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -536,7 +494,7 @@ categories:
         id: 0002-js-function-constructor
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:9a4324b81e3a7a354195567fa01c4f7cf622e80471bade39062284508d967690
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -547,7 +505,7 @@ categories:
         id: 0003-js-require-dynamic
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:9addbbc8ef1888fb11081d996cba01ea067b0eb97f29c2edde71d5e0f1334f28
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -558,7 +516,7 @@ categories:
         id: 0004-js-eval
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:2fd4c63eeebf9d2c38b3de099dc1e54da85a530922ccfd8a3b204272f77345e0
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -569,7 +527,7 @@ categories:
         id: 0005-js-function-constructor
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:9a4324b81e3a7a354195567fa01c4f7cf622e80471bade39062284508d967690
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -580,7 +538,7 @@ categories:
         id: 0006-js-require-dynamic
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:9addbbc8ef1888fb11081d996cba01ea067b0eb97f29c2edde71d5e0f1334f28
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -591,7 +549,7 @@ categories:
         id: 0007-js-eval
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:2fd4c63eeebf9d2c38b3de099dc1e54da85a530922ccfd8a3b204272f77345e0
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -602,7 +560,7 @@ categories:
         id: 0008-js-function-constructor
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:9a4324b81e3a7a354195567fa01c4f7cf622e80471bade39062284508d967690
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -613,7 +571,7 @@ categories:
         id: 0009-js-require-dynamic
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:9addbbc8ef1888fb11081d996cba01ea067b0eb97f29c2edde71d5e0f1334f28
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -624,7 +582,7 @@ categories:
         id: 0010-js-eval
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:2fd4c63eeebf9d2c38b3de099dc1e54da85a530922ccfd8a3b204272f77345e0
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -635,7 +593,7 @@ categories:
         id: 0011-js-function-constructor
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:9a4324b81e3a7a354195567fa01c4f7cf622e80471bade39062284508d967690
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -646,7 +604,7 @@ categories:
         id: 0012-js-require-dynamic
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:9addbbc8ef1888fb11081d996cba01ea067b0eb97f29c2edde71d5e0f1334f28
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -657,7 +615,7 @@ categories:
         id: 0013-js-eval
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:2fd4c63eeebf9d2c38b3de099dc1e54da85a530922ccfd8a3b204272f77345e0
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -668,7 +626,7 @@ categories:
         id: 0014-js-function-constructor
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:9a4324b81e3a7a354195567fa01c4f7cf622e80471bade39062284508d967690
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -679,7 +637,7 @@ categories:
         id: 0015-js-require-dynamic
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:9addbbc8ef1888fb11081d996cba01ea067b0eb97f29c2edde71d5e0f1334f28
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -690,7 +648,7 @@ categories:
         id: 0016-js-eval
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:2fd4c63eeebf9d2c38b3de099dc1e54da85a530922ccfd8a3b204272f77345e0
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -701,7 +659,7 @@ categories:
         id: 0017-js-function-constructor
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:9a4324b81e3a7a354195567fa01c4f7cf622e80471bade39062284508d967690
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -712,7 +670,7 @@ categories:
         id: 0018-js-require-dynamic
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:9addbbc8ef1888fb11081d996cba01ea067b0eb97f29c2edde71d5e0f1334f28
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -723,7 +681,7 @@ categories:
         id: 0019-js-eval
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:2fd4c63eeebf9d2c38b3de099dc1e54da85a530922ccfd8a3b204272f77345e0
         source_url: local:clean_bases/js/calculator.js
       - commit_sha: sha256:0790480fcfbb4bbbf68bdff4579a8c55254cb3f522b37b651d79870b6ee4d5e8
@@ -734,12 +692,12 @@ categories:
         id: 0020-js-function-constructor
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.js
+        path_in_source: source/calculator.js
         sha256: sha256:9a4324b81e3a7a354195567fa01c4f7cf622e80471bade39062284508d967690
         source_url: local:clean_bases/js/calculator.js
     kind: mixed
     language: js
-    name: mutation-injected-js
+    name: mutation-injected/js
     sample_size: 20
   - hand_curated_second_pass: 0
     items:
@@ -751,7 +709,7 @@ categories:
         id: 0001-php-call-user-func
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:7d043e63d8e7828b1e51498d553e1935eeaaae919cfaf3665624e54499b34b17
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -762,7 +720,7 @@ categories:
         id: 0002-php-variable-function
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:b9b95ab67b8d0e0e587a758834f48bd368e6dedea602b2003de922c583ce7957
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -773,7 +731,7 @@ categories:
         id: 0003-php-call-user-func
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:7d043e63d8e7828b1e51498d553e1935eeaaae919cfaf3665624e54499b34b17
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -784,7 +742,7 @@ categories:
         id: 0004-php-variable-function
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:b9b95ab67b8d0e0e587a758834f48bd368e6dedea602b2003de922c583ce7957
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -795,7 +753,7 @@ categories:
         id: 0005-php-call-user-func
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:7d043e63d8e7828b1e51498d553e1935eeaaae919cfaf3665624e54499b34b17
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -806,7 +764,7 @@ categories:
         id: 0006-php-variable-function
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:b9b95ab67b8d0e0e587a758834f48bd368e6dedea602b2003de922c583ce7957
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -817,7 +775,7 @@ categories:
         id: 0007-php-call-user-func
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:7d043e63d8e7828b1e51498d553e1935eeaaae919cfaf3665624e54499b34b17
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -828,7 +786,7 @@ categories:
         id: 0008-php-variable-function
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:b9b95ab67b8d0e0e587a758834f48bd368e6dedea602b2003de922c583ce7957
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -839,7 +797,7 @@ categories:
         id: 0009-php-call-user-func
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:7d043e63d8e7828b1e51498d553e1935eeaaae919cfaf3665624e54499b34b17
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -850,7 +808,7 @@ categories:
         id: 0010-php-variable-function
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:b9b95ab67b8d0e0e587a758834f48bd368e6dedea602b2003de922c583ce7957
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -861,7 +819,7 @@ categories:
         id: 0011-php-call-user-func
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:7d043e63d8e7828b1e51498d553e1935eeaaae919cfaf3665624e54499b34b17
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -872,7 +830,7 @@ categories:
         id: 0012-php-variable-function
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:b9b95ab67b8d0e0e587a758834f48bd368e6dedea602b2003de922c583ce7957
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -883,7 +841,7 @@ categories:
         id: 0013-php-call-user-func
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:7d043e63d8e7828b1e51498d553e1935eeaaae919cfaf3665624e54499b34b17
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -894,7 +852,7 @@ categories:
         id: 0014-php-variable-function
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:b9b95ab67b8d0e0e587a758834f48bd368e6dedea602b2003de922c583ce7957
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -905,7 +863,7 @@ categories:
         id: 0015-php-call-user-func
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:7d043e63d8e7828b1e51498d553e1935eeaaae919cfaf3665624e54499b34b17
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -916,7 +874,7 @@ categories:
         id: 0016-php-variable-function
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:b9b95ab67b8d0e0e587a758834f48bd368e6dedea602b2003de922c583ce7957
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -927,7 +885,7 @@ categories:
         id: 0017-php-call-user-func
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:7d043e63d8e7828b1e51498d553e1935eeaaae919cfaf3665624e54499b34b17
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -938,7 +896,7 @@ categories:
         id: 0018-php-variable-function
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:b9b95ab67b8d0e0e587a758834f48bd368e6dedea602b2003de922c583ce7957
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -949,7 +907,7 @@ categories:
         id: 0019-php-call-user-func
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:7d043e63d8e7828b1e51498d553e1935eeaaae919cfaf3665624e54499b34b17
         source_url: local:clean_bases/php/Calculator.php
       - commit_sha: sha256:5862fe521d767d7f5d992505119e9747e210e45d46cf02ddcdae7eb19c14d52f
@@ -960,12 +918,12 @@ categories:
         id: 0020-php-variable-function
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: Calculator.php
+        path_in_source: source/Calculator.php
         sha256: sha256:b9b95ab67b8d0e0e587a758834f48bd368e6dedea602b2003de922c583ce7957
         source_url: local:clean_bases/php/Calculator.php
     kind: mixed
     language: php
-    name: mutation-injected-php
+    name: mutation-injected/php
     sample_size: 20
   - hand_curated_second_pass: 0
     items:
@@ -977,7 +935,7 @@ categories:
         id: 0001-python-eval-exec
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:9c7dabc2b4704f32d645cf06212978e1498da0fd1f9c90bdcbf5301a1b50f9dd
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -988,7 +946,7 @@ categories:
         id: 0002-python-getattr
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:3625fed916b02e0b3cd2ff3ca299492b0ce21ee90e27126e9655e2edd661988b
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -999,7 +957,7 @@ categories:
         id: 0003-python-import-dunder
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:c7afcd18a6680a8654ef28373e73ba1281e96065468131f38bd0a6fbce8e0a3e
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -1010,7 +968,7 @@ categories:
         id: 0004-python-eval-exec
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:9c7dabc2b4704f32d645cf06212978e1498da0fd1f9c90bdcbf5301a1b50f9dd
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -1021,7 +979,7 @@ categories:
         id: 0005-python-getattr
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:3625fed916b02e0b3cd2ff3ca299492b0ce21ee90e27126e9655e2edd661988b
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -1032,7 +990,7 @@ categories:
         id: 0006-python-import-dunder
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:c7afcd18a6680a8654ef28373e73ba1281e96065468131f38bd0a6fbce8e0a3e
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -1043,7 +1001,7 @@ categories:
         id: 0007-python-eval-exec
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:9c7dabc2b4704f32d645cf06212978e1498da0fd1f9c90bdcbf5301a1b50f9dd
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -1054,7 +1012,7 @@ categories:
         id: 0008-python-getattr
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:3625fed916b02e0b3cd2ff3ca299492b0ce21ee90e27126e9655e2edd661988b
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -1065,7 +1023,7 @@ categories:
         id: 0009-python-import-dunder
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:c7afcd18a6680a8654ef28373e73ba1281e96065468131f38bd0a6fbce8e0a3e
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -1076,7 +1034,7 @@ categories:
         id: 0010-python-eval-exec
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:9c7dabc2b4704f32d645cf06212978e1498da0fd1f9c90bdcbf5301a1b50f9dd
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -1087,7 +1045,7 @@ categories:
         id: 0011-python-getattr
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:3625fed916b02e0b3cd2ff3ca299492b0ce21ee90e27126e9655e2edd661988b
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -1098,7 +1056,7 @@ categories:
         id: 0012-python-import-dunder
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:c7afcd18a6680a8654ef28373e73ba1281e96065468131f38bd0a6fbce8e0a3e
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -1109,7 +1067,7 @@ categories:
         id: 0013-python-eval-exec
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:9c7dabc2b4704f32d645cf06212978e1498da0fd1f9c90bdcbf5301a1b50f9dd
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -1120,7 +1078,7 @@ categories:
         id: 0014-python-getattr
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:3625fed916b02e0b3cd2ff3ca299492b0ce21ee90e27126e9655e2edd661988b
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -1131,7 +1089,7 @@ categories:
         id: 0015-python-import-dunder
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:c7afcd18a6680a8654ef28373e73ba1281e96065468131f38bd0a6fbce8e0a3e
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -1142,7 +1100,7 @@ categories:
         id: 0016-python-eval-exec
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:9c7dabc2b4704f32d645cf06212978e1498da0fd1f9c90bdcbf5301a1b50f9dd
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -1153,7 +1111,7 @@ categories:
         id: 0017-python-getattr
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:3625fed916b02e0b3cd2ff3ca299492b0ce21ee90e27126e9655e2edd661988b
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -1164,7 +1122,7 @@ categories:
         id: 0018-python-import-dunder
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:c7afcd18a6680a8654ef28373e73ba1281e96065468131f38bd0a6fbce8e0a3e
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -1175,7 +1133,7 @@ categories:
         id: 0019-python-eval-exec
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:9c7dabc2b4704f32d645cf06212978e1498da0fd1f9c90bdcbf5301a1b50f9dd
         source_url: local:clean_bases/python/calculator.py
       - commit_sha: sha256:b78883ac07432fe88cc52c31a1d8a627f86e855d958dd249131aa77056c24046
@@ -1186,12 +1144,12 @@ categories:
         id: 0020-python-getattr
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.py
+        path_in_source: source/calculator.py
         sha256: sha256:3625fed916b02e0b3cd2ff3ca299492b0ce21ee90e27126e9655e2edd661988b
         source_url: local:clean_bases/python/calculator.py
     kind: mixed
     language: python
-    name: mutation-injected-python
+    name: mutation-injected/python
     sample_size: 20
   - hand_curated_second_pass: 0
     items:
@@ -1203,7 +1161,7 @@ categories:
         id: 0001-ruby-define-method
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:51972875d47b6aa3733f7df6ce354a218e00e52e34037e8b0faeab1ea77e1c61
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1214,7 +1172,7 @@ categories:
         id: 0002-ruby-send
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:7dc0f542f109856e653d8577e8939725de8cb6e5f035ac84c298d60818f4d0e0
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1225,7 +1183,7 @@ categories:
         id: 0003-ruby-define-method
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:51972875d47b6aa3733f7df6ce354a218e00e52e34037e8b0faeab1ea77e1c61
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1236,7 +1194,7 @@ categories:
         id: 0004-ruby-send
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:7dc0f542f109856e653d8577e8939725de8cb6e5f035ac84c298d60818f4d0e0
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1247,7 +1205,7 @@ categories:
         id: 0005-ruby-define-method
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:51972875d47b6aa3733f7df6ce354a218e00e52e34037e8b0faeab1ea77e1c61
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1258,7 +1216,7 @@ categories:
         id: 0006-ruby-send
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:7dc0f542f109856e653d8577e8939725de8cb6e5f035ac84c298d60818f4d0e0
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1269,7 +1227,7 @@ categories:
         id: 0007-ruby-define-method
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:51972875d47b6aa3733f7df6ce354a218e00e52e34037e8b0faeab1ea77e1c61
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1280,7 +1238,7 @@ categories:
         id: 0008-ruby-send
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:7dc0f542f109856e653d8577e8939725de8cb6e5f035ac84c298d60818f4d0e0
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1291,7 +1249,7 @@ categories:
         id: 0009-ruby-define-method
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:51972875d47b6aa3733f7df6ce354a218e00e52e34037e8b0faeab1ea77e1c61
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1302,7 +1260,7 @@ categories:
         id: 0010-ruby-send
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:7dc0f542f109856e653d8577e8939725de8cb6e5f035ac84c298d60818f4d0e0
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1313,7 +1271,7 @@ categories:
         id: 0011-ruby-define-method
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:51972875d47b6aa3733f7df6ce354a218e00e52e34037e8b0faeab1ea77e1c61
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1324,7 +1282,7 @@ categories:
         id: 0012-ruby-send
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:7dc0f542f109856e653d8577e8939725de8cb6e5f035ac84c298d60818f4d0e0
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1335,7 +1293,7 @@ categories:
         id: 0013-ruby-define-method
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:51972875d47b6aa3733f7df6ce354a218e00e52e34037e8b0faeab1ea77e1c61
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1346,7 +1304,7 @@ categories:
         id: 0014-ruby-send
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:7dc0f542f109856e653d8577e8939725de8cb6e5f035ac84c298d60818f4d0e0
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1357,7 +1315,7 @@ categories:
         id: 0015-ruby-define-method
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:51972875d47b6aa3733f7df6ce354a218e00e52e34037e8b0faeab1ea77e1c61
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1368,7 +1326,7 @@ categories:
         id: 0016-ruby-send
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:7dc0f542f109856e653d8577e8939725de8cb6e5f035ac84c298d60818f4d0e0
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1379,7 +1337,7 @@ categories:
         id: 0017-ruby-define-method
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:51972875d47b6aa3733f7df6ce354a218e00e52e34037e8b0faeab1ea77e1c61
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1390,7 +1348,7 @@ categories:
         id: 0018-ruby-send
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:7dc0f542f109856e653d8577e8939725de8cb6e5f035ac84c298d60818f4d0e0
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1401,7 +1359,7 @@ categories:
         id: 0019-ruby-define-method
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:51972875d47b6aa3733f7df6ce354a218e00e52e34037e8b0faeab1ea77e1c61
         source_url: local:clean_bases/ruby/calculator.rb
       - commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
@@ -1412,31 +1370,13 @@ categories:
         id: 0020-ruby-send
         label: not-closed-world
         license: Apache-2.0
-        path_in_source: calculator.rb
+        path_in_source: source/calculator.rb
         sha256: sha256:7dc0f542f109856e653d8577e8939725de8cb6e5f035ac84c298d60818f4d0e0
         source_url: local:clean_bases/ruby/calculator.rb
     kind: mixed
     language: ruby
-    name: mutation-injected-ruby
+    name: mutation-injected/ruby
     sample_size: 20
-  - hand_curated_second_pass: 0
-    items: []
-    kind: php-call-user-func
-    language: php
-    name: php-call-user-func
-    sample_size: 0
-  - hand_curated_second_pass: 0
-    items: []
-    kind: php-variable-function
-    language: php
-    name: php-variable-function
-    sample_size: 0
-  - hand_curated_second_pass: 0
-    items: []
-    kind: python-eval-exec
-    language: python
-    name: python-eval-exec
-    sample_size: 0
   - hand_curated_second_pass: 0
     items:
       - commit_sha: 147c8511ddbfa5e8f71bbf5c18ede0c4ceb3bba4
@@ -1454,33 +1394,9 @@ categories:
     language: python
     name: python-getattr
     sample_size: 1
-  - hand_curated_second_pass: 0
-    items: []
-    kind: python-import-dunder
-    language: python
-    name: python-import-dunder
-    sample_size: 0
-  - hand_curated_second_pass: 0
-    items: []
-    kind: ruby-define-method
-    language: ruby
-    name: ruby-define-method
-    sample_size: 0
-  - hand_curated_second_pass: 0
-    items: []
-    kind: ruby-method-missing
-    language: ruby
-    name: ruby-method-missing
-    sample_size: 0
-  - hand_curated_second_pass: 0
-    items: []
-    kind: ruby-send
-    language: ruby
-    name: ruby-send
-    sample_size: 0
-corpus_digest: sha256:82e49512e0d0f07f824805eef27981603953214d251228641d680cf19e00610f
+corpus_digest: sha256:bfd3b11e8f74e4dcfd740dea04b1b03a56e2534131d5002171df6c94992f0f8f
 corpus_id: CMP-CORP-REFL-01
-corpus_version: 0.1.0
+corpus_version: 0.1.1
 ground_truth_method: Per-category hand-labelling by Corpus Curator with second-pass
   review; mutation-injection ground-truth by construction (a known reflection site
   inserted by pipeline/inject_reflection.py at a recorded line). See README.md for
