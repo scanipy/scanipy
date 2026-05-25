@@ -87,10 +87,18 @@ def test_deploy_01a_every_clar_deploy_has_recorded_decision() -> None:
         if match is None:
             continue
         clar_id = match.group(1)
-        if "RESOLVED" in line:
+        # Read the STATUS *column*, not a substring of the whole row: a CLAR's
+        # free-text description may legitimately contain the word "RESOLVED"
+        # (e.g. "all 16 CLAR-DEPLOY-* RESOLVED"), which would mis-promote an OPEN
+        # row. The status column holds exactly one status token as its whole cell
+        # value, so match on a stripped cell equalling a status word.
+        cells = {cell.strip() for cell in line.split("|")}
+        if "RESOLVED" in cells:
             resolved_ids.add(clar_id)
-        elif "DEFERRED" in line:
+        elif "DEFERRED" in cells:
             deferred_ids.add(clar_id)
+        # OPEN rows (e.g. CLAR-DEPLOY-18, filed but not yet decided) require no
+        # decision-record section and are intentionally excluded from both sets.
 
     assert resolved_ids, "no RESOLVED CLAR-DEPLOY-* rows found in WBS.md §17"
     # CLAR-DEPLOY-17 is the deferred one and must NOT be required to have a record.
