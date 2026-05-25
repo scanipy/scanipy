@@ -244,7 +244,6 @@ def test_scm_02b_tiered_star_listing_matches_v2_baseline() -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-SCM-02 (github shim) not yet implemented", strict=False)
 def test_scm_02c_shim_exports_search_repositories() -> None:
     """integrations.github.search_repositories imports as a caller-transparent shim.
 
@@ -258,13 +257,16 @@ def test_scm_02c_shim_exports_search_repositories() -> None:
     Frequency: every CI run
     Hard gate?: yes
     """
-    # TODO: from integrations.github import search_repositories
-    # assert callable(search_repositories)
-    pytest.skip("CMP-SCM-02 not implemented yet")
+    import integrations.github as github_shim
+    from integrations.github import search_repositories
+
+    assert callable(search_repositories)
+    # The symbol resolves at the legacy import path (integrations/github/__init__.py).
+    assert search_repositories.__module__ == "integrations.github"
+    assert github_shim.search_repositories is search_repositories
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-SCM-02 (github shim) not yet implemented", strict=False)
 def test_scm_02c_shim_signature_unchanged() -> None:
     """The shim preserves the v2 public signature with no caller-visible change.
 
@@ -278,11 +280,32 @@ def test_scm_02c_shim_signature_unchanged() -> None:
       GitHubConnector.list_repos_tiered_star, signature unchanged).
     Frequency: every CI run
     Hard gate?: yes
+
+    Note: the *exact* v2 parameter list is part of the CLAR-SCM-01 baseline
+    capture (see TST-AC-SCM-02b, BLOCKED). DOC §3.5 specifies only the existence
+    and shape contract, so this test asserts the shape — a leading positional
+    `query` parameter and delegation to the tiered-star helper — not a captured
+    byte-for-byte signature. The byte-for-byte signature check lands with
+    TST-AC-SCM-02b once CLAR-SCM-01 names the baseline.
     """
-    # TODO: confirm inspect.signature(search_repositories) matches the v2 baseline
-    #       signature (the parameter list is part of CLAR-SCM-01's captured baseline,
-    #       but the *existence and shape* contract is specified in DOC §3.5).
-    pytest.skip("CMP-SCM-02 not implemented yet")
+    import inspect
+
+    from integrations.github import search_repositories
+
+    sig = inspect.signature(search_repositories)
+    params = list(sig.parameters.values())
+    # The v2 public contract takes the search query as its leading argument.
+    assert params, "search_repositories must accept at least the query argument"
+    assert params[0].name == "query"
+    assert params[0].kind in (
+        inspect.Parameter.POSITIONAL_ONLY,
+        inspect.Parameter.POSITIONAL_OR_KEYWORD,
+    )
+    # Delegates to the tiered-star helper (DOC §3.5): the helper exists and is an
+    # async generator (async def + yield, matching the ABC's list_repos shape).
+    from integrations.scm.github import GitHubConnector
+
+    assert inspect.isasyncgenfunction(GitHubConnector.list_repos_tiered_star)
 
 
 # ---------------------------------------------------------------------------
