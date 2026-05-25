@@ -37,7 +37,7 @@ from typing import Literal
 # Semver of this detector. Sealed into provenance (precondition_status.json) so
 # CMP-SNAP-04 can identify which CW version produced a verdict on a
 # disagreement (DOC-CMP-SNAP-03 §8). Bump on any change to detection behaviour.
-CW_DETECT_VERSION = "0.1.0"
+CW_DETECT_VERSION = "0.1.1"
 
 Verdict = Literal["closed-world", "degraded", "full-reparse"]
 Confidence = Literal["high", "uncertain"]
@@ -245,11 +245,15 @@ _LANG_PATTERNS: dict[str, tuple[tuple[ReflectionKind, re.Pattern[str]], ...]] = 
         ),
     ),
     "js": (
-        # require(<non-string>) — dynamic require; conservatively any require( not
-        # immediately followed by a string literal.
+        # Dynamic require. Safe direction (INV-4, zero-FN): treat a require argument
+        # as static ONLY when it is a single plain string literal immediately followed
+        # by ')'. Everything else — bare identifier, string concatenation
+        # (require("pa" + "th")), template-literal interpolation (require(`${x}`)),
+        # function calls — is not-closed-world. FP is permitted; a missed dynamic
+        # require is a release blocker.
         (
             "js-require-dynamic",
-            re.compile(r"""\brequire\s*\(\s*(?!['"`])"""),
+            re.compile(r"""\brequire\s*\(\s*(?!(?:'[^'\n]*'|"[^"\n]*")\s*\))"""),
         ),
         # new Function(...) constructor.
         ("js-function-constructor", re.compile(r"\bnew\s+Function\s*\(")),
@@ -259,7 +263,7 @@ _LANG_PATTERNS: dict[str, tuple[tuple[ReflectionKind, re.Pattern[str]], ...]] = 
     "ts": (
         (
             "js-require-dynamic",
-            re.compile(r"""\brequire\s*\(\s*(?!['"`])"""),
+            re.compile(r"""\brequire\s*\(\s*(?!(?:'[^'\n]*'|"[^"\n]*")\s*\))"""),
         ),
         ("js-function-constructor", re.compile(r"\bnew\s+Function\s*\(")),
         ("js-eval", re.compile(r"\beval\s*\(|\bFunction\s*\(")),
