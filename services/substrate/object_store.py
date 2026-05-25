@@ -192,7 +192,7 @@ class InMemoryObjectStore:
         # run through _validate_component; instead each segment is checked for the
         # traversal tokens and the org prefix is enforced.
         folded = key.casefold()
-        for token in ("..", "%2e", "\x00"):
+        for token in ("..", "%2e", "%5c", "\\", "\x00"):
             if token in folded:
                 raise PathTraversalError(
                     f"key {key!r} contains forbidden traversal sequence {token!r}"
