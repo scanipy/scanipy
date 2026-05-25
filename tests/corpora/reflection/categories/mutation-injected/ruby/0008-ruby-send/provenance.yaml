@@ -1,7 +1,7 @@
 commit_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
 input_sha: sha256:6f0eb79f846eb781e569aa1c262d1447b217d85629883cb173212d9abddaec14
 license: Apache-2.0
-path_in_source: calculator.rb
+path_in_source: source/calculator.rb
 recipe: send
 seed: 7
 source_url: local:clean_bases/ruby/calculator.rb

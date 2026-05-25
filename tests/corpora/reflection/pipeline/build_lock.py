@@ -50,7 +50,7 @@ CLEAN_BASES_DIR = CORPUS_ROOT / "clean_bases"
 LOCK_PATH = CORPUS_ROOT / "corpus.lock"
 
 CORPUS_ID = "CMP-CORP-REFL-01"
-CORPUS_VERSION = "0.1.0"  # README §Status: NOT the v1.0.0 N>=50 hand-curated bar
+CORPUS_VERSION = "0.1.1"  # README §Status: NOT the v1.0.0 N>=50 hand-curated bar
 BUILT_BY = "corpus-agent/CMP-CORP-REFL-01"
 
 LICENSE_ALLOWLIST = {"MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "MPL-2.0"}
@@ -121,7 +121,11 @@ def generate_mutation_items() -> None:
             prov_doc = {
                 "source_url": f"local:clean_bases/{base_rel}",
                 "commit_sha": input_sha,  # content-addressed; base is in-repo
-                "path_in_source": base_filename,
+                # path_in_source records the analysis-scope-relative path: the
+                # falsifier (tests/falsifier/cw) derives the CW-DETECT source
+                # root from parts[0] of this path, which must be the per-item
+                # `source/` directory (README: categories/<cat>/<id>/source/<file>).
+                "path_in_source": f"source/{base_filename}",
                 "seed": seed,
                 "recipe": recipe,
                 "input_sha": res.input_sha,
@@ -202,7 +206,9 @@ def assemble_lock() -> tuple[dict, list[str], list[str]]:
             for lang_dir in sorted(d for d in cat_dir.iterdir() if d.is_dir()):
                 categories.append(
                     _build_category(
-                        f"mutation-injected-{lang_dir.name}",
+                        # Slash so the falsifier's pathlib join resolves to the
+                        # existing nested on-disk tree categories/mutation-injected/<lang>/.
+                        f"mutation-injected/{lang_dir.name}",
                         lang_dir.name,
                         "mixed",
                         lang_dir,
