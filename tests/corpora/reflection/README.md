@@ -7,7 +7,7 @@ on an item labelled `not-closed-world` — is a **release blocker**. This docume
 the ground-truth-labelling methodology mandated by `DOC-CMP-CORP-REFL-01 §3.4`; the
 corpus is **not DONE without it**.
 
-## Status — v0.1.0 (NOT the v1.0.0 release bar)
+## Status — v0.1.1 (NOT the v1.0.0 release bar)
 
 This is a **provisional, scaffolding** build that delivers the load-bearing
 **mutation-injection pipeline** and a **reproducible `corpus.lock`**, plus a small
@@ -15,14 +15,23 @@ This is a **provisional, scaffolding** build that delivers the load-bearing
 `AC-CORP-REFL-01a`'s `N ≥ 50` *hand-curated* examples per category, nor the
 `review_status: second-pass` dual-review bar for hand items (`DOC §3.4`, `§7`).
 
-| Track | This build (v0.1.0) | v1.0.0 release bar |
+v0.1.1 re-pins the lock so the mutation-category `name` (`mutation-injected/<lang>`)
+and per-item `path_in_source` (`source/<file>`) resolve to the on-disk
+`categories/<cat>/<id>/source/<file>` tree the Gate-2 falsifier scans (a
+path-convention fix only — no source moves, no relabel, no CW-DETECT change).
+
+| Track | This build (v0.1.1) | v1.0.0 release bar |
 |---|---|---|
 | Mutation-injected / language | 20 (meets CLAR-CORP-01) | ≥ 20 |
 | Hand-curated / category, second-pass | 0 (two single-pass seed items only) | ≥ 50 |
 
-Gate 2 (`TST-AC-SNAP-03a`) is still a `pytest.mark.xfail` stub (`CMP-SNAP-03` not
-implemented). The corpus is wired so the gate arms when `CW-DETECT` lands; the gate
-**must not be declared passing on the v0.1.0 hand-curated coverage** — see CLARs below.
+Gate 2 (`TST-AC-SNAP-03a`) now **executes** against this corpus: `CW-DETECT`
+(`CMP-SNAP-03`) is implemented and the falsifier resolves each mutation positive to
+its `source/` dir, verdicting every one `degraded` (not-closed-world, INV-4 safe
+direction) → `fn_rate == 0.0`. The gate **passes at v0.1.1 mutation coverage** but
+**must not be declared passing as the v1.0.0 release bar** — the `N ≥ 50`
+hand-curated, second-pass bar and the `CLAR-CORP-06` per-seed structural-diversity
+caveat remain open below.
 
 ## What is SOURCED vs SYNTHESIZED
 

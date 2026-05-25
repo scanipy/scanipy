@@ -1,7 +1,7 @@
 commit_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
 input_sha: sha256:e5c41a911cbae2700359ba0bc75ba20f0635f60f2dac8f6c8fd35fdc4d680afe
 license: Apache-2.0
-path_in_source: Calculator.java
+path_in_source: source/Calculator.java
 recipe: class-forname
 seed: 4
 source_url: local:clean_bases/java/Calculator.java
