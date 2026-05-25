@@ -25,11 +25,16 @@ path-convention fix only — no source moves, no relabel, no CW-DETECT change).
 | Mutation-injected / language | 20 (meets CLAR-CORP-01) | ≥ 20 |
 | Hand-curated / category, second-pass | 0 (two single-pass seed items only) | ≥ 50 |
 
-Gate 2 (`TST-AC-SNAP-03a`) now **executes** against this corpus: `CW-DETECT`
-(`CMP-SNAP-03`) is implemented and the falsifier resolves each mutation positive to
-its `source/` dir, verdicting every one `degraded` (not-closed-world, INV-4 safe
-direction) → `fn_rate == 0.0`. The gate **passes at v0.1.1 mutation coverage** but
-**must not be declared passing as the v1.0.0 release bar** — the `N ≥ 50`
+Gate 2 (`TST-AC-SNAP-03a`) now **executes** against this corpus (previously it
+skipped vacuously): the falsifier resolves each mutation positive to its `source/`
+dir and runs `CW-DETECT` (`CMP-SNAP-03`) over it. **This path-convention fix only
+makes the gate runnable — it does not by itself make the gate pass.** On this branch
+alone the falsifier reports **`fn_rate = 0.05` (6/120 FAIL)**: six JS
+`require("a" + "b")` mutation positives are wrongly verdicted `closed-world` by a
+`CW-DETECT` regex false negative — a genuine `CMP-SNAP-03` INV-4 bug. The corpus is
+intentionally **not** weakened to hide it (INV-4 is zero-FN); the fix lands in
+**PR #241** (`fix(cmp-snap-03)`), after which `fn_rate == 0.0`. Even with #241 the
+gate **must not be declared passing as the v1.0.0 release bar** — the `N ≥ 50`
 hand-curated, second-pass bar and the `CLAR-CORP-06` per-seed structural-diversity
 caveat remain open below.
 
