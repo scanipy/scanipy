@@ -67,13 +67,17 @@ def _action_for(method: str, resource: Resource) -> Action:
     if verb == "GET":
         return "read"
     if verb in ("POST", "PUT"):
-        return _POST_ACTION[resource]
+        # .get fallthrough: a verb on an unmapped resource projects to the
+        # non-grantable sentinel rather than raising KeyError (fail-closed deny).
+        return _POST_ACTION.get(resource, "forbidden")
     if verb == "PATCH":
         return "patch_status"
-    # DELETE / unknown verbs: project onto a non-grantable action. No role has
-    # "update_creds" on findings/scans, and the matrix never grants delete, so
-    # this always denies (DOC-API §2.6 — delete is not a capability in v3.2).
-    return "update_creds"
+    # DELETE / unknown verbs: project onto the "forbidden" sentinel, which no
+    # role holds in the RBAC matrix, so this ALWAYS denies. (Using a real
+    # capability like "update_creds" here was a bug: org-admin holds
+    # update_creds on codebases, which would have let org-admin DELETE codebases.
+    # DOC-API §2.6 grants no delete capability to any role in v3.2.)
+    return "forbidden"
 
 
 class TenantIsolationError(RuntimeError):
