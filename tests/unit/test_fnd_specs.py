@@ -32,6 +32,27 @@ Covers (from WBS §4.2 / §4.3):
 """
 
 import pytest
+from sqlalchemy import CheckConstraint
+
+from services.scan.models.findings import (
+    CPG_ORDER_HASH_ANNOTATION,
+    Finding,
+)
+
+# The exact INV-5 annotation literal pinned by the
+# findings_cpg_order_hash_annotation_chk CHECK constraint (DOC-DB sec 4.12).
+# The live-PostgreSQL INSERT falsifiers that exercise this literal now live in
+# tests/integration/test_fnd_specs.py (so CI's postgres:16 job runs them); this
+# unit file keeps only the no-DB metadata-introspection assertions.
+_ANNOTATION = "canonical iff fingerprint_class = strong"
+
+
+def _check_sqltext(table: object, name: str) -> str:
+    """Return the rendered ``sqltext`` of the named CHECK constraint."""
+    for constraint in Finding.__table__.constraints:
+        if isinstance(constraint, CheckConstraint) and constraint.name == name:
+            return str(constraint.sqltext)
+    raise AssertionError(f"CHECK constraint {name!r} not found on findings table")
 
 
 @pytest.mark.unit
@@ -100,10 +121,6 @@ def test_fnd_01b_result_ordering_is_canonical_cpg_order() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-FND-02 (Findings store schema) not yet implemented",
-    strict=False,
-)
 def test_fnd_02a_baseline_lookup_never_autosuppresses_weak_or_oracle() -> None:
     """Cross-scan baseline lookup is correct and never auto-suppresses across refactor.
 
@@ -129,16 +146,43 @@ def test_fnd_02a_baseline_lookup_never_autosuppresses_weak_or_oracle() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — component acceptance gate for CMP-FND-02.
     """
-    # TODO: from services.scan.models.findings import Finding; query baseline by
-    # (codebase_id, slice_fingerprint); assert weak/oracle never set to suppressed
-    pytest.skip("CMP-FND-02 not implemented yet")
+    # --- Schema/index half (CMP-FND-02 owns this; asserted here) ---
+    # The cross-scan baseline matcher (CMP-SNAP-02 / CMP-FND-01) looks up by
+    # (codebase_id, slice_fingerprint); CMP-FND-02's contribution to AC-FND-02a
+    # is that the supporting index exists with exactly those columns in that
+    # order. Assert it on the ORM table that mirrors the shipped DDL.
+    table = Finding.__table__
+    by_name = {ix.name: ix for ix in table.indexes}
+    assert "findings_codebase_slice_idx" in by_name, (
+        "AC-FND-02a baseline-lookup index findings_codebase_slice_idx is missing"
+    )
+    baseline_idx = by_name["findings_codebase_slice_idx"]
+    assert [c.name for c in baseline_idx.columns] == [
+        "codebase_id",
+        "slice_fingerprint",
+    ], "baseline-lookup index must be keyed (codebase_id, slice_fingerprint)"
+
+    # status / fingerprint_class / origin must exist on the row so a matcher can
+    # read fingerprint_class='weak' / origin='oracle-passthrough' WITHOUT writing
+    # status='suppressed'. Assert their presence and enum domains.
+    cols = table.columns
+    assert "status" in cols and "fingerprint_class" in cols and "origin" in cols
+    assert "weak" in _check_sqltext(table, "findings_fingerprint_class_chk")
+    assert "oracle-passthrough" in _check_sqltext(table, "findings_origin_chk")
+    assert "suppressed" in _check_sqltext(table, "findings_status_chk")
+
+    # --- Behavioral baseline-matcher half: DOCUMENT-AND-DEFER ---
+    # "never auto-suppresses a weak or oracle-passthrough finding across a
+    # refactor" is a BEHAVIORAL property of the baseline matcher, which lives in
+    # the downstream CMP-SNAP-02 (incremental delta) / CMP-FND-01 (normalizer)
+    # contract -- NOT in the CMP-FND-02 schema component. The schema makes the
+    # safe behaviour possible (the index + the columns asserted above); it
+    # cannot itself flip a status. The matcher-behaviour assertion is therefore
+    # owned by TST-AC-SNAP-02* / the FND-01 baseline path and is intentionally
+    # not exercised here.
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-FND-02 (Findings store schema) not yet implemented",
-    strict=False,
-)
 def test_fnd_02b_every_row_carries_nonnull_origin_sversion_envdigest() -> None:
     """Every findings row carries non-null origin, S_version, env_digest.
 
@@ -158,16 +202,22 @@ def test_fnd_02b_every_row_carries_nonnull_origin_sversion_envdigest() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — schema NOT NULL gate for CMP-FND-02.
     """
-    # TODO: attempt INSERT missing origin/S_version/env_digest; assert IntegrityError
-    # assert session.query(Finding).filter(Finding.origin.is_(None)).count() == 0
-    pytest.skip("CMP-FND-02 not implemented yet")
+    # --- Metadata introspection (always runs, no DB) ---
+    # AC-FND-02b pins NOT NULL on exactly these three columns.
+    cols = Finding.__table__.columns
+    for name in ("origin", "S_version", "env_digest"):
+        assert not cols[name].nullable, (
+            f"AC-FND-02b: findings.{name} must be NOT NULL (INV-1/INV-2)"
+        )
+
+    # NOTE: the live-PostgreSQL INSERT-fail falsifiers for this invariant
+    # (NOT NULL 23502 / CHECK 23514) live in tests/integration/
+    # test_fnd_specs.py under @pytest.mark.integration, so CI's postgres:16
+    # integration job runs them. This unit half asserts only the no-DB
+    # schema metadata above.
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-FND-02 (Findings store schema) not yet implemented",
-    strict=False,
-)
 def test_inv_5_fnd_02_cpg_order_hash_annotation_persisted_at_schema() -> None:
     """INV-5 at the persistence layer: the annotation column is NOT NULL + CHECKed.
 
@@ -190,10 +240,28 @@ def test_inv_5_fnd_02_cpg_order_hash_annotation_persisted_at_schema() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — schema INV-5 gate for CMP-FND-02.
     """
-    # TODO: when CMP-FND-02 lands, assert NOT NULL + CHECK on
-    #       findings.cpg_order_hash_annotation (exact literal); INSERT variants
-    #       raise IntegrityError (23502 omit, 23514 wrong-value).
-    pytest.skip("CMP-FND-02 not implemented yet")
+    # --- Metadata introspection (always runs, no DB) ---
+    table = Finding.__table__
+    annotation_col = table.columns["cpg_order_hash_annotation"]
+    assert not annotation_col.nullable, "INV-5: findings.cpg_order_hash_annotation must be NOT NULL"
+    # The literal CHECK pins the EXACT annotation string.
+    sqltext = _check_sqltext(table, "findings_cpg_order_hash_annotation_chk")
+    assert _ANNOTATION in sqltext, (
+        f"INV-5: the annotation CHECK must pin the exact literal {_ANNOTATION!r}; got {sqltext!r}"
+    )
+    # The model constant equals the literal (the same string the DDL pins).
+    assert CPG_ORDER_HASH_ANNOTATION == _ANNOTATION
+    # cpg_order_hash itself is NOT NULL with a 32-byte length CHECK.
+    assert not table.columns["cpg_order_hash"].nullable
+    assert "octet_length(cpg_order_hash) = 32" in _check_sqltext(
+        table, "findings_cpg_order_hash_len_chk"
+    )
+
+    # NOTE: the live-PostgreSQL INSERT-fail falsifiers for this invariant
+    # (NOT NULL 23502 / CHECK 23514) live in tests/integration/
+    # test_fnd_specs.py under @pytest.mark.integration, so CI's postgres:16
+    # integration job runs them. This unit half asserts only the no-DB
+    # schema metadata above.
 
 
 @pytest.mark.invariant
@@ -292,10 +360,6 @@ def test_inv_1_fnd_01_origin_partition_at_normalizer() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-FND-02 (Findings store schema) not yet implemented",
-    strict=False,
-)
 def test_inv_1_fnd_02_origin_partition_at_store() -> None:
     """INV-1 at the store: origin NOT NULL + enum CHECK rejects null and 'mixed'.
 
@@ -308,7 +372,7 @@ def test_inv_1_fnd_02_origin_partition_at_store() -> None:
     Outputs:        INSERT outcome (success / DB error).
     Pass criteria:  INSERT omitting ``origin`` raises a NOT NULL violation
                     (SQLSTATE 23502); INSERT with ``origin='mixed'`` is rejected
-                    by the ``findings_origin_check`` CHECK constraint (only
+                    by the ``findings_origin_chk`` CHECK constraint (only
                     ``deterministic-core`` / ``oracle-passthrough`` permitted);
                     ``determinism_partition`` and ``engine`` enforce their enums
                     likewise (DOC-DB §4.12, DOC-CMP-FND-02 §5.1). The violation is
@@ -316,9 +380,27 @@ def test_inv_1_fnd_02_origin_partition_at_store() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — schema INV-1 gate for CMP-FND-02.
     """
-    # TODO: with pytest.raises(IntegrityError): insert(origin=None)
-    # with pytest.raises(IntegrityError): insert(origin="mixed")
-    pytest.skip("CMP-FND-02 not implemented yet")
+    # --- Metadata introspection (always runs, no DB) ---
+    table = Finding.__table__
+    for name in ("origin", "determinism_partition", "engine"):
+        assert not table.columns[name].nullable, f"INV-1: findings.{name} must be NOT NULL"
+    # The origin enum CHECK admits ONLY the two partitions; 'mixed' is excluded.
+    origin_chk = _check_sqltext(table, "findings_origin_chk")
+    assert "deterministic-core" in origin_chk
+    assert "oracle-passthrough" in origin_chk
+    assert "mixed" not in origin_chk, (
+        "INV-1: 'mixed' must never be an admissible finding-level origin"
+    )
+    assert "mixed" not in _check_sqltext(table, "findings_determinism_partition_chk")
+    engine_chk = _check_sqltext(table, "findings_engine_chk")
+    for eng in ("ifds", "ide", "semgrep", "cpg-query", "external"):
+        assert eng in engine_chk
+
+    # NOTE: the live-PostgreSQL INSERT-fail falsifiers for this invariant
+    # (NOT NULL 23502 / CHECK 23514) live in tests/integration/
+    # test_fnd_specs.py under @pytest.mark.integration, so CI's postgres:16
+    # integration job runs them. This unit half asserts only the no-DB
+    # schema metadata above.
 
 
 @pytest.mark.invariant
@@ -387,10 +469,6 @@ def test_inv_2_fnd_01_nonnull_sversion_envdigest_at_normalizer() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-FND-02 (Findings store schema) not yet implemented",
-    strict=False,
-)
 def test_inv_2_fnd_02_nonnull_sversion_envdigest_at_schema_level() -> None:
     """INV-2 at the store: S_version + env_digest NOT NULL; env_digest format CHECK.
 
@@ -410,9 +488,21 @@ def test_inv_2_fnd_02_nonnull_sversion_envdigest_at_schema_level() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — schema INV-2 gate for CMP-FND-02.
     """
-    # TODO: with pytest.raises(IntegrityError): insert(S_version=None)
-    # with pytest.raises(IntegrityError): insert(env_digest="not-a-digest")
-    pytest.skip("CMP-FND-02 not implemented yet")
+    # --- Metadata introspection (always runs, no DB) ---
+    table = Finding.__table__
+    for name in ("S_version", "env_digest"):
+        assert not table.columns[name].nullable, f"INV-2: findings.{name} must be NOT NULL"
+    # env_digest format CHECK pins sha256:hex64.
+    env_chk = _check_sqltext(table, "findings_env_digest_chk")
+    assert "^sha256:[0-9a-f]{64}$" in env_chk, (
+        f"INV-2: env_digest must enforce the sha256 format; got {env_chk!r}"
+    )
+
+    # NOTE: the live-PostgreSQL INSERT-fail falsifiers for this invariant
+    # (NOT NULL 23502 / CHECK 23514) live in tests/integration/
+    # test_fnd_specs.py under @pytest.mark.integration, so CI's postgres:16
+    # integration job runs them. This unit half asserts only the no-DB
+    # schema metadata above.
 
 
 @pytest.mark.invariant
