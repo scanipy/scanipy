@@ -89,7 +89,9 @@ def test_every_mutation_lang_has_min() -> None:
     lock = build_lock._load_yaml(build_lock.LOCK_PATH)
     by_name = {c["name"]: c for c in lock["categories"]}
     for lang in _BASES:
-        cat = by_name[f"mutation-injected-{lang}"]
+        # v0.1.1: category name uses a slash so the Gate-2 falsifier's pathlib
+        # join resolves to categories/mutation-injected/<lang>/ on disk.
+        cat = by_name[f"mutation-injected/{lang}"]
         assert cat["sample_size"] >= 20, f"{lang}: {cat['sample_size']} < 20"
         for item in cat["items"]:
             assert item["label"] == "not-closed-world"
