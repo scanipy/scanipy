@@ -1,7 +1,7 @@
 commit_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
 input_sha: sha256:9295f5a285f93a8836a5ea4bb96105655ce3867c97ebe5292aaae71422713b04
 license: Apache-2.0
-path_in_source: calculator.go
+path_in_source: source/calculator.go
 recipe: reflect-call
 seed: 9
 source_url: local:clean_bases/go/calculator.go
