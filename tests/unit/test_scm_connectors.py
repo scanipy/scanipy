@@ -420,6 +420,33 @@ def test_clone_returns_metadata(provider: str, tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("provider", ["gitlab", "bitbucket", "azure-devops"])
+def test_clone_scrubs_token_bearing_remote_after_checkout(provider: str, tmp_path: Path) -> None:
+    """The token-bearing origin remote is removed after checkout (credential-at-rest).
+
+    `remote add origin <authed_url>` writes the token into dest/.git/config; clone()
+    must `remote remove origin` after the working tree is materialized so the
+    credential does not survive on disk.
+    """
+    build, repo = _BUILDERS[provider]
+    recorded: list[tuple[str, ...]] = []
+
+    async def recording_runner(argv: Sequence[str], cwd: Path) -> tuple[int, str, str]:
+        recorded.append(tuple(argv))
+        if argv[0] == "rev-parse":
+            return (0, f"{_SHA}\n", "")
+        if argv[0] == "rev-list":
+            return (0, f"{_SHA} {_PARENT}\n", "")
+        return (0, "", "")
+
+    conn = build(_Transport([]), git_runner=recording_runner)
+    asyncio.run(conn.clone(repo, commit_sha=_SHA, dest_dir=tmp_path / "t", shallow=True))
+    assert ("remote", "remove", "origin") in recorded
+    checkout_idx = next(i for i, a in enumerate(recorded) if a[0] == "checkout")
+    scrub_idx = recorded.index(("remote", "remove", "origin"))
+    assert scrub_idx > checkout_idx
+
+
+@pytest.mark.parametrize("provider", ["gitlab", "bitbucket", "azure-devops"])
 def test_clone_non_shallow_and_no_parents(provider: str, tmp_path: Path) -> None:
     build, repo = _BUILDERS[provider]
     # rev-list fails / empty → parent_shas == ().
