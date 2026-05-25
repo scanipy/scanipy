@@ -135,6 +135,20 @@ def test_traversal_in_access_key_is_denied() -> None:
         store.put(_KW["org_id"], f"orgs/{_KW['org_id']}/../escape", b"x")
 
 
+@pytest.mark.parametrize(
+    "bad_key",
+    [
+        f"orgs/{_KW['org_id']}/%5c../escape",
+        f"orgs/{_KW['org_id']}/a\\b/k",
+        f"orgs/{_KW['org_id']}/%5C../escape",  # upper-case %5C (case-fold)
+    ],
+)
+def test_backslash_encoded_traversal_in_guard_is_denied(bad_key: str) -> None:
+    store = InMemoryObjectStore()
+    with pytest.raises(PathTraversalError):
+        store.put(_KW["org_id"], bad_key, b"x")
+
+
 def test_store_validates_org_id_component() -> None:
     store = InMemoryObjectStore()
     with pytest.raises(PathTraversalError):
