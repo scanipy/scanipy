@@ -294,28 +294,93 @@ def test_scm_02c_shim_signature_unchanged() -> None:
 _SCM03_PROVIDERS = ("gitlab", "bitbucket", "azure-devops")
 
 
+# --- SCM-03 test scaffolding --------------------------------------------------
+# A no-op async transport: CMP-SCM-03's verify_webhook is a pure, offline
+# cryptographic predicate and performs no I/O, so the constructor's required
+# `transport` seam is satisfied with a stub that is never called.
+
+
+class _NullTransport:
+    """Async HTTP transport stub for tests that never touch the network."""
+
+    async def request(self, method, url, *, headers=None, params=None, json=None):
+        raise AssertionError("transport must not be called by verify_webhook")
+
+
+def _scm03_connector(provider: str):
+    """Instantiate the CMP-SCM-03 connector for `provider` with a PAT envelope."""
+    from integrations.scm.ado import AzureDevOpsConnector
+    from integrations.scm.base import SCMAuthMode, SCMCredentials
+    from integrations.scm.bitbucket import BitbucketConnector
+    from integrations.scm.gitlab import GitLabConnector
+
+    creds = SCMCredentials(provider=provider, mode=SCMAuthMode.PAT, payload={"token": "t"})
+    transport = _NullTransport()
+    if provider == "gitlab":
+        return GitLabConnector(creds, transport=transport)
+    if provider == "bitbucket":
+        return BitbucketConnector(creds, transport=transport)
+    if provider == "azure-devops":
+        return AzureDevOpsConnector(creds, organization="acme", transport=transport)
+    raise AssertionError(f"unhandled SCM-03 provider: {provider}")
+
+
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-SCM-03 (GL/BB/ADO connectors) not yet implemented", strict=False)
 @pytest.mark.parametrize("provider", _SCM03_PROVIDERS)
 def test_scm_03b_forged_webhook_rejected(provider: str) -> None:
-    """A forged/tampered webhook payload makes verify_webhook return False.
+    """A forged/tampered webhook makes verify_webhook return False (positive sanity first).
 
     Test id: TST-AC-SCM-03b-1..3 (one per provider)
     Maps to AC: AC-SCM-03b
     Kind tag: [NEGATIVE]
-    Inputs: a genuine payload + valid provider signature, then one tampered body byte
-      (signature recomputed over the original body). Per-provider scheme from
-      DOC-CMP-SCM-03 §3.3 (GitLab X-Gitlab-Token; Bitbucket X-Hub-Signature HMAC-SHA256;
-      ADO HMAC-SHA256 service-hook).
-    Outputs: verify_webhook(raw_body=tampered, headers, secret) -> bool.
-    Pass criteria: returns False; raises no exception; emits no "verified" log line
-      (DOC-CMP-SCM-03 §7 — predicate, not fault path).
+    Inputs: a genuine payload + valid provider signature (via the connector's
+      `sign_webhook` test hook), then a forgery. Per-provider scheme from
+      DOC-CMP-SCM-03 §3.3:
+        - GitLab: `X-Gitlab-Token` plain shared-secret equality. The token is
+          *body-independent*, so the honest forgery is a wrong/absent token —
+          tampering a body byte alone is undetectable by GitLab's native scheme
+          and asserting otherwise would misrepresent the provider guarantee.
+        - Bitbucket: `X-Hub-Signature` = sha256=HMAC-SHA256(secret, body). The
+          forgery tampers one body byte while keeping the original signature.
+        - Azure DevOps: HMAC-SHA-256 over the raw body (header pending
+          CLAR-SCM-02). The forgery tampers one body byte.
+    Outputs: verify_webhook(...) -> bool.
+    Pass criteria: the genuine delivery returns True; the forgery returns False;
+      no exception is raised (DOC-CMP-SCM-03 §7 — predicate, not fault path).
     Frequency: every CI run
     Hard gate?: yes
     """
-    # TODO: connector = {gitlab: GitLabConnector, ...}[provider](mock_creds)
-    # assert connector.verify_webhook(raw_body=tampered, headers=hdrs, secret=s) is False
-    pytest.skip("CMP-SCM-03 not implemented yet")
+    connector = _scm03_connector(provider)
+    secret = "shared-webhook-secret"  # pragma: allowlist secret
+    body = b'{"event":"push","ref":"refs/heads/main"}'
+
+    # Positive sanity: a genuine signature/token verifies True.
+    genuine_headers = connector.sign_webhook(raw_body=body, secret=secret)
+    assert connector.verify_webhook(raw_body=body, headers=genuine_headers, secret=secret) is True
+
+    if provider == "gitlab":
+        # GitLab's token is body-independent — forge the token, not the body.
+        forged_headers = {"X-Gitlab-Token": "wrong-token"}
+        assert (
+            connector.verify_webhook(raw_body=body, headers=forged_headers, secret=secret) is False
+        )
+        # A genuine token but missing header also fails.
+        assert connector.verify_webhook(raw_body=body, headers={}, secret=secret) is False
+    else:
+        # HMAC schemes: tamper one body byte, keep the signature over the original.
+        tampered_body = b'{"event":"push","ref":"refs/heads/MAIN"}'
+        assert (
+            connector.verify_webhook(raw_body=tampered_body, headers=genuine_headers, secret=secret)
+            is False
+        )
+        # A missing/malformed signature header also fails (no exception).
+        assert connector.verify_webhook(raw_body=body, headers={}, secret=secret) is False
+        assert (
+            connector.verify_webhook(
+                raw_body=body, headers={"X-Hub-Signature": "garbage"}, secret=secret
+            )
+            is False
+        )
 
 
 # ---------------------------------------------------------------------------
