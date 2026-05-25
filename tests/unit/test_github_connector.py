@@ -309,6 +309,13 @@ def test_clone_runs_git_sequence_and_returns_metadata(tmp_path: Path) -> None:
     # shallow → --depth=1 in the fetch argv
     fetch_argv = next(argv for argv, _ in runner.invocations if argv[0] == "fetch")
     assert "--depth=1" in fetch_argv
+    # Security: the token-bearing origin remote is scrubbed after checkout so the
+    # bearer token does not persist in dest/.git/config (credential-at-rest).
+    argvs = [tuple(argv) for argv, _ in runner.invocations]
+    assert ("remote", "remove", "origin") in argvs
+    checkout_idx = next(i for i, a in enumerate(argvs) if a[0] == "checkout")
+    scrub_idx = argvs.index(("remote", "remove", "origin"))
+    assert scrub_idx > checkout_idx  # scrub happens after the working tree is materialized
 
 
 def test_clone_non_shallow_omits_depth(tmp_path: Path) -> None:

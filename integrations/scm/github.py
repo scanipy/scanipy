@@ -333,6 +333,12 @@ class GitHubConnector(SCMConnector):
         await self._run_git(fetch_args, dest_dir)
         await self._run_git(["checkout", "--quiet", commit_sha], dest_dir)
 
+        # `remote add origin <authed_url>` persisted the bearer token into
+        # dest_dir/.git/config. Scrub it: the snapshot only needs the working
+        # tree at this SHA, so the authenticated remote must not survive on disk
+        # (credential-at-rest leak). rev-parse / rev-list below are local-only.
+        await self._run_git(["remote", "remove", "origin"], dest_dir)
+
         resolved = await self._git_rev_parse(dest_dir, "HEAD")
         parents = await self._git_parents(dest_dir, resolved)
         return CloneMetadata(
@@ -348,8 +354,10 @@ class GitHubConnector(SCMConnector):
     def _authed_clone_url(self, clone_url: str) -> str:
         """Inject the bearer token into an HTTPS clone URL's userinfo.
 
-        The token is used in-memory only and never written to disk (DOC §4.3).
-        SSH clone URLs are returned unchanged (key auth handled by the runner).
+        `git remote add origin <this-url>` transiently writes the token into
+        `.git/config`; `clone()` removes the `origin` remote after checkout so the
+        credential does not survive at rest (DOC §4.3). SSH clone URLs are returned
+        unchanged (key auth handled by the runner).
         """
         payload = self._credentials.payload
         token = payload.get("token") or payload.get("access_token")
