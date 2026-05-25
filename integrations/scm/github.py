@@ -437,18 +437,28 @@ class GitHubConnector(SCMConnector):
         )
 
     async def _find_existing_hook(self, owner: str, name: str, target_url: str) -> str | None:
-        """Return the id of an existing hook with this target_url, else None."""
-        resp = await self._request("GET", f"/repos/{owner}/{name}/hooks")
-        body = resp.json()
-        if not isinstance(body, list):
-            return None
-        for hook in body:
-            if not isinstance(hook, Mapping):
-                continue
-            config = hook.get("config", {})
-            if isinstance(config, Mapping) and config.get("url") == target_url:
-                hook_id = hook.get("id")
-                return str(hook_id) if hook_id is not None else None
+        """Return the id of an existing hook with this target_url, else None.
+
+        Cursor-paginates via the `Link` header (like `list_repos`) so an existing
+        hook on a later page is found — otherwise register_webhook would create a
+        duplicate when a repo already has more than one page of hooks.
+        """
+        path: str | None = f"/repos/{owner}/{name}/hooks"
+        params: Mapping[str, str] | None = {"per_page": "100"}
+        while path is not None:
+            resp = await self._request("GET", path, params=params)
+            body = resp.json()
+            if not isinstance(body, list):
+                return None
+            for hook in body:
+                if not isinstance(hook, Mapping):
+                    continue
+                config = hook.get("config", {})
+                if isinstance(config, Mapping) and config.get("url") == target_url:
+                    hook_id = hook.get("id")
+                    return str(hook_id) if hook_id is not None else None
+            path = self._next_link(resp)
+            params = None  # the next-link URL already carries its query string
         return None
 
     # ---- ABC method 4 : verify_webhook ------------------------------------
