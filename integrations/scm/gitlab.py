@@ -270,6 +270,11 @@ class GitLabConnector(SCMConnector):
         await self._run_git(fetch_args, dest_dir)
         await self._run_git(["checkout", "--quiet", commit_sha], dest_dir)
 
+        # Scrub the token-bearing origin remote so the credential does not persist
+        # in dest_dir/.git/config (credential-at-rest); the snapshot only needs the
+        # working tree at this SHA. rev-parse/rev-list below are local-only.
+        await self._run_git(["remote", "remove", "origin"], dest_dir)
+
         resolved = await self._git_rev_parse(dest_dir, "HEAD")
         parents = await self._git_parents(dest_dir, resolved)
         return CloneMetadata(
