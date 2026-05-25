@@ -29,9 +29,18 @@ Marker set is the CLOSED pyproject.toml set
 the WBS kind tag appears in the docstring only.
 """
 
+from pathlib import Path
+
 import pytest
 
 from analysis.ifds.dsl import DSLError, Spec, parse_spec
+from detectors.registry import (
+    Detector,
+    DetectorRegistry,
+    RegistryError,
+    RegistryLoadError,
+    derive_partition,
+)
 
 # Well-formed header shared by the negative fixtures below: an engine=ifds
 # (deterministic-core) DSL spec. Each malformed-spec test appends exactly one
@@ -203,50 +212,71 @@ def test_dsl_rejects_non_core_engine_e_dsl_009() -> None:
 # accept. Hard gate? yes. Frequency: every CI run.
 
 
-@pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-02 not yet implemented", strict=False)
-@pytest.mark.parametrize(
-    "e_dsl_code",
-    [
-        "E-DSL-001",
-        "E-DSL-002",
-        "E-DSL-003",
-        "E-DSL-004",
-        "E-DSL-005",
-        "E-DSL-006",
-        "E-DSL-007",
-        "E-DSL-008",
-        "E-DSL-009",
-    ],
+# Per-code out-of-grammar spec bodies, reused verbatim from TST-INV-4-DET-01.
+# Each is the SAME malformed DSL text the parser rejects; here it is surfaced
+# through the REGISTRY entry point (load_manifests) where the verbatim E-DSL
+# code must pass through unwrapped.
+_SEMGREP_HEADER = 'id: "neg-eng"\nclass: "xss"\nlanguages: ["javascript"]\nengine: "semgrep"\n'
+_BAD_SPEC_BY_CODE: dict[str, str] = {
+    "E-DSL-001": _spec(r'source(re.compile(r".*\.execute\("))'),
+    "E-DSL-002": _spec('propagate(semgrep: { pattern: "$X" })'),
+    "E-DSL-003": _spec('sink(cpg.method("foo").caller)'),
+    "E-DSL-004": _spec("sanitize(lambda f: f.is_xss())"),
+    "E-DSL-005": _spec("then propagate(arg[0] → ret)"),
+    "E-DSL-006": _spec("if matches(p) then sanitize(arg[0])"),
+    "E-DSL-007": _spec("fixpoint(propagate(arg[0] → ret))"),
+    "E-DSL-008": _spec("taint_flow(?T<:Http.getParameter)"),
+    "E-DSL-009": _spec("sink(document.innerHTML)", header=_SEMGREP_HEADER),
+}
+
+_CORE_MANIFEST = (
+    "id: neg-fixture\n"
+    "cwes: [CWE-89]\n"
+    "languages: [java]\n"
+    "frameworks: [jdbc]\n"
+    "engine: ifds\n"
+    "severity_default: high\n"
+    "per_language_readiness:\n"
+    "  java: ready\n"
 )
-def test_registration_rejects_out_of_dsl_spec_passthrough_e_dsl(e_dsl_code: str) -> None:
+
+
+def _write_core_detector(root: Path, *, spec_text: str, class_name: str = "neg") -> None:
+    """Build <root>/<class>/{manifest.yaml,specs/bad.dsl.yaml} for a core engine."""
+    class_dir = root / class_name
+    (class_dir / "specs").mkdir(parents=True)
+    (class_dir / "manifest.yaml").write_text(_CORE_MANIFEST, encoding="utf-8")
+    (class_dir / "specs" / "bad.dsl.yaml").write_text(spec_text, encoding="utf-8")
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("e_dsl_code", sorted(_BAD_SPEC_BY_CODE))
+def test_registration_rejects_out_of_dsl_spec_passthrough_e_dsl(
+    e_dsl_code: str, tmp_path: Path
+) -> None:
     """TST-AC-DET-02a / Maps to AC-DET-02a / Kind [NEGATIVE].
 
     One case per E-DSL-001..009 surfaced verbatim at the REGISTRY entry point
     (DOC-CMP-DET-02 §9.2 mandates one test per E-DSL code plus one per E-REG code).
 
-    Inputs: a Detector whose core DSL spec triggers `e_dsl_code` (out-of-grammar).
-    Outputs: register() raises DSLError with the verbatim E-DSL code; registry
-        left empty (no partial-load); rejection is total.
-    Pass criteria: DSLError.code == e_dsl_code surfaced verbatim at register();
+    Inputs: a detector tree whose core DSL spec triggers `e_dsl_code`.
+    Outputs: load_manifests() raises DSLError with the verbatim E-DSL code;
+        registry left empty (no partial-load); rejection is total.
+    Pass criteria: DSLError.code == e_dsl_code surfaced verbatim at the registry;
         spec never admitted. Distinct entry point from TST-AC-DET-01b (parser).
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: from detectors.registry import DetectorRegistry, DSLError
-    # CLAR-PARAM-01 — non-DSL spec boundary owned upstream; codes per DOC-DSL §6
-    # When CMP-DET-02 is DONE, assert on the REGISTRY OUTPUT, never the input var:
-    #   with pytest.raises(DSLError) as exc:
-    #       DetectorRegistry().register(detector_triggering(e_dsl_code))
-    #   assert exc.value.code == e_dsl_code        # verbatim code at register()
-    #   assert DetectorRegistry().specs == []      # total rejection, no partial-load
-    # (No pre-skip assert on e_dsl_code itself — that is tautological and would leave
-    #  the registration guard permanently green once pytest.skip is removed.)
-    pytest.skip("CMP-DET-02 not implemented yet")
+    root = tmp_path / "detectors"
+    _write_core_detector(root, spec_text=_BAD_SPEC_BY_CODE[e_dsl_code])
+    reg = DetectorRegistry()
+    with pytest.raises(DSLError) as exc:
+        reg.load_manifests(str(root))
+    assert exc.value.code == e_dsl_code  # verbatim code surfaced at the registry
+    assert reg.all() == ()  # total rejection, no partial-load
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-02 not yet implemented", strict=False)
-def test_registration_rejects_missing_manifest_field_e_reg_001() -> None:
+def test_registration_rejects_missing_manifest_field_e_reg_001(tmp_path: Path) -> None:
     """TST-AC-DET-02a / Maps to AC-DET-02a / Kind [NEGATIVE].
 
     Inputs: a manifest missing a required field (id/cwes/languages/frameworks/
@@ -255,13 +285,29 @@ def test_registration_rejects_missing_manifest_field_e_reg_001() -> None:
     Pass criteria: error.code == 'E-REG-001'; diagnostic names the field.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: from detectors.registry import RegistryError
-    pytest.skip("CMP-DET-02 not implemented yet")
+    root = tmp_path / "detectors"
+    class_dir = root / "neg"
+    class_dir.mkdir(parents=True)
+    # Drop the required ``cwes`` field.
+    manifest = (
+        "id: neg-fixture\n"
+        "languages: [java]\n"
+        "frameworks: [jdbc]\n"
+        "engine: ifds\n"
+        "severity_default: high\n"
+        "per_language_readiness:\n  java: ready\n"
+    )
+    (class_dir / "manifest.yaml").write_text(manifest, encoding="utf-8")
+    reg = DetectorRegistry()
+    with pytest.raises(RegistryLoadError) as exc:
+        reg.load_manifests(str(root))
+    assert exc.value.code == "E-REG-001"
+    assert "cwes" in str(exc.value)
+    assert reg.all() == ()  # atomic: no partial-load
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-02 not yet implemented", strict=False)
-def test_registration_rejects_unknown_engine_e_reg_002() -> None:
+def test_registration_rejects_unknown_engine_e_reg_002(tmp_path: Path) -> None:
     """TST-AC-DET-02a / Maps to AC-DET-02a / Kind [NEGATIVE].
 
     Inputs: a manifest whose engine is outside {ifds, ide, semgrep, cpg-query, external}.
@@ -269,27 +315,55 @@ def test_registration_rejects_unknown_engine_e_reg_002() -> None:
     Pass criteria: error.code == 'E-REG-002'.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: engine enum is closed; new engines need AC-DET-02c amendment (RULE-4)
-    pytest.skip("CMP-DET-02 not implemented yet")
+    root = tmp_path / "detectors"
+    class_dir = root / "neg"
+    class_dir.mkdir(parents=True)
+    manifest = (
+        "id: neg-fixture\n"
+        "cwes: [CWE-89]\n"
+        "languages: [java]\n"
+        "frameworks: [jdbc]\n"
+        "engine: quantum\n"  # not in the closed engine enum
+        "severity_default: high\n"
+        "per_language_readiness:\n  java: ready\n"
+    )
+    (class_dir / "manifest.yaml").write_text(manifest, encoding="utf-8")
+    reg = DetectorRegistry()
+    with pytest.raises(RegistryLoadError) as exc:
+        reg.load_manifests(str(root))
+    assert exc.value.code == "E-REG-002"
+    assert reg.all() == ()
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-02 not yet implemented", strict=False)
-def test_registration_rejects_duplicate_id_e_reg_003() -> None:
+def test_registration_rejects_duplicate_id_e_reg_003(tmp_path: Path) -> None:
     """TST-AC-DET-02a / Maps to AC-DET-02a / Kind [NEGATIVE].
 
-    Inputs: two Detectors sharing the same id.
+    Inputs: two detectors sharing the same id.
     Outputs: RegistryError(code='E-REG-003') 'detector id already registered'.
     Pass criteria: error.code == 'E-REG-003'; ids are globally unique.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: id uniqueness is a registry-level closure constraint
-    pytest.skip("CMP-DET-02 not implemented yet")
+    root = tmp_path / "detectors"
+    good_spec = _spec(
+        "source(?T<:javax.servlet.http.HttpServletRequest.getParameter(*))",
+        "sink(?T<:java.sql.Statement.executeQuery(arg[0]))",
+    )
+    # Two distinct class dirs whose manifests both declare id: neg-fixture.
+    for class_name in ("alpha", "beta"):
+        cd = root / class_name
+        (cd / "specs").mkdir(parents=True)
+        (cd / "manifest.yaml").write_text(_CORE_MANIFEST, encoding="utf-8")
+        (cd / "specs" / "ok.dsl.yaml").write_text(good_spec, encoding="utf-8")
+    reg = DetectorRegistry()
+    with pytest.raises(RegistryLoadError) as exc:
+        reg.load_manifests(str(root))
+    assert exc.value.code == "E-REG-003"
+    assert reg.all() == ()
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-02 not yet implemented", strict=False)
-def test_registration_rejects_oracle_without_query_path_e_reg_004() -> None:
+def test_registration_rejects_oracle_without_query_path_e_reg_004(tmp_path: Path) -> None:
     """TST-AC-DET-02a / Maps to AC-DET-02a / Kind [NEGATIVE].
 
     Inputs: an oracle-engine manifest with missing/nonexistent oracle_query_path.
@@ -297,13 +371,29 @@ def test_registration_rejects_oracle_without_query_path_e_reg_004() -> None:
     Pass criteria: error.code == 'E-REG-004'.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: oracle engines require an existing oracle_query_path file
-    pytest.skip("CMP-DET-02 not implemented yet")
+    root = tmp_path / "detectors"
+    class_dir = root / "neg"
+    class_dir.mkdir(parents=True)
+    manifest = (
+        "id: oracle-fixture\n"
+        "cwes: [CWE-79]\n"
+        "languages: [javascript]\n"
+        "frameworks: [express]\n"
+        "engine: semgrep\n"
+        "severity_default: medium\n"
+        "oracle_query_path: oracle/missing.semgrep.yaml\n"  # file does not exist
+        "per_language_readiness:\n  javascript: ready\n"
+    )
+    (class_dir / "manifest.yaml").write_text(manifest, encoding="utf-8")
+    reg = DetectorRegistry()
+    with pytest.raises(RegistryLoadError) as exc:
+        reg.load_manifests(str(root))
+    assert exc.value.code == "E-REG-004"
+    assert reg.all() == ()
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-02 not yet implemented", strict=False)
-def test_registration_rejects_reregistration_after_boot_e_reg_005() -> None:
+def test_registration_rejects_reregistration_after_boot_e_reg_005(tmp_path: Path) -> None:
     """TST-AC-DET-02a / Maps to AC-DET-02a / Kind [NEGATIVE].
 
     Inputs: a register() call for an id after load_manifests() has completed.
@@ -311,12 +401,37 @@ def test_registration_rejects_reregistration_after_boot_e_reg_005() -> None:
     Pass criteria: error.code == 'E-REG-005'; registry never mutates post-boot.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: registry is a frozen process-singleton after load_manifests()
-    pytest.skip("CMP-DET-02 not implemented yet")
+    root = tmp_path / "detectors"
+    cd = root / "alpha"
+    (cd / "specs").mkdir(parents=True)
+    (cd / "manifest.yaml").write_text(_CORE_MANIFEST, encoding="utf-8")
+    (cd / "specs" / "ok.dsl.yaml").write_text(
+        _spec(
+            "source(?T<:javax.servlet.http.HttpServletRequest.getParameter(*))",
+            "sink(?T<:java.sql.Statement.executeQuery(arg[0]))",
+        ),
+        encoding="utf-8",
+    )
+    reg = DetectorRegistry()
+    reg.load_manifests(str(root))  # boot completes; registry frozen
+
+    later = Detector(
+        id="post-boot",
+        cwes=("CWE-89",),
+        languages=("java",),
+        frameworks=("jdbc",),
+        engine="ifds",
+        severity_default="high",
+        determinism_partition=derive_partition("ifds"),
+        per_language_readiness={"java": "ready"},
+        spec=reg.all()[0].spec,
+    )
+    with pytest.raises(RegistryError) as exc:
+        reg.register(later)
+    assert exc.value.code == "E-REG-005"
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-02 not yet implemented", strict=False)
 def test_registration_rejects_unknown_engine_in_derive_partition_e_reg_006() -> None:
     """TST-AC-DET-02a / Maps to AC-DET-02a / Kind [NEGATIVE].
 
@@ -326,19 +441,19 @@ def test_registration_rejects_unknown_engine_in_derive_partition_e_reg_006() -> 
     Pass criteria: error.code == 'E-REG-006'.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: derive_partition is total over the closed engine enum; else E-REG-006
-    pytest.skip("CMP-DET-02 not implemented yet")
+    with pytest.raises(RegistryError) as exc:
+        derive_partition("quantum")
+    assert exc.value.code == "E-REG-006"
 
 
 # ─── TST-AC-DET-02b — Manifest records all required fields + derived partition ─
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-02 not yet implemented", strict=False)
-def test_manifest_records_all_required_fields() -> None:
+def test_manifest_records_all_required_fields(tmp_path: Path) -> None:
     """TST-AC-DET-02b / Maps to AC-DET-02b / Kind [UNIT].
 
-    Inputs: a well-formed manifest passed through register().
+    Inputs: a well-formed manifest passed through load_manifests().
     Outputs: the resulting Detector record carries id, cwes, languages, frameworks,
         engine, severity_default, per_language_readiness, and a derived
         determinism_partition.
@@ -346,8 +461,45 @@ def test_manifest_records_all_required_fields() -> None:
         DERIVED (matches derive_partition(engine)), not authored on the manifest.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: assert determinism_partition is absent from manifest input yet present on record
-    pytest.skip("CMP-DET-02 not implemented yet")
+    root = tmp_path / "detectors"
+    cd = root / "injection"
+    (cd / "specs").mkdir(parents=True)
+    manifest_text = (
+        "id: java-jdbc-sqli\n"
+        "cwes: [CWE-89]\n"
+        "languages: [java]\n"
+        "frameworks: [jdbc, spring-jdbc]\n"
+        "engine: ifds\n"
+        "severity_default: high\n"
+        "per_language_readiness:\n  java: ready\n  python: front-end-blocked\n"
+    )
+    (cd / "manifest.yaml").write_text(manifest_text, encoding="utf-8")
+    (cd / "specs" / "sqli.dsl.yaml").write_text(
+        'id: "java-jdbc-sqli"\nclass: "injection"\nlanguages: ["java"]\nengine: "ifds"\n'
+        "source(?T<:javax.servlet.http.HttpServletRequest.getParameter(*))\n"
+        "sink(?T<:java.sql.Statement.executeQuery(arg[0]))\n",
+        encoding="utf-8",
+    )
+    reg = DetectorRegistry()
+    reg.load_manifests(str(root))
+    det = reg.by_id("java-jdbc-sqli")
+
+    assert det.cwes == ("CWE-89",)
+    assert det.languages == ("java",)
+    assert det.frameworks == ("jdbc", "spring-jdbc")
+    assert det.engine == "ifds"
+    assert det.severity_default == "high"
+    assert det.per_language_readiness == {"java": "ready", "python": "front-end-blocked"}
+    assert det.spec is not None
+
+    # determinism_partition is DERIVED, not authored: absent from the raw manifest
+    # on disk, present on the record, and equal to derive_partition(engine).
+    import yaml as _yaml
+
+    raw = _yaml.safe_load((cd / "manifest.yaml").read_text(encoding="utf-8"))
+    assert "determinism_partition" not in raw
+    assert det.determinism_partition == derive_partition(det.engine)
+    assert det.determinism_partition == "deterministic-core"
 
 
 # ─── TST-AC-DET-02c — engine -> determinism_partition mapping ───────────────
@@ -357,7 +509,6 @@ def test_manifest_records_all_required_fields() -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-02 not yet implemented", strict=False)
 def test_partition_ifds_is_deterministic_core() -> None:
     """TST-AC-DET-02c / Maps to AC-DET-02c / Kind [UNIT].
 
@@ -366,12 +517,10 @@ def test_partition_ifds_is_deterministic_core() -> None:
     Pass criteria: exact equality 'deterministic-core'.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: from detectors.registry import derive_partition
-    pytest.skip("CMP-DET-02 not implemented yet")
+    assert derive_partition("ifds") == "deterministic-core"
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-02 not yet implemented", strict=False)
 def test_partition_ide_is_deterministic_core() -> None:
     """TST-AC-DET-02c / Maps to AC-DET-02c / Kind [UNIT].
 
@@ -380,12 +529,10 @@ def test_partition_ide_is_deterministic_core() -> None:
     Pass criteria: exact equality 'deterministic-core'.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: derive_partition('ide') -> deterministic-core
-    pytest.skip("CMP-DET-02 not implemented yet")
+    assert derive_partition("ide") == "deterministic-core"
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-02 not yet implemented", strict=False)
 def test_partition_semgrep_is_oracle_passthrough() -> None:
     """TST-AC-DET-02c / Maps to AC-DET-02c / Kind [UNIT].
 
@@ -394,12 +541,10 @@ def test_partition_semgrep_is_oracle_passthrough() -> None:
     Pass criteria: exact equality 'oracle-passthrough'.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: derive_partition('semgrep') -> oracle-passthrough
-    pytest.skip("CMP-DET-02 not implemented yet")
+    assert derive_partition("semgrep") == "oracle-passthrough"
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-02 not yet implemented", strict=False)
 def test_partition_cpg_query_is_oracle_passthrough() -> None:
     """TST-AC-DET-02c / Maps to AC-DET-02c / Kind [UNIT].
 
@@ -408,12 +553,10 @@ def test_partition_cpg_query_is_oracle_passthrough() -> None:
     Pass criteria: exact equality 'oracle-passthrough'.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: derive_partition('cpg-query') -> oracle-passthrough
-    pytest.skip("CMP-DET-02 not implemented yet")
+    assert derive_partition("cpg-query") == "oracle-passthrough"
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-02 not yet implemented", strict=False)
 def test_partition_external_is_oracle_passthrough() -> None:
     """TST-AC-DET-02c / Maps to AC-DET-02c / Kind [UNIT].
 
@@ -422,8 +565,7 @@ def test_partition_external_is_oracle_passthrough() -> None:
     Pass criteria: exact equality 'oracle-passthrough'.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: derive_partition('external') -> oracle-passthrough
-    pytest.skip("CMP-DET-02 not implemented yet")
+    assert derive_partition("external") == "oracle-passthrough"
 
 
 # ─── TST-AC-DET-03a — All ten class dirs register without error ─────────────
