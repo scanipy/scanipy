@@ -18,15 +18,47 @@ Marker set is closed (`--strict-markers`): {unit, integration, falsifier, empiri
 invariant, nightly, pre_release}. The WBS "Kind tag" lives in the docstring only.
 """
 
+from typing import TYPE_CHECKING
+
 import pytest
+
+if TYPE_CHECKING:
+    from services.control_plane import JWTClaims
+
+_ORG_A = "11111111-1111-1111-1111-111111111111"
+_ORG_B = "22222222-2222-2222-2222-222222222222"
+_USER_A = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+
+# Parametrization axis: (verb, resource) over the three route families named in
+# the AC-CP-01a spec (findings / scans / codebases) across GET/POST/DELETE.
+_VERB_RESOURCE = [
+    ("GET", "findings"),
+    ("POST", "scans"),
+    ("DELETE", "codebases"),
+    ("GET", "scans"),
+    ("POST", "codebases"),
+    ("DELETE", "findings"),
+    ("GET", "codebases"),
+    ("POST", "findings"),
+    ("DELETE", "scans"),
+]
+
+
+def _claims_org_a(role: str = "org-admin") -> "JWTClaims":
+    from services.control_plane import JWTClaims
+
+    return JWTClaims(
+        user_id=_USER_A,
+        org_id=_ORG_A,
+        role=role,  # type: ignore[arg-type]
+        issued_at=0,
+        expires_at=9999999999,
+    )
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(
-    reason="CMP-CP-01 (multi-tenant scan API guard) not yet implemented — spec stub",
-    strict=False,
-)
-def test_cp01a_cross_org_access_is_denied() -> None:
+@pytest.mark.parametrize(("method", "resource"), _VERB_RESOURCE)
+def test_cp01a_cross_org_access_is_denied(method: str, resource: str) -> None:
     """Cross-org access attempt is denied — no IAM cross-bleed.
 
     Test id:      TST-AC-CP-01a
@@ -43,10 +75,73 @@ def test_cp01a_cross_org_access_is_denied() -> None:
                   leaks org-B existence beyond the chosen 403/404 envelope.
     Frequency:    every CI run
     Hard gate?:   yes — Stage-A GA process gate (tenancy isolation, CLAR-DEPLOY-16).
+
+    Exercises all three CLAR-DEPLOY-16 / DOC-CMP-CP-01 §9 layers per (verb, route):
+      L1: forged X-Scanipy-Org-Id (org B) on an org-A JWT  -> 403 org_mismatch
+      L2: org-A session reaching an org-B resource id      -> RLS miss -> 404
+      L3: query issued before the session var is bound      -> TenantIsolationError
     """
-    # TODO: import CPGuard from services.scan / control plane app when CMP-CP-01 is DONE;
-    # parameterize over (verb, route); assert cross-org request yields denial + zero rows.
-    pytest.skip("CMP-CP-01 not implemented yet")
+    from services.control_plane import (
+        CPGuard,
+        OrgScopedStore,
+        TenantIsolationError,
+    )
+
+    guard = CPGuard()
+    claims = _claims_org_a()
+    trace = "trace-cp01a"
+
+    # --- Layer 1: forged tenancy header pointing at org B -------------------
+    forged_headers = {"X-Scanipy-Org-Id": _ORG_B, "X-Scanipy-User-Id": _USER_A}
+    l1 = guard.authorize_request(
+        claims,
+        forged_headers,
+        method=method,
+        resource=resource,  # type: ignore[arg-type]
+        route=f"/api/v1/{resource}",
+        trace_id=trace,
+    )
+    assert l1 is not None, "cross-tenant header must be rejected"
+    assert l1.error_code == "org_mismatch"
+    assert l1.http_status == 403
+    # No org-B identifier beyond the echoed header is leaked in the message.
+    assert _ORG_B not in l1.message
+
+    # --- Layer 2: org-A session can never see an org-B resource id ----------
+    store: OrgScopedStore[str] = OrgScopedStore()
+    store.seed("resource-owned-by-b", _ORG_B, "secret-b-payload")
+    store.set_session(_ORG_A)  # CP-01 bound app.org_id = A after a clean auth.
+    assert store.query_one("resource-owned-by-b") is None, "RLS must hide org-B row"
+    assert store.query() == [], "no cross-tenant rows in a tenant-scoped list"
+    # The handler surfaces a non-leaking 404 for the cross-tenant miss.
+    nf = guard.not_found_envelope(trace)
+    assert nf.error_code == "not_found"
+    assert nf.http_status == 404
+
+    # --- Layer 3: a query before the session setter ran is a hard reject ----
+    unbound: OrgScopedStore[str] = OrgScopedStore()
+    unbound.seed("resource-owned-by-b", _ORG_B, "secret-b-payload")
+    with pytest.raises(TenantIsolationError):
+        unbound.query_one("resource-owned-by-b")
+    iso = guard.isolation_error_envelope(trace)
+    assert iso.error_code == "tenant_isolation_violation"
+    assert iso.http_status == 403
+
+    # --- RBAC gate is live: a same-tenant request lacking the capability is
+    #     denied with role_denied (org-viewer cannot submit a scan; DOC-API §2.6).
+    viewer = _claims_org_a(role="org-viewer")
+    same_tenant_headers = {"X-Scanipy-Org-Id": _ORG_A, "X-Scanipy-User-Id": _USER_A}
+    rbac = guard.authorize_request(
+        viewer,
+        same_tenant_headers,
+        method="POST",
+        resource="scans",
+        route="/api/v1/scans",
+        trace_id=trace,
+    )
+    assert rbac is not None
+    assert rbac.error_code == "role_denied"
+    assert rbac.http_status == 403
 
 
 @pytest.mark.unit
