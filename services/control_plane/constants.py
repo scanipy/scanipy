@@ -52,7 +52,11 @@ ERROR_HTTP_STATUS: dict[str, int] = {
 # (DOC-API §4: scans / codebases / findings). Actions are the verb→capability
 # projection from the §2.6 matrix.
 Resource = Literal["scans", "snapshots", "codebases", "findings", "attestations"]
-Action = Literal["read", "submit", "create", "update_creds", "patch_status"]
+# "forbidden" is a sentinel the verb→capability projection returns for verbs with
+# no §2.6 capability cell (DELETE, unknown verbs). It is NEVER a member of any
+# role's grant set in RBAC below, so requiring it always denies (fail-closed).
+# v3.2 has no delete capability for any role on any resource.
+Action = Literal["read", "submit", "create", "update_creds", "patch_status", "forbidden"]
 
 # RBAC matrix verbatim from DOC-API §2.6 (CLAR-DEPLOY-12). A role may take an
 # action on a resource iff the action is in the set below. "own only" scoping

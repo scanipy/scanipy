@@ -143,6 +143,24 @@ def test_cp01a_cross_org_access_is_denied(method: str, resource: str) -> None:
     assert rbac.error_code == "role_denied"
     assert rbac.http_status == 403
 
+    # --- Regression: DELETE has no §2.6 capability cell for ANY role. It must
+    #     deny even for org-admin (who holds update_creds on codebases). A prior
+    #     bug projected DELETE onto "update_creds", silently letting org-admin
+    #     DELETE codebases. The "forbidden" sentinel (held by no role) fixes it.
+    admin = _claims_org_a(role="org-admin")
+    for res in ("codebases", "scans", "findings", "snapshots", "attestations"):
+        denied = guard.authorize_request(
+            admin,
+            same_tenant_headers,
+            method="DELETE",
+            resource=res,
+            route=f"/api/v1/{res}",
+            trace_id=trace,
+        )
+        assert denied is not None, f"DELETE {res} must be denied for org-admin"
+        assert denied.error_code == "role_denied"
+        assert denied.http_status == 403
+
 
 @pytest.mark.unit
 @pytest.mark.xfail(
