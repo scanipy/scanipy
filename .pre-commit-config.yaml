@@ -69,6 +69,7 @@ repos:
           - types-PyYAML
           - types-requests
           - types-psycopg2
+          - sqlalchemy>=2.0
         # Scope to the same source dirs CI type-checks (ci.yml runs
         # `mypy analysis/ detectors/ integrations/ services/`). Tests are
         # not type-checked in CI; running mypy on them here only fails on
