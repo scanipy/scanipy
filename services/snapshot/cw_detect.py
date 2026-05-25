@@ -37,7 +37,7 @@ from typing import Literal
 # Semver of this detector. Sealed into provenance (precondition_status.json) so
 # CMP-SNAP-04 can identify which CW version produced a verdict on a
 # disagreement (DOC-CMP-SNAP-03 §8). Bump on any change to detection behaviour.
-CW_DETECT_VERSION = "0.1.0"
+CW_DETECT_VERSION = "0.1.1"
 
 Verdict = Literal["closed-world", "degraded", "full-reparse"]
 Confidence = Literal["high", "uncertain"]
