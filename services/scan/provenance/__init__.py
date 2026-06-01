@@ -512,8 +512,8 @@ def _verify_signature(
 ) -> bool:
     """Verify an RSASSA-PSS signature with the DER-encoded public key.
 
-    Uses ``cryptography`` (already a transitive dependency); the salt is the
-    digest length, matching AWS KMS RSASSA_PSS semantics. Returns ``False`` on
+    Uses ``cryptography`` (a declared project dependency — see pyproject.toml);
+    the salt is the digest length, matching AWS KMS RSASSA_PSS semantics. Returns ``False`` on
     any verification failure (PSS is randomized — never re-sign-and-compare).
     """
     from cryptography.exceptions import InvalidSignature
