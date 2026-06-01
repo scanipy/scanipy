@@ -227,7 +227,7 @@ Full decision record: `docs/cross-cutting/DOC-DEPLOY-DECISIONS.md` (Phase 0 / CM
 | **SRE / DevOps** | `/sre-agent` | CMP-DEPLOY-*; CI/CD; Dockerfile pinning; observability |
 | **Corpus Curator** | `/corpus-agent` | CMP-CORP-* (reflection, CPG-fidelity, canary, refactor, vuln) |
 | **Implementation** | `/implement` | One CMP at a time; reads DOC-CMP-*; makes TST-AC-* green |
-| **Code Review** | `claude-review` (CI check) | Automated PR review on open/ready (RULE-10): INV-* compliance, scope, provenance threading. Replaces the retired `/code-review-cmp` Skill; defined in `.github/workflows/claude-code-review.yml`. |
+| **Code Review** | `claude-review` (CI check) | Automated PR review on open/ready (RULE-10): INV-* compliance, scope, provenance threading. The verdict gates merge — the check goes RED unless it is APPROVE (fail-closed). Replaces the retired `/code-review-cmp` Skill; defined in `.github/workflows/claude-code-review.yml`. |
 | **WBS Sync** | `/sync-wbs` | Update status codes; surface next-READY items |
 | **Stage Gate** | `/stage-gate` | Approve/reject Stage A→D transitions |
 | **CLAR Resolution** | `/clar-resolve` | Research + write a single CLAR-* decision record in WBS.md §17 |
@@ -251,9 +251,14 @@ RULE-8   CTO approves every CLAR-DEPLOY-* before its dependent phase starts.
 RULE-9   Security Analyst reviews every component touching INV-3 or INV-4.
 RULE-10  The `claude-review` CI check (`.github/workflows/claude-code-review.yml`)
          is the canonical code review and must be green (verdict APPROVE)
-         before merge. It is the sole reviewer — the old `/code-review-cmp`
-         Skill is retired. Server-side required-checks are unavailable on this
-         repo (Free/private), so this is a process-level gate like the others.
+         before merge. The verdict drives the check conclusion: a gate step
+         parses the reviewer's `SCANIPY-REVIEW-VERDICT=…` sentinel and turns
+         the check RED unless it is APPROVE (fail-closed). It is the sole
+         reviewer — the old `/code-review-cmp` Skill is retired. Server-side
+         required-checks are unavailable on this repo (Free/private), so this
+         is a process-level gate like the others. Re-run the check by toggling
+         draft↔ready / reopening the PR — `@claude review` (claude.yml) cannot
+         clear it.
 RULE-11  Board reflects reality. Before picking up CMP-X: run
          `scripts/board.sh check <issue>`; stop if In-Progress/Done.
          Claim with `set <issue> "In Progress"`; mark `Done` only when

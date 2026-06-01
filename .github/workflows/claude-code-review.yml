@@ -3,8 +3,13 @@ name: Claude Code Review
 on:
   pull_request:
     # No `synchronize` — review fires when a PR is opened / marked ready /
-    # reopened, not on every push (cost control). Re-review a pushed PR by
-    # toggling draft↔ready or with a one-off `@claude review` comment.
+    # reopened, not on every push (cost control). This job is also the RULE-10
+    # *merge gate*: its conclusion is red unless the review verdict is APPROVE
+    # (see the "Enforce review verdict" step). To re-run THIS check (e.g. after
+    # pushing a fix) you must re-fire one of these triggers — toggle the PR
+    # draft↔ready, or close→reopen it. A `@claude review` comment fires a
+    # *different* workflow (claude.yml): it posts fresh findings but does NOT
+    # re-run this job, so it cannot turn this check green.
     types: [opened, ready_for_review, reopened]
 
 jobs:
@@ -59,3 +64,53 @@ jobs:
             - PLAN.md / SDD.md untouched; WBS.md changes limited to status flips / §17 / §18.
             - The PR-template checklist is satisfied.
             End with an explicit verdict: APPROVE or REQUEST-CHANGES.
+
+            Then, as the VERY LAST LINE of your output, emit a machine-readable
+            sentinel that the merge gate parses — the token SCANIPY-REVIEW-VERDICT
+            followed immediately by an `=` and then exactly one of the words APPROVE
+            or REQUEST-CHANGES, with nothing after it. Emit the sentinel only once,
+            as that final line; it must agree with the verdict above.
+
+      - name: Enforce review verdict (merge gate)
+        # RULE-10 enforcement. The reviewer above always exits `success`; this
+        # step turns the single `claude-review` check RED unless the parsed
+        # verdict is APPROVE, so a REQUEST-CHANGES (or a missing/uncertain
+        # verdict) blocks merge. Server-side required checks are unavailable on
+        # this Free/private repo (branch protection + rulesets both 403), so —
+        # like the four CI gates and enforce-pr-only-merges.yml — this is a
+        # process-level gate: a loud red check, ready to be wired as a required
+        # check on a Team/Pro upgrade.
+        #
+        # We read the verdict from the action's `execution_file` (the run
+        # transcript) rather than the posted PR comment: the comment is known to
+        # fail to post on draft↔ready re-triggers (permission_denials), whereas
+        # `execution_file` is set right after the agent run completes and is
+        # recovered even in the action's error path — so this gate is
+        # self-recovering on exactly that re-trigger path. Fail-closed: no
+        # parseable APPROVE ⇒ red.
+        if: always()
+        env:
+          EXECUTION_FILE: ${{ steps.claude-review.outputs.execution_file }}
+        run: |
+          set -euo pipefail
+          if [ -z "${EXECUTION_FILE:-}" ] || [ ! -s "${EXECUTION_FILE}" ]; then
+            echo "FAIL (fail-closed): the review step produced no execution file —"
+            echo "cannot confirm an APPROVE verdict, so merge is blocked."
+            exit 1
+          fi
+          # The reviewer's final line is the sentinel; take the LAST match so the
+          # agent's final emission wins even if the token appears earlier. `-oE`
+          # extracts the bare token regardless of the surrounding JSON transcript.
+          VERDICT="$(grep -oE 'SCANIPY-REVIEW-VERDICT=(APPROVE|REQUEST-CHANGES)' "${EXECUTION_FILE}" \
+                     | tail -n1 | cut -d= -f2 || true)"
+          echo "Parsed reviewer verdict: ${VERDICT:-<none>}"
+          if [ "${VERDICT}" = "APPROVE" ]; then
+            echo "PASS: verdict APPROVE — RULE-10 merge gate satisfied."
+            exit 0
+          fi
+          echo "FAIL: verdict '${VERDICT:-<none>}' is not APPROVE — RULE-10 blocks merge."
+          echo "After addressing the findings, re-run THIS check by re-firing its trigger:"
+          echo "  toggle the PR draft↔ready, or close→reopen it."
+          echo "(A '@claude review' comment runs claude.yml and posts findings, but does"
+          echo " NOT re-run this job, so it will not clear this check.)"
+          exit 1
