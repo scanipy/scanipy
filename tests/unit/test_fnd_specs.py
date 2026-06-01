@@ -265,10 +265,6 @@ def test_inv_5_fnd_02_cpg_order_hash_annotation_persisted_at_schema() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-FND-03 (Signed provenance record) not yet implemented",
-    strict=False,
-)
 def test_fnd_03b_cpg_order_hash_annotation_in_auditor_export() -> None:
     """The cpg_order_hash field carries its conditional-canonicality annotation.
 
@@ -290,16 +286,48 @@ def test_fnd_03b_cpg_order_hash_annotation_in_auditor_export() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — INV-5 gate for CMP-FND-03.
     """
-    # TODO: export = export_auditor_record(rid)
-    # assert export["cpg_order_hash_annotation"] == "canonical iff fingerprint_class = strong"
-    pytest.skip("CMP-FND-03 not implemented yet")
+    import json as _json
+
+    from services.scan.provenance import export_auditor_record, sign_provenance
+    from tests.fnd03_fakes import (
+        InMemoryProvenanceStore,
+        SoftwareKMSSigner,
+        make_chain_record,
+    )
+
+    signer = SoftwareKMSSigner()
+    store = InMemoryProvenanceStore()
+    record = make_chain_record()
+    sign_provenance(
+        record,
+        signer=signer,
+        kms_key_arn="arn:aws:kms:us-east-1:000000000000:key/fnd03",
+        store=store,
+    )
+
+    export = export_auditor_record(record.id, store=store)
+
+    # The annotation is present with the EXACT literal.
+    assert export["cpg_order_hash_annotation"] == _ANNOTATION
+
+    # It is JSON-adjacent to cpg_order_hash (consecutive keys = JSON adjacency).
+    keys = list(export.keys())
+    hash_idx = keys.index("cpg_order_hash")
+    assert keys[hash_idx + 1] == "cpg_order_hash_annotation", (
+        "INV-5: cpg_order_hash_annotation must be JSON-adjacent to cpg_order_hash"
+    )
+
+    # A grep of the serialized export for any abbreviated/truncated variant of the
+    # annotation returns no hit other than the full literal itself.
+    serialized = _json.dumps(export)
+    for variant in ("canonical hash", "cpg_canonical_hash", "canonical CPG"):
+        assert variant not in serialized, (
+            f"INV-5: abbreviated annotation variant {variant!r} leaked"
+        )
+    assert serialized.count(_ANNOTATION) == 1
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-FND-03 (Signed provenance record) not yet implemented",
-    strict=False,
-)
 def test_fnd_03c_repartition_events_appear_in_the_record() -> None:
     """Differential-oracle re-partition events appear in the provenance record.
 
@@ -322,9 +350,59 @@ def test_fnd_03c_repartition_events_appear_in_the_record() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — INV-1 / append-only gate for CMP-FND-03.
     """
-    # TODO: append_repartition_event(...); assert new row record_type=='repartition'
-    # and base row bytes unchanged and export["repartition_history"] is non-empty
-    pytest.skip("CMP-FND-03 not implemented yet")
+    import uuid as _uuid
+
+    from services.scan.provenance import (
+        append_repartition_event,
+        export_auditor_record,
+        sign_provenance,
+    )
+    from tests.fnd03_fakes import (
+        InMemoryProvenanceStore,
+        SoftwareKMSSigner,
+        make_chain_record,
+    )
+
+    signer = SoftwareKMSSigner()
+    store = InMemoryProvenanceStore()
+    base = make_chain_record(origin="deterministic-core")
+    base_signed = sign_provenance(
+        base,
+        signer=signer,
+        kms_key_arn="arn:aws:kms:us-east-1:000000000000:key/fnd03",
+        store=store,
+    )
+    base_bytes_before = base_signed.canonical_bytes
+
+    oracle_id = _uuid.uuid4()
+    repart = append_repartition_event(
+        parent_record_id=base.id,
+        repartition_oracle_id=oracle_id,
+        repartition_reason="differential-oracle disagreement: reachable reflection",
+        store=store,
+        signer=signer,
+    )
+
+    # A NEW row exists with the re-partition shape (DOC-PROVENANCE §4.1).
+    assert repart.record.record_type == "repartition"
+    assert repart.record.parent_record_id == base.id
+    assert repart.record.origin == "oracle-passthrough"
+    assert repart.record.cpg_order_hash is None  # not recomputed on re-partition
+    assert repart.record.repartition_oracle_id == oracle_id
+
+    # The base record is NEVER mutated (append-only): its canonical bytes and its
+    # origin are byte-identical before and after the append.
+    base_after = store.get(base.id)
+    assert base_after is not None
+    assert base_after.canonical_bytes == base_bytes_before
+    assert base_after.record.origin == "deterministic-core"
+
+    # The auditor export of the base record surfaces the event in repartition_history.
+    export = export_auditor_record(base.id, store=store)
+    history = export["repartition_history"]
+    assert isinstance(history, list) and len(history) == 1
+    assert history[0]["new_origin"] == "oracle-passthrough"
+    assert history[0]["repartition_oracle_id"] == str(oracle_id)
 
 
 @pytest.mark.invariant
@@ -404,10 +482,6 @@ def test_inv_1_fnd_02_origin_partition_at_store() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-FND-03 (Signed provenance record) not yet implemented",
-    strict=False,
-)
 def test_inv_1_fnd_03_origin_partition_at_provenance() -> None:
     """INV-1 at provenance: chain link 9 carries origin; parent never mutated.
 
@@ -428,9 +502,46 @@ def test_inv_1_fnd_03_origin_partition_at_provenance() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — INV-1 / append-only gate for CMP-FND-03.
     """
-    # TODO: assert base_bytes_before == base_bytes_after; repartition.origin ==
-    # "oracle-passthrough"; every finding-bearing record has non-null origin
-    pytest.skip("CMP-FND-03 not implemented yet")
+    import uuid as _uuid
+
+    from services.scan.provenance import (
+        append_repartition_event,
+        sign_provenance,
+    )
+    from tests.fnd03_fakes import (
+        InMemoryProvenanceStore,
+        SoftwareKMSSigner,
+        make_chain_record,
+    )
+
+    signer = SoftwareKMSSigner()
+    store = InMemoryProvenanceStore()
+    base = make_chain_record(origin="deterministic-core")
+    base_signed = sign_provenance(
+        base,
+        signer=signer,
+        kms_key_arn="arn:aws:kms:us-east-1:000000000000:key/fnd03",
+        store=store,
+    )
+    base_bytes_before = base_signed.canonical_bytes
+
+    repart = append_repartition_event(
+        parent_record_id=base.id,
+        repartition_oracle_id=_uuid.uuid4(),
+        repartition_reason="reachable reflection",
+        store=store,
+        signer=signer,
+    )
+
+    # Every chain/repartition record carries a non-null origin (link 9, INV-1).
+    assert base_signed.record.origin is not None
+    assert repart.record.origin == "oracle-passthrough"
+
+    # The parent base record's canonical bytes are byte-identical before and
+    # after the append (append-only — no UPDATE/DELETE).
+    base_after = store.get(base.id)
+    assert base_after is not None
+    assert base_after.canonical_bytes == base_bytes_before
 
 
 @pytest.mark.invariant
@@ -506,10 +617,6 @@ def test_inv_2_fnd_02_nonnull_sversion_envdigest_at_schema_level() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-FND-03 (Signed provenance record) not yet implemented",
-    strict=False,
-)
 def test_inv_2_fnd_03_sversion_envdigest_as_links_in_signed_chain() -> None:
     """INV-2 at provenance: S_version + env_digest are links in the audit chain.
 
@@ -533,17 +640,53 @@ def test_inv_2_fnd_03_sversion_envdigest_as_links_in_signed_chain() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — INV-2 chain gate for CMP-FND-03.
     """
-    # TODO: export = export_auditor_record(rid)
-    # assert export["chain"]["S_version"] == finding.S_version  # non-null, a link
-    # assert export["chain"]["env_digest"] == finding.env_digest  # non-null, a link
-    pytest.skip("CMP-FND-03 not implemented yet")
+    import dataclasses
+
+    from services.scan.provenance import (
+        export_auditor_record,
+        sign_provenance,
+        verify_chain,
+    )
+    from tests.fnd03_fakes import (
+        InMemoryProvenanceStore,
+        SoftwareKMSSigner,
+        make_chain_record,
+    )
+
+    signer = SoftwareKMSSigner()
+    store = InMemoryProvenanceStore()
+    s_version = "4.5.6"
+    env_digest = "sha256:" + ("d" * 64)
+    record = make_chain_record(s_version=s_version, env_digest=env_digest)
+    signed = sign_provenance(
+        record,
+        signer=signer,
+        kms_key_arn="arn:aws:kms:us-east-1:000000000000:key/fnd03",
+        store=store,
+    )
+
+    # Both links are non-null on the chain row and equal the source verbatim.
+    assert signed.record.S_version == s_version
+    assert signed.record.env_digest == env_digest
+
+    # Both appear in the auditor export, ordered between the snapshot digest link
+    # and the cpg_order_hash link (DOC-PROVENANCE chain order).
+    export = export_auditor_record(record.id, store=store)
+    assert export["S_version"] == s_version
+    assert export["env_digest"] == env_digest
+    keys = list(export.keys())
+    assert keys.index("snapshot_digest") < keys.index("S_version") < keys.index("env_digest")
+    assert keys.index("env_digest") < keys.index("cpg_order_hash")
+
+    # The signature covers both fields: tampering with env_digest fails verification.
+    tampered = dataclasses.replace(
+        signed,
+        record=dataclasses.replace(signed.record, env_digest="sha256:" + ("e" * 64)),  # type: ignore[arg-type]
+    )
+    assert verify_chain(tampered, signer=signer) == "TAMPERED"
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-FND-03 (Signed provenance record) not yet implemented",
-    strict=False,
-)
 def test_inv_5_fnd_03_annotation_present_in_chain_and_auditor_export() -> None:
     """INV-5 at provenance: annotation literal present in chain row + export.
 
@@ -565,7 +708,35 @@ def test_inv_5_fnd_03_annotation_present_in_chain_and_auditor_export() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — INV-5 gate for CMP-FND-03.
     """
-    # TODO: from analysis.ordering import CPG_ORDER_HASH_ANNOTATION
-    # assert row.cpg_order_hash_annotation == CPG_ORDER_HASH_ANNOTATION
-    # assert export["cpg_order_hash_annotation"] == CPG_ORDER_HASH_ANNOTATION
-    pytest.skip("CMP-FND-03 not implemented yet")
+    from analysis.ordering import CPG_ORDER_HASH_ANNOTATION as ORDERING_ANNOTATION
+
+    # The provenance module re-exports the same single-construction-site constant.
+    from services.scan.provenance import CPG_ORDER_HASH_ANNOTATION as PROV_ANNOTATION
+    from services.scan.provenance import export_auditor_record, sign_provenance
+    from tests.fnd03_fakes import (
+        InMemoryProvenanceStore,
+        SoftwareKMSSigner,
+        make_chain_record,
+    )
+
+    assert PROV_ANNOTATION is ORDERING_ANNOTATION
+    assert ORDERING_ANNOTATION == _ANNOTATION
+
+    signer = SoftwareKMSSigner()
+    store = InMemoryProvenanceStore()
+    record = make_chain_record()
+    signed = sign_provenance(
+        record,
+        signer=signer,
+        kms_key_arn="arn:aws:kms:us-east-1:000000000000:key/fnd03",
+        store=store,
+    )
+
+    # The chain row carries the literal — sourced from the constant, not rebuilt.
+    assert signed.record.cpg_order_hash_annotation == ORDERING_ANNOTATION
+
+    # The auditor export carries the same literal, JSON-adjacent to the hash.
+    export = export_auditor_record(record.id, store=store)
+    assert export["cpg_order_hash_annotation"] == ORDERING_ANNOTATION
+    keys = list(export.keys())
+    assert keys[keys.index("cpg_order_hash") + 1] == "cpg_order_hash_annotation"
