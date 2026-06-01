@@ -379,8 +379,7 @@ def _verify_artifacts(record: ProvenanceRecord, artifacts: ArtifactStore) -> Ver
         # full key is computable; a bare `sarif/{scan_id}` would never resolve
         # against real object storage.
         sarif_uri = (
-            f"orgs/{record.org_id}/codebases/{record.codebase_id}"
-            f"/sarif/{record.scan_id}.sarif.json"
+            f"orgs/{record.org_id}/codebases/{record.codebase_id}/sarif/{record.scan_id}.sarif.json"
         )
         blob = artifacts.fetch(sarif_uri)
         if blob is None:
