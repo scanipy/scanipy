@@ -262,6 +262,16 @@ def sign_provenance(
             code="invariant_inv5_violation",
         )
 
+    # Defence-in-depth INV-1 guard, symmetric to the INV-5 guard above: a
+    # finding-bearing record (chain / repartition) must carry a non-null origin
+    # before signing. The DB NOT NULL / CHECK catches this in production; the
+    # application-layer catch also covers the in-memory store used in tests.
+    if record.record_type in ("chain", "repartition") and record.origin is None:
+        raise InvariantViolation(
+            "origin must be non-null for chain/repartition records (INV-1)",
+            code="invariant_inv1_violation",
+        )
+
     canonical = canonical_record_bytes(record)
     resp = signer.sign(
         KeyId=kms_key_arn,
@@ -351,18 +361,27 @@ def _verify_artifacts(record: ProvenanceRecord, artifacts: ArtifactStore) -> Ver
 
     Only digest-bearing links are recomputed: ``sarif_hash`` is the one the chain
     carries as a raw digest, so the verifier fetches the SARIF blob and asserts
-    its recomputed sha256 matches. ``snapshot_digest`` recomputation
-    (DOC-PROVENANCE §8.4 step 4-5) is intentionally deferred: the CPG tarball is
-    fetched only "if needed"/when cached (it has a 90-day retention vs. the 7-year
-    SARIF/provenance retention, DOC-PROVENANCE §6), and the witness blob carries
-    no digest field on the record to compare against, so neither gates the verdict
-    here. When a snapshot tarball is provisioned for re-verification, this is the
-    extension point. No IFDS / Algorithm 5 / detector is invoked.
+    its recomputed sha256 matches. ``snapshot_digest`` is verified by equality
+    against the record's stored value (§8.4 step 4); it is not *recomputed* from a
+    refetched CPG tarball here, because (a) the record carries no per-link digest
+    for the witness/snapshot blobs to recompute *against*, and (b) the CPG tarball
+    has 90-day retention vs. the 7-year SARIF/provenance retention (DOC-PROVENANCE
+    §6), so it is not guaranteed present. This bound is schema-determined, not a
+    unilateral scope cut; when a snapshot tarball is provisioned for
+    re-verification, this is the extension point. No IFDS / Algorithm 5 / detector
+    is invoked.
     """
     import hashlib
 
     if record.sarif_hash is not None:
-        sarif_uri = f"sarif/{record.scan_id}.sarif.json"
+        # Deterministic, org-namespaced S3 key (DOC-CMP-FND-03 §4.3, CLAUDE.md §8:
+        # `orgs/{org_id}/...`). The record carries org_id + codebase_id, so the
+        # full key is computable; a bare `sarif/{scan_id}` would never resolve
+        # against real object storage.
+        sarif_uri = (
+            f"orgs/{record.org_id}/codebases/{record.codebase_id}"
+            f"/sarif/{record.scan_id}.sarif.json"
+        )
         blob = artifacts.fetch(sarif_uri)
         if blob is None:
             return "ARTIFACT_MISSING"

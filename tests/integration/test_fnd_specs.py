@@ -411,7 +411,11 @@ def test_fnd_03a_record_independently_verifiable_without_rerun() -> None:
     # Build a chain record whose sarif_hash matches a stored SARIF blob.
     sarif_blob = b'{"version":"2.1.0","runs":[]}'
     record = make_chain_record(sarif_bytes=sarif_blob)
-    artifacts.put(f"sarif/{record.scan_id}.sarif.json", sarif_blob)
+    artifacts.put(
+        f"orgs/{record.org_id}/codebases/{record.codebase_id}"
+        f"/sarif/{record.scan_id}.sarif.json",
+        sarif_blob,
+    )
 
     signed = sign_provenance(record, signer=signer, kms_key_arn=kms_key_arn, store=store)
     assert signed.signature_alg == "RSASSA_PSS_SHA_256"
