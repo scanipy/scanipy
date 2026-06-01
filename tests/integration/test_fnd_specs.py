@@ -372,10 +372,6 @@ assert CPG_ORDER_HASH_ANNOTATION == _ANNOTATION
 
 
 @pytest.mark.integration
-@pytest.mark.xfail(
-    reason="CMP-FND-03 (Signed provenance record) not yet implemented",
-    strict=False,
-)
 def test_fnd_03a_record_independently_verifiable_without_rerun() -> None:
     """The signed record is independently verifiable from stored artefacts.
 
@@ -390,9 +386,66 @@ def test_fnd_03a_record_independently_verifiable_without_rerun() -> None:
                     NO IFDS solver, NO Algorithm 5 run, NO detector.
     Frequency:      every CI run
     Hard gate?:     yes -- component acceptance gate for CMP-FND-03 (AC-FND-03a).
+
+    Hermetic by construction: the signer is an offline software RSASSA-PSS fake
+    and the artefact store is in-memory, so this runs green with NO database and
+    NO AWS (unlike the live-PG FND-02 falsifiers above, which skip locally). It
+    therefore must NOT be gated on SCANIPY_DATABASE_URL.
     """
-    # TODO: from services.scan.provenance import verify_chain when CMP-FND-03 is DONE
-    # assert verify_chain(signed_record) == "VERIFIED"
-    # mutate one signed field; assert verify_chain(mutated) == "TAMPERED"
-    # assert solver/detectors never invoked during verification
-    pytest.skip("CMP-FND-03 not implemented yet")
+    import dataclasses
+    import sys
+
+    from services.scan.provenance import sign_provenance, verify_chain
+    from tests.fnd03_fakes import (
+        InMemoryArtifactStore,
+        InMemoryProvenanceStore,
+        SoftwareKMSSigner,
+        make_chain_record,
+    )
+
+    signer = SoftwareKMSSigner()
+    store = InMemoryProvenanceStore()
+    artifacts = InMemoryArtifactStore()
+    kms_key_arn = "arn:aws:kms:us-east-1:000000000000:key/fnd03"
+
+    # Build a chain record whose sarif_hash matches a stored SARIF blob.
+    sarif_blob = b'{"version":"2.1.0","runs":[]}'
+    record = make_chain_record(sarif_bytes=sarif_blob)
+    artifacts.put(
+        f"orgs/{record.org_id}/codebases/{record.codebase_id}/sarif/{record.scan_id}.sarif.json",
+        sarif_blob,
+    )
+
+    signed = sign_provenance(record, signer=signer, kms_key_arn=kms_key_arn, store=store)
+    assert signed.signature_alg == "RSASSA_PSS_SHA_256"
+
+    # (1) Untampered record verifies, recomputing canonical bytes + sarif digest.
+    #     Snapshot the IFDS/detector modules around the call and assert the DELTA
+    #     is empty: verification re-runs NO analysis (AC-FND-03a). A delta (not an
+    #     absolute-absence) assertion is collection-safe — a sibling integration
+    #     module that imports analysis.ifds/detectors at module scope would
+    #     otherwise pre-populate sys.modules and break an absolute check.
+    before = {m for m in sys.modules if m.startswith(("analysis.ifds", "detectors"))}
+    assert verify_chain(signed, signer=signer, artifacts=artifacts, store=store) == "VERIFIED"
+    after = {m for m in sys.modules if m.startswith(("analysis.ifds", "detectors"))}
+    assert after == before, (
+        f"AC-FND-03a: verification must not import IFDS/detector modules; "
+        f"new modules pulled in: {after - before}"
+    )
+
+    # (2) A mutated signed field (S_version) — keeping the original signature —
+    #     makes the recomputed canonical bytes differ, so the RSASSA-PSS
+    #     signature no longer verifies: TAMPERED. The verifier recomputes bytes
+    #     from record.record; it never trusts the stored canonical_bytes.
+    tampered = dataclasses.replace(
+        signed,
+        record=dataclasses.replace(signed.record, S_version="9.9.9"),  # type: ignore[arg-type]
+    )
+    assert verify_chain(tampered, signer=signer, artifacts=artifacts, store=store) == "TAMPERED"
+
+    # (3) A missing SARIF artefact yields ARTIFACT_MISSING (not a re-run).
+    empty_artifacts = InMemoryArtifactStore()
+    assert (
+        verify_chain(signed, signer=signer, artifacts=empty_artifacts, store=store)
+        == "ARTIFACT_MISSING"
+    )
