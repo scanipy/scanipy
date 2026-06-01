@@ -84,10 +84,12 @@ else
   echo "  no Python source yet — mypy skipped (scaffold phase)"
 fi
 
-echo "pre-push [4/4]: pytest -m unit -x"
+echo "pre-push [4/4]: pytest -m '(unit or invariant) and not integration/falsifier/empirical' -x"
 # `-x` stops at the first failure for fast feedback. `-q --tb=short`
-# matches the CI invocation. We exclude the falsifier + integration
-# markers explicitly to avoid pulling them in via marker overlap.
-pytest tests/ -m "unit and not integration and not falsifier and not empirical" -q --tb=short -x
+# matches the CI invocation. `invariant` is included to mirror the CI
+# unit-tests gate (CLAR-CI-01); the `not integration/falsifier/empirical`
+# clauses keep the DB-backed invariant falsifiers and Gate-2 falsifier
+# tests out of this DB-less local run.
+pytest tests/ -m "(unit or invariant) and not integration and not falsifier and not empirical" -q --tb=short -x
 
 echo "pre-push: all checks passed"
