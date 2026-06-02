@@ -190,7 +190,7 @@ The source documents do not pin a cloud vendor, region strategy, queue technolog
 
 ### 2.4 Deployment work packages
 
-#### CMP-DEPLOY-01 — Runtime substrate selection `IN-PROGRESS`
+#### CMP-DEPLOY-01 — Runtime substrate selection `DONE`
 **Depends-On:** none · **Staging:** cross-cutting (must complete before Phase 4)
 **Purpose:** Resolve every `CLAR-DEPLOY-*` item in §17 and commit one substrate per primitive (compute, queue, blob store, RDBMS, KMS, secrets, IdP, observability stack, region strategy, network model). Output is a written substrate decision record plus the IaC scaffolding needed by every later phase. The decision record is the input to `CMP-DEPLOY-02..04`.
 **Acceptance criteria:**
@@ -200,7 +200,7 @@ The source documents do not pin a cloud vendor, region strategy, queue technolog
 - AC-DEPLOY-01d: The chosen relational primitive supports forward + rollback migrations on a fresh database (cf. `AC-CP-03a`).
 - AC-DEPLOY-01e: The chosen KMS-equivalent supports envelope encryption and key rotation (cf. `AC-CP-02a`).
 
-#### CMP-DEPLOY-02 — Worker container baseline
+#### CMP-DEPLOY-02 — Worker container baseline `IN-PROGRESS`
 **Depends-On:** CMP-DEPLOY-01 · **Staging:** Stage A
 **Purpose:** Produce the base container image that bundles `joern`, `codeql`, `git` and pins each by digest; bake the environment-variable contract, the argument allowlist machinery, and the `report_status` callback affordances into the image. The image digest **is** `env_digest` (per `AC-SNAP-05b`); changing any bundled tool changes the digest.
 **Acceptance criteria:**

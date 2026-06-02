@@ -16,6 +16,7 @@ ARG JOERN_SHA256
 ARG CODEQL_VERSION
 ARG CODEQL_SHA256
 ARG GIT_VERSION
+ARG GIT_SHA256
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates curl unzip && \
