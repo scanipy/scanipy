@@ -33,7 +33,7 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["analysis*", "detectors*", "integrations*", "services*", "workers*", "web*"]
+include = ["analysis*", "detectors*", "integrations*", "services*", "workers*", "web*", "tools*"]
 
 # ---------------------------------------------------------------------------
 # Ruff — linter + formatter
@@ -41,7 +41,7 @@ include = ["analysis*", "detectors*", "integrations*", "services*", "workers*", 
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-src = ["analysis", "detectors", "integrations", "services", "workers", "web", "tests"]
+src = ["analysis", "detectors", "integrations", "services", "workers", "web", "tools", "tests"]
 # Corpus fixtures are intentionally-malformed sample programs (reflection
 # seeds, vuln samples) — test DATA, not code. mypy and detect-secrets already
 # exclude tests/corpora/; keep ruff in lockstep so `ruff check .` in the
@@ -79,7 +79,7 @@ ignore = [
 "db/migrations/**" = ["N999", "ANN"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["analysis", "detectors", "integrations", "services", "workers", "web"]
+known-first-party = ["analysis", "detectors", "integrations", "services", "workers", "web", "tools"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -105,6 +105,15 @@ exclude = [
 
 [[tool.mypy.overrides]]
 module = ["joern.*", "codeql.*", "sarif_om.*"]
+ignore_missing_imports = true
+
+# CMP-DEPLOY-03 (observability): the OpenTelemetry SDK + AWS exporters are an
+# optional, lazily-imported dependency (imported only inside init_otel on the
+# success path, never at module top-level), so the hermetic AC-DEPLOY-03b slice
+# needs no opentelemetry-* install. mypy has no stubs for it; ignore the missing
+# import rather than gate the strict type check on a heavy optional dep.
+[[tool.mypy.overrides]]
+module = ["opentelemetry.*"]
 ignore_missing_imports = true
 
 # ---------------------------------------------------------------------------
