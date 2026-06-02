@@ -18,16 +18,35 @@ from services.snapshot.cw_detect import (
     detect,
     measure_routing_rate,
 )
+from services.snapshot.models import PreconditionStatus, SnapshotRow
+from services.snapshot.service import (
+    EnvDigestProvider,
+    InMemorySnapshotStore,
+    SnapshotAccepted,
+    SnapshotRequest,
+    SnapshotService,
+    SnapshotStore,
+    env_var_env_digest_provider,
+)
 
 __all__ = [
     "CW_DETECT_VERSION",
     "SUPPORTED_LANGUAGES",
     "CwDetectRequest",
     "CwDetectVerdict",
+    "EnvDigestProvider",
+    "InMemorySnapshotStore",
+    "PreconditionStatus",
     "ReflectionKind",
     "ReflectionSite",
     "RoutingRateReport",
     "Snapshot",
+    "SnapshotAccepted",
+    "SnapshotRequest",
+    "SnapshotRow",
+    "SnapshotService",
+    "SnapshotStore",
     "detect",
+    "env_var_env_digest_provider",
     "measure_routing_rate",
 ]
