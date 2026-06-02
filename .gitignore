@@ -7,6 +7,10 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+# workers/build/ is the CMP-DEPLOY-02 image-build tooling (verify_pins.py, the
+# AC-DEPLOY-02c gate), NOT a Python build-output dir — keep its sources tracked.
+!workers/build/
+!workers/build/*.py
 .eggs/
 .venv/
 venv/
