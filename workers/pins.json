@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-02T00:00:00Z",
+  "comment": "CMP-DEPLOY-02 pinning manifest. Every base_images.* entry MUST have a non-empty sha256; every tools.* entry MUST have a non-empty version AND sha256; python_packages_lockfile_sha256 MUST be non-empty. workers/build/verify_pins.py (AC-DEPLOY-02c) refuses to build if any is empty. Values below are non-empty PLACEHOLDERS pending the real env_digest rollover (AC-DEPLOY-02a/02b, deferred until a real ECR build); the SHAPE and the unspecified-refuse gate are the delivered contract.",
+  "base_images": {
+    "debian": {
+      "tag": "12-slim",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "python": {
+      "tag": "3.11-slim-bookworm",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "tools": {
+    "joern": {
+      "version": "v4.0.0",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "source": "https://github.com/joernio/joern/releases/download/v4.0.0/joern-cli.zip"
+    },
+    "codeql": {
+      "version": "v2.20.0",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "source": "https://github.com/github/codeql-cli-binaries/releases/download/v2.20.0/codeql-linux64.zip"
+    },
+    "git": {
+      "version": "1:2.39.5-0+deb12u1",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "source": "https://snapshot.debian.org/archive/debian/"
+    }
+  },
+  "python_packages_lockfile": "workers/snapshot/requirements.txt",
+  "python_packages_lockfile_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+}
