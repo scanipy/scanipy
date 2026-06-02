@@ -273,10 +273,6 @@ def test_tri_02c_accepted_spec_version_pinned_core_reads_pinned_only() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-TRI-03 (per-customer revalidation + drift) not yet implemented",
-    strict=False,
-)
 def test_tri_03b_unrevalidated_global_spec_findings_carry_label() -> None:
     """Findings on an unrevalidated global spec carry `global-unrevalidated`.
 
@@ -297,10 +293,63 @@ def test_tri_03b_unrevalidated_global_spec_findings_carry_label() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — component acceptance gate for CMP-TRI-03 (INV-3).
     """
-    # TODO: emit findings on a 'global-unrevalidated' spec_versions row
-    # assert all(f.spec_provenance == "global-unrevalidated" for f in findings)
-    # TODO: after customer-stream e-process clears -> 'global-revalidated'
-    pytest.skip("CMP-TRI-03 not implemented yet")
+    import random
+    import uuid
+
+    from services.triage.spec_inference import (
+        CustomerEvaluationStream,
+        initial_customer_state,
+        revalidate_spec,
+        update_customer_e_process,
+    )
+    from tests.tri03_fakes import InMemorySpecQuarantineStore
+
+    org_id = uuid.uuid4()
+    spec_version_id = uuid.uuid4()
+    pi_zero = 0.7
+    quarantine_store = InMemorySpecQuarantineStore()
+
+    def emit_findings(n: int) -> list[str]:
+        """Stand-in for CMP-ORCH-03 emission: stamp the CURRENT per-customer
+        spec_provenance view onto each finding (CMP-TRI-03 does NOT write findings;
+        it owns the value the emitter reads). Returns the stamped label per finding.
+        """
+        label = quarantine_store.spec_provenance_for(org_id, spec_version_id)
+        return [label for _ in range(n)]
+
+    # BEFORE the customer stream revalidates: every emitted finding dependent on
+    # the unrevalidated global spec carries 'global-unrevalidated'.
+    pre = emit_findings(3)
+    assert all(label == "global-unrevalidated" for label in pre)
+
+    # Drive the REAL customer-stream revalidate e-process on a clearly-good stream
+    # (true precision 0.95 >> pi_0) until H0(sigma) clears (E_t >= 1/alpha). Using
+    # the REAL wealth process (not a force-set flag) is what makes a do-nothing
+    # instrument fail this test.
+    stream = CustomerEvaluationStream(
+        org_id=org_id, spec_version_id=spec_version_id, pi_zero=pi_zero, alpha=0.05
+    )
+    state = initial_customer_state(stream)
+    rng = random.Random(11)
+    revalidated = False
+    for _ in range(500):
+        obs = 1.0 if rng.random() < 0.95 else 0.0
+        state = update_customer_e_process(state, obs)
+        result = revalidate_spec(spec_version_id, org_id, state, quarantine_store=quarantine_store)
+        if result.decision == "revalidated":
+            revalidated = True
+            break
+    assert revalidated, "good customer stream never revalidated within 500 looks"
+
+    # AFTER clearance: subsequent emissions carry 'global-revalidated'.
+    post = emit_findings(3)
+    assert all(label == "global-revalidated" for label in post)
+
+    # A spec NEVER transitions back to 'global-unrevalidated' (§5.3): even a
+    # further revalidate-pending look keeps the revalidated label.
+    again = revalidate_spec(spec_version_id, org_id, state, quarantine_store=quarantine_store)
+    assert again.decision in {"revalidated", "pending"}
+    assert quarantine_store.spec_provenance_for(org_id, spec_version_id) == "global-revalidated"
 
 
 @pytest.mark.invariant
