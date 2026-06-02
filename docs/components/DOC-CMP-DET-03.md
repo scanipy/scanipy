@@ -58,7 +58,7 @@ def scaffold_class(
     *,
     root: Path = Path("detectors/"),
     languages: tuple[str, ...] = (),
-    default_engine: Literal["ifds", "ide", "semgrep", "cpg-query", "external"] = "ifds",
+    default_engine: Literal["ifds", "ide", "semgrep", "cpg-query", "external"] | None = None,  # None resolves to the per-class default engine (AC-DET-03a)
     stub_only: bool = True,
 ) -> None:
     """Create the directory skeleton for a class.
