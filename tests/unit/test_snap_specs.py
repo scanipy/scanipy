@@ -22,10 +22,6 @@ import pytest
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(
-    reason="CMP-SNAP-01 (Snapshot service API) not yet implemented",
-    strict=False,
-)
 def test_snap_01b_precondition_status_is_one_of_three() -> None:
     """The precondition-status record records exactly one of three values.
 
@@ -38,24 +34,50 @@ def test_snap_01b_precondition_status_is_one_of_three() -> None:
                     and the `snapshots.precondition_status` relational column.
     Outputs:        `verdict` field ∈ {closed-world, degraded, full-reparse}.
     Pass criteria:  `precondition_status in {"closed-world","degraded",
-                    "full-reparse"}` is True for the row, AND a CHECK-constraint
-                    rejects any fourth value at the schema level. Exactly one
-                    value present (not null, not multi-valued) once state=ready.
+                    "full-reparse"}` is True for the row, AND a fourth value is
+                    rejected (application-layer mirror of the DDL CHECK, since the
+                    shipped schema has `precondition_status` NOT NULL CHECK over
+                    the three verdicts — DOC-CMP-SNAP-01 §4.4 / CLAR-SNAP-02).
+
+    Hermetic (no DB): the row is persisted via the simulated worker-completion
+    seam (`record_completion`) and read back with `get(...)`.
     Frequency:      every CI run
     Hard gate?:     yes — component acceptance gate for CMP-SNAP-01.
     """
-    # TODO: import the snapshot service from services.snapshot when CMP-SNAP-01 is DONE
-    # from services.snapshot import SnapshotService
-    # rec = SnapshotService().get(snapshot_id).precondition_status
-    # assert rec in {"closed-world", "degraded", "full-reparse"}
-    pytest.skip("CMP-SNAP-01 not implemented yet")
+    import uuid
+
+    from services.scan.provenance import InvariantViolation
+    from services.snapshot import SnapshotRequest, SnapshotService
+
+    image_digest = "sha256:" + "a" * 64
+    svc = SnapshotService(env_digest_provider=lambda: None)
+    req = SnapshotRequest(org_id=uuid.uuid4(), codebase_id=uuid.uuid4(), commit_sha="c" * 40)
+    bodies = {
+        "cpg_tarball": b"cpg",
+        "reverse_symbol_index": b"rsi",
+        "dynamic_call_graph": b"dcg",
+        "delta_graph": b"dg",
+        "precondition_status": b"{}",
+    }
+
+    for verdict in ("closed-world", "degraded", "full-reparse"):
+        accepted = svc.create_snapshot(req, image_digest=image_digest)
+        svc.record_completion(accepted, req, precondition_status=verdict, artifact_bodies=bodies)
+        row = svc.get(accepted.snapshot_id)
+        assert row is not None
+        # Exactly one value present, drawn from the three-verdict enum.
+        assert row.precondition_status == verdict
+        assert row.precondition_status in {"closed-world", "degraded", "full-reparse"}
+
+    # A fourth value is rejected (application-layer mirror of the DDL CHECK).
+    accepted = svc.create_snapshot(req, image_digest=image_digest)
+    with pytest.raises(InvariantViolation):
+        svc.record_completion(
+            accepted, req, precondition_status="not-closed-world", artifact_bodies=bodies
+        )
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(
-    reason="CMP-SNAP-01 (Snapshot service API) not yet implemented",
-    strict=False,
-)
 def test_snap_01c_env_digest_from_pinned_container_image_digest() -> None:
     """env_digest is computed from the pinned container image digest.
 
@@ -73,11 +95,74 @@ def test_snap_01c_env_digest_from_pinned_container_image_digest() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — component acceptance gate for CMP-SNAP-01 (INV-2).
     """
-    # TODO: import from services.snapshot when CMP-SNAP-01 is DONE
-    # row = SnapshotService().create(req, image_digest="sha256:" + "a" * 64)
-    # assert row.env_digest == "sha256:" + "a" * 64
-    # assert re.fullmatch(r"sha256:[0-9a-f]{64}", row.env_digest)
-    pytest.skip("CMP-SNAP-01 not implemented yet")
+    import re
+    import uuid
+
+    from services.snapshot import SnapshotRequest, SnapshotService
+
+    image_digest = "sha256:" + "a" * 64
+    svc = SnapshotService(env_digest_provider=lambda: None)
+    req = SnapshotRequest(org_id=uuid.uuid4(), codebase_id=uuid.uuid4(), commit_sha="d" * 40)
+
+    # The explicit image_digest is the stamped env_digest (the accepted result).
+    accepted = svc.create_snapshot(req, image_digest=image_digest)
+    assert accepted.env_digest == image_digest
+    assert re.fullmatch(r"sha256:[0-9a-f]{64}", accepted.env_digest)
+
+    # It is recorded verbatim on the persisted row (INV-2).
+    svc.record_completion(
+        accepted,
+        req,
+        precondition_status="closed-world",
+        artifact_bodies={
+            "cpg_tarball": b"c",
+            "reverse_symbol_index": b"r",
+            "dynamic_call_graph": b"d",
+            "delta_graph": b"g",
+            "precondition_status": b"{}",
+        },
+    )
+    row = svc.get(accepted.snapshot_id)
+    assert row is not None
+    assert row.env_digest == image_digest
+    assert re.fullmatch(r"sha256:[0-9a-f]{64}", row.env_digest)
+
+
+@pytest.mark.unit
+def test_snap_01c_null_or_malformed_env_digest_is_fail_closed() -> None:
+    """A null or malformed image digest is refused fail-closed (INV-2, DOC §7).
+
+    Test id:        TST-AC-SNAP-01c [NEGATIVE]
+    Maps to AC:     AC-SNAP-01c / TST-INV-2-SNAP-01 — "a missing digest is a
+                    fail-closed condition" (DOC-CMP-SNAP-01 §7). INV-2 requires a
+                    real `env_digest`; the row cannot be created without one.
+    Kind tag:       [NEGATIVE]
+    Pass criteria:  `create_snapshot` raises `InvariantViolation` when (a) the
+                    explicit `image_digest` is malformed, and (b) no digest is
+                    resolvable (provider returns None, simulating an unset
+                    `SCANIPY_ENV_DIGEST`). Mirrors the FND-03 InvariantViolation
+                    guard pattern.
+    Frequency:      every CI run
+    Hard gate?:     yes — INV-2 fail-closed gate for CMP-SNAP-01.
+    """
+    import uuid
+
+    from services.scan.provenance import InvariantViolation
+    from services.snapshot import SnapshotRequest, SnapshotService
+
+    req = SnapshotRequest(org_id=uuid.uuid4(), codebase_id=uuid.uuid4(), commit_sha="e" * 40)
+
+    # (a) malformed explicit image_digest → raises regardless of the provider.
+    svc_malformed = SnapshotService(env_digest_provider=lambda: "sha256:" + "a" * 64)
+    for bad in ("sha256:deadbeef", "not-a-digest", "sha256:" + "A" * 64, "", "sha1:" + "a" * 40):
+        with pytest.raises(InvariantViolation):
+            svc_malformed.create_snapshot(req, image_digest=bad)
+
+    # (b) no digest resolvable (provider returns None, SCANIPY_ENV_DIGEST unset)
+    #     and no explicit param → fail-closed.
+    svc_absent = SnapshotService(env_digest_provider=lambda: None)
+    with pytest.raises(InvariantViolation):
+        svc_absent.create_snapshot(req)
 
 
 @pytest.mark.unit
@@ -215,10 +300,6 @@ def test_snap_05b_image_digest_is_authoritative_env_digest() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-SNAP-01 (Snapshot service API) not yet implemented",
-    strict=False,
-)
 def test_inv_2_snap_01_snapshot_row_stamps_env_digest() -> None:
     """CMP-SNAP-01 stamps a non-empty env_digest equal to the image digest (INV-2).
 
@@ -237,7 +318,35 @@ def test_inv_2_snap_01_snapshot_row_stamps_env_digest() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — INV-2 invariant gate (per-emitter, WBS §4.3).
     """
-    # TODO: import SnapshotService from services.snapshot when CMP-SNAP-01 is DONE
-    # row = SnapshotService().create(req, image_digest=digest)
-    # assert row.env_digest and row.env_digest == digest
-    pytest.skip("CMP-SNAP-01 not implemented yet")
+    import re
+    import uuid
+
+    from services.scan.provenance import InvariantViolation
+    from services.snapshot import SnapshotRequest, SnapshotService
+
+    digest = "sha256:" + "f" * 64
+    svc = SnapshotService(env_digest_provider=lambda: None)
+    req = SnapshotRequest(org_id=uuid.uuid4(), codebase_id=uuid.uuid4(), commit_sha="a" * 40)
+
+    accepted = svc.create_snapshot(req, image_digest=digest)
+    svc.record_completion(
+        accepted,
+        req,
+        precondition_status="degraded",
+        artifact_bodies={
+            "cpg_tarball": b"c",
+            "reverse_symbol_index": b"r",
+            "dynamic_call_graph": b"d",
+            "delta_graph": b"g",
+            "precondition_status": b"{}",
+        },
+    )
+    row = svc.get(accepted.snapshot_id)
+    assert row is not None
+    assert row.env_digest
+    assert row.env_digest == digest
+    assert re.fullmatch(r"sha256:[0-9a-f]{64}", row.env_digest)
+
+    # Fail-closed: the emitter refuses a null env_digest (INV-2, DOC §7).
+    with pytest.raises(InvariantViolation):
+        svc.create_snapshot(req)
