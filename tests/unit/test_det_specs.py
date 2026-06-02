@@ -680,8 +680,7 @@ def test_partition_external_is_oracle_passthrough() -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-DET-03 not yet implemented", strict=False)
-def test_all_ten_class_directories_register_without_error() -> None:
+def test_det_03a_all_ten_class_directories_register_without_error(tmp_path: Path) -> None:
     """TST-AC-DET-03a / Maps to AC-DET-03a / Kind [UNIT].
 
     Inputs: scaffold_class() run for all ten ClassName values (injection,
@@ -693,8 +692,28 @@ def test_all_ten_class_directories_register_without_error() -> None:
         stub specs/oracle dirs are acceptable.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: from tools.scaffold_class import scaffold_class; from detectors.registry import ...
-    pytest.skip("CMP-DET-03 not implemented yet")
+    from tools.scaffold_class import CLASS_NAMES, scaffold_class
+
+    root = tmp_path / "detectors"
+    for class_name in CLASS_NAMES:
+        scaffold_class(class_name, root=root)
+
+    # Exactly the ten pinned classes were scaffolded.
+    assert len(CLASS_NAMES) == 10
+    assert {p.name for p in root.iterdir() if p.is_dir()} == set(CLASS_NAMES)
+
+    # load_manifests() completes without error on the scaffolded stub tree.
+    reg = DetectorRegistry()
+    reg.load_manifests(str(root))
+
+    # All ten classes registered; each carries a derived determinism_partition
+    # consistent with its engine (core engines -> deterministic-core; oracle
+    # engines -> oracle-passthrough). This is DERIVED downstream (CMP-DET-02),
+    # not authored by the scaffold (DOC-CMP-DET-03 §4.4, §8).
+    registered = reg.all()
+    assert len(registered) == 10
+    for det in registered:
+        assert det.determinism_partition == derive_partition(det.engine)
 
 
 # ─── TST-AC-DET-03b — Migrated path-traversal reproduces CVE-2025-61765 ─────
@@ -702,7 +721,7 @@ def test_all_ten_class_directories_register_without_error() -> None:
 
 @pytest.mark.unit
 @pytest.mark.xfail(reason="CMP-DET-03 not yet implemented", strict=False)
-def test_migrated_path_traversal_reproduces_cve_2025_61765() -> None:
+def test_det_03b_migrated_path_traversal_reproduces_cve_2025_61765() -> None:
     """TST-AC-DET-03b / Maps to AC-DET-03b / Kind [REGRESSION].
 
     Inputs: legacy tarslip.yaml migrated via migrate_tarslip(); the resulting
