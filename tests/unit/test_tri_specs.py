@@ -38,10 +38,6 @@ import pytest
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-TRI-01 (LLM triage ranking) not yet implemented",
-    strict=False,
-)
 def test_tri_01a_flag_off_no_origin_or_detection_change() -> None:
     """With the triage flag off, no finding's origin / detection content changes.
 
@@ -60,20 +56,43 @@ def test_tri_01a_flag_off_no_origin_or_detection_change() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — component acceptance gate for CMP-TRI-01 (INV-3).
     """
-    # TODO: import from services.triage when CMP-TRI-01 is DONE
-    # from services.triage import run_triage_cycle
-    # before = snapshot_findings(scan_id)
-    # run_triage_cycle(scan_id, llm_triage=False)
-    # after = snapshot_findings(scan_id)
-    # assert before == after  # no origin / detection / status change
-    pytest.skip("CMP-TRI-01 not implemented yet")
+    import uuid
+
+    from services.triage import run_triage_cycle
+    from tests.tri01_fakes import (
+        InMemoryFindingsTable,
+        InMemoryTriageScoresStore,
+        RecordingFakeLLM,
+        make_finding,
+    )
+
+    scan_id = uuid.uuid4()
+    findings = InMemoryFindingsTable(scan_id, [make_finding(), make_finding()])
+    triage_store = InMemoryTriageScoresStore()
+    llm = RecordingFakeLLM()
+
+    before = findings.snapshot()
+    result = run_triage_cycle(
+        scan_id,
+        llm_triage=False,  # LLM_TRIAGE=off — the production default
+        findings=findings,
+        triage_store=triage_store,
+        llm=llm,
+    )
+    after = findings.snapshot()
+
+    # No findings row changed: every column (origin + detection content + status)
+    # is byte-identical across the flag-off cycle.
+    assert before == after
+    # No triage_scores row was created.
+    assert result.rows_written == 0
+    assert triage_store.writes == []
+    # And — load-bearing — no LLM call was made at all.
+    assert llm.call_count == 0
+    assert result.llm_calls == 0
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-TRI-01 (LLM triage ranking) not yet implemented",
-    strict=False,
-)
 def test_tri_01b_ranking_writes_only_triage_columns() -> None:
     """Ranking writes only `triage_*` columns (to the triage_scores table).
 
@@ -97,11 +116,58 @@ def test_tri_01b_ranking_writes_only_triage_columns() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — component acceptance gate for CMP-TRI-01 (INV-3).
     """
-    # TODO: assert set(written.keys()) <= ALLOWED_TRIAGE_COLUMNS
-    # TODO: assert written.table == "triage_scores"
-    # TODO: with pytest.raises(PermissionError): triage_role.update("findings", ...)
-    # TODO: with pytest.raises(PermissionError): triage_role.delete("findings", ...)
-    pytest.skip("CMP-TRI-01 not implemented yet")
+    import uuid
+
+    from services.triage import ALLOWED_TRIAGE_COLUMNS, run_triage_cycle
+    from tests.tri01_fakes import (
+        FORBIDDEN_FINDINGS_WRITE_COLUMNS,
+        InMemoryFindingsTable,
+        InMemoryTriageScoresStore,
+        RecordingFakeLLM,
+        make_finding,
+    )
+
+    scan_id = uuid.uuid4()
+    findings = InMemoryFindingsTable(scan_id, [make_finding(), make_finding()])
+    triage_store = InMemoryTriageScoresStore()
+    llm = RecordingFakeLLM()
+
+    result = run_triage_cycle(
+        scan_id,
+        llm_triage=True,  # LLM_TRIAGE=on
+        findings=findings,
+        triage_store=triage_store,
+        llm=llm,
+    )
+
+    # One additive triage_scores row per finding.
+    assert result.rows_written == 2
+    assert llm.call_count == 2
+
+    # The ONLY write target is triage_scores.
+    assert triage_store.written_tables == {"triage_scores"}
+    # The written column set is a subset of the allowed triage columns —
+    # never a findings detection / partition / status column.
+    assert triage_store.written_columns <= set(ALLOWED_TRIAGE_COLUMNS)
+    assert triage_store.written_columns.isdisjoint(FORBIDDEN_FINDINGS_WRITE_COLUMNS)
+    assert "origin" not in triage_store.written_columns
+    assert "status" not in triage_store.written_columns
+
+    # An attempted UPDATE on any findings column fails with a permission error
+    # (REVOKE ALL ON findings FROM scanipy_triage).
+    a_finding_id = next(iter(findings.snapshot()))
+    with pytest.raises(PermissionError):
+        findings.update(a_finding_id, status="suppressed")
+    # An attempted DELETE on findings ALSO fails — triage never deletes findings
+    # (a role retaining DELETE while UPDATE is revoked could still destroy them).
+    with pytest.raises(PermissionError):
+        findings.delete(a_finding_id)
+
+    # No insert ever targets provenance_records / spec_versions / proposed_specs.
+    for forbidden in ("provenance_records", "spec_versions", "proposed_specs"):
+        with pytest.raises(PermissionError):
+            triage_store.insert(forbidden, {"finding_id": a_finding_id})
+        assert forbidden not in triage_store.written_tables
 
 
 @pytest.mark.invariant
@@ -170,10 +236,6 @@ def test_tri_03b_unrevalidated_global_spec_findings_carry_label() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-TRI-01 (LLM triage ranking) not yet implemented",
-    strict=False,
-)
 def test_inv_1_tri_01_no_triage_induced_origin_flips() -> None:
     """INV-1: triage induces no `origin` flips on any finding.
 
@@ -192,18 +254,54 @@ def test_inv_1_tri_01_no_triage_induced_origin_flips() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — INV-1 emitter test for CMP-TRI-01.
     """
-    # TODO: before = {f.id: f.origin for f in findings}
-    # run_triage_cycle(scan_id)
-    # after = {f.id: f.origin for f in findings}
-    # assert before == after
-    pytest.skip("CMP-TRI-01 not implemented yet")
+    import uuid
+
+    from services.triage import run_triage_cycle
+    from services.triage.triage import (
+        TriageWriteSurfaceViolation,
+        _assert_allowed_columns,
+    )
+    from tests.tri01_fakes import (
+        InMemoryFindingsTable,
+        InMemoryTriageScoresStore,
+        RecordingFakeLLM,
+        make_finding,
+        malicious_triage_row,
+    )
+
+    scan_id = uuid.uuid4()
+    rows = [
+        make_finding(origin="deterministic-core"),
+        make_finding(origin="oracle-passthrough"),
+    ]
+    findings = InMemoryFindingsTable(scan_id, rows)
+    triage_store = InMemoryTriageScoresStore()
+    llm = RecordingFakeLLM()
+
+    before = {fid: r.origin for fid, r in findings.snapshot().items()}
+    run_triage_cycle(
+        scan_id,
+        llm_triage=True,
+        findings=findings,
+        triage_store=triage_store,
+        llm=llm,
+    )
+    after = {fid: r.origin for fid, r in findings.snapshot().items()}
+
+    # No origin flipped; each value stays in the partition and is never "mixed".
+    assert before == after
+    assert all(v in {"deterministic-core", "oracle-passthrough"} for v in after.values())
+    assert "mixed" not in after.values()
+
+    # The write-surface guard rejects any attempt to smuggle `origin` (or any
+    # non-triage column) through the triage write path — the application-layer
+    # mirror of the grant that makes an origin flip impossible.
+    a_finding_id = next(iter(after))
+    with pytest.raises(TriageWriteSurfaceViolation):
+        _assert_allowed_columns("triage_scores", malicious_triage_row(a_finding_id))
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-TRI-01 (LLM triage ranking) not yet implemented",
-    strict=False,
-)
 def test_inv_3_tri_01_llm_off_detection_path() -> None:
     """INV-3: the LLM is off the deterministic detection path.
 
@@ -224,11 +322,43 @@ def test_inv_3_tri_01_llm_off_detection_path() -> None:
     Frequency:      every CI run
     Hard gate?:     yes — INV-3 emitter test for CMP-TRI-01 (Security-Analyst review).
     """
-    # TODO: before = snapshot_findings_all_columns(scan_id)
-    # run_triage_cycle(scan_id, llm_triage=True)
-    # after = snapshot_findings_all_columns(scan_id)
-    # assert before == after  # findings untouched; only triage_scores changed
-    pytest.skip("CMP-TRI-01 not implemented yet")
+    import uuid
+
+    from services.triage import run_triage_cycle
+    from tests.tri01_fakes import (
+        InMemoryFindingsTable,
+        InMemoryTriageScoresStore,
+        RecordingFakeLLM,
+        make_finding,
+    )
+
+    scan_id = uuid.uuid4()
+    findings = InMemoryFindingsTable(scan_id, [make_finding(), make_finding()])
+    triage_store = InMemoryTriageScoresStore()
+    llm = RecordingFakeLLM()
+
+    # Full pre-triage findings state (every column).
+    before = findings.snapshot()
+    result = run_triage_cycle(
+        scan_id,
+        llm_triage=True,  # triage ENABLED — the INV-3 OWNER surface under load
+        findings=findings,
+        triage_store=triage_store,
+        llm=llm,
+    )
+    after = findings.snapshot()
+
+    # NO findings column is mutated — the LLM output never reaches `findings`.
+    assert before == after
+    # The ONLY thing that changed is the triage_scores table.
+    assert result.rows_written == 2
+    assert triage_store.written_tables == {"triage_scores"}
+    # And the triage row stamps its own INV-2 witness (its own copy, not a
+    # mutation of the source finding's S_version / env_digest).
+    for write in triage_store.writes:
+        assert write.row["S_version"] == "1.2.3"
+        assert write.row["env_digest"] == "sha256:" + ("a" * 64)
+        assert write.row["model_id"] == "claude-sonnet-4-6"
 
 
 @pytest.mark.invariant
