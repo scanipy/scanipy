@@ -206,10 +206,6 @@ def test_snap_02a_closed_world_kappa_bound_regression() -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(
-    reason="CMP-SNAP-02 (Incremental CPG, Algorithm 1) not yet implemented",
-    strict=False,
-)
 def test_snap_02c_reparse_preserves_node_ids_for_unchanged_decls() -> None:
     """Function-granularity reparse preserves node IDs for unchanged decls.
 
@@ -229,12 +225,164 @@ def test_snap_02c_reparse_preserves_node_ids_for_unchanged_decls() -> None:
                     (`NodeIdCollision`, DOC-CMP-SNAP-02 §3.1).
     Frequency:      every CI run
     Hard gate?:     yes — Algorithm 1 correctness gate (feeds AC-CORE-01c).
+
+    Non-vacuity: `compute_incremental_cpg` computes AFFECTED itself from the
+    graph-level views (it is NOT passed AFFECTED). The fixture changes exactly
+    one decl that has a direct caller, so AFFECTED = {changed, caller} via §6.2's
+    direct-callers term; the test then asserts BOTH directions — preserved decls
+    keep their parent IDs and AFFECTED decls (including the unchanged-content
+    caller) get fresh IDs — and that a forced collision raises.
     """
-    # TODO: import compute_incremental_cpg from analysis.cpg_delta when CMP-SNAP-02 DONE
-    # result = compute_incremental_cpg(req)
-    # for decl in unchanged_decls:
-    #     assert result.new_cpg.node_ids(decl) == parent.node_ids(decl)
-    pytest.skip("CMP-SNAP-02 not implemented yet")
+    from analysis.cpg_delta import (
+        CPGEdge,
+        CPGNode,
+        DeclSubgraph,
+        GraphView,
+        IncrementalCpg,
+        IncrementalCpgRequest,
+        NodeId,
+        NodeIdCollision,
+        compute_incremental_cpg,
+    )
+
+    env_digest = "sha256:" + "b" * 64
+
+    # --- Parent CPG: three declarations, deterministic insertion-order IDs. ----
+    #   util.helper   (ids 0,1)  — unchanged, not a caller of the changed decl
+    #   app.target    (ids 2,3)  — the declaration the child commit CHANGES
+    #   app.caller    (ids 4,5)  — calls app.target (so it lands in AFFECTED)
+    parent = IncrementalCpg()
+    n_helper_0 = parent.add_node(
+        "METHOD", resolved_fqn="util.helper", enclosing_decl_fqn="util.helper"
+    )
+    n_helper_1 = parent.add_node("RETURN", enclosing_decl_fqn="util.helper")
+    n_target_0 = parent.add_node(
+        "METHOD", resolved_fqn="app.target", enclosing_decl_fqn="app.target"
+    )
+    n_target_1 = parent.add_node("CALL", operator_or_literal="v1", enclosing_decl_fqn="app.target")
+    n_caller_0 = parent.add_node(
+        "METHOD", resolved_fqn="app.caller", enclosing_decl_fqn="app.caller"
+    )
+    n_caller_1 = parent.add_node(
+        "CALL", operator_or_literal="app.target()", enclosing_decl_fqn="app.caller"
+    )
+    parent.add_edge(n_helper_0, n_helper_1, "AST")
+    parent.add_edge(n_target_0, n_target_1, "AST")
+    parent.add_edge(n_caller_0, n_caller_1, "AST")
+    parent.add_edge(n_caller_1, n_target_0, "CALL")  # caller -> target
+
+    parent_helper_ids = parent.node_ids("util.helper")
+    parent_target_ids = parent.node_ids("app.target")
+    parent_caller_ids = parent.node_ids("app.caller")
+    assert parent_helper_ids == {NodeId(0), NodeId(1)}
+    assert parent_target_ids == {NodeId(2), NodeId(3)}
+    assert parent_caller_ids == {NodeId(4), NodeId(5)}
+
+    # Graph-level views: app.caller calls app.target (direct-callers term feeds
+    # AFFECTED); util.helper references nothing changed.
+    graph = GraphView(
+        reverse_symbol_index={},
+        call_graph={"app.caller": frozenset({"app.target"})},
+        class_hierarchy={},
+        decl_to_type={},
+    )
+
+    # Injected SNAP-05 reparse seam (a DeclReparser): mints fresh node IDs from
+    # the builder-supplied base. With ``collide=True`` it deliberately returns an
+    # ID owned by a preserved unchanged decl, forcing the NodeIdCollision path.
+    class _FixtureReparser:
+        def __init__(self, collide: bool = False) -> None:
+            self.collide = collide
+
+        def reparse(self, decl_fqn: str, *, fresh_id_base: int) -> DeclSubgraph:
+            if self.collide and decl_fqn == "app.target":
+                bad = NodeId(0)  # collides with util.helper's preserved node 0
+                return DeclSubgraph(
+                    decl_fqn=decl_fqn,
+                    nodes=(
+                        CPGNode(
+                            node_id=bad,
+                            kind="METHOD",
+                            operator_or_literal="",
+                            resolved_fqn=decl_fqn,
+                            enclosing_decl_fqn=decl_fqn,
+                            structural_path="",
+                        ),
+                    ),
+                    edges=(),
+                )
+            a = NodeId(fresh_id_base)
+            b = NodeId(fresh_id_base + 1)
+            return DeclSubgraph(
+                decl_fqn=decl_fqn,
+                nodes=(
+                    CPGNode(
+                        node_id=a,
+                        kind="METHOD",
+                        operator_or_literal="",
+                        resolved_fqn=decl_fqn,
+                        enclosing_decl_fqn=decl_fqn,
+                        structural_path="",
+                    ),
+                    CPGNode(
+                        node_id=b,
+                        kind="CALL",
+                        operator_or_literal="v2",
+                        resolved_fqn="",
+                        enclosing_decl_fqn=decl_fqn,
+                        structural_path="",
+                    ),
+                ),
+                edges=(CPGEdge(src=a, dst=b, kind="AST"),),
+            )
+
+    # --- Child commit changes exactly one decl: app.target. -------------------
+    req = IncrementalCpgRequest(
+        parent_cpg=parent,
+        parent_env_digest=env_digest,
+        worker_env_digest=env_digest,
+        cw_verdict="closed-world",
+        changed_decls=frozenset({"app.target"}),
+        changed_types=frozenset(),
+        graph=graph,
+        reparser=_FixtureReparser(),
+        total_files=10,
+        changed_files=1,
+    )
+    result = compute_incremental_cpg(req)
+
+    # AFFECTED computed by the component = changed | direct-callers(changed).
+    assert result.affected == frozenset({"app.target", "app.caller"})
+
+    # NOT-AFFECTED decl keeps its parent node IDs verbatim (the AC).
+    assert result.new_cpg.node_ids("util.helper") == parent.node_ids("util.helper")
+
+    # AFFECTED decls get FRESH IDs disjoint from every preserved ID — including
+    # app.caller, whose source content did NOT change but which is in AFFECTED.
+    preserved = parent.node_ids("util.helper")
+    assert result.new_cpg.node_ids("app.target").isdisjoint(preserved)
+    assert result.new_cpg.node_ids("app.caller").isdisjoint(preserved)
+    assert result.new_cpg.node_ids("app.target") != parent.node_ids("app.target")
+    assert result.new_cpg.node_ids("app.caller") != parent.node_ids("app.caller")
+
+    # The route actually taken is the closed-world incremental happy path.
+    assert result.precondition_status == "closed-world"
+
+    # --- Forced collision is a hard failure (NodeIdCollision, DOC §3.1). ------
+    req_collide = IncrementalCpgRequest(
+        parent_cpg=parent,
+        parent_env_digest=env_digest,
+        worker_env_digest=env_digest,
+        cw_verdict="closed-world",
+        changed_decls=frozenset({"app.target"}),
+        changed_types=frozenset(),
+        graph=graph,
+        reparser=_FixtureReparser(collide=True),
+        total_files=10,
+        changed_files=1,
+    )
+    with pytest.raises(NodeIdCollision):
+        compute_incremental_cpg(req_collide)
 
 
 @pytest.mark.unit
