@@ -18,6 +18,20 @@ from services.snapshot.cw_detect import (
     detect,
     measure_routing_rate,
 )
+from services.snapshot.diff_oracle import (
+    CORE_ENGINES,
+    InMemoryOracleRunStore,
+    OracleReflectionSite,
+    OracleRunRecord,
+    OracleRunStore,
+    OracleVerdict,
+    RepartitionProvenanceStore,
+    RepartitionResult,
+    effective_origin,
+    record_oracle_run,
+    record_safe_default_agreement,
+    repartition_snapshot,
+)
 from services.snapshot.models import PreconditionStatus, SnapshotRow
 from services.snapshot.service import (
     EnvDigestProvider,
@@ -30,15 +44,23 @@ from services.snapshot.service import (
 )
 
 __all__ = [
+    "CORE_ENGINES",
     "CW_DETECT_VERSION",
     "SUPPORTED_LANGUAGES",
     "CwDetectRequest",
     "CwDetectVerdict",
     "EnvDigestProvider",
+    "InMemoryOracleRunStore",
     "InMemorySnapshotStore",
+    "OracleReflectionSite",
+    "OracleRunRecord",
+    "OracleRunStore",
+    "OracleVerdict",
     "PreconditionStatus",
     "ReflectionKind",
     "ReflectionSite",
+    "RepartitionProvenanceStore",
+    "RepartitionResult",
     "RoutingRateReport",
     "Snapshot",
     "SnapshotAccepted",
@@ -47,6 +69,10 @@ __all__ = [
     "SnapshotService",
     "SnapshotStore",
     "detect",
+    "effective_origin",
     "env_var_env_digest_provider",
     "measure_routing_rate",
+    "record_oracle_run",
+    "record_safe_default_agreement",
+    "repartition_snapshot",
 ]
