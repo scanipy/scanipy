@@ -23,10 +23,6 @@ import pytest
 
 
 @pytest.mark.integration
-@pytest.mark.xfail(
-    reason="CMP-SNAP-01 (Snapshot service API) not yet implemented",
-    strict=False,
-)
 def test_snap_01a_five_artifacts_at_deterministic_keys() -> None:
     """A snapshot request produces all five persisted artifacts at deterministic keys.
 
@@ -47,12 +43,54 @@ def test_snap_01a_five_artifacts_at_deterministic_keys() -> None:
                     Re-running the same request resolves the same keys (idempotent).
     Frequency:      every CI run
     Hard gate?:     yes — component acceptance gate for CMP-SNAP-01.
+
+    Hermetic: in-memory object store + queue + snapshot store, injected digest
+    (no DB, no AWS). The clone / CW-DETECT / CPG build run in the CMP-SNAP-05
+    worker (not built); this drives the SNAP-01 API + persistence seam and
+    simulates the worker via `record_completion` (the FND-03 fixtured-signer
+    pattern).
     """
-    # TODO: drive POST /snapshots via the services.snapshot app + a fake S3
-    #       (moto / localstack) when CMP-SNAP-01 is DONE; assert the five keys.
-    # keys = SnapshotService().create(req).artifact_keys
-    # assert set(keys.artifact_types()) == FIVE_EXPECTED_ARTIFACTS
-    pytest.skip("CMP-SNAP-01 not implemented yet")
+    import uuid
+
+    from services.snapshot import SnapshotRequest, SnapshotService
+    from services.substrate.object_store import (
+        SNAPSHOT_ARTIFACT_TYPES,
+        InMemoryObjectStore,
+    )
+
+    image_digest = "sha256:" + "a" * 64
+    org_id = uuid.uuid4()
+    req = SnapshotRequest(
+        org_id=org_id,
+        codebase_id=uuid.uuid4(),
+        commit_sha="b" * 40,
+    )
+
+    store = InMemoryObjectStore()
+    svc = SnapshotService(
+        object_store=store,
+        env_digest_provider=lambda: None,  # force the explicit image_digest path
+    )
+
+    accepted = svc.create_snapshot(req, image_digest=image_digest)
+
+    # Exactly the five named artifacts at the deterministic key scheme.
+    assert set(accepted.artifact_keys) == set(SNAPSHOT_ARTIFACT_TYPES)
+    assert len(accepted.artifact_keys) == 5
+    for key in accepted.artifact_keys.values():
+        assert key.startswith(f"orgs/{org_id}/codebases/{req.codebase_id}/snapshots/")
+        assert image_digest in key
+
+    # The simulated CMP-SNAP-05 worker reports completion; the five bodies are
+    # PUT to the deterministic keys, so the artifacts literally persist.
+    bodies = {t: f"{t}-bytes".encode() for t in SNAPSHOT_ARTIFACT_TYPES}
+    svc.record_completion(accepted, req, precondition_status="closed-world", artifact_bodies=bodies)
+    for artifact_type, key in accepted.artifact_keys.items():
+        assert store.get(str(org_id), key) == bodies[artifact_type]
+
+    # Re-running the same request resolves byte-identical keys (deterministic).
+    accepted2 = svc.create_snapshot(req, image_digest=image_digest)
+    assert accepted2.artifact_keys == accepted.artifact_keys
 
 
 @pytest.mark.empirical
