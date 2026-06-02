@@ -17,6 +17,7 @@ Covers (from WBS §4.2 / §4.3):
   - TST-INV-1-SNAP-04 [INVARIANT]  — re-partition flips origin core→oracle correctly
 """
 
+import uuid
 from pathlib import Path
 
 import pytest
@@ -216,10 +217,6 @@ def test_snap_04b_labeling_correction_window_meets_sla() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-SNAP-04 (Differential reflection oracle) not yet implemented",
-    strict=False,
-)
 def test_snap_04c_every_repartition_event_written_to_provenance() -> None:
     """Every re-partition event is written to provenance.
 
@@ -239,20 +236,64 @@ def test_snap_04c_every_repartition_event_written_to_provenance() -> None:
                     `snap_oracle_runs` row exists with `agreed=false`.
     Frequency:      every CI run
     Hard gate?:     yes — INV-1 provenance gate for CMP-SNAP-04.
+
+    NOTE: this narrative copy lives under ``tests/integration/`` and carries the
+    ``invariant`` marker, so it is collected by NO gating CI job (the unit job is
+    directory-scoped to ``tests/unit/ -m unit`` and the integration job is
+    informational + ``-m integration``). The CI-GATING copy is
+    ``tests/unit/test_snap04_repartition.py::test_snap_04c_*``.
     """
-    # TODO: import repartition_snapshot from services/snapshot oracle when
-    #       CMP-SNAP-04 is DONE; assert one repartition row per affected finding.
-    # result = repartition_snapshot(snapshot_id, oracle_run_id, reason)
-    # rows = provenance.repartition_rows(snapshot_id)
-    # assert len(rows) == result.affected_finding_count
-    pytest.skip("CMP-SNAP-04 not implemented yet")
+    from services.scan.provenance import sign_provenance
+    from services.snapshot import (
+        InMemoryOracleRunStore,
+        record_oracle_run,
+        repartition_snapshot,
+    )
+    from tests.fnd03_fakes import SoftwareKMSSigner
+    from tests.snap04_fakes import RepartitionTestStore, make_snapshot_chain_record
+
+    store = RepartitionTestStore()
+    signer = SoftwareKMSSigner()
+    oracle_runs = InMemoryOracleRunStore()
+    snapshot_id = uuid.uuid4()
+    arn = "arn:aws:kms:us-east-1:000000000000:key/snap04"
+
+    chain_ids = []
+    for engine in ("ifds", "ide"):
+        rec = make_snapshot_chain_record(snapshot_id=snapshot_id, detector_engine=engine)
+        chain_ids.append(
+            sign_provenance(rec, signer=signer, kms_key_arn=arn, store=store).record.id
+        )
+    before = {cid: store.get(cid) for cid in chain_ids}
+
+    run = record_oracle_run(
+        snapshot_id=snapshot_id,
+        oracle_verdict="not-closed-world",
+        oracle_version="oracle-1.0.0",
+        cw_detect_version="cw-1.0.0",
+        started_at="2026-06-01T00:00:00+00:00",
+        completed_at="2026-06-01T00:05:00+00:00",
+        oracle_run_store=oracle_runs,
+    )
+    assert run.agreed is False
+
+    result = repartition_snapshot(
+        snapshot_id,
+        run.run_id,
+        reason="oracle-disagreed",
+        provenance_store=store,
+        signer=signer,
+    )
+    assert result.affected_finding_count == len(chain_ids)
+    for cid in chain_ids:
+        rows = [c for c in store.children(cid) if c.record.record_type == "repartition"]
+        assert len(rows) == 1
+        assert rows[0].record.parent_record_id == cid
+        assert rows[0].record.repartition_oracle_id == run.run_id
+        assert store.get(cid) == before[cid]  # parent never UPDATEd
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-SNAP-04 (Differential reflection oracle) not yet implemented",
-    strict=False,
-)
 def test_inv_1_snap_04_repartition_flips_origin_core_to_oracle() -> None:
     """Re-partition flips origin deterministic-core→oracle-passthrough correctly (INV-1).
 
@@ -274,11 +315,58 @@ def test_inv_1_snap_04_repartition_flips_origin_core_to_oracle() -> None:
                     `findings` mirror reflects the new origin.
     Frequency:      every CI run
     Hard gate?:     yes — INV-1 invariant gate (per-emitter, WBS §4.3).
+
+    NOTE: collected by no gating job (see the §04c note above); the CI-GATING
+    copy is ``tests/unit/test_snap04_repartition.py::test_inv_1_snap_04_*``.
     """
-    # TODO: import repartition_snapshot + provenance store from services/snapshot
-    #       when CMP-SNAP-04 is DONE.
-    # repartition_snapshot(snapshot_id, oracle_run_id, reason)
-    # for f in core_findings:   assert f.origin == "oracle-passthrough"
-    # for f in oracle_findings: assert f.origin == "oracle-passthrough"  # unchanged
-    # assert no_finding_dropped()  # status untouched
-    pytest.skip("CMP-SNAP-04 not implemented yet")
+    from services.scan.provenance import SignedProvenanceRecord, sign_provenance
+    from services.snapshot import (
+        InMemoryOracleRunStore,
+        effective_origin,
+        record_oracle_run,
+        repartition_snapshot,
+    )
+    from tests.fnd03_fakes import SoftwareKMSSigner
+    from tests.snap04_fakes import RepartitionTestStore, make_snapshot_chain_record
+
+    store = RepartitionTestStore()
+    signer = SoftwareKMSSigner()
+    oracle_runs = InMemoryOracleRunStore()
+    snapshot_id = uuid.uuid4()
+    arn = "arn:aws:kms:us-east-1:000000000000:key/snap04"
+
+    def seed(**kw: object) -> uuid.UUID:
+        rec = make_snapshot_chain_record(snapshot_id=snapshot_id, **kw)  # type: ignore[arg-type]
+        return sign_provenance(rec, signer=signer, kms_key_arn=arn, store=store).record.id
+
+    def get(record_id: uuid.UUID) -> SignedProvenanceRecord:
+        signed = store.get(record_id)
+        assert signed is not None
+        return signed
+
+    core_ifds = seed(detector_engine="ifds")
+    oracle_pt = seed(origin="oracle-passthrough", detector_engine="semgrep")
+
+    run = record_oracle_run(
+        snapshot_id=snapshot_id,
+        oracle_verdict="not-closed-world",
+        oracle_version="oracle-1.0.0",
+        cw_detect_version="cw-1.0.0",
+        started_at="2026-06-01T00:00:00+00:00",
+        completed_at="2026-06-01T00:05:00+00:00",
+        oracle_run_store=oracle_runs,
+    )
+    repartition_snapshot(
+        snapshot_id,
+        run.run_id,
+        reason="oracle-disagreed",
+        provenance_store=store,
+        signer=signer,
+    )
+
+    # core finding flipped; oracle-passthrough finding untouched (no reverse flip).
+    assert effective_origin(get(core_ifds), provenance_store=store) == "oracle-passthrough"
+    assert effective_origin(get(oracle_pt), provenance_store=store) == "oracle-passthrough"
+    assert not store.children(oracle_pt)
+    # status is never written by this mechanism (no finding dropped).
+    assert get(core_ifds).record.record_type == "chain"  # parent immutable
