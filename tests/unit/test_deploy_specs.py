@@ -12,7 +12,17 @@ Source-of-truth: WBS.md §2.4 / §4.2; DOC-CMP-DEPLOY-02.md §9 (verbatim ACs);
 DOC-DEPLOY-DECISIONS.md (CLAR-DEPLOY-05, CLAR-DEPLOY-13).
 
 When CMP-DEPLOY-02 is DONE, replace xfail markers + skips with real assertions.
+
+PARTIAL STATUS (CMP-DEPLOY-02): AC-DEPLOY-02c (the hermetic publish gate,
+`workers/build/verify_pins.py`) is implemented and green below. AC-DEPLOY-02a
+and AC-DEPLOY-02b require a real ECR docker build (joern/codeql/git present at
+pinned digests inside a built image; mutating a tool changes the image digest);
+those two remain xfail+skip until a build substrate exists. Deep two-arm
+coverage of the gate lives in `tests/unit/test_verify_pins.py`.
 """
+
+import json
+from pathlib import Path
 
 import pytest
 
@@ -71,10 +81,6 @@ def test_deploy_02b_tool_mutation_changes_image_digest() -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(
-    reason="CMP-DEPLOY-02 (worker container baseline) not yet implemented",
-    strict=False,
-)
 def test_deploy_02c_build_refuses_unspecified_pinned_digest() -> None:
     """The image-build process refuses to publish if any pinned digest is unspecified.
 
@@ -90,6 +96,44 @@ def test_deploy_02c_build_refuses_unspecified_pinned_digest() -> None:
     Frequency: every CI run.
     Hard gate?: yes — upstream defence for INV-2 (no env_digest from unpinned input).
     """
-    # TODO: import workers.build.verify_pins; run against a malformed pins.json with
-    #       one empty sha256; assert returncode != 0 when CMP-DEPLOY-02 is DONE.
-    pytest.skip("CMP-DEPLOY-02 not implemented yet")
+    from workers.build.verify_pins import check_pins, main
+
+    digest = "0" * 64
+
+    def _complete_pins() -> dict[str, object]:
+        return {
+            "schema_version": 1,
+            "base_images": {
+                "debian": {"tag": "12-slim", "sha256": digest},
+                "python": {"tag": "3.11-slim-bookworm", "sha256": digest},
+            },
+            "tools": {
+                "joern": {"version": "v4.0.0", "sha256": digest},
+                "codeql": {"version": "v2.20.0", "sha256": digest},
+                "git": {"version": "1:2.39.5", "sha256": digest},
+            },
+            "python_packages_lockfile_sha256": digest,
+        }
+
+    # A complete manifest passes the gate (no missing fields).
+    assert check_pins(_complete_pins()) == []
+
+    # Exactly one empty sha256 ⇒ the gate refuses and names the missing field.
+    malformed = _complete_pins()
+    malformed["base_images"]["python"]["sha256"] = ""  # type: ignore[index]
+    missing = check_pins(malformed)
+    assert missing == ["base_images.python.sha256"]
+
+    # The CLI wrapper exits non-zero on the malformed manifest (build refused).
+    bad_file = Path(__file__).resolve().parent / "_tmp_bad_pins.json"
+    bad_file.write_text(json.dumps(malformed), encoding="utf-8")
+    try:
+        assert main([str(bad_file)]) == 1
+    finally:
+        bad_file.unlink()
+
+    # The committed workers/pins.json must itself pass the gate (non-empty pins).
+    repo_root = Path(__file__).resolve().parents[2]
+    committed = json.loads((repo_root / "workers" / "pins.json").read_text(encoding="utf-8"))
+    assert check_pins(committed) == []
+    assert main([str(repo_root / "workers" / "pins.json")]) == 0
