@@ -36,6 +36,32 @@ test. TST-AC-TRI-03a (quarantine falsifier) lives in
 
 import pytest
 
+from services.triage.spec_inference import CandidateSpec, EProcessState
+
+
+def _drive_to_threshold(spec: CandidateSpec) -> EProcessState:
+    """Run the REAL e-process on a clearly-good stream until E_t crosses 1/alpha.
+
+    Used by the CMP-TRI-02 invariant specs so they exercise the real wealth
+    process (not a force-constructed state): a do-nothing/broken e-process that
+    never crosses the threshold makes the dependent assertions fail. The good
+    stream uses true precision 0.95 >> pi_0.
+    """
+    import random
+
+    from services.triage.spec_inference import initial_state, update_e_process
+
+    rng = random.Random(11)
+    state = initial_state(spec)
+    for _ in range(500):
+        obs = 1.0 if rng.random() < 0.95 else 0.0
+        state = update_e_process(state, obs)
+        if state.e_value >= state.threshold:
+            return state
+    raise AssertionError(
+        f"e-process never crossed threshold on a good stream (final E_t={state.e_value})"
+    )
+
 
 @pytest.mark.invariant
 def test_tri_01a_flag_off_no_origin_or_detection_change() -> None:
@@ -171,21 +197,18 @@ def test_tri_01b_ranking_writes_only_triage_columns() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-TRI-02 (e-process spec gate) not yet implemented",
-    strict=False,
-)
 def test_tri_02c_accepted_spec_version_pinned_core_reads_pinned_only() -> None:
     """Accepted spec written version-pinned; the core only consumes pinned specs.
 
     Test id:        TST-AC-TRI-02c
-    Maps to AC:     AC-TRI-02c — "An accepted spec is written version-pinned as a
+    Maps to AC:     AC-TRI-02c -- "An accepted spec is written version-pinned as a
                     new `S_version`; the deterministic core only ever consumes
                     pinned specs (INV-3)."
     Kind tag:       [INVARIANT]
-    Inputs:         A candidate spec whose e-process wealth has crossed
-                    `E_t(sigma) >= 1/alpha` (alpha=0.05 ⇒ threshold 20.0); the `spec_versions`
-                    table before acceptance (DOC-CMP-TRI-02 §3.1, §4.2).
+    Inputs:         A candidate spec driven through the REAL e-process on a good
+                    stream until its wealth crosses `E_t(sigma) >= 1/alpha`
+                    (alpha=0.05 ==> threshold 20.0); the `spec_versions` table before
+                    acceptance (DOC-CMP-TRI-02 §3.1, §4.2).
     Outputs:        The `spec_versions` table after acceptance; the `S_version`
                     set the deterministic core reads for a subsequent scan.
     Pass criteria:  Acceptance materializes exactly one NEW `spec_versions` row
@@ -194,14 +217,59 @@ def test_tri_02c_accepted_spec_version_pinned_core_reads_pinned_only() -> None:
                     new row; and the core consumes the spec ONLY via the pinned
                     `S_version` (never a mutable "current spec" pointer).
     Frequency:      every CI run
-    Hard gate?:     yes — standard release gate for CMP-TRI-02 (INV-3).
+    Hard gate?:     yes -- standard release gate for CMP-TRI-02 (INV-3).
     """
-    # TODO: from services.triage.spec_inference import evaluate_proposed_spec
-    # verdict = evaluate_proposed_spec(spec, state_at_threshold)
-    # assert verdict.decision == "accepted"
-    # assert verdict.accepted_S_version is not None  # new pinned semver
-    # assert spec_versions_unchanged_except_one_new_row(before, after)
-    pytest.skip("CMP-TRI-02 not implemented yet")
+    from services.triage.spec_inference import (
+        CandidateSpec,
+        evaluate_proposed_spec,
+    )
+    from tests.fnd03_fakes import InMemoryProvenanceStore, SoftwareKMSSigner
+    from tests.tri02_fakes import (
+        InMemoryProposedSpecStore,
+        InMemorySpecVersionStore,
+        new_uuid,
+    )
+
+    spec = CandidateSpec(
+        id=new_uuid(),
+        org_id=new_uuid(),
+        spec_body={"class": "injection", "rule": "user-input-to-sql-sink"},
+        detector_class="injection",
+        pi_zero=0.7,
+    )
+    # Drive the REAL e-process to threshold on a clearly-good stream (not a
+    # force-constructed state): this is what makes a do-nothing impl fail here.
+    state = _drive_to_threshold(spec)
+    assert state.e_value >= state.threshold
+
+    spec_versions = InMemorySpecVersionStore()
+    proposed_specs = InMemoryProposedSpecStore()
+    before = spec_versions.all()
+    assert before == []
+
+    verdict = evaluate_proposed_spec(
+        spec,
+        state,
+        spec_versions=spec_versions,
+        proposed_specs=proposed_specs,
+        provenance_store=InMemoryProvenanceStore(),
+        signer=SoftwareKMSSigner(),
+    )
+
+    assert verdict.decision == "accepted"
+    assert verdict.accepted_S_version is not None  # new pinned semver
+
+    after = spec_versions.all()
+    assert len(after) == len(before) + 1  # exactly one new row materialized
+    new_row = after[0]
+    assert new_row.S_version == verdict.accepted_S_version
+    # The core consumes the spec ONLY via the pinned S_version, never a mutable
+    # "current spec" pointer: the row is scope='global', pinned, append-only.
+    assert new_row.scope == "global"
+    assert new_row.spec_provenance == "global-unrevalidated"
+    # proposed_specs flipped to 'accepted' with the FK to the new row.
+    assert proposed_specs.decision == "accepted"
+    assert proposed_specs.accepted_as_spec_version_id == new_row.id
 
 
 @pytest.mark.invariant
@@ -362,52 +430,94 @@ def test_inv_3_tri_01_llm_off_detection_path() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-TRI-02 (e-process spec gate) not yet implemented",
-    strict=False,
-)
 def test_inv_3_tri_02_accepted_spec_new_version_core_reads_pinned() -> None:
     """INV-3: accepted spec materializes a new S_version; core reads pinned only.
 
     Test id:        TST-INV-3-TRI-02
-    Maps to AC:     INV-3 (LLM off the detection path) for CMP-TRI-02 — an
+    Maps to AC:     INV-3 (LLM off the detection path) for CMP-TRI-02 -- an
                     accepted spec materializes as a NEW `S_version`; existing rows
                     are untouched; the core reads only pinned specs.
     Kind tag:       [INVARIANT]
     Inputs:         A candidate spec accepted by the e-process gate (E_t >= 1/alpha,
                     alpha=0.05); the `spec_versions` table before/after (DOC-CMP-TRI-02
-                    §5.1 — the single legitimate INV-3-compliant LLM->core path).
+                    §5.1 -- the single legitimate INV-3-compliant LLM->core path).
     Outputs:        The `spec_versions` table delta; the spec set the core reads.
     Pass criteria:  Acceptance INSERTs exactly one new `spec_versions` row and
                     mutates NO existing row (append-only). The deterministic core
                     influence is mediated solely by the new pinned `S_version`
-                    being consumed by a later scan — the LLM never directly
+                    being consumed by a later scan -- the LLM never directly
                     influences a `deterministic-core` finding.
     Frequency:      every CI run
-    Hard gate?:     yes — INV-3 emitter test for CMP-TRI-02 (Security-Analyst review).
+    Hard gate?:     yes -- INV-3 emitter test for CMP-TRI-02 (Security-Analyst review).
     """
-    # TODO: before = list(spec_versions.all())
-    # evaluate_proposed_spec(spec, state_at_threshold)
-    # after = list(spec_versions.all())
-    # assert len(after) == len(before) + 1  # exactly one new row
-    # assert all(row in after for row in before)  # no existing row mutated
-    pytest.skip("CMP-TRI-02 not implemented yet")
+    from services.triage.spec_inference import (
+        CandidateSpec,
+        SpecVersionRow,
+        evaluate_proposed_spec,
+    )
+    from tests.fnd03_fakes import InMemoryProvenanceStore, SoftwareKMSSigner
+    from tests.tri02_fakes import (
+        InMemoryProposedSpecStore,
+        InMemorySpecVersionStore,
+        new_uuid,
+    )
+
+    spec_versions = InMemorySpecVersionStore()
+    # Seed a pre-existing pinned spec for the class so we can prove append-only:
+    # acceptance must NOT mutate it, and must bump to a fresh semver.
+    preexisting = SpecVersionRow(
+        id=new_uuid(),
+        org_id=None,
+        S_version="1.0.0",
+        scope="global",
+        spec_set={"class": "injection", "rule": "prior"},
+        spec_provenance="global-unrevalidated",
+        e_process_detail={},
+    )
+    spec_versions.insert(preexisting)
+    before = spec_versions.all()
+
+    spec = CandidateSpec(
+        id=new_uuid(),
+        org_id=new_uuid(),
+        spec_body={"class": "injection", "rule": "new-accepted"},
+        detector_class="injection",
+        pi_zero=0.7,
+    )
+    state = _drive_to_threshold(spec)
+
+    evaluate_proposed_spec(
+        spec,
+        state,
+        spec_versions=spec_versions,
+        proposed_specs=InMemoryProposedSpecStore(),
+        provenance_store=InMemoryProvenanceStore(),
+        signer=SoftwareKMSSigner(),
+    )
+
+    after = spec_versions.all()
+    assert len(after) == len(before) + 1  # exactly one new row
+    # No existing row mutated (append-only): every prior row is byte-identical.
+    assert all(row in after for row in before)
+    # The new row is a fresh pinned semver, distinct from the pre-existing one.
+    new_rows = [r for r in after if r not in before]
+    assert len(new_rows) == 1
+    assert new_rows[0].S_version != preexisting.S_version
+    # The store exposes NO update/delete surface (mirrors revoked grants).
+    assert not hasattr(spec_versions, "update")
+    assert not hasattr(spec_versions, "delete")
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-TRI-02 (e-process spec gate) not yet implemented",
-    strict=False,
-)
 def test_inv_2_tri_02_accepted_specs_version_pinned() -> None:
     """INV-2: accepted specs are version-pinned (no in-place spec mutation).
 
     Test id:        TST-INV-2-TRI-02
-    Maps to AC:     INV-2 (versioned parameters) for CMP-TRI-02 — accepted specs
+    Maps to AC:     INV-2 (versioned parameters) for CMP-TRI-02 -- accepted specs
                     are version-pinned; no in-place spec mutation.
     Kind tag:       [INVARIANT]
     Inputs:         An accepted candidate spec; the new `spec_versions` row and
-                    its signed `provenance_records` row (DOC-CMP-TRI-02 §5.2, §8 —
+                    its signed `provenance_records` row (DOC-CMP-TRI-02 §5.2, §8 --
                     `S_version` + `env_digest` on the signed chain).
     Outputs:        The new `spec_versions` row's `S_version` semver and the
                     INV-2 fields on the spec-acceptance provenance record.
@@ -417,10 +527,58 @@ def test_inv_2_tri_02_accepted_specs_version_pinned() -> None:
                     `env_digest`. No UPDATE/DELETE is ever issued against an
                     existing `spec_versions` row.
     Frequency:      every CI run
-    Hard gate?:     yes — INV-2 emitter test for CMP-TRI-02.
+    Hard gate?:     yes -- INV-2 emitter test for CMP-TRI-02.
     """
-    # TODO: verdict = evaluate_proposed_spec(spec, state_at_threshold)
-    # assert verdict.accepted_S_version is not None
-    # assert is_valid_semver(verdict.accepted_S_version)
-    # assert provenance_record.S_version and provenance_record.env_digest
-    pytest.skip("CMP-TRI-02 not implemented yet")
+    import re
+
+    from services.triage.spec_inference import CandidateSpec, evaluate_proposed_spec
+    from tests.fnd03_fakes import InMemoryProvenanceStore, SoftwareKMSSigner
+    from tests.tri02_fakes import (
+        InMemoryProposedSpecStore,
+        InMemorySpecVersionStore,
+        new_uuid,
+    )
+
+    semver_re = re.compile(r"^\d+\.\d+\.\d+$")
+    env_digest = "sha256:" + ("d" * 64)
+
+    spec = CandidateSpec(
+        id=new_uuid(),
+        org_id=new_uuid(),
+        spec_body={"class": "ssrf", "rule": "user-url-to-fetch"},
+        detector_class="ssrf",
+        pi_zero=0.7,
+    )
+    state = _drive_to_threshold(spec)
+
+    spec_versions = InMemorySpecVersionStore()
+    provenance_store = InMemoryProvenanceStore()
+
+    verdict = evaluate_proposed_spec(
+        spec,
+        state,
+        spec_versions=spec_versions,
+        proposed_specs=InMemoryProposedSpecStore(),
+        provenance_store=provenance_store,
+        signer=SoftwareKMSSigner(),
+        env_digest=env_digest,
+    )
+
+    # The accepted S_version is a non-null, valid semver (version-pinned).
+    assert verdict.accepted_S_version is not None
+    assert semver_re.match(verdict.accepted_S_version)
+    new_row = spec_versions.all()[0]
+    assert new_row.S_version == verdict.accepted_S_version
+
+    # The spec-acceptance provenance row carries the INV-2 fields (S_version +
+    # env_digest) on the signed chain row.
+    rows = list(provenance_store._rows.values())  # test inspects the in-memory fake store
+    accept_rows = [s for s in rows if s.record.record_type == "spec-acceptance"]
+    assert len(accept_rows) == 1
+    rec = accept_rows[0].record
+    assert rec.S_version == verdict.accepted_S_version
+    assert rec.env_digest == env_digest
+    assert rec.finding_id is None  # scan-level acceptance, not per-finding
+    # No UPDATE/DELETE surface on spec_versions (append-only, INV-2).
+    assert not hasattr(spec_versions, "update")
+    assert not hasattr(spec_versions, "delete")
