@@ -34,10 +34,25 @@ mirror so the unit specs verify the same contract one layer up.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Literal, Protocol, runtime_checkable
 from uuid import UUID
+
+
+def _truncate_utf8(text: str, max_bytes: int) -> str:
+    """Truncate ``text`` to at most ``max_bytes`` UTF-8 bytes on a char boundary.
+
+    Slicing a ``str`` by a *byte* budget directly (``text[:n]``) counts
+    characters, not bytes, so a multibyte window could exceed the budget. Encode,
+    cut on the byte budget, then drop any partial trailing char on decode.
+    """
+    encoded = text.encode("utf-8")
+    if len(encoded) <= max_bytes:
+        return text
+    return encoded[:max_bytes].decode("utf-8", errors="ignore")
+
 
 # LLM provider pin (CLAR-DEPLOY-14 RESOLVED 2026-05-23). Recorded verbatim as
 # ``model_id`` on every ``triage_scores`` row for the INV-3 audit trail.
@@ -48,6 +63,11 @@ MODEL_ID = "claude-sonnet-4-6"
 # Anthropic prompt-caching cost / latency tradeoff, documented in the PR. The
 # worker truncates the window to this many bytes before building the prompt.
 DEFAULT_CODE_WINDOW_BYTE_BUDGET = 4096
+
+# Hard bound on the LLM ``free_text`` rationale persisted into the bounded
+# ``triage_reason`` JSON payload (DOC-CMP-TRI-01 §4.2 / §7: adversarial-LLM
+# output must be length-bounded before persistence, never written unbounded).
+MAX_FREE_TEXT_BYTES = 2048
 
 Severity = Literal["info", "low", "medium", "high", "critical"]
 
@@ -271,15 +291,18 @@ def triage_finding(inp: TriageInput, llm: LLMClient) -> TriageScore:
 
 
 def _encode_reason(verdict: LLMTriageVerdict) -> str:
-    """JSON-encode the bounded triage_reason payload (DOC-CMP-TRI-01 §4.2)."""
-    import json
+    """JSON-encode the bounded triage_reason payload (DOC-CMP-TRI-01 §4.2).
 
+    ``free_text`` is length-bounded to :data:`MAX_FREE_TEXT_BYTES` before
+    encoding so an adversarial / runaway LLM rationale cannot write an unbounded
+    payload (DOC §7).
+    """
     return json.dumps(
         {
             "likely_exploitable": verdict.likely_exploitable,
             "likely_test_code": verdict.likely_test_code,
             "likely_fp": verdict.likely_fp,
-            "free_text": verdict.free_text,
+            "free_text": _truncate_utf8(verdict.free_text, MAX_FREE_TEXT_BYTES),
         },
         separators=(",", ":"),
         sort_keys=True,
@@ -356,7 +379,7 @@ def run_triage_cycle(
         code_window, sarif_excerpt = findings.context_for(view.id)
         inp = TriageInput(
             finding=view,
-            code_window=code_window[:code_window_byte_budget],
+            code_window=_truncate_utf8(code_window, code_window_byte_budget),
             sarif_excerpt=sarif_excerpt,
             S_version=s_version,
             env_digest=env_digest,
