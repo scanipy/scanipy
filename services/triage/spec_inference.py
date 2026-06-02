@@ -46,6 +46,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field, replace
+from datetime import datetime, timezone
 from typing import Literal, Protocol, runtime_checkable
 from uuid import UUID, uuid4
 
@@ -197,6 +198,14 @@ def update_e_process(state: EProcessState, outcome: float) -> EProcessState:
     Ordering 1->2->3 is the predictability guarantee: ``X_t`` enters the wealth and
     the stats but never the choice of ``lambda_t``. Reordering would silently void the
     supermartingale property (and 02a/02b would pass while being unsound).
+
+    CLAR-TRI-01 (WBS §17): this primitive deliberately operates on the bounded
+    ``[0, 1]`` ``outcome`` rather than DOC-CMP-TRI-02 §3's ``observation:
+    AdjudicatedFinding``. The adjudication->outcome projection
+    (``AdjudicatedFinding.label`` -> ``tp = 1.0`` / ``fp = 0.0``) is the caller's
+    responsibility; ``finding_id`` traceability lives on
+    ``proposed_specs.e_process_state`` at the evaluate/caller layer, not threaded
+    into this O(1) statistical update. See CLAR-TRI-01 for the sanctioned deviation.
     """
     if not (0.0 <= outcome <= 1.0):
         raise ValueError(f"outcome must be bounded in [0, 1]; got {outcome!r}")
@@ -279,7 +288,9 @@ class SpecVersionStore(Protocol):
 class ProposedSpecStore(Protocol):
     """Persistence port for ``proposed_specs`` decision flips (DOC-DB §4.8)."""
 
-    def mark_accepted(self, spec_id: UUID, *, accepted_as_spec_version_id: UUID) -> None: ...
+    def mark_accepted(
+        self, spec_id: UUID, *, accepted_as_spec_version_id: UUID, decided_at: datetime
+    ) -> None: ...
 
     def mark_quarantined(self, spec_id: UUID) -> None: ...
 
@@ -380,6 +391,7 @@ def evaluate_proposed_spec(
     env_digest: str = "sha256:" + ("e" * 64),
     scan_id: UUID | None = None,
     signature_alg: SignatureAlg = DEFAULT_SIGNATURE_ALG,
+    decided_at: datetime | None = None,
 ) -> AcceptanceVerdict:
     """Decision step. Acceptance when ``E_t(sigma) >= 1/alpha`` (alpha = 0.05 ==> 20.0).
 
@@ -398,6 +410,19 @@ def evaluate_proposed_spec(
     persistence ports are injected so the component is testable offline (the
     in-memory fakes mirror ``tests/fnd03_fakes.py`` / ``tests/tri01_fakes.py``);
     if none are supplied the decision is computed without side effects.
+
+    ATOMICITY (DOC-CMP-TRI-02 §7): the caller MUST wrap the three durable writes
+    -- (1) the ``spec_versions`` insert, (2) the ``proposed_specs`` decision flip,
+    and (3) the signed ``provenance_records`` insert -- in a SINGLE DB
+    transaction. A KMS-signing or any write exception at ANY step MUST roll back
+    ALL THREE: the new ``S_version`` must not exist until its signed chain row
+    exists, and the candidate stays ``pending`` (no partial state; INV-2 / INV-3
+    preserved). This function performs the writes in-order via the injected ports
+    but does NOT own the transaction boundary -- that is the caller's contract.
+
+    ``decided_at`` is the acceptance decision timestamp recorded on the
+    ``proposed_specs`` flip; it defaults to ``datetime.now(timezone.utc)`` when not
+    supplied (caller may pin it for deterministic / replayed acceptance).
     """
     e_value = state.e_value
     threshold = state.threshold
@@ -456,7 +481,14 @@ def evaluate_proposed_spec(
 
     # (2) Flip the proposed_specs decision with the FK to the new row.
     if proposed_specs is not None:
-        proposed_specs.mark_accepted(spec.id, accepted_as_spec_version_id=new_row.id)
+        proposed_specs.mark_accepted(
+            spec.id,
+            accepted_as_spec_version_id=new_row.id,
+            # `timezone.utc` (not the 3.11+-only `datetime.UTC` alias that UP017
+            # suggests) keeps this import-safe on the 3.10 validation venv too; the
+            # two are the identical object on py311 -- hence the UP017 suppression.
+            decided_at=decided_at or datetime.now(timezone.utc),  # noqa: UP017
+        )
 
     return AcceptanceVerdict(
         spec_id=spec.id,

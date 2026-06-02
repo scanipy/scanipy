@@ -46,6 +46,8 @@ from uuid import uuid4
 import pytest
 
 from services.triage.spec_inference import (
+    _BET_C,  # production betting constants -- reused so the peek control isolates ONLY
+    _BET_KAPPA,  # the predictability break (not a re-hardcoded clip)
     CandidateSpec,
     EProcessState,
     evaluate_proposed_spec,
@@ -146,19 +148,27 @@ def test_tri_02b_martingale_property_e_tau_le_one_under_h0() -> None:
     """
     rng = random.Random(424242)
     pi_zero = 0.7
-    true_precision = pi_zero  # tight boundary of H0: E[E_tau] ~= 1 (most adversarial)
+    true_precision = pi_zero  # tight boundary of H0: E[E_tau] == 1 (most adversarial)
     n_trajectories = 10_000
     fixed_taus = [1, 5, 20, 100]
-    # MC slack at 10k trajectories under the TIGHT boundary (true precision == pi_0),
-    # where the bet is active and E_tau is right-skewed (rare large-wealth wins).
-    # Empirically (fixed seed 424242, 10k traj) a CORRECT e-process produces
-    # E[E_tau] <= 1.02 at every tau here; this 0.03 tolerance separates that from a
-    # broken supermartingale by a wide margin: a NON-PREDICTABLE bet (peeking at X_t
-    # to choose lambda — the exact R-3 failure mode) blows E[E_tau] up to 1.15 -> 2.0
-    # -> 16 -> ~1.2e6 across these taus, and a fixed-aggressive bet drifts to ~1.04+.
-    # 0.03 is a deliberate TIGHTENING vs. a naive 0.05 (it still admits the honest
-    # boundary skew but bites a 3%+ violation). Fixed-seed Mersenne Twister is stable
-    # across CPython 3.10/3.11, so this reproduces in CI.
+    # WHY THE BOUND IS 1.0 (not "1.02 / a thin margin"): at the H0 boundary
+    # (true precision EXACTLY pi_0) with a PREDICTABLE bet (lambda_t chosen from
+    # X_1..X_{t-1}, before X_t), each wealth factor is conditionally mean-1 --
+    # E[1 + lambda_t(X_t - pi_0) | F_{t-1}] = 1 + lambda_t(E[X_t] - pi_0) = 1
+    # because E[X_t] - pi_0 = 0 (and when lambda_t clips to 0 the factor is exactly
+    # 1). So E[E_tau] = EXACTLY 1.0 -- a true MARTINGALE -- for every bounded tau,
+    # not merely a supermartingale with slack. The +mc_tolerance band is therefore
+    # NOT theoretical skew/margin: it is Monte-Carlo ESTIMATOR VARIANCE of a
+    # heavy-right-tailed mean (E_tau has rare large-wealth realisations), which at
+    # 10k trajectories floors around ~0.02-0.03 and shrinks with more trajectories
+    # (it converges to ~1.006 by 200k traj). This fast 10k-traj martingale check
+    # reliably catches GROSS predictability breaks (a non-predictable peek bet
+    # reads >> 1 -- see test_tri_02b_negative_control_* below, where it measures
+    # ~10.7 at tau=20) but acknowledges it cannot resolve a sub-MC-tolerance,
+    # short-tau supermartingale defect. Fixed-seed Mersenne Twister is stable across
+    # CPython 3.10/3.11, so this reproduces in CI. (Tightening toward ~0.015 with
+    # more trajectories is possible but is NOT done here to avoid estimator-variance
+    # flakiness on the honest impl.)
     mc_tolerance = 0.03
 
     # Pre-generate per-trajectory streams long enough for every tau (incl. the
@@ -196,6 +206,74 @@ def test_tri_02b_martingale_property_e_tau_le_one_under_h0() -> None:
     mean_e_tau = sum(e_tau_samples) / len(e_tau_samples)
     assert mean_e_tau <= 1.0 + mc_tolerance, (
         f"E[E_tau|H0] = {mean_e_tau} > 1 + tol at data-dependent tau"
+    )
+
+
+def _peek_update_log_wealth(log_wealth: float, outcome: float, pi_zero: float) -> float:
+    """A DELIBERATELY NON-PREDICTABLE (peek) e-process update -- the R-3 failure mode.
+
+    This is the EXACT same clip formula and ``log1p`` wealth step as the production
+    :func:`update_e_process` / :func:`_predictable_bet`, with ONE break: ``lambda_t``
+    is chosen from the CURRENT outcome ``X_t`` (``lam = clip(kappa*(X_t - pi_0), 0,
+    c/pi_0)``) instead of from ``X_1..X_{t-1}``. Peeking at ``X_t`` to size the bet
+    voids the conditional-mean-1 (martingale) property: under H0 at the boundary the
+    per-step factor mean becomes pi_0*(1 + lambda(1 - pi_0)) + (1 - pi_0)*1 = 1.126 > 1
+    (with pi_0=0.7, c=0.5, kappa=2.0), so ``E[E_tau|H0]`` grows as ~1.126^tau. The
+    production constants are imported (not re-hardcoded) so the ONLY difference from
+    the sound impl is the predictability break this control isolates.
+    """
+    lam_raw = _BET_KAPPA * (outcome - pi_zero)  # PEEK: uses X_t, not mu_hat_{t-1}
+    upper = _BET_C / pi_zero if pi_zero > 0.0 else 0.0
+    lam = 0.0 if lam_raw < 0.0 else upper if lam_raw > upper else lam_raw
+    return log_wealth + math.log1p(lam * (outcome - pi_zero))
+
+
+@pytest.mark.unit
+def test_tri_02b_negative_control_peek_bet_violates_martingale_bound() -> None:
+    """NEGATIVE CONTROL: a non-predictable (peek) bet FAILS the Gate-4 martingale bound.
+
+    Test id:        (added) TST-AC-TRI-02b-NEGATIVE-CONTROL
+    Rationale:      ``test_tri_02b_*`` asserts ``E[E_tau|H0] <= 1 + mc_tolerance``.
+                    A do-nothing/constant-wealth e-process trivially passes that
+                    bound, so green 02b alone does not prove the check actually
+                    DISCRIMINATES a broken supermartingale. This control turns the
+                    discrimination from implicit into ENFORCED: it builds the exact
+                    R-3 failure mode -- a bet that peeks at the CURRENT outcome X_t
+                    to choose lambda_t (breaking predictability) -- and asserts that
+                    its empirical ``E[E_tau|H0]`` at the boundary EXCEEDS
+                    ``1.0 + mc_tolerance``. I.e. the Gate-4 martingale check WOULD
+                    FAIL for this broken process, proving the sound impl passing it
+                    is meaningful. (A correct/predictable bet sits at E == 1.0.)
+    Pass criteria:  At tau=20 (factors bounded in {1, ~1.18} so the MC estimate is
+                    rock-stable at 10k trajectories), the peek bet's empirical
+                    ``E[E_tau|H0]`` > 1.0 + mc_tolerance, using the SAME 0.03
+                    tolerance the honest 02b test passes. Per the per-step factor
+                    mean 1.126, E[E_tau] ~= 1.126^20 ~= 10.7 -- many multiples above
+                    the bar, so the control is robust (not flaky).
+    Kind tag:       [UNIT] (negative control for Gate 4; runs in the Gate-4 dir).
+    """
+    rng = random.Random(424242)
+    pi_zero = 0.7
+    true_precision = pi_zero  # boundary of H0: a PREDICTABLE bet would sit at E == 1
+    n_trajectories = 10_000
+    tau = 20  # factors in {1, ~1.18} ==> the 10k-traj MC mean is rock-stable here
+    mc_tolerance = 0.03  # the SAME band the honest 02b test passes -> proves discrimination
+
+    e_tau_samples = []
+    for _ in range(n_trajectories):
+        log_wealth = 0.0
+        for _ in range(tau):
+            obs = 1.0 if rng.random() < true_precision else 0.0
+            log_wealth = _peek_update_log_wealth(log_wealth, obs, pi_zero)
+        e_tau_samples.append(math.exp(log_wealth))
+    mean_e_tau = sum(e_tau_samples) / len(e_tau_samples)
+
+    # The broken (peek) process BLOWS PAST the bound the honest impl satisfies:
+    # this is the enforced proof that the Gate-4 martingale check discriminates a
+    # broken supermartingale rather than passing everything.
+    assert mean_e_tau > 1.0 + mc_tolerance, (
+        f"peek-bet E[E_tau|H0] = {mean_e_tau} did NOT exceed the martingale bound "
+        f"1 + {mc_tolerance} at tau={tau}; the Gate-4 check would not discriminate it"
     )
 
 

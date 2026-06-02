@@ -18,6 +18,7 @@ the same ``InMemory*Store`` discipline (DI pattern of
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from uuid import UUID
 
 from services.triage.spec_inference import SpecVersionRow
@@ -67,11 +68,15 @@ class InMemoryProposedSpecStore:
     def __init__(self) -> None:
         self.decision: str = "pending"
         self.accepted_as_spec_version_id: UUID | None = None
+        self.decided_at: datetime | None = None
         self.quarantined: bool = False
 
-    def mark_accepted(self, spec_id: UUID, *, accepted_as_spec_version_id: UUID) -> None:
+    def mark_accepted(
+        self, spec_id: UUID, *, accepted_as_spec_version_id: UUID, decided_at: datetime
+    ) -> None:
         self.decision = "accepted"
         self.accepted_as_spec_version_id = accepted_as_spec_version_id
+        self.decided_at = decided_at
 
     def mark_quarantined(self, spec_id: UUID) -> None:
         self.decision = "quarantined"
