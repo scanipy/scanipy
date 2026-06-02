@@ -208,7 +208,7 @@ The source documents do not pin a cloud vendor, region strategy, queue technolog
 - AC-DEPLOY-02b: Mutating any bundled tool changes the image digest, and that digest is the authoritative `env_digest` exposed to the snapshot worker.
 - AC-DEPLOY-02c: The image-build process refuses to publish if any pinned digest is unspecified.
 
-#### CMP-DEPLOY-03 — Observability surfaces
+#### CMP-DEPLOY-03 — Observability surfaces `IN-PROGRESS`
 **Depends-On:** CMP-DEPLOY-01 · **Staging:** cross-cutting
 **Purpose:** Structured logs, metrics, and traces for every worker and API surface. Carries the per-scan correlation fields needed for cross-component triage (scan id, snapshot id, org id, codebase id, detector id, `S_version`, `env_digest`, `fingerprint_class`, `origin`).
 **Acceptance criteria:**
