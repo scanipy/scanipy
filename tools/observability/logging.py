@@ -84,8 +84,12 @@ class ScanipyJsonFormatter(logging.Formatter):
             "level": record.levelname,
             "ts": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime(record.created)),
             "msg": record.getMessage(),
-            "trace_id": f"{ctx.trace_id:032x}" if ctx is not None else None,
-            "span_id": f"{ctx.span_id:016x}" if ctx is not None else None,
+            # Emit ids only for a *valid* span context. An OTel-installed worker
+            # with no active span yields an invalid context whose trace/span ids
+            # are 0 — emitting "000…0" would falsely imply a real trace, so emit
+            # explicit null instead (DOC-CMP-DEPLOY-03 §3.3).
+            "trace_id": f"{ctx.trace_id:032x}" if ctx is not None and ctx.is_valid else None,
+            "span_id": f"{ctx.span_id:016x}" if ctx is not None and ctx.is_valid else None,
         }
         # Caller-supplied structured fields (the ``extra=`` kwarg lands as
         # attributes on the record). Absent fields are emitted as explicit null.

@@ -190,7 +190,7 @@ The source documents do not pin a cloud vendor, region strategy, queue technolog
 
 ### 2.4 Deployment work packages
 
-#### CMP-DEPLOY-01 — Runtime substrate selection `IN-PROGRESS`
+#### CMP-DEPLOY-01 — Runtime substrate selection `DONE`
 **Depends-On:** none · **Staging:** cross-cutting (must complete before Phase 4)
 **Purpose:** Resolve every `CLAR-DEPLOY-*` item in §17 and commit one substrate per primitive (compute, queue, blob store, RDBMS, KMS, secrets, IdP, observability stack, region strategy, network model). Output is a written substrate decision record plus the IaC scaffolding needed by every later phase. The decision record is the input to `CMP-DEPLOY-02..04`.
 **Acceptance criteria:**
@@ -208,7 +208,7 @@ The source documents do not pin a cloud vendor, region strategy, queue technolog
 - AC-DEPLOY-02b: Mutating any bundled tool changes the image digest, and that digest is the authoritative `env_digest` exposed to the snapshot worker.
 - AC-DEPLOY-02c: The image-build process refuses to publish if any pinned digest is unspecified.
 
-#### CMP-DEPLOY-03 — Observability surfaces
+#### CMP-DEPLOY-03 — Observability surfaces `IN-PROGRESS`
 **Depends-On:** CMP-DEPLOY-01 · **Staging:** cross-cutting
 **Purpose:** Structured logs, metrics, and traces for every worker and API surface. Carries the per-scan correlation fields needed for cross-component triage (scan id, snapshot id, org id, codebase id, detector id, `S_version`, `env_digest`, `fingerprint_class`, `origin`).
 **Acceptance criteria:**
