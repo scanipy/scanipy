@@ -896,6 +896,7 @@ __all__ = [
     "CustomerEvaluationStream",
     "EProcessState",
     "ProposedSpecStore",
+    "RevalidationDecision",
     "RevalidationResult",
     "SpecQuarantineStore",
     "SpecVersionRow",

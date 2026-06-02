@@ -141,7 +141,7 @@ The set is **frozen** at scan submission; `CMP-ORCH-01` records the pinned `S_ve
 
 **On every customer-adjudicated observation:** an update to `CustomerEProcessState` for the relevant `(org_id, spec_version_id)`. No `findings` rows are touched.
 
-**On revalidation acceptance** (customer-stream e-process for `H0` crosses `1/α`): a state-machine transition on the customer-scoped view of the spec — either by inserting a customer-scoped `spec_versions` row with `scope='customer'`, `spec_provenance='global-revalidated'`, referencing the global parent; or by recording a per-customer revalidation event whose effect is to label *future* findings emitted under this customer's scans with `spec_provenance='global-revalidated'`. The precise schema mechanism is documented in `DOC-DB §4.9` (the `spec_provenance` enum is on `spec_versions`); a clarification on the exact per-customer revalidation persistence is filed as `CLAR-DB-02` (see §10).
+**On revalidation acceptance** (customer-stream e-process for `H0` crosses `1/α`): a state-machine transition on the customer-scoped view of the spec — either by inserting a customer-scoped `spec_versions` row with `scope='customer'`, `spec_provenance='global-revalidated'`, referencing the global parent; or by recording a per-customer revalidation event whose effect is to label *future* findings emitted under this customer's scans with `spec_provenance='global-revalidated'`. The precise schema mechanism is documented in `DOC-DB §4.9` (the `spec_provenance` enum is on `spec_versions`); a clarification on the exact per-customer revalidation persistence is filed as `CLAR-DB-05` (see §10).
 
 **On quarantine** (customer-stream e-process for the complementary drift null crosses `1/α`): the spec's `decision` is `'quarantined'` for that customer. Subsequent scans for the same `org_id` MUST NOT include the quarantined spec in their pinned `S`. Existing emitted findings are NOT deleted; their historical `S_version` is preserved.
 
@@ -232,7 +232,7 @@ Downstream consumers: `CMP-CP-04` (dashboard surfaces `spec_provenance` per-find
 
 | Field | Where | Threading rule |
 |---|---|---|
-| `spec_versions.spec_provenance` | Updated to `'global-revalidated'` for the customer-scoped pin upon revalidation acceptance, OR a new `scope='customer'` row is created (schema mechanism: `CLAR-DB-02` see §10). | Transitions are append-only in spirit (specs are immutable; revalidation is recorded as either an attribute update on a scope='customer' shadow row or as a separate per-customer revalidation event row — exact persistence pattern is the open `CLAR-DB-02`). |
+| `spec_versions.spec_provenance` | Updated to `'global-revalidated'` for the customer-scoped pin upon revalidation acceptance, OR a new `scope='customer'` row is created (schema mechanism: `CLAR-DB-05` see §10). | Transitions are append-only in spirit (specs are immutable; revalidation is recorded as either an attribute update on a scope='customer' shadow row or as a separate per-customer revalidation event row — exact persistence pattern is the open `CLAR-DB-05`). |
 | `findings.spec_provenance` | Set at emission time by `CMP-ORCH-03` from the consumed `spec_versions.spec_provenance` (per-scope view) | `CMP-TRI-03` does NOT write to `findings`. The schema grants exclude this; the state-machine transitions affect *future* emissions only. |
 | Quarantine event | A `provenance_records` row with `record_type='spec-acceptance'` reused or a new record_type for quarantine — exact mechanism via `CMP-FND-03` signing helpers; KMS-signed per `CLAR-DEPLOY-04`. | Append-only; signed; carries `S_version`, `env_digest`, `org_id`. |
 
@@ -266,14 +266,14 @@ Cross-referenced upstream tests (consumed but not owned):
 | CLAR-ID | Question | Status | Impact on CMP-TRI-03 |
 |---|---|---|---|
 | `CLAR-PARAM-02` | π₀ per detector class, α, per-class evaluation-stream definition (global) | **DEFERRED** (until Phase 5) | The customer-stream evaluation-stream definition for each detector class inherits from the global definition; per-tenant overrides are a policy concern, not blocking for implementation. |
-| `CLAR-DB-02` *(NEW — FILED BY THIS DOCUMENT)* | Exact persistence pattern for per-customer revalidation/quarantine state | **OPEN** | Two viable schemas: (a) update `spec_versions.spec_provenance` on a customer-scoped shadow row with `scope='customer'` and an FK back to the global parent; (b) a dedicated `spec_revalidations` table keyed by `(org_id, spec_version_id)` with the e-process state, decision, and KMS-signed transition record. The SDD/PLAN does not pin one; the implementation PR will propose a design and request CTO sign-off. Both options preserve INV-2 (specs append-only) and INV-3 (pinned per scan). Blocks: nothing immediate — implementation should proceed with option (b) as the default unless `/cto` decides otherwise. |
+| `CLAR-DB-05` *(NEW — FILED BY THIS DOCUMENT)* | Exact persistence pattern for per-customer revalidation/quarantine state | **OPEN** | Two viable schemas: (a) update `spec_versions.spec_provenance` on a customer-scoped shadow row with `scope='customer'` and an FK back to the global parent; (b) a dedicated `spec_revalidations` table keyed by `(org_id, spec_version_id)` with the e-process state, decision, and KMS-signed transition record. The SDD/PLAN does not pin one; the implementation PR will propose a design and request CTO sign-off. Both options preserve INV-2 (specs append-only) and INV-3 (pinned per scan). Blocks: nothing immediate — implementation should proceed with option (b) as the default unless `/cto` decides otherwise. |
 | `CLAR-OWNER-01` | Per-component owner | **DEFERRED** | §1 `Owner` stays DEFERRED. |
 | `CLAR-PARAM-06` *(NOT FILED — explicit non-action)* | Customer-stream drift detection sensitivity / minimum observations before quarantine fires | n/a | The e-process is anytime-valid; there is no minimum-observation requirement. Spurious quarantines from low-`n` are mitigated by α being small (0.05); no separate parameter is needed. Implementation may add a soft-warning at low `n` but the quarantine threshold remains `E_t ≥ 1/α`. |
 
 **New CLAR filed by this document:**
 
 ```
-| CLAR-DB-02 | Per-customer revalidation/quarantine persistence pattern: customer-scope shadow row vs. dedicated spec_revalidations table | CMP-TRI-03 schema | Before Phase 8 enable |
+| CLAR-DB-05 | Per-customer revalidation/quarantine persistence pattern: customer-scope shadow row vs. dedicated spec_revalidations table | CMP-TRI-03 schema | Before Phase 8 enable |
 ```
 
 To be appended to `WBS.md §17` by the next `WBS.md` editor (this document does not modify `WBS.md` directly per the SoT rule).
@@ -297,7 +297,7 @@ To be appended to `WBS.md §17` by the next `WBS.md` editor (this document does 
 - `docs/components/DOC-CMP-FND-02.md` (forthcoming) — schema owner; `spec_versions` and `findings.spec_provenance` constraints.
 - `docs/components/DOC-CMP-CP-04.md` (forthcoming) — dashboard surfaces `spec_provenance` and quarantine events.
 - `WBS.md §11 (CMP-TRI-03)` — task list T-CMP-TRI-03-01..04.
-- `WBS.md §17 CLAR-PARAM-02` (DEFERRED), `CLAR-DB-02` (NEW — filed by this document).
+- `WBS.md §17 CLAR-PARAM-02` (DEFERRED), `CLAR-DB-05` (NEW — filed by this document).
 - `.claude/rules/00-global.md` (RULE-6, RULE-9 — Security Analyst review required).
 - `.claude/rules/01-invariants.md §INV-3`.
 
