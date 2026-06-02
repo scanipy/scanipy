@@ -139,3 +139,39 @@ def test_deploy_03b_init_otel_refuses_blank_env_digest(monkeypatch: pytest.Monke
     monkeypatch.setenv("SCANIPY_ENV_DIGEST", "")
     with pytest.raises(RuntimeError, match="INV-2"):
         init_otel("snapshot-worker")
+
+
+@pytest.mark.unit
+def test_deploy_03b_invalid_span_context_emits_null_not_zeros(
+    _otel_env: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An OTel-installed worker with no active span emits ``null`` trace ids, not zeros.
+
+    Exercises the ``ctx.is_valid`` guard (DOC-CMP-DEPLOY-03 §3.3): an invalid span
+    context has trace/span id 0; emitting ``"000…0"`` would falsely imply a real
+    trace, so the formatter must emit explicit ``null``.
+    """
+    import tools.observability.logging as logmod
+
+    class _InvalidCtx:
+        is_valid = False
+        trace_id = 0
+        span_id = 0
+
+    class _Span:
+        def get_span_context(self) -> _InvalidCtx:
+            return _InvalidCtx()
+
+    class _Trace:
+        def get_current_span(self) -> _Span:
+            return _Span()
+
+    # Simulate OTel installed but no active (valid) span.
+    monkeypatch.setattr(logmod, "_otel_trace", _Trace())
+    payload = _format_record(ScanipyJsonFormatter())
+
+    assert payload["trace_id"] is None
+    assert payload["span_id"] is None
+    # The three mandatory fields are still present (independent of tracing).
+    for field in MANDATORY_FIELDS:
+        assert payload[field], f"mandatory field {field!r} must be present"
