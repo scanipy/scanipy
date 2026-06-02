@@ -499,17 +499,415 @@ def evaluate_proposed_spec(
     )
 
 
+# =========================================================================== #
+# CMP-TRI-03 -- Per-customer revalidation + drift monitor.                     #
+#                                                                             #
+# Implementation contract: ``docs/components/DOC-CMP-TRI-03.md``.             #
+# Cross-cutting refs: ``PLAN.md §"Algorithm 6 -- Continuous revalidation /     #
+# drift"`` + ``§"Covariate shift"``, ``docs/cross-cutting/DOC-ALGS.md §7.4    #
+# / §7.8``, ``.claude/rules/01-invariants.md §INV-3``,                         #
+# ``.claude/rules/02-provenance.md`` (spec_provenance state machine).         #
+#                                                                             #
+# TRI-03 reuses TRI-02's VERIFIED e-process instrument. ``S = S_global U      #
+# S_customer``; the same anytime-valid e-process runs on the CUSTOMER's       #
+# adjudicated (human-labelled) stream -- never on the LLM output, never on    #
+# the detection path (INV-3). Two e-processes per (org, spec):                #
+#                                                                             #
+#   * REVALIDATE -- the SAME null as TRI-02 (``H0: precision < pi_0``); it     #
+#     reuses :func:`update_e_process` / :func:`_predictable_bet` VERBATIM.     #
+#     Crossing ``E_t >= 1/alpha`` transitions ``spec_provenance``             #
+#     ``global-unrevalidated -> global-revalidated`` for this customer.       #
+#                                                                             #
+#   * DRIFT -- the COMPLEMENTARY null (``H0_drift: precision >= pi_0`` -- the  #
+#     *good* hypothesis). Rejecting it (drift ``E_t >= 1/alpha``) means        #
+#     "precision has FALLEN BELOW the floor" -> auto-quarantine sigma for      #
+#     that customer (PLAN §"Algorithm 6", DOC-ALGS §7.8). It is the SYMMETRIC  #
+#     MIRROR of TRI-02's construction under ``X -> 1 - X``, ``pi_0 ->          #
+#     1 - pi_0``: a predictable bet ``lambda_t`` computed from                 #
+#     ``mu_hat_{t-1}`` STRICTLY BEFORE ``X_t`` (predictability = the           #
+#     supermartingale / Ville guarantee), log-space accumulation, wealth >= 0. #
+#                                                                             #
+# To make the mirror PROVABLY the verified instrument, the drift update is     #
+# implemented by REDUCTION: ``drift_update(state, X) ==                       #
+# update_e_process(state', 1 - X)`` where ``state'`` carries ``pi_zero =       #
+# 1 - pi_0``. Predictability, the martingale property, nonnegative wealth, and #
+# the CORRECT worst-case clip ``c/(1 - pi_0)`` (worst case is ``X = 1`` for    #
+# the drift direction, factor ``1 - lambda*(1 - pi_0)``) all hold BY          #
+# CONSTRUCTION because the body is TRI-02's already-tested code. The explicit  #
+# mirror bet :func:`_predictable_drift_bet` is provided for reviewer           #
+# legibility (and equality with the reduction is asserted in the tests).       #
+#                                                                             #
+# Quarantine is an EXCLUSION decision (a state flag) -- the spec is dropped     #
+# from the org's FUTURE pinned ``S``. It NEVER mutates ``findings.origin`` /   #
+# detection / ``status``, and NEVER deletes a finding (INV-3 non-deletion).    #
+# The three-value ``spec_provenance`` enum never gains a 4th value and never   #
+# transitions back from ``global-revalidated``.                               #
+# =========================================================================== #
+
+
+RevalidationDecision = Literal["pending", "revalidated", "quarantined"]
+
+# The drift quarantine threshold is the same anytime-valid ``1/alpha`` as the
+# acceptance / revalidation threshold (Ville's inequality). alpha = 0.05 ==> 20.0.
+
+
+@dataclass(frozen=True)
+class CustomerEvaluationStream:
+    """Per-customer evaluation-stream config (DOC-CMP-TRI-03 §3).
+
+    ``pi_zero`` is the CUSTOMER's precision floor -- config-wired from tenant
+    policy, **never hardcoded** (it defaults to the global pi_0 per
+    CLAR-PARAM-02 but may be tightened per tenant). ``alpha`` defaults to the
+    pinned 0.05 but stays overridable so the gate math works for any configured
+    alpha. One stream per ``(org_id, spec_version_id)``.
+    """
+
+    org_id: UUID
+    spec_version_id: UUID  # the global spec being revalidated on this customer
+    pi_zero: float
+    alpha: float = DEFAULT_ALPHA
+
+
+@dataclass(frozen=True)
+class CustomerEProcessState:
+    """Per-(org, spec) customer-stream e-process state (DOC-CMP-TRI-03 §3).
+
+    Holds TWO log-space wealth processes over the SAME customer-adjudicated
+    stream, both ``E_0 = 1`` (``log_wealth = 0.0``) at construction:
+
+    * ``log_wealth_revalidate`` -- ``log E_t`` for the REVALIDATION null
+      (``H0: precision < pi_0``; same direction as TRI-02). Crossing
+      ``E_t >= 1/alpha`` ==> revalidated.
+    * ``log_wealth_drift`` -- ``log E_t`` for the COMPLEMENTARY drift null
+      (``H0_drift: precision >= pi_0``). Crossing ``E_t >= 1/alpha`` ==>
+      quarantine ("precision has fallen below floor").
+
+    ``sum_outcomes`` / ``n_observations`` give ``mu_hat_{t-1}`` -- the running
+    precision estimate over outcomes seen *so far*, used to pick BOTH predictable
+    bets for the next (strictly future) observation. Persisted via an injected
+    in-memory store in tests (DI pattern of ``tests/tri02_fakes.py`` /
+    ``tests/tri01_fakes.py``); the production persistence schema is deferred
+    (CLAR-DB-05 -- filed by the orchestrator).
+    """
+
+    org_id: UUID
+    spec_version_id: UUID
+    pi_zero: float
+    alpha: float = DEFAULT_ALPHA
+    log_wealth_revalidate: float = 0.0
+    log_wealth_drift: float = 0.0
+    n_observations: int = 0
+    sum_outcomes: float = 0.0
+
+    @property
+    def threshold(self) -> float:
+        """Anytime-valid threshold ``1/alpha`` (alpha = 0.05 ==> 20.0)."""
+        return 1.0 / self.alpha
+
+    @property
+    def e_value_revalidate(self) -> float:
+        """Current revalidation wealth ``E_t = exp(log_wealth_revalidate)``."""
+        return math.exp(self.log_wealth_revalidate)
+
+    @property
+    def e_value_drift(self) -> float:
+        """Current drift wealth ``E_t = exp(log_wealth_drift)``."""
+        return math.exp(self.log_wealth_drift)
+
+    @property
+    def mean_estimate(self) -> float:
+        """``mu_hat_{t-1}`` -- running mean of outcomes so far (0.0 cold start)."""
+        if self.n_observations == 0:
+            return 0.0
+        return self.sum_outcomes / self.n_observations
+
+
+@dataclass(frozen=True)
+class RevalidationResult:
+    """Decision-step result for the customer-stream e-process (DOC §3).
+
+    ``decision`` is one of ``pending`` / ``revalidated`` / ``quarantined``.
+    Both e-values are surfaced so the dashboard (CMP-CP-04) can show the
+    revalidation and drift wealth side by side.
+    """
+
+    org_id: UUID
+    spec_version_id: UUID
+    decision: RevalidationDecision
+    e_value_revalidate: float
+    e_value_drift: float
+
+
+def initial_customer_state(stream: CustomerEvaluationStream) -> CustomerEProcessState:
+    """Construct ``E_0 = 1`` (both wealths ``log_wealth = 0``) for ``stream``."""
+    return CustomerEProcessState(
+        org_id=stream.org_id,
+        spec_version_id=stream.spec_version_id,
+        pi_zero=stream.pi_zero,
+        alpha=stream.alpha,
+        log_wealth_revalidate=0.0,
+        log_wealth_drift=0.0,
+        n_observations=0,
+        sum_outcomes=0.0,
+    )
+
+
+def _drift_view(state: CustomerEProcessState) -> EProcessState:
+    """The MIRRORED ``EProcessState`` that reduces drift to TRI-02's instrument.
+
+    Under ``X -> 1 - X``, ``pi_0 -> 1 - pi_0`` the drift e-process on the customer
+    stream IS TRI-02's verified e-process on the mirrored input against the
+    mirrored floor. This view carries the drift wealth, the mirrored floor
+    ``1 - pi_0``, and the mirrored running stats (``sum -> n - sum``) so that
+    :func:`_predictable_bet` / :func:`update_e_process` operate on it VERBATIM. The
+    ``mean_estimate`` cold-start semantics (0.0 at ``n = 0``) are inherited from
+    :class:`EProcessState` exactly, so the hand-mirror and the reduction agree
+    everywhere (asserted in the test-suite).
+    """
+    return EProcessState(
+        spec_id=state.spec_version_id,
+        pi_zero=1.0 - state.pi_zero,
+        alpha=state.alpha,
+        log_wealth=state.log_wealth_drift,
+        n_observations=state.n_observations,
+        sum_outcomes=float(state.n_observations) - state.sum_outcomes,
+    )
+
+
+def _predictable_drift_bet(state: CustomerEProcessState) -> float:
+    """The SYMMETRIC MIRROR of :func:`_predictable_bet` (drift direction).
+
+    Conceptually ``lambda_t = clip(kappa * (pi_0 - mu_hat_{t-1}), 0,
+    c/(1 - pi_0))`` -- TRI-02's :func:`_predictable_bet` under ``X -> 1 - X``,
+    ``pi_0 -> 1 - pi_0``: the signal flips to ``(1 - pi_0) - mirror_mu_hat`` (the
+    bet only ever wagers the mean is *below* pi_0), keeping the DRIFT wealth a
+    supermartingale under ``H0_drift`` (precision >= pi_0). The upper clip is
+    ``c/(1 - pi_0)`` -- NOT ``c/pi_0`` -- because the worst-case factor for the
+    drift direction is at ``X = 1``: ``1 - lambda*(1 - pi_0)``, which stays
+    ``>= 1 - c > 0`` only if ``lambda <= c/(1 - pi_0)``. (Copying TRI-02's
+    ``c/pi_0`` verbatim would let ``log1p`` go non-positive for small pi_0; the
+    bound is direction-specific.) Implemented by REDUCTION -- it returns
+    :func:`_predictable_bet` on the mirrored :func:`_drift_view` -- so the bet IS
+    TRI-02's verified, predictable bet (it reads ``state`` over ``X_1..X_{t-1}``
+    ALONE, never ``X_t``), with the correct clip and cold-start by construction.
+    """
+    return _predictable_bet(_drift_view(state))
+
+
+def update_customer_e_process(
+    state: CustomerEProcessState, outcome: float
+) -> CustomerEProcessState:
+    """One O(1) update of BOTH customer-stream e-processes for a ``[0, 1]`` outcome.
+
+    ``outcome`` is one customer-adjudicated finding's label mapped to ``[0, 1]``
+    (tp = 1.0, fp = 0.0; partial labels permitted). The REVALIDATE wealth is
+    updated by TRI-02's VERIFIED :func:`update_e_process` VERBATIM (same null,
+    same instrument); the DRIFT wealth is updated by REDUCTION to the SAME
+    verified instrument on the mirrored input ``1 - outcome`` against the
+    mirrored floor ``1 - pi_0``. Both updates obey the predictability ordering
+    1->2->3 (bet read from ``state`` BEFORE ``outcome`` touches anything), so the
+    supermartingale / Ville guarantee transfers unchanged from TRI-02.
+
+    The drift bet is ALSO available as the explicit mirror
+    :func:`_predictable_drift_bet`; it is asserted equal to the reduction's bet
+    in the test-suite (the proof the hand-mirror IS the verified instrument).
+    """
+    if not (0.0 <= outcome <= 1.0):
+        raise ValueError(f"outcome must be bounded in [0, 1]; got {outcome!r}")
+
+    pi_zero = state.pi_zero
+
+    # (REVALIDATE) -- TRI-02's verified instrument, VERBATIM, same null.
+    reval_view = EProcessState(
+        spec_id=state.spec_version_id,
+        pi_zero=pi_zero,
+        alpha=state.alpha,
+        log_wealth=state.log_wealth_revalidate,
+        n_observations=state.n_observations,
+        sum_outcomes=state.sum_outcomes,
+    )
+    reval_next = update_e_process(reval_view, outcome)
+
+    # (DRIFT) -- the SAME verified instrument by REDUCTION: complementary null,
+    # mirrored input (1 - outcome) against the mirrored floor (1 - pi_0). This is
+    # literally TRI-02's tested update, so predictability + martingale + the
+    # correct c/(1 - pi_0) clip all hold by construction.
+    drift_next = update_e_process(_drift_view(state), 1.0 - outcome)
+
+    return replace(
+        state,
+        log_wealth_revalidate=reval_next.log_wealth,
+        log_wealth_drift=drift_next.log_wealth,
+        n_observations=state.n_observations + 1,
+        sum_outcomes=state.sum_outcomes + outcome,
+    )
+
+
+@runtime_checkable
+class CustomerEProcessStore(Protocol):
+    """Injected persistence port for ``CustomerEProcessState`` (DOC-CMP-TRI-03 §3).
+
+    Keyed by ``(org_id, spec_version_id)``. The in-memory fake mirrors the DI
+    pattern of ``tests/tri02_fakes.py`` / ``tests/tri01_fakes.py``. The
+    production revalidation-persistence schema is DEFERRED (CLAR-DB-05 -- filed by
+    the orchestrator); no DB migration is written by this component.
+    """
+
+    def get(self, org_id: UUID, spec_version_id: UUID) -> CustomerEProcessState | None: ...
+
+    def put(self, state: CustomerEProcessState) -> None: ...
+
+    def all_for_org(self, org_id: UUID) -> list[CustomerEProcessState]: ...
+
+
+@runtime_checkable
+class SpecQuarantineStore(Protocol):
+    """Injected port recording per-customer spec EXCLUSION / revalidation state.
+
+    A quarantine is an EXCLUSION DECISION (a state flag), NOT a finding mutation
+    and NOT a 4th ``spec_provenance`` value: a quarantined ``(org_id,
+    spec_version_id)`` is dropped from the org's FUTURE pinned ``S``. This port
+    also records the ``global-unrevalidated -> global-revalidated`` transition for
+    the customer-scoped view of the spec. Neither write ever touches ``findings``
+    (INV-3); the schema grants exclude that surface.
+    """
+
+    def mark_quarantined(self, org_id: UUID, spec_version_id: UUID) -> None: ...
+
+    def mark_revalidated(self, org_id: UUID, spec_version_id: UUID) -> None: ...
+
+    def is_quarantined(self, org_id: UUID, spec_version_id: UUID) -> bool: ...
+
+    def spec_provenance_for(
+        self, org_id: UUID, spec_version_id: UUID
+    ) -> Literal["global-unrevalidated", "global-revalidated", "customer"]: ...
+
+
+def _decide(state: CustomerEProcessState) -> RevalidationDecision:
+    """Decision rule over the two customer-stream wealths (DOC-CMP-TRI-03 §4.2).
+
+    Quarantine takes precedence: a floor breach (drift ``E_t >= 1/alpha``) is a
+    safety signal that EXCLUDES the spec, and it never transitions back. Else,
+    revalidation acceptance (revalidate ``E_t >= 1/alpha``). Else pending.
+    """
+    threshold = state.threshold
+    if state.e_value_drift >= threshold:
+        return "quarantined"
+    if state.e_value_revalidate >= threshold:
+        return "revalidated"
+    return "pending"
+
+
+def revalidate_spec(
+    spec_version_id: UUID,
+    customer_id: UUID,
+    state: CustomerEProcessState,
+    *,
+    quarantine_store: SpecQuarantineStore | None = None,
+) -> RevalidationResult:
+    """Decision step on the customer-stream e-process (DOC-CMP-TRI-03 §3).
+
+    Reuses the SAME Algorithm 6 instrument (TRI-02's update primitive) on the
+    customer's adjudicated stream, maintained in ``state`` by
+    :func:`update_customer_e_process`. Three outcomes:
+
+    * ``revalidated`` -- the REVALIDATE null cleared (``E_t >= 1/alpha``);
+      transitions the customer-scoped ``spec_provenance``
+      ``global-unrevalidated -> global-revalidated`` (never back).
+    * ``quarantined`` -- the DRIFT (complementary) null was rejected
+      (``E_t >= 1/alpha``); the spec is EXCLUDED from the org's future pinned
+      ``S``. Previously emitted findings are NOT deleted (INV-3 non-deletion);
+      their historical ``S_version`` is preserved.
+    * ``pending`` -- neither threshold crossed.
+
+    The optional ``quarantine_store`` is injected so the decision is persisted
+    offline in tests (the production schema is DEFERRED -- CLAR-DB-05). When no
+    store is supplied the decision is computed without side effects. This
+    function does NOT write to ``findings`` and does NOT mutate ``origin`` /
+    detection / ``status`` (INV-3).
+    """
+    decision = _decide(state)
+
+    if quarantine_store is not None:
+        if decision == "quarantined":
+            quarantine_store.mark_quarantined(customer_id, spec_version_id)
+        elif decision == "revalidated":
+            quarantine_store.mark_revalidated(customer_id, spec_version_id)
+
+    return RevalidationResult(
+        org_id=customer_id,
+        spec_version_id=spec_version_id,
+        decision=decision,
+        e_value_revalidate=state.e_value_revalidate,
+        e_value_drift=state.e_value_drift,
+    )
+
+
+def monitor_drift(
+    customer_id: UUID,
+    *,
+    state_store: CustomerEProcessStore,
+    quarantine_store: SpecQuarantineStore | None = None,
+) -> list[RevalidationResult]:
+    """Sweep an org's active customer-stream e-processes; report + act per spec.
+
+    For each ``(org_id, spec_version_id)`` the customer is currently consuming,
+    report the current revalidation / drift e-values and apply the decision rule
+    (DOC-CMP-TRI-03 §3). Quarantine fires when the DRIFT e-process crosses
+    ``E_t >= 1/alpha`` ("precision has fallen below floor"). The state store is
+    injected; the production persistence schema is DEFERRED (CLAR-DB-05).
+    """
+    results: list[RevalidationResult] = []
+    for state in state_store.all_for_org(customer_id):
+        results.append(
+            revalidate_spec(
+                state.spec_version_id,
+                customer_id,
+                state,
+                quarantine_store=quarantine_store,
+            )
+        )
+    return results
+
+
+def pinned_global_specs_for_org(
+    org_id: UUID,
+    candidate_spec_version_ids: list[UUID],
+    quarantine_store: SpecQuarantineStore,
+) -> list[UUID]:
+    """The org's pinnable ``S_global`` set with quarantined specs EXCLUDED.
+
+    Per-scan pinning of ``S = S_global U S_customer`` (set union) (T-CMP-TRI-03-01) excludes
+    every spec the org has quarantined. The exclusion is a DECISION FLAG, not a
+    finding mutation: previously emitted findings keep their historical
+    ``S_version`` (INV-3 non-deletion); only FUTURE scans drop the spec.
+    """
+    return [
+        sv for sv in candidate_spec_version_ids if not quarantine_store.is_quarantined(org_id, sv)
+    ]
+
+
 __all__ = [
     "DEFAULT_ALPHA",
     "AcceptanceVerdict",
     "CandidateSpec",
+    "CustomerEProcessState",
+    "CustomerEProcessStore",
+    "CustomerEvaluationStream",
     "EProcessState",
     "ProposedSpecStore",
+    "RevalidationResult",
+    "SpecQuarantineStore",
     "SpecVersionRow",
     "SpecVersionStore",
     "combined_e_value",
     "evaluate_proposed_spec",
+    "initial_customer_state",
     "initial_state",
+    "monitor_drift",
     "next_semver_for_class",
+    "pinned_global_specs_for_org",
+    "revalidate_spec",
+    "update_customer_e_process",
     "update_e_process",
 ]
