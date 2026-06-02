@@ -105,9 +105,15 @@ def get_logger(name: str) -> logging.Logger:
     log line is emitted exactly once in the structured-JSON envelope.
     """
     logger = logging.getLogger(name)
-    if not any(isinstance(h, logging.StreamHandler) for h in logger.handlers):
+    # Idempotent on *our* handler specifically — match a handler carrying the
+    # ScanipyJsonFormatter, not any StreamHandler (a foreign handler must not
+    # suppress installing ours).
+    if not any(isinstance(h.formatter, ScanipyJsonFormatter) for h in logger.handlers):
         handler = logging.StreamHandler()
         handler.setFormatter(ScanipyJsonFormatter())
         logger.addHandler(handler)
         logger.setLevel(logging.INFO)
+    # Do not propagate to the root logger (whose handlers lack the JSON
+    # formatter) — the structured line must be emitted exactly once.
+    logger.propagate = False
     return logger
