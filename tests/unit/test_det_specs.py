@@ -733,7 +733,7 @@ def test_det_03b_migrated_path_traversal_reproduces_cve_2025_61765() -> None:
         canonical witness matches. Ties to TST-AC-ORCH-01c backwards-compat surface.
     Frequency: every CI run. Hard gate? yes.
     """
-    # TODO: from tools.migrate_tarslip import migrate_tarslip; assert single canonical finding
+    # TODO: CLAR-MIGRATION-01 — migrate_tarslip then assert single canonical finding
     pytest.skip("CMP-DET-03 not implemented yet")
 
 

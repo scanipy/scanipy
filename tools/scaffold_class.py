@@ -164,13 +164,17 @@ class ScaffoldError(Exception):
     """
 
 
-def _stub_dsl_spec(spec_id: str, class_name: ClassName, languages: tuple[str, ...]) -> str:
+def _stub_dsl_spec(
+    spec_id: str, class_name: ClassName, languages: tuple[str, ...], engine: Engine
+) -> str:
     """A minimal, parseable DSL spec for a core-engine stub.
 
     Picks a DSL-legal language for the header (falling back to ``java``), and a
     source/sink clause pair whose access-path patterns avoid every DSL escape
     hatch (no raw regex / semgrep / cpg-query / callable / sequencing keyword).
     Parses through ``analysis.ifds.dsl.parse_spec`` so the registry admits it.
+    ``engine`` is the class's resolved core engine (``ifds``/``ide``) so the spec
+    header matches the manifest's ``engine`` field, never a hardcoded value.
     """
     dsl_langs = tuple(lang for lang in languages if lang in _DSL_LANGUAGES) or ("java",)
     langs_block = ", ".join(f'"{lang}"' for lang in dsl_langs)
@@ -178,7 +182,7 @@ def _stub_dsl_spec(spec_id: str, class_name: ClassName, languages: tuple[str, ..
         f'id: "{spec_id}"\n'
         f'class: "{class_name}"\n'
         f"languages: [{langs_block}]\n"
-        'engine: "ifds"\n'
+        f'engine: "{engine}"\n'
         "# Stub spec (AC-DET-03a): placeholder source/sink, not detection content.\n"
         "source(stub.placeholder.taint(*))\n"
         "sink(stub.placeholder.exec(arg[0]))\n"
@@ -294,7 +298,7 @@ def scaffold_class(
         # Core engine: needs a parseable specs/*.dsl.yaml; oracle/ is a placeholder.
         _write_if_absent(
             specs_dir / f"{class_name}.stub.dsl.yaml",
-            _stub_dsl_spec(class_name, class_name, class_languages),
+            _stub_dsl_spec(class_name, class_name, class_languages, engine),
         )
         _write_if_absent(oracle_dir / ".gitkeep", "")
     else:
