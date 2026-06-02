@@ -167,7 +167,9 @@ def test_snap_01c_null_or_malformed_env_digest_is_fail_closed() -> None:
 
 @pytest.mark.unit
 @pytest.mark.xfail(
-    reason="CMP-SNAP-02 (Incremental CPG, Algorithm 1) not yet implemented",
+    reason="frozen κ unspecified — blocked on CLAR-PARAM-01 (κ TBD by detector at "
+    "registration; pinned at Stage A go-live). The Algorithm-1 core exists "
+    "(analysis/cpg_delta.py); only the κ pass-criterion is missing.",
     strict=False,
 )
 def test_snap_02a_closed_world_kappa_bound_regression() -> None:
@@ -383,6 +385,108 @@ def test_snap_02c_reparse_preserves_node_ids_for_unchanged_decls() -> None:
     )
     with pytest.raises(NodeIdCollision):
         compute_incremental_cpg(req_collide)
+
+
+def _minimal_parent_and_reparser() -> tuple[object, object, object, object]:
+    """A tiny 2-declaration parent CPG + a reparser that mints one fresh node per
+    decl. Shared by the INV-2 and full-reparse SNAP-02 unit tests below."""
+    from analysis.cpg_delta import CPGNode, DeclSubgraph, GraphView, IncrementalCpg, NodeId
+
+    parent = IncrementalCpg()
+    parent.add_node("METHOD", resolved_fqn="a.one", enclosing_decl_fqn="a.one")
+    parent.add_node("METHOD", resolved_fqn="a.two", enclosing_decl_fqn="a.two")
+
+    class _Reparser:
+        def reparse(self, decl_fqn: str, *, fresh_id_base: int) -> DeclSubgraph:
+            return DeclSubgraph(
+                decl_fqn=decl_fqn,
+                nodes=(
+                    CPGNode(
+                        node_id=NodeId(fresh_id_base),
+                        kind="METHOD",
+                        operator_or_literal="",
+                        resolved_fqn=decl_fqn,
+                        enclosing_decl_fqn=decl_fqn,
+                        structural_path="",
+                    ),
+                ),
+                edges=(),
+            )
+
+    graph = GraphView(reverse_symbol_index={}, call_graph={}, class_hierarchy={}, decl_to_type={})
+    return parent, _Reparser(), graph, IncrementalCpg
+
+
+@pytest.mark.unit
+def test_snap_02_inv2_env_digest_mismatch_refuses() -> None:
+    """INV-2 fail-closed: a parent snapshot from a different Env is refused.
+
+    Maps to AC:     INV-2 (DOC-CMP-SNAP-02 §5/§7) — a snapshot may not be re-used
+                    across `env_digest`s (a different `Env`). The guard is the
+                    INV-2 discharge the PR checklist claims; it must be tested.
+    Pass criteria:  `compute_incremental_cpg` raises `EnvDigestMismatch` when
+                    `parent_env_digest != worker_env_digest`, before any build.
+    Hard gate?:     yes — INV-2 guard for CMP-SNAP-02.
+    """
+    from analysis.cpg_delta import (
+        EnvDigestMismatch,
+        IncrementalCpgRequest,
+        compute_incremental_cpg,
+    )
+
+    parent, reparser, graph, _ = _minimal_parent_and_reparser()
+    req = IncrementalCpgRequest(
+        parent_cpg=parent,
+        parent_env_digest="sha256:" + "a" * 64,
+        worker_env_digest="sha256:" + "b" * 64,  # different Env → must refuse
+        cw_verdict="closed-world",
+        changed_decls=frozenset({"a.one"}),
+        changed_types=frozenset(),
+        graph=graph,
+        reparser=reparser,
+        total_files=10,
+        changed_files=1,
+    )
+    with pytest.raises(EnvDigestMismatch):
+        compute_incremental_cpg(req)
+
+
+@pytest.mark.unit
+def test_snap_02_full_reparse_preserves_no_parent_ids() -> None:
+    """On the full-reparse route, G' preserves no parent IDs (DOC §6.1/§6.5).
+
+    Maps to AC:     AC-SNAP-02c-adjacent — the route-actually-taken semantics
+                    (DOC §6.1). A `full-reparse` verdict means the whole program is
+                    reparsed; the result must not be a half-preserved graph.
+    Pass criteria:  `precondition_status == "full-reparse"`, and `affected` ==
+                    EVERY parent declaration (so the build preserves nothing — no
+                    half-preserved graph). On full reparse the worker rebuilds G'
+                    from scratch, so node-ID *integers* may legitimately restart at
+                    0; the load-bearing property is that all decls are AFFECTED, not
+                    that the fresh integers avoid the parent's.
+    Hard gate?:     yes — guards the full-reparse output semantics.
+    """
+    from analysis.cpg_delta import IncrementalCpgRequest, compute_incremental_cpg
+
+    parent, reparser, graph, _ = _minimal_parent_and_reparser()
+    req = IncrementalCpgRequest(
+        parent_cpg=parent,
+        parent_env_digest="sha256:" + "c" * 64,
+        worker_env_digest="sha256:" + "c" * 64,
+        cw_verdict="full-reparse",
+        changed_decls=frozenset({"a.one"}),
+        changed_types=frozenset(),
+        graph=graph,
+        reparser=reparser,
+        total_files=10,
+        changed_files=1,
+    )
+    result = compute_incremental_cpg(req)
+
+    assert result.precondition_status == "full-reparse"
+    # All declarations AFFECTED ⇒ the preservation loop carries nothing over.
+    assert result.affected == frozenset({"a.one", "a.two"})
+    assert result.delta_graph.affected_set == frozenset({"a.one", "a.two"})
 
 
 @pytest.mark.unit

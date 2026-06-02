@@ -38,7 +38,6 @@ consumes the parent's ``env_digest`` unchanged), ``cpg_order_hash`` or
 
 from __future__ import annotations
 
-import hashlib
 from dataclasses import dataclass, field
 from typing import Final, Literal, Protocol, runtime_checkable
 
@@ -322,23 +321,6 @@ def _route_for(
 # ---------------------------------------------------------------------------
 
 
-def decl_content_hash(nodes: tuple[CPGNode, ...]) -> str:
-    """SHA-256 over the canonical form of a declaration's nodes (DOC §6.4).
-
-    The enclosing-declaration content hash is the key on which unchanged
-    declarations are matched back to their parent node IDs. Canonicalised by
-    sorting node tuples so the hash is parse-order-independent over the same
-    declaration content.
-    """
-    h = hashlib.sha256()
-    for tup in sorted(
-        (n.kind, n.operator_or_literal, n.resolved_fqn, n.enclosing_decl_fqn, n.structural_path)
-        for n in nodes
-    ):
-        h.update(repr(tup).encode("utf-8"))
-    return h.hexdigest()
-
-
 def _build_preserving_new_cpg(
     parent: IncrementalCpg,
     affected: frozenset[str],
@@ -346,8 +328,11 @@ def _build_preserving_new_cpg(
 ) -> tuple[IncrementalCpg, GraphDelta]:
     """Materialise ``G'`` by function-granularity reparse (DOC §6.2 step 6, §6.4).
 
-    * Declarations **not in** ``AFFECTED`` reuse their parent node IDs verbatim
-      (keyed on enclosing-declaration content hash via :func:`decl_content_hash`).
+    * Declarations **not in** ``AFFECTED`` reuse their parent node IDs verbatim.
+      "Unchanged" == "not in ``AFFECTED``"; the enclosing-declaration content-hash
+      change-detection that *populates* ``changed_decls`` (and hence ``AFFECTED``)
+      is performed upstream at the source boundary (DOC §6.2 step 1 / §6.4), not in
+      this graph-level engine.
     * Declarations **in** ``AFFECTED`` are reparsed through the injected
       ``reparser`` and mint fresh IDs (above the preserved maximum).
     * Any reparsed ID overlapping a preserved ID raises :class:`NodeIdCollision`.
@@ -356,13 +341,11 @@ def _build_preserving_new_cpg(
 
     # 1) Carry over not-AFFECTED declarations with their parent node IDs intact.
     preserved_ids: set[NodeId] = set()
-    preserved_decls: set[str] = set()
     for node in parent.nodes:
         if node.enclosing_decl_fqn in affected:
             continue
         new_cpg._append_node(node)  # node_id preserved verbatim
         preserved_ids.add(node.node_id)
-        preserved_decls.add(node.enclosing_decl_fqn)
 
     # Carry edges fully internal to preserved declarations; edges that touch an
     # AFFECTED node are removed from G' and re-supplied by the reparse subgraphs.
@@ -370,13 +353,6 @@ def _build_preserving_new_cpg(
     for edge in parent.edges:
         if edge.src in preserved_node_set and edge.dst in preserved_node_set:
             new_cpg._append_edge(edge)
-
-    # Bind the content hash of each preserved declaration into the audit (DOC §6.4
-    # keys on it); computed so the mechanism is exercised, not merely asserted.
-    _ = {
-        decl: decl_content_hash(tuple(n for n in parent.nodes if n.enclosing_decl_fqn == decl))
-        for decl in preserved_decls
-    }
 
     fresh_id_base = (max(preserved_ids) + 1) if preserved_ids else 0
 
@@ -447,6 +423,15 @@ def compute_incremental_cpg(req: IncrementalCpgRequest) -> IncrementalCpgResult:
 
     changed_files_ratio = req.changed_files / max(req.total_files, 1)
     route, cone_size_ratio = _route_for(req, changed_files_ratio, affected)
+
+    # On the ``full-reparse`` route the worker discards any incrementally-built G'
+    # and reparses the whole program (DOC §6.1/§6.5). Returning a *partially*
+    # preserved graph here would give ``new_cpg`` undefined semantics for that
+    # route. So treat **every** declaration as AFFECTED: nothing is preserved, all
+    # IDs are fresh, and ``affected_set`` honestly reports "all" — a coherent
+    # full-reparse output rather than a half-preserved graph.
+    if route == "full-reparse":
+        affected = frozenset(n.enclosing_decl_fqn for n in req.parent_cpg.nodes)
 
     new_cpg, delta = _build_preserving_new_cpg(req.parent_cpg, affected, req.reparser)
 
