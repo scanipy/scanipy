@@ -17,6 +17,8 @@ matching CMP-CORE-* lands. Marker = execution/frequency class only (the
 `--strict-markers` set is closed); the WBS kind tag lives in the docstring.
 """
 
+import itertools
+
 import pytest
 
 from analysis.ifds.dsl.primitives import AccessPathPattern, Sink, Source
@@ -256,6 +258,162 @@ def test_core_01_inv2_fail_fast_on_unpinned_params() -> None:
         solve(cpg, spec, S_version="", env_digest=_ENV_DIGEST)
     with pytest.raises(ValueError):
         solve(cpg, spec, S_version=_S_VERSION, env_digest=Sha256(b""))
+
+
+@pytest.mark.unit
+def test_core_01_witness_is_connected_source_to_sink_path() -> None:
+    """PR2: the witness is a real source -> sink path, not the ``(sink,)`` stub.
+
+    Test id:       (CMP-CORE-01 PR2 witness reconstruction — feeds CMP-CORE-02)
+    Maps to AC:    PREP for AC-CORE-01a/01b (witness is the input CMP-CORE-02
+                   backward-slices along, DOC-CMP-CORE-01 §3.3, DOC-CMP-CORE-02
+                   §4.1); not itself a release-blocker AC.
+    Kind tag:      [UNIT]
+    Inputs:        the single-proc taint fixture (source -> mid -> sink via CFG).
+    Outputs:       the realising ``Finding.witness`` tuple.
+    Pass criteria: (i) ANTI-VACUITY — exactly one finding at the exec_sink node;
+                   (ii) the witness is a CONNECTED path with len > 1 — the
+                   placeholder ``(sink,)`` was len 1; (iii) the FIRST node is the
+                   seeded source (``operator_or_literal == "taint_src"``), checked
+                   against the CPG itself (NOT the solver's own pred map, which
+                   would be tautological); (iv) the LAST node is the sink; (v)
+                   every consecutive pair in the witness is a real CFG/CALL edge in
+                   the supergraph (it is a path, not an arbitrary node set).
+    Frequency:     every CI run.
+    Hard gate?:    no — PREP that unblocks CMP-CORE-02 witness consumption.
+    """
+    cpg = _single_proc_taint_cpg()
+    spec = _injection_spec()
+
+    result = solve(cpg, spec, S_version=_S_VERSION, env_digest=_ENV_DIGEST)
+
+    # (i) ANTI-VACUITY: the adapter fired exactly one source->sink finding.
+    assert len(result.findings) == 1, "expected exactly one source->sink finding"
+    finding = next(iter(result.findings))
+    witness = finding.witness
+
+    # The set of source node ids, recomputed from the CPG (independent of the
+    # solver internals — guards against a tautological "witness[0] is whatever the
+    # solver seeded" assertion).
+    source_node_ids = {n.node_id for n in cpg.nodes if n.operator_or_literal == str(_SRC_PAT)}
+    sink_node_ids = {n.node_id for n in cpg.nodes if n.operator_or_literal == str(_SINK_PAT)}
+    assert source_node_ids, "fixture must contain a taint_src node"
+    assert finding.sink in sink_node_ids
+
+    # (ii) CONNECTED + non-trivial: the placeholder was the 1-tuple ``(sink,)``.
+    assert len(witness) > 1, "witness must be a real path, not the (sink,) placeholder"
+
+    # (iii) first node is a SEEDED SOURCE; (iv) last node is the sink.
+    assert witness[0] in source_node_ids, "witness must start at a taint source"
+    assert witness[-1] == finding.sink, "witness must end at the sink"
+
+    # (v) every consecutive (a, b) is a real CFG or CALL edge in the supergraph:
+    #     the witness is a path through the graph, not an arbitrary node bag. This
+    #     is exactly the property CMP-CORE-02 relies on to backward-slice along it.
+    sg = build_supergraph(cpg, canonical_order(cpg).canonical_order)
+
+    def _is_edge(a: NodeId, b: NodeId) -> bool:
+        if b in sg.cfg_succ.get(a, []):
+            return True
+        # CALL edge: a is a call site whose callee's ENTRY is b.
+        return any(sg.procs[p].entry == b for p in sg.call_succ.get(a, []))
+
+    for a, b in itertools.pairwise(witness):
+        assert _is_edge(a, b), f"witness edge {a}->{b} is not a CFG/CALL edge"
+
+
+@pytest.mark.unit
+def test_core_01_witness_byte_identical_across_runs() -> None:
+    """PR2: the reconstructed witness is byte-identical across two solve() calls.
+
+    Test id:       (CMP-CORE-01 PR2 witness determinism)
+    Maps to AC:    proxy/PREP for AC-CORE-01a (the witness is folded into
+                   ``solution_hash`` at solver.py ``_hash_solution``, so its
+                   determinism is load-bearing for byte-identical SARIF).
+    Kind tag:      [UNIT]
+    Inputs:        the single-proc taint fixture, fixed (S_version, env_digest).
+    Outputs:       ``Finding.witness`` from two independent solve() calls.
+    Pass criteria: the two witnesses are byte-identical tuples. ANTI-VACUITY is
+                   shared with the path test: ``len(witness) > 1`` (a degenerate
+                   empty/singleton witness would make byte-identity vacuous).
+    Honest framing: this is a REGRESSION GUARD against a future set-/hash-ordering
+                   nondeterminism in pred reconstruction. In this deterministic
+                   codebase a realistic broken impl still passes byte-identity
+                   within one process, so a fabricated nondeterminism mutation is
+                   not a meaningful negative control here (see the docstring of
+                   ``test_core_01_witness_is_connected_source_to_sink_path`` for
+                   the real, mutation-verified negative control: the ``(sink,)``
+                   placeholder).
+    Frequency:     every CI run.
+    Hard gate?:    no — PREP.
+    """
+    cpg = _single_proc_taint_cpg()
+    spec = _injection_spec()
+
+    r1 = solve(cpg, spec, S_version=_S_VERSION, env_digest=_ENV_DIGEST)
+    r2 = solve(cpg, spec, S_version=_S_VERSION, env_digest=_ENV_DIGEST)
+
+    w1 = next(iter(r1.findings)).witness
+    w2 = next(iter(r2.findings)).witness
+
+    # ANTI-VACUITY: a real multi-node path (byte-identity is meaningless on a stub).
+    assert len(w1) > 1
+    assert w1 == w2, "witness must be byte-identical across re-runs"
+
+
+@pytest.mark.unit
+def test_core_01_summarycache_round_trips_into_incremental_solve() -> None:
+    """PR2 (DELIVERABLE 2): solve().summaries round-trips into incremental_solve().
+
+    Test id:       (CMP-CORE-01 PR2 SummaryCache exposure — CLAR-CORE-01)
+    Maps to AC:    PREP for AC-CORE-01c (cross-run incremental reuse; CLAR-CORE-01
+                   records the previously-dropped ``SolverResult.summaries`` field).
+    Kind tag:      [UNIT]
+    Inputs:        a base solve() over the call-chain fixture; its
+                   ``.summaries`` fed back as ``prior_summaries``.
+    Outputs:       the SummaryCache header + a non-raising incremental_solve().
+    Pass criteria: (i) ``solve().summaries`` carries the (S_version, env_digest)
+                   header; (ii) it round-trips as ``prior_summaries`` into
+                   incremental_solve() WITHOUT raising the version-mismatch guard.
+                   NEGATIVE CONTROL: a cache whose header is TAMPERED (wrong
+                   S_version) DOES raise ValueError — proving the round-trip
+                   success is not vacuous (the guard is real, and the matching
+                   header is what clears it).
+    Frequency:     every CI run.
+    Hard gate?:    no — PREP.
+    """
+    cpg, procs = _call_chain_cpg()
+    spec = _injection_spec()
+
+    base = solve(cpg, spec, S_version=_S_VERSION, env_digest=_ENV_DIGEST)
+
+    # (i) the cache is exposed and carries the (S_version, env_digest) header.
+    cache = base.summaries
+    assert cache.header == (_S_VERSION, bytes(_ENV_DIGEST))
+    # ANTI-VACUITY: the base run actually built summaries (it is not an empty cache
+    # that would trivially round-trip).
+    assert cache.summaries, "base solve must populate at least one procedure summary"
+
+    # (ii) round-trips as prior_summaries WITHOUT raising the version guard.
+    affected = frozenset({procs["leaf"]})
+    incr = incremental_solve(
+        cpg, spec, affected, cache, S_version=_S_VERSION, env_digest=_ENV_DIGEST
+    )
+    assert incr.summaries.header == (_S_VERSION, bytes(_ENV_DIGEST))
+
+    # NEGATIVE CONTROL: a TAMPERED header (wrong S_version) must raise — this is
+    # what proves the clean round-trip above is non-vacuous.
+    from analysis.ifds.solver import SummaryCache
+
+    tampered = SummaryCache(
+        header=("9.9.9-wrong", bytes(_ENV_DIGEST)),
+        summaries=dict(cache.summaries),
+        visited=set(cache.visited),
+    )
+    with pytest.raises(ValueError, match="SummaryCacheVersionMismatch"):
+        incremental_solve(
+            cpg, spec, affected, tampered, S_version=_S_VERSION, env_digest=_ENV_DIGEST
+        )
 
 
 @pytest.mark.unit
