@@ -362,7 +362,9 @@ class AzureDevOpsConnector(SCMConnector):
 
         POST /{org}/_apis/hooks/subscriptions with the web-hooks consumer,
         consumerInputs.url = `target_url`, consumerInputs.basicAuthPassword =
-        `secret` (the subscription consumer secret used to HMAC deliveries).
+        `secret` — the shared secret echoed as the HTTP Basic-auth password on
+        each delivery and verified by constant-time secret-equality in
+        `verify_webhook` (CLAR-SCM-02; native ADO sends no body HMAC).
         Idempotent on (project repo, target_url).
         """
         org, project = self._split_owner(repo_ref)
