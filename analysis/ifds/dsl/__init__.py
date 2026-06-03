@@ -9,6 +9,9 @@ with a precise ``E-DSL-*`` diagnostic, never analyzed.
 Public surface (DOC-CMP-DET-01 §3):
   - :func:`parse_spec` — parser entry point; returns a frozen :class:`Spec` or
     raises :class:`DSLError`.
+  - :func:`revalidate_spec` — re-run the INV-4 escape-hatch gate over an
+    already-constructed :class:`Spec` (closes the hand-built-Spec bypass; see
+    CMP-DET-02 ``register()``). Raises :class:`DSLError` on any escape hatch.
   - :class:`Spec`, :class:`Source`, :class:`Sink`, :class:`Sanitize`,
     :class:`Propagate` — the closed grammar.
   - :func:`all_obligations_discharged` — DSL boot guard (AC-DET-01a, Gate 1).
@@ -17,7 +20,7 @@ Public surface (DOC-CMP-DET-01 §3):
 from __future__ import annotations
 
 from analysis.ifds.dsl.errors import DSLError, DSLErrorCode
-from analysis.ifds.dsl.parser import parse_spec
+from analysis.ifds.dsl.parser import parse_spec, revalidate_spec
 from analysis.ifds.dsl.primitives import (
     Clause,
     Propagate,
@@ -45,4 +48,5 @@ __all__ = [
     "all_obligations_discharged",
     "parse_spec",
     "registered_obligation_ids",
+    "revalidate_spec",
 ]
