@@ -138,7 +138,7 @@ In the serialization-dominated regime, `time(Δ) → c_serialize·|graph|`, so
 
 which **diverges as `f = |AFFECTED|/|graph| → 0`**. Worked (illustrative, `c_serialize/c_full = 0.1`):
 `f = 1%` → ρ ≈ 10; `f = 0.1%` → ρ ≈ 100; a one-function commit (`|AFFECTED| ≈ 30` nodes) on a
-`|graph| = 2¹⁶` CPG → `f ≈ 4.6e-4` → **ρ ≈ 218**; a one-line commit on a 1M-node graph → **ρ ≈ tens of
+`|graph| = 2¹⁶` CPG → `f ≈ 4.6e-4` → **ρ ≈ 218** (illustrative κ-economics-ratio magnitudes, **not a guarantee**; this ρ is the incremental-overhead ratio of §1, *not* the CMP-ORCH-02 2-approximation); a one-line commit on a 1M-node graph → **ρ ≈ tens of
 thousands**. Because `TST-AC-SNAP-02a` is **per-commit zero-tolerance** ("any commit above κ fails",
 `tests/unit/test_snap_specs.py:188-189`; per-commit over ≥1000 commits, `PLAN.md:74`, `WBS.md:363`), the
 gate reads off this **divergent small-commit tail**. Therefore:
@@ -251,14 +251,14 @@ the separation to be **mechanical, not a label**:
 property of the **certified** per-commit zero-tolerance *gate*; it does **not** block a value that gates
 nothing. Since the hard gate stays xfail and the interim has no runtime consumer, the interim's only job
 is to let the dev smoke-check produce a *finite* ρ. So set `KAPPA_INTERIM_DEV = 50` now — a loose ceiling
-~2.5× above the AC-SNAP-02b median-ρ ≈ 20 sanity point, config-driven, `INTERIM-DEV`, never imported into
+~2.5× above the AC-SNAP-02b median-ρ ≈ 20 sanity point (a loose order-of-magnitude floor, **not a guarantee** — the κ-economics ratio, *not* the CMP-ORCH-02 2-approximation), config-driven, `INTERIM-DEV`, never imported into
 the gate's pass-criterion. The dev smoke-check runs on a floored corpus *or* on serialization-normalized
 `time(Δ)` — either trivially yields a finite ρ; that measurement choice is a dev-harness detail, **not** a
 precondition for naming the number.
 
 What **is** contingent on the §4 well-posedness fix is the **certified** value (and the dev measurement
 basis), **not** the interim number. Once §4 removes the serialization floor, the certified residual is the
-bounded frontier floor (`ρ ≈ 2–3`), so the *certified* `κ_L` lands far below 50 (≈ 10–15 with margin) —
+bounded frontier floor (`ρ ≈ 2–3`, an estimate, **not a guarantee** — the κ-economics ratio, *not* the CMP-ORCH-02 2-approximation), so the *certified* `κ_L` lands far below 50 (≈ 10–15 with margin) —
 which is *why* 50 is a safe, loose interim that cannot accidentally read as a tight certified threshold.
 (The cross-stream spread — literature ~10–20, this ~50 interim, a refuted ~20–25 *certified* proposal — is
 the signal that the *certified* value is not derivable until §4 is settled; the *interim* value is not so
