@@ -677,12 +677,29 @@ def test_bitbucket_verify_webhook_hmac_sha256() -> None:
     )
 
 
-def test_ado_verify_webhook_hmac_sha256() -> None:
+def test_ado_verify_webhook_basic_auth_secret_equality() -> None:
+    # Native ADO service-hooks carry no body HMAC: the secret rides as the HTTP
+    # Basic password (CLAR-SCM-02 RESOLVED 2026-06-03). The predicate is
+    # body-independent — it checks the credential, not the body.
+    import base64
+
     conn = _ado(_Transport([]))
     body = b'{"e":"push"}'
     good = conn.sign_webhook(raw_body=body, secret=_WH_SECRET)
+    # Anti-vacuity: sign_webhook emits a Basic header that genuinely verifies.
+    assert good.get("Authorization", "").startswith("Basic ")
     assert conn.verify_webhook(raw_body=body, headers=good, secret=_WH_SECRET) is True
-    assert conn.verify_webhook(raw_body=b'{"e":"PUSH"}', headers=good, secret=_WH_SECRET) is False
+    # Body-independence: a tampered body still verifies True (credential checked,
+    # not the body) — this is the de-vacuumed positive, replacing the old
+    # body-tamper assert that the HMAC scheme implied.
+    assert conn.verify_webhook(raw_body=b'{"e":"PUSH"}', headers=good, secret=_WH_SECRET) is True
+    # Negative control: a Basic header echoing the WRONG password → False.
+    wrong = "Basic " + base64.b64encode(b":not-the-secret").decode("ascii")
+    assert (
+        conn.verify_webhook(raw_body=body, headers={"Authorization": wrong}, secret=_WH_SECRET)
+        is False
+    )
+    # Negative control: absent Authorization header → False (no exception).
     assert conn.verify_webhook(raw_body=body, headers={}, secret=_WH_SECRET) is False
 
 

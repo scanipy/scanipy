@@ -17,19 +17,21 @@ Design mirrors the rest of the SCM subsystem — stdlib-only + injected seams
 `CMP-SCM-03` emits no findings and threads **no** provenance fields — upstream
 of the provenance chain (DOC §5, §8; RULE-6 non-touch).
 
-Webhook signature: DOC-CMP-SCM-03 §3.3 and DOC-API §2.4 state ADO "pins
-HMAC-SHA-256" but do not name the signature *header* (`X-Vss-Activityid` is an
-activity id, not a signature). The interim scheme below pins HMAC-SHA-256 over
-the raw body under an `X-Hub-Signature-256` header (the GitHub-style scheme the
-DOC says ADO mirrors on algorithm). This is tracked by CLAR-SCM-02 — see the
-`# TODO: CLAR-SCM-02` markers; the negative test (`AC-SCM-03b`) holds for any
-HMAC-over-body header, so the choice does not affect forgery rejection.
+Webhook verification (DOC-CMP-SCM-03 §3.3, DOC-API §2.4; CLAR-SCM-02 RESOLVED
+2026-06-03): native ADO service-hooks emit **no body HMAC and no signature
+header** — they carry the registered secret as the HTTP Basic password
+(`Authorization: Basic base64("<user>:<basicAuthPassword>")`). `X-Vss-Activityid`
+is a correlation id, not a signature. `register_webhook` sets
+`consumerInputs.basicAuthPassword = secret`; `verify_webhook` extracts the
+password from the `Authorization: Basic` header and compares it constant-time
+against the expected secret (the body-independent GitLab `X-Gitlab-Token`
+pattern). `AC-SCM-03b`'s forgery is therefore a wrong/absent Basic credential,
+not a tampered body byte.
 """
 
 from __future__ import annotations
 
 import base64
-import hashlib
 import hmac
 from collections.abc import AsyncIterator, Awaitable, Callable, Mapping, Sequence
 from datetime import UTC, datetime
@@ -360,7 +362,9 @@ class AzureDevOpsConnector(SCMConnector):
 
         POST /{org}/_apis/hooks/subscriptions with the web-hooks consumer,
         consumerInputs.url = `target_url`, consumerInputs.basicAuthPassword =
-        `secret` (the subscription consumer secret used to HMAC deliveries).
+        `secret` — the shared secret echoed as the HTTP Basic-auth password on
+        each delivery and verified by constant-time secret-equality in
+        `verify_webhook` (CLAR-SCM-02; native ADO sends no body HMAC).
         Idempotent on (project repo, target_url).
         """
         org, project = self._split_owner(repo_ref)
@@ -420,34 +424,43 @@ class AzureDevOpsConnector(SCMConnector):
         headers: Mapping[str, str],
         secret: str,
     ) -> bool:
-        """Verify the service-hook HMAC-SHA256 signature over the raw body (DOC §3.3).
+        """Verify the ADO service-hook HTTP Basic credential (DOC §3.3).
 
-        # TODO: CLAR-SCM-02 — DOC-CMP-SCM-03 §3.3 / DOC-API §2.4 pin HMAC-SHA-256
-        # but do not name the ADO signature header. Interim: GitHub-style
-        # `X-Hub-Signature-256` = "sha256=" + HMAC-SHA256(secret, raw_body), hex.
-        # The connector pins HMAC-SHA-256 and rejects anything else (DOC §3.3
-        # "rejects subscriptions configured otherwise"). The negative test holds
-        # for any HMAC-over-body header, so the header-name choice is non-binding
-        # on AC-SCM-03b.
+        Native ADO service-hooks carry no body HMAC and no signature header;
+        the registered secret rides as the HTTP Basic password
+        (`Authorization: Basic base64("<user>:<basicAuthPassword>")`). This
+        predicate extracts that password and compares it constant-time against
+        the expected `secret` (CLAR-SCM-02 RESOLVED 2026-06-03). It is therefore
+        body-independent — a forged delivery (wrong / absent Basic credential)
+        returns False (`AC-SCM-03b`).
 
-        Constant-time comparison via `hmac.compare_digest`. Returns False on any
-        mismatch / missing / malformed header; never raises (DOC §7 predicate).
+        Returns False on any missing / malformed `Authorization` header; never
+        raises (DOC §7 predicate).
         """
-        provided = self._lookup_header(headers, "X-Hub-Signature-256")
-        if not provided or not provided.startswith("sha256="):
+        provided = self._lookup_header(headers, "Authorization")
+        if not provided or not provided.startswith("Basic "):
             return False
-        digest = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
-        expected = "sha256=" + digest
-        return hmac.compare_digest(provided, expected)
+        encoded = provided[len("Basic ") :]
+        try:
+            decoded = base64.b64decode(encoded, validate=True).decode("utf-8")
+        except (ValueError, UnicodeDecodeError):
+            return False
+        if ":" not in decoded:
+            return False
+        _user, password = decoded.split(":", 1)
+        return hmac.compare_digest(password.encode("utf-8"), secret.encode("utf-8"))
 
     def sign_webhook(self, *, raw_body: bytes, secret: str) -> dict[str, str]:
-        """Test hook: produce the header a genuine service-hook delivery carries.
+        """Test hook: produce the `Authorization: Basic` header a genuine delivery carries.
 
-        Used by the conformance harness (`_signature_headers`). Not production.
-        # TODO: CLAR-SCM-02 — header name pending the ADO scheme decision.
+        Used by the conformance harness (`_signature_headers`) to drive the
+        positive `verify_webhook` case provider-neutrally. Not a production path.
+        Native ADO service-hooks echo the registered secret as the HTTP Basic
+        password with an empty username (CLAR-SCM-02 RESOLVED 2026-06-03); the
+        credential is body-independent (mirrors GitLab's secret-echo pattern).
         """
-        sig = "sha256=" + hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
-        return {"X-Hub-Signature-256": sig}
+        basic = base64.b64encode(f":{secret}".encode()).decode("ascii")
+        return {"Authorization": "Basic " + basic}
 
     @staticmethod
     def _lookup_header(headers: Mapping[str, str], name: str) -> str | None:
