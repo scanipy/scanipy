@@ -39,7 +39,7 @@ from typing import Literal
 import yaml
 
 from analysis.ifds.dsl import DSLError as DSLError  # re-exported (DOC-CMP-DET-02 §3)
-from analysis.ifds.dsl import Spec, parse_spec
+from analysis.ifds.dsl import Spec, parse_spec, revalidate_spec
 
 EngineTag = Literal["ifds", "ide", "semgrep", "cpg-query", "external"]
 DeterminismPartition = Literal["deterministic-core", "oracle-passthrough"]
@@ -270,6 +270,14 @@ class DetectorRegistry:
                 # _build_detector against ``staged`` (PR #235 F-4: removed the
                 # unreachable post-build re-check here).
                 closure_check(detector)
+                # INV-4 authoritative gate (CLAR-DET-02). closure_check is a
+                # shape-only re-validation; it never inspects clause *pattern*
+                # content. revalidate_spec re-runs the parser's escape-hatch
+                # checks over each clause so a hand-built or tampered Spec cannot
+                # slip unparsed escape-hatch content (E-DSL-*) past admission.
+                # Idempotent on the production path (specs came from parse_spec).
+                if detector.spec is not None:
+                    revalidate_spec(detector.spec)
                 staged[detector.id] = detector
         except RegistryError as exc:
             # Atomic: discard everything staged this load, leave registry empty.
@@ -301,6 +309,16 @@ class DetectorRegistry:
                 f"re-registration of {detector.id!r} rejected",
             )
         closure_check(detector)
+        # INV-4 authoritative gate (CLAR-DET-02). closure_check is shape-only and
+        # never inspects clause pattern content, so a caller could hand-build a
+        # Spec carrying unparsed escape-hatch content (e.g.
+        # Source(AccessPathPattern("re.compile(...)"))) and slip it past register().
+        # revalidate_spec re-runs the parser's escape-hatch / endpoint checks over
+        # each clause and raises the verbatim DSLError (E-DSL-*) on any hit. This
+        # is the SAME gate load_manifests applies, so both admission paths enforce
+        # it identically (idempotent when the Spec came from parse_spec).
+        if detector.spec is not None:
+            revalidate_spec(detector.spec)
         if detector.id in self._by_id:
             raise RegistryError(
                 "E-REG-003",

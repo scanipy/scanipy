@@ -257,6 +257,91 @@ def _parse_propagate(body: str, *, line: int, source_path: str | None) -> Propag
     return Propagate(source_ref, FieldRef(tgt))
 
 
+def revalidate_spec(spec: Spec) -> None:
+    """Re-run the INV-4 escape-hatch gate over an already-constructed Spec.
+
+    ``parse_spec`` is the authoritative INV-4 gate, but it only runs on the
+    text→Spec path (``specs/*.dsl.yaml`` → :func:`parse_spec`). A caller can
+    hand-build a frozen :class:`Spec` whose clause patterns were *never* parsed
+    — e.g. ``Source(AccessPathPattern("re.compile(...)"))`` — and slip
+    out-of-grammar escape-hatch content past the registry's shape-only
+    ``closure_check``. That is a one-sided INV-4 false negative.
+
+    ``revalidate_spec`` closes that gap by re-applying the parser's authoritative
+    *pattern-content* escape-hatch gate — :func:`_check_escape_hatches`
+    (E-DSL-001..004), the very function ``parse_spec`` calls — plus the
+    Propagate-endpoint grammar (E-DSL-008), over each already-frozen clause:
+
+    - :class:`Source` / :class:`Sink` / :class:`Sanitize` pattern strings run
+      through :func:`_check_escape_hatches` (E-DSL-001..004);
+    - :class:`Propagate` endpoints re-validate against the existing
+      ``_ARG_REF`` / ``_FIELD_REF`` / ``_RETURN_REF`` grammar (E-DSL-008).
+
+    The parser's *line-level composition* checks (``_check_composition_keywords``,
+    E-DSL-005..007: ``then`` / ``if``-``guard`` / ``fixpoint``) are intentionally
+    **not** re-run here. Those are source-text combinators, and a flat frozen
+    :class:`Spec` (``clauses`` is a tuple of leaf Source/Sink/Sanitize/Propagate
+    with no field that can encode a combinator) structurally cannot carry one; a
+    composition keyword surviving *inside* a pattern string is an opaque
+    fact-selector token (consumed only as such by :mod:`analysis.ifds.dsl.flow`,
+    composed solely by the distributive ``union_flow``), never a combinator, so
+    it cannot make the spec non-distributive. The hand-built-Spec INV-4 threat is
+    therefore fully captured by the 001-004 + 008 gate (CLAR-DET-02 scoping).
+
+    Raises the verbatim :class:`DSLError` (``E-DSL-*``) on the first hit;
+    rejection is total and fail-fast, exactly as on the parse path. A spec whose
+    clauses all came from :func:`parse_spec` re-validates as a no-op (idempotent).
+
+    Synthetic ``line=0`` / ``col=1`` / ``source_path=None`` positions are used —
+    there is no backing source text at re-validation time; only the ``code`` and
+    ``message`` carry meaning.
+    """
+    for clause in spec.clauses:
+        if isinstance(clause, Source | Sink | Sanitize):
+            _check_escape_hatches(
+                str(clause.pattern),
+                _clause_head(clause),
+                line=0,
+                base_col=1,
+                source_path=None,
+            )
+        else:  # Propagate
+            _revalidate_propagate_endpoints(clause)
+
+
+def _clause_head(clause: Source | Sink | Sanitize) -> str:
+    if isinstance(clause, Source):
+        return "source"
+    if isinstance(clause, Sink):
+        return "sink"
+    return "sanitize"
+
+
+def _revalidate_propagate_endpoints(clause: Propagate) -> None:
+    """Re-validate a hand-built Propagate's endpoints against the §3.4 grammar.
+
+    Mirrors :func:`_parse_propagate`'s endpoint logic over the already-typed
+    refs (no source text to re-split). The strict ``_ARG_REF`` / ``_FIELD_REF``
+    regexes already reject any embedded code (a callable endpoint fails the
+    ``arg[..]`` / ``field[..]`` match), so no separate escape-hatch scan is
+    needed here. Any non-grammar endpoint raises the same E-DSL-008 the parser
+    uses.
+    """
+    src = str(clause.source)
+    tgt = str(clause.target)
+    src_ok = bool(_ARG_REF.match(src)) or bool(_FIELD_REF.match(src))
+    tgt_ok = tgt == _RETURN_REF or bool(_FIELD_REF.match(tgt))
+    if not src_ok or not tgt_ok:
+        raise _reject(
+            "E-DSL-008",
+            "propagate endpoints must be arg[..]/field[..]/this.x -> ret/field[..]",
+            line=0,
+            col=1,
+            suggested_fix="use one of arg->ret, arg->field, field->ret, field->field",
+            source_path=None,
+        )
+
+
 def _parse_header(
     header: dict[str, str], *, source_path: str | None
 ) -> tuple[str, ClassName, tuple[Language, ...], EngineTag]:
