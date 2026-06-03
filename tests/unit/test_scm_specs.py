@@ -363,10 +363,12 @@ def test_scm_03b_forged_webhook_rejected(provider: str) -> None:
           *body-independent*, so the honest forgery is a wrong/absent token —
           tampering a body byte alone is undetectable by GitLab's native scheme
           and asserting otherwise would misrepresent the provider guarantee.
+        - Azure DevOps: `Authorization: Basic base64(":<secret>")` — the secret
+          rides as the HTTP Basic password, no body HMAC (CLAR-SCM-02 RESOLVED
+          2026-06-03). *Body-independent*, like GitLab: the honest forgery is a
+          wrong/absent Basic credential, not a tampered body byte.
         - Bitbucket: `X-Hub-Signature` = sha256=HMAC-SHA256(secret, body). The
           forgery tampers one body byte while keeping the original signature.
-        - Azure DevOps: HMAC-SHA-256 over the raw body (header pending
-          CLAR-SCM-02). The forgery tampers one body byte.
     Outputs: verify_webhook(...) -> bool.
     Pass criteria: the genuine delivery returns True; the forgery returns False;
       no exception is raised (DOC-CMP-SCM-03 §7 — predicate, not fault path).
@@ -389,8 +391,31 @@ def test_scm_03b_forged_webhook_rejected(provider: str) -> None:
         )
         # A genuine token but missing header also fails.
         assert connector.verify_webhook(raw_body=body, headers={}, secret=secret) is False
+    elif provider == "azure-devops":
+        # ADO's Basic-auth credential is body-independent (no body HMAC). The
+        # genuine header must verify even against a *tampered* body — proving the
+        # predicate checks the credential, not the body. Forge the credential.
+        # Anti-vacuity: sign_webhook actually emits a Basic header.
+        auth = genuine_headers.get("Authorization", "")
+        assert auth.startswith("Basic ")
+        tampered_body = b'{"event":"push","ref":"refs/heads/MAIN"}'
+        assert (
+            connector.verify_webhook(raw_body=tampered_body, headers=genuine_headers, secret=secret)
+            is True
+        )
+        # Negative controls: a Basic header echoing the WRONG password → False.
+        import base64 as _b64
+
+        wrong = "Basic " + _b64.b64encode(b":wrong-secret").decode("ascii")
+        assert (
+            connector.verify_webhook(raw_body=body, headers={"Authorization": wrong}, secret=secret)
+            is False
+        )
+        # Absent Authorization header → False (no exception).
+        assert connector.verify_webhook(raw_body=body, headers={}, secret=secret) is False
     else:
-        # HMAC schemes: tamper one body byte, keep the signature over the original.
+        # Bitbucket HMAC scheme: tamper one body byte, keep the signature over
+        # the original.
         tampered_body = b'{"event":"push","ref":"refs/heads/MAIN"}'
         assert (
             connector.verify_webhook(raw_body=tampered_body, headers=genuine_headers, secret=secret)
