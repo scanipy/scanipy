@@ -78,7 +78,9 @@ class DetectorRegistry:
         """Discover detectors/<class>/manifest.yaml under `root`; parse each;
         for engine ∈ {ifds, ide}, also load every detectors/<class>/specs/*.dsl.yaml
         via CMP-DET-01 parse_spec(); for oracle engines, validate the
-        native query file exists. Calls register(...) for each.
+        native query file exists. For each detector it runs closure_check(...)
+        and admits it into the atomic staging area — it does NOT call the public
+        register() API (see registry.py load_manifests).
         Raises RegistryLoadError on any failure (no partial-load mode)."""
 
     def register(self, detector: Detector) -> None:
