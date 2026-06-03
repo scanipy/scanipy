@@ -17,7 +17,15 @@ assertions when the owning CMP reaches DONE. Closed marker set
 (--strict-markers): kind tags live in docstrings, never as markers.
 """
 
+from collections.abc import Awaitable, Callable, Mapping, Sequence
+from pathlib import Path
+from typing import Any
+
 import pytest
+
+from integrations.scm.base import RepoRef, SCMConnector
+
+_GitRunner = Callable[[Sequence[str], Path], Awaitable[tuple[int, str, str]]]
 
 # ---------------------------------------------------------------------------
 # Mock CMP-CP-02 encrypt/decrypt envelope (T-CMP-SCM-01-04).
@@ -433,16 +441,139 @@ def test_scm_03b_forged_webhook_rejected(provider: str) -> None:
 
 # ---------------------------------------------------------------------------
 # TST-AC-SCM-03a — per-provider SCMConnector conformance suite  [CONFORMANCE]
-# CMP-SCM-03 · hard gate: yes. Registered red: the connectors are
-# conformance-ready (each passes run_conformance_suite against a stub transport),
-# but the AC test driving the shared suite per provider was not authored in
-# Phase 1 (gap tracked in issue #242). Stubbed xfail so the AC is visible and
-# #11 is NOT auto-closed (References #11) until QA authors the real suite.
+# CMP-SCM-03 · hard gate: yes. Authored (gap #242 closed): each connector is
+# driven through the shared SCM-01c run_conformance_suite harness over a
+# queue-mocked async transport + a fake git runner (no network / subprocess I/O).
+# Mirrors the integration-marked driver in tests/integration/test_scm_specs.py so
+# each test module is independently collectable (the unit run measures coverage).
+#
+# The mock transport pops one response per request regardless of method/URL, so
+# only the count, order, and JSON shape of the queued responses matter. Every
+# response is a non-rate-limited 200 so `with_retry` never pops an extra entry.
+# The suite issues exactly five transport calls per provider — list_repos (GET),
+# find-hooks/subscriptions (GET), register (POST), get_default_branch (GET),
+# resolve_commit (GET) — and drives `clone` purely through the git runner.
 # ---------------------------------------------------------------------------
+
+_SCM03A_OPERATIONS = (
+    "list_repos",
+    "clone",
+    "register_webhook",
+    "verify_webhook_positive",
+    "verify_webhook_negative",
+    "get_default_branch",
+    "resolve_commit",
+)
+_SCM03A_SHA = "a" * 40  # the 40-hex SHA every connector's resolve_commit must return
+
+
+class _ConfResp:
+    """An HTTPResponse-shaped stub (status_code, headers, text, json())."""
+
+    def __init__(self, body: Any, *, status_code: int = 200) -> None:
+        self.status_code = status_code
+        self.headers: dict[str, str] = {}
+        self.text = ""
+        self._body = body
+
+    def json(self) -> Any:
+        return self._body
+
+
+class _ConfTransport:
+    """Queue-based async transport: pops one queued response per request."""
+
+    def __init__(self, responses: Sequence[_ConfResp]) -> None:
+        self._queue = list(responses)
+
+    async def request(
+        self,
+        method: str,
+        url: str,
+        *,
+        headers: Mapping[str, str] | None = None,
+        params: Mapping[str, str] | None = None,
+        json: Any | None = None,
+    ) -> _ConfResp:
+        return self._queue.pop(0)
+
+
+def _conf_git_runner() -> _GitRunner:
+    """Fake GitRunner: rev-parse → the canary SHA; rev-list → SHA+parent; else ok."""
+
+    async def runner(argv: Sequence[str], cwd: Path) -> tuple[int, str, str]:
+        cmd = argv[0]
+        if cmd == "rev-parse":
+            return (0, f"{_SCM03A_SHA}\n", "")
+        if cmd == "rev-list":
+            return (0, f"{_SCM03A_SHA} {'b' * 40}\n", "")
+        return (0, "", "")
+
+    return runner
+
+
+def _conf_responses(provider: str) -> list[_ConfResp]:
+    """The five queued responses (in suite order) for `provider`."""
+    if provider == "gitlab":
+        return [
+            _ConfResp([]),  # list_repos
+            _ConfResp([]),  # _find_existing_hook
+            _ConfResp({"id": 1}),  # register_webhook POST
+            _ConfResp({"default_branch": "main"}),  # get_default_branch
+            _ConfResp({"id": _SCM03A_SHA}),  # resolve_commit (.id)
+        ]
+    if provider == "bitbucket":
+        return [
+            _ConfResp({"values": [], "next": None}),  # list_repos
+            _ConfResp({"values": []}),  # _find_existing_hook
+            _ConfResp({"uuid": "{abc}"}),  # register_webhook POST
+            _ConfResp({"mainbranch": {"name": "main"}}),  # get_default_branch
+            _ConfResp({"hash": _SCM03A_SHA}),  # resolve_commit (.hash)
+        ]
+    if provider == "azure-devops":
+        return [
+            _ConfResp({"value": []}),  # list_repos
+            _ConfResp({"value": []}),  # _find_existing_subscription
+            _ConfResp({"id": "sub-1"}),  # register_webhook POST
+            _ConfResp({"defaultBranch": "refs/heads/main"}),  # get_default_branch
+            _ConfResp({"value": [{"commitId": _SCM03A_SHA}]}),  # resolve_commit
+        ]
+    raise AssertionError(f"unhandled SCM-03a provider: {provider}")
+
+
+def _conf_connector(provider: str, transport: _ConfTransport) -> SCMConnector:
+    """Build the concrete connector for `provider` over `transport` + fake git."""
+    from integrations.scm.ado import AzureDevOpsConnector
+    from integrations.scm.base import SCMAuthMode, SCMCredentials
+    from integrations.scm.bitbucket import BitbucketConnector
+    from integrations.scm.gitlab import GitLabConnector
+
+    creds = SCMCredentials(provider=provider, mode=SCMAuthMode.PAT, payload={"token": "t"})
+    git_runner = _conf_git_runner()
+    if provider == "gitlab":
+        return GitLabConnector(creds, transport=transport, git_runner=git_runner)
+    if provider == "bitbucket":
+        return BitbucketConnector(creds, transport=transport, git_runner=git_runner)
+    if provider == "azure-devops":
+        return AzureDevOpsConnector(
+            creds, organization="acme", transport=transport, git_runner=git_runner
+        )
+    raise AssertionError(f"unhandled SCM-03a provider: {provider}")
+
+
+def _conf_repo(provider: str) -> RepoRef:
+    """A provider-matching fixture RepoRef the suite drives the connector with."""
+    owner = "acme/proj" if provider == "azure-devops" else "acme"
+    return RepoRef(
+        provider=provider,
+        owner=owner,
+        name="widgets",
+        clone_url="https://scm.example/acme/widgets.git",
+        default_branch="main",
+    )
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-SCM-03 conformance test not yet authored — gap #242", strict=False)
 @pytest.mark.parametrize("provider", ["gitlab", "bitbucket", "azure-devops"])
 def test_scm_03a_connector_conformance(provider: str) -> None:
     """Each connector passes the shared SCMConnector conformance suite.
@@ -451,16 +582,30 @@ def test_scm_03a_connector_conformance(provider: str) -> None:
     Maps to AC: AC-SCM-03a
     Kind tag: [CONFORMANCE]
     Inputs: a GitLab / Bitbucket / Azure-DevOps connector + the shared
-      run_conformance_suite harness driven by a stub transport.
+      run_conformance_suite harness driven by a queue-mocked transport + fake git.
     Outputs: is_conformant verdict per provider.
-    Pass criteria: NOT YET AUTHORED — the conformance suite test was not produced
-      in Phase 1 for SCM-03 (gap #242). The connectors are conformance-ready
-      (verified manually), but the AC remains red until QA authors this.
+    Pass criteria: report.is_conformant is True and report.provider == provider,
+      with all six ABC methods exercised (DOC-CMP-SCM-03 §2 — "passes the same
+      conformance suite"). Gap #242 closed.
     Frequency: every CI run
     Hard gate?: yes
     """
-    # TODO: author via run_conformance_suite per provider — blocked on gap #242 (QA).
-    pytest.skip("TST-AC-SCM-03a not authored — Phase-1 gap tracked in #242")
+    import asyncio
+
+    from integrations.scm.conformance import run_conformance_suite
+
+    transport = _ConfTransport(_conf_responses(provider))
+    connector = _conf_connector(provider, transport)
+    report = asyncio.run(
+        run_conformance_suite(
+            connector,
+            fixture_repo=_conf_repo(provider),
+            canary_commit_sha=_SCM03A_SHA,
+        )
+    )
+    assert report.provider == provider
+    assert report.is_conformant, report.failures
+    assert frozenset(report.passed) == frozenset(_SCM03A_OPERATIONS)
 
 
 # ---------------------------------------------------------------------------
