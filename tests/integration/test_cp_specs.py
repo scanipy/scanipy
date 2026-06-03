@@ -555,3 +555,71 @@ def test_cp05c_ci_runs_both_pipelines_on_canary_on_change() -> None:
     # covers the documented change surfaces, and attestor-core is wired as the required
     # check, once CMP-CP-05 is DONE.
     pytest.skip("CMP-CP-05 not implemented yet")
+
+
+@pytest.mark.integration
+def test_cp03c_scanipy_app_least_privilege_grants() -> None:
+    """scanipy_app (request-path role) is denied the two over-reaching grants.
+
+    Test id:      TST-AC-CP-03c
+    Maps to AC:   CLAR-DB-02 Security APPROVE-WITH-CONDITIONS (DECISION-PART2 §5);
+                  DOC-CMP-CP-03 §3.3 least-privilege grant surface.
+    Kind tag:     [INTEGRATION]
+    Pass criteria: bound to the request-path role scanipy_app, a connection
+                  - CANNOT SELECT from `orgs` (orgs is NOT RLS-protected, so a
+                    request-path SELECT would enumerate every tenant's org —
+                    InsufficientPrivilege), and
+                  - CANNOT UPDATE or DELETE `provenance_records` (append-only
+                    signed audit chain, CMP-FND-03 — InsufficientPrivilege),
+                  while RETAINING SELECT on provenance_records (positive control:
+                  the denials are grant-specific, not a blanket lockout).
+    Hard gate?:   yes — least-privilege tenant-isolation boundary.
+
+    Permission is checked before row access, so no seeded rows are required.
+    Requires live PostgreSQL 16 via SCANIPY_DATABASE_URL (CI integration job);
+    SKIPS with an explicit env-gap reason otherwise.
+    """
+    database_url = os.environ.get("SCANIPY_DATABASE_URL")
+    if not database_url:
+        pytest.skip(
+            "SCANIPY_DATABASE_URL not configured — live PostgreSQL 16 integration "
+            "env gap; runs in the CI integration-tests job."
+        )
+
+    import psycopg2  # imported lazily so collection does not require the driver
+    import psycopg2.errors  # bind the errors submodule (not auto-imported)
+
+    _alembic(["downgrade", "base"], database_url)
+    up = _alembic(["upgrade", "head"], database_url)
+    assert up.returncode == 0, f"alembic upgrade head failed:\n{up.stderr}"
+    try:
+        conn = psycopg2.connect(database_url)
+        try:
+            conn.autocommit = True  # each statement is its own txn (no abort state)
+
+            def _denied(sql: str) -> None:
+                with conn.cursor() as cur:
+                    cur.execute("SET ROLE scanipy_app;")
+                    try:
+                        with pytest.raises(psycopg2.errors.InsufficientPrivilege):
+                            cur.execute(sql)
+                    finally:
+                        cur.execute("RESET ROLE;")
+
+            # orgs has no RLS: a request-path SELECT would enumerate all tenants.
+            _denied("SELECT id FROM orgs;")
+            # provenance_records is append-only (signed audit chain).
+            _denied("UPDATE provenance_records SET org_id = org_id;")
+            _denied("DELETE FROM provenance_records;")
+
+            # Positive control: denials are grant-specific, not a lockout —
+            # scanipy_app RETAINS SELECT on provenance_records.
+            with conn.cursor() as cur:
+                cur.execute("SET ROLE scanipy_app;")
+                cur.execute("SELECT count(*) FROM provenance_records;")  # no raise
+                cur.fetchone()
+                cur.execute("RESET ROLE;")
+        finally:
+            conn.close()
+    finally:
+        _alembic(["downgrade", "base"], database_url)
