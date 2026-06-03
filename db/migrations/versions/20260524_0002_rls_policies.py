@@ -63,6 +63,14 @@ _STANDARD_RLS_TABLES = (
 def upgrade() -> None:
     for table in _STANDARD_RLS_TABLES:
         op.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY;")
+        # CLAR-DB-02 condition 2 (DECISION-PART2 §5, Security
+        # APPROVE-WITH-CONDITIONS): FORCE so even the table OWNER is subject to
+        # RLS. Without FORCE a role that owns the table bypasses the tenant
+        # predicate entirely — a self-elevation-via-ownership hole. With FORCE,
+        # only the dedicated BYPASSRLS scanipy_system role (and superusers, which
+        # are never request-path roles) is exempt; the request-path scanipy_app
+        # role is fully confined to its bound app.org_id.
+        op.execute(f"ALTER TABLE {table} FORCE ROW LEVEL SECURITY;")
         op.execute(
             f"""
             CREATE POLICY tenant_isolation_select ON {table}
@@ -81,6 +89,9 @@ def upgrade() -> None:
 
     # spec_versions — custom: global rows universally readable (DOC-DB §4.9).
     op.execute("ALTER TABLE spec_versions ENABLE ROW LEVEL SECURITY;")
+    # CLAR-DB-02 condition 2: FORCE so the owner is also confined (the global-row
+    # read exemption lives in the SELECT policy predicate, not in an owner bypass).
+    op.execute("ALTER TABLE spec_versions FORCE ROW LEVEL SECURITY;")
     op.execute(
         """
         CREATE POLICY spec_versions_select ON spec_versions
@@ -103,6 +114,10 @@ def upgrade() -> None:
     # DELETE for every role subject to RLS (the BYPASSRLS scanipy_system role is
     # unaffected; grant-level revokes are layered on top by CMP-FND-03).
     op.execute("ALTER TABLE provenance_records ENABLE ROW LEVEL SECURITY;")
+    # CLAR-DB-02 condition 2: FORCE so the owner is also subject to the tenant
+    # predicate and the RESTRICTIVE append-only policies below (an owner without
+    # FORCE could UPDATE/DELETE provenance rows, breaking the append-only chain).
+    op.execute("ALTER TABLE provenance_records FORCE ROW LEVEL SECURITY;")
     op.execute(
         """
         CREATE POLICY tenant_isolation_select ON provenance_records
@@ -142,13 +157,18 @@ def downgrade() -> None:
     op.execute("DROP POLICY provenance_append_only_no_update ON provenance_records;")
     op.execute("DROP POLICY tenant_isolation_insert ON provenance_records;")
     op.execute("DROP POLICY tenant_isolation_select ON provenance_records;")
+    # Clear FORCE before DISABLE so the catalog flag is reset symmetrically with
+    # the upgrade (DISABLE alone leaves relforcerowsecurity set-but-inert).
+    op.execute("ALTER TABLE provenance_records NO FORCE ROW LEVEL SECURITY;")
     op.execute("ALTER TABLE provenance_records DISABLE ROW LEVEL SECURITY;")
 
     op.execute("DROP POLICY spec_versions_modify ON spec_versions;")
     op.execute("DROP POLICY spec_versions_select ON spec_versions;")
+    op.execute("ALTER TABLE spec_versions NO FORCE ROW LEVEL SECURITY;")
     op.execute("ALTER TABLE spec_versions DISABLE ROW LEVEL SECURITY;")
 
     for table in reversed(_STANDARD_RLS_TABLES):
         op.execute(f"DROP POLICY tenant_isolation_modify ON {table};")
         op.execute(f"DROP POLICY tenant_isolation_select ON {table};")
+        op.execute(f"ALTER TABLE {table} NO FORCE ROW LEVEL SECURITY;")
         op.execute(f"ALTER TABLE {table} DISABLE ROW LEVEL SECURITY;")
