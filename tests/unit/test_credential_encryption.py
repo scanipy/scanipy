@@ -421,3 +421,114 @@ def test_decrypt_propagates_credential_encryption_error_unchanged() -> None:
     enc = svc.encrypt_credential(_PLAINTEXT, org)
     with pytest.raises(CredentialEncryptionError, match="explicit KMS-layer validation failure"):
         svc.decrypt_credential(enc, org)
+
+
+# ---------------------------------------------------------------------------
+# DOC-CMP-CP-02 §7 — botocore error-code split (NotFoundException → 500, not 403)
+#
+# Regression guard for the masking bug: the typed FakeKMS above raises the
+# *CP-typed* KMSKeyMissingError, which propagates via the `except
+# CredentialEncryptionError: raise` branch and so NEVER exercises the opaque
+# catch-all. A REAL botocore ClientError("NotFoundException") is a plain
+# Exception (carrying `.response["Error"]["Code"]`) and DID hit the catch-all,
+# where it was mislabeled `TenantIsolationError` (403) and pushed onto the
+# cross-tenant forensic/WARN channel. `_FakeClientError` models that real shape;
+# it deliberately subclasses Exception (NOT CredentialEncryptionError) so it
+# reaches the catch-all rather than the typed-propagate branch.
+# ---------------------------------------------------------------------------
+
+
+class _FakeClientError(Exception):
+    """Duck-typed stand-in for a botocore ClientError (no botocore dependency).
+
+    botocore is not installed for CP-02; a real ClientError carries the error
+    code at ``.response["Error"]["Code"]``. This reproduces that exact shape so
+    the structural ``_kms_error_code`` read is exercised against a realistic
+    payload — the typed fakes above cannot do this, which is why the bug hid.
+    """
+
+    def __init__(self, code: str) -> None:
+        super().__init__(code)
+        self.response = {"Error": {"Code": code, "Message": code}}
+
+
+def _kms_raising_service(code: str) -> CredentialEncryptionService:
+    """Service whose KMS.decrypt raises a botocore-shaped ClientError(`code`)."""
+
+    class ClientErrorKMS(FakeKMS):
+        def decrypt(self, **kwargs: object) -> dict[str, object]:
+            raise _FakeClientError(code)
+
+    return CredentialEncryptionService(
+        kms=ClientErrorKMS(), key_store=FakeKeyStore(), audit_log=FakeAuditLog()
+    )
+
+
+@pytest.mark.unit
+def test_decrypt_notfound_clienterror_raises_key_missing_not_isolation() -> None:
+    """POSITIVE: a botocore NotFoundException maps to KMSKeyMissingError (500).
+
+    Anti-vacuity / the load-bearing split: the raised error must NOT be a
+    TenantIsolationError. KMSKeyMissingError and TenantIsolationError are
+    *siblings* (both subclass CredentialEncryptionError), so the isinstance
+    check proves the NotFound case left the cross-tenant 403 alarm — a
+    do-nothing impl (everything → TenantIsolationError) fails the `raises`
+    line, and a mapping to a TenantIsolationError subclass would fail the
+    isinstance assertion.
+    """
+    svc = _kms_raising_service("NotFoundException")
+    org = uuid4()
+    enc = svc.encrypt_credential(_PLAINTEXT, org)
+    with pytest.raises(KMSKeyMissingError) as excinfo:
+        svc.decrypt_credential(enc, org)
+    # Split out of the cross-tenant alarm: must not be (a subclass of) the 403.
+    assert not isinstance(excinfo.value, TenantIsolationError)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("code", ["InvalidCiphertextException", "AccessDeniedException"])
+def test_decrypt_other_clienterror_stays_fail_closed_403(code: str) -> None:
+    """NEGATIVE CONTROL: every non-NotFound opaque KMS error stays 403.
+
+    Pins the fail-closed catch-all and RULE-4 (only ONE code is split out):
+    - InvalidCiphertextException is the cross-tenant EncryptionContext/CMK
+      mismatch — it MUST remain TenantIsolationError.
+    - AccessDeniedException is an unrelated opaque error — also fail-closed 403.
+    Without this arm a broken impl that mapped EVERY ClientError to
+    KMSKeyMissingError (or that read the code and matched too broadly) would
+    still pass the positive test; here it raises KMSKeyMissingError where a
+    TenantIsolationError is required and fails.
+    """
+    svc = _kms_raising_service(code)
+    org = uuid4()
+    enc = svc.encrypt_credential(_PLAINTEXT, org)
+    with pytest.raises(TenantIsolationError):
+        svc.decrypt_credential(enc, org)
+
+
+@pytest.mark.unit
+def test_kms_error_code_reads_botocore_shape_else_none() -> None:
+    """Unit-level guard for the duck-typed reader used by the split.
+
+    A botocore-shaped exception yields its code; anything lacking the
+    `.response["Error"]["Code"]` string shape yields None (so it falls through
+    to the fail-closed catch-all). This locks the reader against silently
+    returning a truthy value for a malformed/absent response.
+    """
+    from services.credential_encryption import _kms_error_code
+
+    assert _kms_error_code(_FakeClientError("NotFoundException")) == "NotFoundException"
+    # No `.response` at all → None (plain ValueError, e.g. our context-mismatch path).
+    assert _kms_error_code(ValueError("InvalidCiphertextException: ...")) is None
+    # Malformed response shapes → None, never a crash.
+    assert _kms_error_code(_BadResponseError(response="not-a-dict")) is None
+    assert _kms_error_code(_BadResponseError(response={"Error": "not-a-dict"})) is None
+    assert _kms_error_code(_BadResponseError(response={"Error": {"Code": 404}})) is None
+
+
+class _BadResponseError(Exception):
+    """Exception carrying an arbitrary `.response` attr, for the reader guard."""
+
+    def __init__(self, *, response: object) -> None:
+        super().__init__("bad-response")
+        self.response = response
