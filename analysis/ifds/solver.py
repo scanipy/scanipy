@@ -133,6 +133,16 @@ class SolverResult:
     findings: frozenset[Finding]
     solution_hash: Sha256
     visited_procs: frozenset[ProcId]
+    # The procedure summaries built by this run, for cross-run incremental reuse
+    # (DOC-CMP-CORE-01 §3.1; CLAR-CORE-01 records this field was previously
+    # dropped). Keyed by ``(S_version, env_digest)`` via ``SummaryCache.header`` so
+    # a stale cache is rejected. ``frozen=True`` blocks reassignment, not mutation
+    # of the (mutable) cache object — nothing hashes a ``SolverResult``. NOTE: this
+    # is the cache for incremental reuse; it is NOT what CMP-CORE-02 consumes —
+    # CORE-02 backward-slices along ``Finding.witness`` (CLAR-CORE-01's phrase
+    # "SummaryCache consumed by CMP-CORE-02" is imprecise: CORE-02 consumes the
+    # witness, not the cache).
+    summaries: SummaryCache
 
 
 # ---------------------------------------------------------------------------
@@ -209,12 +219,28 @@ def _tabulate(
     restrict_to: frozenset[ProcId] | None,
     summaries: SummaryCache,
     canon_index: dict[NodeId, int],
-) -> tuple[dict[NodeId, set[Fact]], frozenset[ProcId]]:
+) -> tuple[
+    dict[NodeId, set[Fact]],
+    frozenset[ProcId],
+    dict[tuple[NodeId, Fact], tuple[NodeId, Fact] | None],
+]:
     """Intra+interprocedural taint reachability with reusable summaries.
 
     Computes, for every node, the set of taint facts holding *at* that node.
     ``restrict_to`` (incremental mode) limits which procedures are (re)tabulated;
-    ``None`` means full tabulation. Returns ``(facts_at_node, visited_procs)``.
+    ``None`` means full tabulation. Returns ``(facts_at_node, visited_procs,
+    pred)``.
+
+    ``pred`` is the predecessor map for witness reconstruction (DOC §3.3):
+    ``pred[(node, fact)]`` is the ``(node, fact)`` from which ``(node, fact)`` was
+    **first** discovered, or ``None`` for a seeded source (a path root). It is
+    written exactly once, co-located with the worklist dedup guard, so the chain
+    points strictly backwards in discovery time and a backtrack always terminates
+    at a seed (never loops, even on a cyclic CPG). Because the worklist pops the
+    canonical-minimum item and ``cfg_succ``/``call_succ`` are canonical-sorted, the
+    *first* discoverer of any ``(node, fact)`` — hence the whole witness path — is a
+    deterministic function of the source (DOC §3.3: "deterministic given
+    canonical_order").
 
     Worklist order is fixed by ``(canonical-order index, fact)`` — ``canon_index``
     is the CMP-CORE-03 canonical order — so the fixpoint is reached identically on
@@ -223,6 +249,7 @@ def _tabulate(
     node_by_id = {n.node_id: n for n in sg.cpg.nodes}
     facts_at: dict[NodeId, set[Fact]] = {n.node_id: set() for n in sg.cpg.nodes}
     visited: set[ProcId] = set()
+    pred: dict[tuple[NodeId, Fact], tuple[NodeId, Fact] | None] = {}
 
     def proc_in_scope(pid: ProcId | None) -> bool:
         if pid is None:
@@ -236,20 +263,26 @@ def _tabulate(
     order_index = canon_index
     worklist: list[tuple[NodeId, Fact]] = []
 
-    def add(nid: NodeId, fact: Fact) -> None:
+    def add(nid: NodeId, fact: Fact, pred_key: tuple[NodeId, Fact] | None) -> None:
         if fact not in facts_at[nid]:
             facts_at[nid].add(fact)
+            # Write-once predecessor: the FIRST discoverer wins (and is
+            # deterministic, given the canonical worklist order). This keeps the
+            # backtrack chain acyclic — pred always points to an earlier-discovered
+            # item — so _witness terminates at a seed (DOC §3.3).
+            pred[(nid, fact)] = pred_key
             worklist.append((nid, fact))
             pid = sg.proc_of_node.get(nid)
             if pid is not None:
                 visited.add(pid)
 
     # Seed: a source node introduces its taint fact at that node, if in scope.
+    # A seed is a path root: pred_key=None.
     for nid, facts in seeded.items():
         pid = sg.proc_of_node.get(nid)
         if proc_in_scope(pid):
             for fact in sorted(facts):
-                add(nid, fact)
+                add(nid, fact, None)
 
     while worklist:
         # Pop the canonical-minimum item for a stable fixpoint trajectory.
@@ -263,7 +296,7 @@ def _tabulate(
 
         # Intraprocedural CFG successors carry the fact forward.
         for succ in sg.cfg_succ.get(nid, ()):  # already canonical-sorted
-            add(succ, fact)
+            add(succ, fact, (nid, fact))
 
         # Interprocedural CALL: enter the callee at its entry with the same fact
         # (PR1 models full taint pass-through; access-path projection deferred).
@@ -271,13 +304,15 @@ def _tabulate(
             if not proc_in_scope(callee_pid):
                 continue
             callee = sg.procs[callee_pid]
-            add(callee.entry, fact)
+            add(callee.entry, fact, (nid, fact))
             # Splice the summary: facts known to reach the callee exit flow back
-            # to the caller's CFG successors (the return site).
+            # to the caller's CFG successors (the return site). The return site is
+            # a CFG successor of the call node, so (nid, fact) -> (ret, exit_fact)
+            # keeps the witness path connected through the call.
             summary = summaries.summaries.get(callee_pid, {})
             for exit_fact in sorted(summary.get(fact, frozenset())):
                 for ret in sg.cfg_succ.get(nid, ()):
-                    add(ret, exit_fact)
+                    add(ret, exit_fact, (nid, fact))
 
     # Record per-procedure summaries: entry fact -> facts reaching any node of the
     # callee (PR1 over-approximation; a precise exit-node summary is a later PR).
@@ -292,24 +327,48 @@ def _tabulate(
         summaries.summaries[pid] = {ef: frozenset(reach[ef]) for ef in entry_facts}
         summaries.visited.add(pid)
 
-    return facts_at, frozenset(visited)
+    return facts_at, frozenset(visited), pred
 
 
-def _witness(sg: ExplodedSupergraph, sink: NodeId, fact: Fact) -> tuple[NodeId, ...]:
-    """A minimal realising path placeholder (PR1): ``(sink,)``.
+def _witness(
+    pred: dict[tuple[NodeId, Fact], tuple[NodeId, Fact] | None],
+    sink: NodeId,
+    fact: Fact,
+) -> tuple[NodeId, ...]:
+    """The realising source -> sink path for ``(sink, fact)`` (DOC §3.3).
 
-    A full backward path reconstruction along path-edges (DOC §3.3) feeds
-    CMP-CORE-02 slice fingerprinting and the SARIF ``codeFlows`` payload; it is a
-    later PR. The witness is intentionally deterministic and non-empty so the
-    pre-serialisation hash is well-defined. See CLAR-CORE-01.
+    Backtracks the write-once ``pred`` map from ``(sink, fact)`` to its seeded
+    source (the ``pred=None`` root), then reverses to **source-first** order so the
+    result is a connected path through the supergraph: each consecutive
+    ``(prev, cur)`` is a CFG/CALL edge that the tabulation propagated along. This
+    is the path CMP-CORE-02 backward-slices along and the SARIF ``codeFlows``
+    payload renders (``DOC-CMP-CORE-02 §4.1``, ``DOC-SARIF``).
+
+    Determinism (DOC §3.3 "deterministic given canonical_order") comes entirely
+    from the write-once ``pred``: the canonical worklist order fixes the first
+    discoverer of every ``(node, fact)``, so the path is a deterministic function
+    of the source. The nodes are **not** re-sorted by canonical index — sorting
+    would break edge-adjacency; the path is already deterministic.
+
+    A ``visited`` guard is redundant insurance against a malformed (cyclic) ``pred``
+    — write-once already guarantees acyclicity — but it makes the bound explicit.
     """
-    return (sink,)
+    path: list[NodeId] = []
+    seen: set[tuple[NodeId, Fact]] = set()
+    cur: tuple[NodeId, Fact] | None = (sink, fact)
+    while cur is not None and cur not in seen:
+        seen.add(cur)
+        path.append(cur[0])
+        cur = pred.get(cur)
+    path.reverse()  # source-first (path[0] is the seeded source, path[-1] == sink)
+    return tuple(path)
 
 
 def _build_findings(
     sg: ExplodedSupergraph,
     spec: Spec,
     facts_at: dict[NodeId, set[Fact]],
+    pred: dict[tuple[NodeId, Fact], tuple[NodeId, Fact] | None],
     *,
     S_version: str,  # noqa: N803  (INV-2 provenance field name — normative, DOC §3.1)
     env_digest: Sha256,
@@ -334,7 +393,7 @@ def _build_findings(
                 Finding(
                     sink=nid,
                     fact=fact,
-                    witness=_witness(sg, nid, fact),
+                    witness=_witness(pred, nid, fact),
                     spec_id=spec.id,
                     origin="deterministic-core",  # INV-1 (engine in {ifds, ide})
                     S_version=S_version,  # INV-2
@@ -402,7 +461,7 @@ def solve(
     sg = build_supergraph(cpg, order_result.canonical_order)
     summaries = SummaryCache(header=(S_version, bytes(env_digest)), summaries={}, visited=set())
     seeded, _facts = _seed_sources(sg, spec)
-    facts_at, visited = _tabulate(
+    facts_at, visited, pred = _tabulate(
         sg, spec, seeded, restrict_to=None, summaries=summaries, canon_index=canon_index
     )
 
@@ -410,6 +469,7 @@ def solve(
         sg,
         spec,
         facts_at,
+        pred,
         S_version=S_version,
         env_digest=env_digest,
         cpg_order_hash=order_result.cpg_order_hash,
@@ -421,6 +481,7 @@ def solve(
         findings=frozenset(findings),
         solution_hash=solution_hash,
         visited_procs=visited,
+        summaries=summaries,
     )
 
 
@@ -464,7 +525,7 @@ def incremental_solve(
     summaries.invalidate(closure)
 
     seeded, _facts = _seed_sources(sg, spec)
-    facts_at, visited = _tabulate(
+    facts_at, visited, pred = _tabulate(
         sg, spec, seeded, restrict_to=closure, summaries=summaries, canon_index=canon_index
     )
 
@@ -472,6 +533,7 @@ def incremental_solve(
         sg,
         spec,
         facts_at,
+        pred,
         S_version=S_version,
         env_digest=env_digest,
         cpg_order_hash=order_result.cpg_order_hash,
@@ -483,4 +545,5 @@ def incremental_solve(
         findings=frozenset(findings),
         solution_hash=solution_hash,
         visited_procs=visited,
+        summaries=summaries,
     )
