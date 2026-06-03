@@ -290,4 +290,38 @@ Legal hold: a tenant can request a per-codebase legal hold that pins all artifac
 
 ---
 
+## CLAR-DEPLOY-17 — Branch-protection enforcement (native vs process shim)
+
+**Status:** RESOLVED
+**Approver:** CTO Agent
+
+**Question:** Server-side branch protection / required-status-checks are unavailable on this repo (GitHub Free/private — the protection API returns 403). Upgrade the plan (Team/Pro) or make the repo public to enable native protection, or keep the process-level shim doctrine?
+
+**Decision:** Keep the **process-level shims** through v3.2 — `enforce-pr-only-merges.yml` + the RULE-10 `claude-review` fail-closed gate. No paid upgrade, no source disclosure.
+
+**Rationale:** `WBS.md §17 CLAR-DEPLOY-17` and `DOC-CMP-CI-01 §3.3` / `DOC-CMP-DEPLOY-04 §3` assume gate enforcement on `main`; the shims already deliver fail-closed, highly-visible (loud-red-check) enforcement at zero cost, equivalent in effect to the four CI gates (`CMP-CI-01`). Native `required_status_checks` is a one-step wire-up once the org is on Team/Pro for other reasons. Making a proprietary SAST platform's repo public to obtain free protection is a product/security regression, not an enforcement decision.
+
+**Consequences:** `CMP-CI-01` and `CMP-DEPLOY-04` continue to rely on the process shims (`enforce-pr-only-merges.yml`, RULE-10); their docs stay annotated as subject to this CLAR. Wire `claude-review` into `required_status_checks` if/when the org upgrades. Revisit at Stage-A go-live readiness.
+
+**Blocks lifted:** `CMP-CI-01 §3.3` enforcement; `CMP-DEPLOY-04 §3` deploy-time gate verification.
+
+---
+
+## CLAR-DEPLOY-18 — Production IaC placement (DEPLOY-01 sub-task vs DEPLOY-02 first task)
+
+**Status:** RESOLVED
+**Approver:** CTO Agent
+
+**Question:** Should the production IaC scaffolding (`infra/` Terraform) be delivered as a sub-task of `CMP-DEPLOY-01` (blocking close of issue #3), or as the first task of `CMP-DEPLOY-02` (which `Depends-On: CMP-DEPLOY-01`)?
+
+**Decision:** Production IaC is the **first task of `CMP-DEPLOY-02`**. `CMP-DEPLOY-01` ACs (`AC-DEPLOY-01a..e`) stay **contract-only** — the `services/substrate/` port-surface + this decision record — so issue #3 closes cleanly.
+
+**Rationale:** `WBS.md §17 CLAR-DEPLOY-18` and `AC-DEPLOY-01a` scope `CMP-DEPLOY-01` to the substrate *contract* (all 16 substrate `CLAR-DEPLOY-*` are RESOLVED); `CMP-DEPLOY-02` is the package that first provisions real AWS resources, so the IaC layer belongs at its head. The CTO had already approved deferring IaC from `AC-DEPLOY-01` (PR #238, 2026-05-25); this ratifies the sequencing. Pure work-ordering — no new money or scope.
+
+**Consequences:** `CMP-DEPLOY-02` begins with the `infra/` Terraform/CDK that provisions ECS/S3/RDS/Secrets-KMS/SQS per the resolved substrate decisions; `CMP-DEPLOY-03..05` and `CMP-SNAP-05` consume it. Issue #3 (`CMP-DEPLOY-01`) closes on contract delivery.
+
+**Blocks lifted:** `CMP-DEPLOY-02` start (IaC head task); unblocks the DEPLOY-02..05 + SNAP-05 provisioning chain.
+
+---
+
 *End of substrate decision record. Updates to any of these decisions require CTO Agent approval and a new entry here. Referenced by WBS.md §17, CLAUDE.md §8.*
