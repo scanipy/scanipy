@@ -71,7 +71,7 @@ Three authentication channels coexist. Every request carries exactly one.
 - GitHub: `X-Hub-Signature-256` HMAC-SHA-256 over body, key = registered webhook secret.
 - GitLab: `X-Gitlab-Token` plain shared secret (provider native).
 - Bitbucket: `X-Hub-Signature` HMAC-SHA-256.
-- Azure DevOps: HMAC via service-hook subscription.
+- Azure DevOps: shared-secret (Basic-auth `basicAuthPassword`) echo verification — native ADO emits no body HMAC (CLAR-SCM-02).
 - AC-SCM-03b requires a negative test per provider: a forged payload is rejected.
 
 ### 2.5 Tenancy header (RULE applies to channels 2.1, 2.2 only)

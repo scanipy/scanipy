@@ -101,7 +101,7 @@ The canonical scheme reference is [`DOC-API §2.4`](../cross-cutting/DOC-API.md#
 |---|---|---|---|
 | GitLab | `X-Gitlab-Token` | plain shared-secret equality (provider-native) | Constant-time compare via `hmac.compare_digest`. |
 | Bitbucket | `X-Hub-Signature` | HMAC-SHA-256 over raw body, key = registered secret; header value prefix `sha256=` | Compare constant-time. |
-| Azure DevOps | HMAC via service-hook subscription header `X-Vss-Activityid` and body HMAC where applicable | HMAC-SHA-1 or HMAC-SHA-256 per service-hook config; secret is the subscription consumer secret | ADO is the only provider whose signature scheme depends on the subscription-side configuration; the connector pins HMAC-SHA-256 and rejects subscriptions configured otherwise. |
+| Azure DevOps | _(none — Basic-auth credential, not a signature header)_ | shared-secret equality on the `basicAuthPassword` consumer input (constant-time compare) | Native ADO service-hooks emit **no body HMAC and no signature header** — only HTTP Basic auth (`basicAuthUsername`/`basicAuthPassword`); `X-Vss-Activityid` is a correlation id, not a signature (CLAR-SCM-02, RESOLVED 2026-06-03). `register_webhook` already sets `consumerInputs.basicAuthPassword = secret`; `verify_webhook` checks constant-time equality of the echoed Basic-auth secret (the GitLab `X-Gitlab-Token` pattern). |
 
 The GitHub row of `DOC-API §2.4` is the responsibility of `CMP-SCM-02`, not this component.
 
