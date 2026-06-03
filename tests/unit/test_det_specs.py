@@ -34,6 +34,14 @@ from pathlib import Path
 import pytest
 
 from analysis.ifds.dsl import DSLError, Spec, parse_spec
+from analysis.ifds.dsl.primitives import (
+    AccessPathPattern,
+    ArgRef,
+    Clause,
+    Propagate,
+    Sanitize,
+    Source,
+)
 from detectors.registry import (
     Detector,
     DetectorRegistry,
@@ -792,3 +800,134 @@ def test_inv4_closure_rejects_any_non_dsl_spec_at_registration() -> None:
     assert isinstance(accepted, Spec)
     assert accepted.engine == "ifds"
     assert len(accepted.clauses) == 4
+
+
+# ─── TST-INV-4-DET-01 — register()-path closes the hand-built-Spec bypass ────
+# CLAR-DET-02 (Security APPROVE-WITH-CONDITIONS / RULE-9): parse_spec is the
+# authoritative INV-4 escape-hatch gate, but it runs only on the text→Spec path.
+# register() previously called the SHAPE-ONLY closure_check, which never inspects
+# clause pattern content — so a caller could hand-build a frozen Spec carrying
+# unparsed escape-hatch content (Spec is a plain frozen dataclass; AccessPathPattern
+# is a NewType over str) and slip it past register(): a one-sided INV-4 FALSE
+# NEGATIVE, empirically reproducible before the fix. revalidate_spec(), now called
+# from register() (and load_manifests), re-runs the parser's escape-hatch checks
+# over each clause and raises the verbatim DSLError. This test FAILS before the fix
+# and PASSES after (red→green non-vacuity), and the negative control below proves
+# the gate is not vacuously rejecting everything.
+
+
+def _handbuilt_core_detector(spec: Spec, *, det_id: str = "handbuilt-evil") -> Detector:
+    """A core (engine='ifds') Detector carrying a HAND-BUILT Spec.
+
+    Constructed WITHOUT parse_spec — the clause patterns never passed the parser,
+    so their escape-hatch content is unvalidated until register()/load_manifests
+    re-validate it. determinism_partition is derived from the engine, as in
+    production.
+    """
+    return Detector(
+        id=det_id,
+        cwes=("CWE-89",),
+        languages=("java",),
+        frameworks=("jdbc",),
+        engine="ifds",
+        severity_default="high",
+        determinism_partition=derive_partition("ifds"),
+        per_language_readiness={"java": "ready"},
+        spec=spec,
+    )
+
+
+# (hand-built out-of-grammar clause, expected verbatim E-DSL code). Each Spec is
+# built directly from the frozen dataclasses — no parse_spec — so the only thing
+# standing between it and admission is register()'s revalidate_spec call. The
+# escape-hatch check is fail-fast (first matching clause wins), so each case
+# carries exactly ONE offending clause to make the asserted code unambiguous.
+_HANDBUILT_ESCAPE_HATCH_CLAUSES: list[tuple[Clause, str]] = [
+    # E-DSL-001: a raw regex smuggled into a Source access-path pattern.
+    (Source(AccessPathPattern(r're.compile(r".*\.execute\(")')), "E-DSL-001"),
+    # E-DSL-004: a non-declarative Python callable smuggled into a Sanitize pattern.
+    (Sanitize(AccessPathPattern("lambda f: f.is_xss()")), "E-DSL-004"),
+    # E-DSL-008: a non-grammar Propagate endpoint (code smuggled into an arg ref).
+    # Exercises the _revalidate_propagate_endpoints branch: _ARG_REF/_FIELD_REF
+    # both fail on the callable, so the endpoint is rejected E-DSL-008. Without
+    # this case a do-nothing propagate re-validator would pass the whole suite.
+    (Propagate(ArgRef("lambda f: f()"), "ret"), "E-DSL-008"),
+]
+
+
+@pytest.mark.invariant
+@pytest.mark.parametrize(
+    ("clause", "expected_code"),
+    _HANDBUILT_ESCAPE_HATCH_CLAUSES,
+    ids=[code for _, code in _HANDBUILT_ESCAPE_HATCH_CLAUSES],
+)
+def test_inv4_register_rejects_handbuilt_escape_hatch_spec(
+    clause: Clause, expected_code: str
+) -> None:
+    """TST-INV-4-DET-01 / Maps to INV-4 (CMP-DET-01/02) / Kind [INVARIANT].
+
+    INV-4 owner module: analysis/ifds/dsl/. Required SAFE direction — a spec
+    outside the distributive-by-construction combinator DSL must be rejected at
+    registration, never analyzed. This pins the register() entry point (the
+    public single-detector admission API), distinct from load_manifests().
+
+    The escape-hatch check is fail-fast (first offending clause raises), so a
+    single Detector cannot surface two codes at once; each case carries exactly
+    one offending clause. ``E-DSL-001`` (regex) and ``E-DSL-004`` (lambda) are
+    both asserted, one per parametrization.
+
+    Inputs: a core engine='ifds' Detector carrying a HAND-BUILT Spec (constructed
+        WITHOUT parse_spec) whose clause embeds an escape hatch.
+    Outputs: reg.register(det) raises DSLError with the verbatim E-DSL code; the
+        detector is never admitted.
+    Pass criteria: DSLError.code == expected_code; reg.all() == () (total
+        rejection). FAILS before the CLAR-DET-02 fix (register() ran only the
+        shape-only closure_check), PASSES after.
+    Frequency: every CI run. Hard gate? yes.
+    """
+    spec = Spec(
+        id="handbuilt-evil",
+        class_="injection",
+        languages=("java",),
+        engine="ifds",
+        clauses=(clause,),
+    )
+    det = _handbuilt_core_detector(spec)
+    reg = DetectorRegistry()
+    with pytest.raises(DSLError) as exc:
+        reg.register(det)
+    assert exc.value.code == expected_code
+    assert reg.all() == ()  # total rejection: the evil detector is not admitted
+
+
+@pytest.mark.invariant
+def test_inv4_register_admits_well_formed_parsed_spec_negative_control() -> None:
+    """TST-INV-4-DET-01 negative control / Maps to INV-4 / Kind [INVARIANT].
+
+    Non-vacuity guard for ``test_inv4_register_rejects_handbuilt_escape_hatch_spec``:
+    a check that rejected EVERY register() call would also "never analyze a non-DSL
+    spec" but be useless. INV-4 forbids silent acceptance, not all acceptance.
+
+    Inputs: a core engine='ifds' Detector whose Spec came from parse_spec over
+        well-formed, in-grammar DSL source (the existing good-spec fixture text).
+    Outputs: reg.register(det) admits it cleanly — revalidate_spec is a no-op on a
+        spec the parser already accepted (idempotent).
+    Pass criteria: register() does not raise; reg.all() contains the detector.
+        This MUST keep passing after the fix, proving the new gate is not vacuously
+        rejecting everything; it goes red if revalidate_spec wrongly rejects a
+        parsed in-grammar spec.
+    Frequency: every CI run. Hard gate? yes.
+    """
+    good_spec = parse_spec(
+        _spec(
+            "source(?T<:javax.servlet.http.HttpServletRequest.getParameter(*))",
+            "propagate(arg[0] → ret)",
+            "sanitize(?T<:java.sql.PreparedStatement.setString(*))",
+            "sink(?T<:java.sql.Statement.executeQuery(arg[0]))",
+        )
+    )
+    det = _handbuilt_core_detector(good_spec, det_id="handbuilt-good")
+    reg = DetectorRegistry()
+    reg.register(det)  # must not raise: parsed in-grammar spec admits cleanly
+    assert reg.all() == (det,)
+    assert reg.by_id("handbuilt-good") is det
