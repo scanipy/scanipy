@@ -360,8 +360,7 @@ def test_cp03b_recycled_pooled_connection_reads_zero_rows() -> None:
                 )
                 flags = {row[0]: (row[1], row[2]) for row in cur.fetchall()}
                 assert set(flags) == set(_FORCED_RLS_TABLES), (
-                    f"missing RLS tables in pg_class: "
-                    f"{set(_FORCED_RLS_TABLES) - set(flags)}"
+                    f"missing RLS tables in pg_class: {set(_FORCED_RLS_TABLES) - set(flags)}"
                 )
                 for table, (rls_on, force_on) in flags.items():
                     assert rls_on is True, f"{table} missing ENABLE ROW LEVEL SECURITY"
@@ -386,8 +385,7 @@ def test_cp03b_recycled_pooled_connection_reads_zero_rows() -> None:
                 # BYPASSRLS is on scanipy_system ONLY; the request-path role and
                 # the triage role are both NOBYPASSRLS.
                 cur.execute(
-                    "SELECT rolname, rolbypassrls FROM pg_roles "
-                    "WHERE rolname = ANY(%s);",
+                    "SELECT rolname, rolbypassrls FROM pg_roles WHERE rolname = ANY(%s);",
                     (["scanipy_system", "scanipy_app", "scanipy_triage"],),
                 )
                 bypass = dict(cur.fetchall())
@@ -487,9 +485,7 @@ def test_cp03b_recycled_pooled_connection_reads_zero_rows() -> None:
                     # Column list is irrelevant — the grant denial fires before
                     # any row is constructed. INSERT ... DEFAULT VALUES would also
                     # be denied; we use an explicit (org_id) form for clarity.
-                    cur.execute(
-                        "INSERT INTO findings (org_id) VALUES (%s);", (org_a,)
-                    )
+                    cur.execute("INSERT INTO findings (org_id) VALUES (%s);", (org_a,))
                 cur.execute("ROLLBACK;")  # clear the aborted transaction
                 cur.execute("RESET ROLE;")
         finally:
