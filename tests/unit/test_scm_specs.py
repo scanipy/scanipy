@@ -400,9 +400,7 @@ def test_scm_03b_forged_webhook_rejected(provider: str) -> None:
         assert auth.startswith("Basic ")
         tampered_body = b'{"event":"push","ref":"refs/heads/MAIN"}'
         assert (
-            connector.verify_webhook(
-                raw_body=tampered_body, headers=genuine_headers, secret=secret
-            )
+            connector.verify_webhook(raw_body=tampered_body, headers=genuine_headers, secret=secret)
             is True
         )
         # Negative controls: a Basic header echoing the WRONG password → False.
@@ -410,9 +408,7 @@ def test_scm_03b_forged_webhook_rejected(provider: str) -> None:
 
         wrong = "Basic " + _b64.b64encode(b":wrong-secret").decode("ascii")
         assert (
-            connector.verify_webhook(
-                raw_body=body, headers={"Authorization": wrong}, secret=secret
-            )
+            connector.verify_webhook(raw_body=body, headers={"Authorization": wrong}, secret=secret)
             is False
         )
         # Absent Authorization header → False (no exception).
