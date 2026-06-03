@@ -34,6 +34,12 @@ ERROR_NOT_FOUND = "not_found"
 ERROR_RATE_LIMITED = "rate_limited"
 ERROR_LLM_QUOTA_EXCEEDED = "llm_quota_exceeded"
 ERROR_INVARIANT_INV2_VIOLATION = "invariant_inv2_violation"
+# Tenant CMK deleted/absent on a decrypt path (KMS NotFoundException). A
+# tenant-impact 500 — NOT a cross-tenant 403 — so the credential service can
+# split it out of the cross-tenant forensic/WARN channel (DOC-CMP-CP-02 §7;
+# CP-02 KMSKeyMissingError). The ThrottlingException/503 limb is SRE-owned and
+# deliberately not represented here (RULE-4).
+ERROR_KMS_KEY_MISSING = "kms_key_missing"
 
 # Maps each reserved code to its HTTP status (DOC-API §6.1).
 ERROR_HTTP_STATUS: dict[str, int] = {
@@ -45,6 +51,7 @@ ERROR_HTTP_STATUS: dict[str, int] = {
     ERROR_RATE_LIMITED: 429,
     ERROR_LLM_QUOTA_EXCEEDED: 429,
     ERROR_INVARIANT_INV2_VIOLATION: 422,
+    ERROR_KMS_KEY_MISSING: 500,
 }
 
 # --- Resources and actions exposed to the RBAC gate ---------------------------
@@ -89,6 +96,7 @@ RBAC: dict[Role, dict[Resource, frozenset[Action]]] = {
 __all__ = [
     "ERROR_HTTP_STATUS",
     "ERROR_INVARIANT_INV2_VIOLATION",
+    "ERROR_KMS_KEY_MISSING",
     "ERROR_LLM_QUOTA_EXCEEDED",
     "ERROR_NOT_FOUND",
     "ERROR_ORG_MISMATCH",

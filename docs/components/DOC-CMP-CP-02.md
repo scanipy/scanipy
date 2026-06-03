@@ -278,16 +278,22 @@ CP-02.get_signing_key_handle(org_id, purpose="provenance-signing")
 
 ## 7. Failure modes and error contracts
 
+The decrypt error-code contract is intentionally **narrow**: exactly one KMS error
+code (`NotFoundException`) is detected by code and split out; every other opaque KMS
+error falls into the fail-closed `403 tenant_isolation_violation` catch-all. This table
+records the *implemented* contract — a row that claims a more specific response than the
+except-chain delivers would be a documentation/code drift (RULE-4).
+
 | Failure | Detected by | Response | Side effect |
 |---|---|---|---|
-| KMS API rate limit (`ThrottlingException`) | boto3 KMS call | Retry with exponential backoff (3 attempts, jitter); after exhaustion → `503 KMS_UNAVAILABLE`. | CloudWatch alarm on sustained throttling. |
-| Tenant CMK missing on decrypt | KMS `NotFoundException` or our pre-lookup | **Surface the error; never auto-create.** A missing CMK means it was deleted (deliberate or accident) — auto-creating would silently re-create the tenant key under a new ARN and orphan all existing ciphertexts. Return `500 KMS_KEY_MISSING` with a runbook reference. | Page SRE; this is a tenant-impact event. |
-| `EncryptionContext` mismatch on decrypt (cross-tenant attempt) | KMS `InvalidCiphertextException` | `403 tenant_isolation_violation`. | WARN OTel event with `{requested_org_id, ciphertext_kms_arn, route}`. |
+| Tenant CMK missing on decrypt | KMS `NotFoundException`, matched by error code (`_kms_error_code(exc) == "NotFoundException"`) or our pre-lookup | **Surface the error; never auto-create.** A missing CMK means it was deleted (deliberate or accident) — auto-creating would silently re-create the tenant key under a new ARN and orphan all existing ciphertexts. `decrypt_credential` raises `KMSKeyMissingError` → `500 kms_key_missing` (`ERROR_KMS_KEY_MISSING`) with a runbook reference. **This is the ONLY fine-grained decrypt limb.** | Page SRE; this is a tenant-impact event. It is **not** routed onto the cross-tenant forensic/WARN channel. |
+| Any other opaque KMS error on decrypt (incl. `InvalidCiphertextException` `EncryptionContext`/CMK mismatch — the cross-tenant attempt) | Fail-closed catch-all (NOT a per-code match) — every non-`NotFoundException`, non-CP-typed exception | `403 tenant_isolation_violation`. | WARN OTel event with `{requested_org_id, ciphertext_kms_arn, route}`. This is the cross-tenant-attack forensic channel; only genuinely-ambiguous failures land here now that `NotFoundException` is split out. |
+| KMS API rate limit (`ThrottlingException`) → `503` retry/backoff limb | boto3 KMS call | **DEFERRED to SRE (not yet implemented).** Intended: retry with exponential backoff (3 attempts, jitter); after exhaustion → `503 KMS_UNAVAILABLE`. Until that limb lands, `ThrottlingException` is a non-`NotFoundException` error and therefore falls into the fail-closed `403` catch-all above (Security-accepted interim; SRE owns the `503`/`KMS_UNAVAILABLE` code, deliberately NOT added to `ERROR_HTTP_STATUS` here). | CloudWatch alarm on sustained throttling (SRE). |
+| KMS region outage → `503` limb | boto3 KMS call (timeout) | **DEFERRED to SRE (same `503`/`KMS_UNAVAILABLE` limb as throttling, not yet implemented).** Until then a timeout is a non-`NotFoundException` error and falls into the fail-closed `403` catch-all; fail closed either way. | Page SRE. |
 | CMK rotation fails partway | boto3 KMS call | Retry with backoff; never leave the CMK in an inconsistent state — KMS rotation is atomic on the KMS side, so a failed call means the rotation simply did not happen and ciphertexts remain readable under the prior key. | Log the rotation attempt; alarm on persistent failure. |
 | Decryption succeeds but plaintext logged | (would-be programming bug) | Compile-time / lint-time enforcement: no log statement in CP-02 or downstream services may interpolate the return value of `decrypt_credential`. | Pre-commit hook + code review (RULE-9 Security Analyst sign-off). |
-| KMS region outage | boto3 KMS call (timeout) | `503 KMS_UNAVAILABLE`; fail closed. | Page SRE. |
 
-**Fail-closed posture.** Any KMS error during decrypt fails the requesting operation. CP-02 never falls back to plaintext, alternate keys, or a cached plaintext that survived an earlier scan. The `Plaintext` lifecycle is single-scan.
+**Fail-closed posture.** Any KMS error during decrypt fails the requesting operation. CP-02 never falls back to plaintext, alternate keys, or a cached plaintext that survived an earlier scan. The `Plaintext` lifecycle is single-scan. The `NotFoundException` split exists so a deleted-CMK tenant-impact event is **not** mislabeled as a cross-tenant isolation violation; it does not weaken the fail-closed posture — both limbs still fail the operation.
 
 ---
 

@@ -248,6 +248,19 @@ class CredentialEncryptionService:
             # unchanged so callers see the precise cause (DOC-CMP-CP-02 §7).
             raise
         except Exception as exc:  # translate opaque KMS errors fail-closed.
+            # A deleted/absent CMK surfaces as a botocore NotFoundException. It is
+            # NOT a cross-tenant attempt, so it must NOT be mislabeled
+            # 403 tenant_isolation_violation and pushed onto the cross-tenant
+            # forensic/WARN channel — it is a tenant-impact 500 KMS_KEY_MISSING
+            # (DOC-CMP-CP-02 §7, RULE-9 INV-3). Split out ONLY this one code; every
+            # other opaque KMS error stays in the fail-closed 403 catch-all below
+            # (RULE-4: the Security ruling names exactly one code — ThrottlingException
+            # / 503 is the SRE-owned limb, deferred).
+            if _kms_error_code(exc) == "NotFoundException":
+                raise KMSKeyMissingError(
+                    "decrypt failed: tenant CMK missing/deleted "
+                    f"(requested org_id={org_id}, ciphertext key={ciphertext.kms_key_arn})"
+                ) from exc
             raise TenantIsolationError(
                 "decrypt rejected: EncryptionContext / CMK mismatch "
                 f"(requested org_id={org_id}, ciphertext key={ciphertext.kms_key_arn})"
@@ -317,6 +330,24 @@ class CredentialEncryptionService:
             KeySpec="ECC_NIST_P256",
         )
         return _key_arn(resp)
+
+
+def _kms_error_code(exc: object) -> str | None:
+    """Duck-typed read of a botocore ``ClientError`` error code, or ``None``.
+
+    botocore is **not** a CP-02 dependency, so this never imports it: any boto3
+    KMS error carries ``exc.response["Error"]["Code"]`` (e.g. ``"NotFoundException"``,
+    ``"InvalidCiphertextException"``). This reads it structurally and returns
+    ``None`` for any exception that does not present that shape (DOC-CMP-CP-02 §7).
+    """
+    r = getattr(exc, "response", None)
+    return (
+        r["Error"]["Code"]
+        if isinstance(r, dict)
+        and isinstance(r.get("Error"), dict)
+        and isinstance(r["Error"].get("Code"), str)
+        else None
+    )
 
 
 def _expect_bytes(resp: dict[str, object], key: str) -> bytes:
