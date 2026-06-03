@@ -19,6 +19,10 @@ matching CMP-CORE-* lands. Marker = execution/frequency class only (the
 
 import pytest
 
+from analysis.ifds.dsl.primitives import AccessPathPattern, Sink, Source
+from analysis.ifds.dsl.spec import Spec
+from analysis.ifds.solver import incremental_solve, solve
+from analysis.ifds.supergraph import ProcId, build_supergraph
 from analysis.ordering import (
     CPG,
     CPG_ORDER_HASH_ANNOTATION,
@@ -31,6 +35,12 @@ from analysis.ordering import (
     to_provenance_fields,
     to_sarif_properties,
 )
+
+# Fixed run parameters for the CMP-CORE-01 fixture-scale tests (INV-2).
+_S_VERSION = "1.0.0"
+_ENV_DIGEST = Sha256(b"\xab" * 32)
+_SRC_PAT = AccessPathPattern("taint_src")
+_SINK_PAT = AccessPathPattern("exec_sink")
 
 # ---------------------------------------------------------------------------
 # CMP-CORE-03 test helpers (CFI-style symmetric graph builder)
@@ -84,8 +94,168 @@ def _weak_result() -> CanonicalOrderResult:
 
 
 # ---------------------------------------------------------------------------
+# CMP-CORE-01 test helpers (fixture-scale taint CPGs + a Stage-A injection spec)
+# ---------------------------------------------------------------------------
+
+
+def _injection_spec() -> Spec:
+    """A minimal Stage-A `ifds` injection spec: one source + one sink clause.
+
+    The PR1 AccessPathPattern matcher fires on a node whose ``operator_or_literal``
+    equals the clause pattern (CLAR-CORE-01 simplification), so the fixtures wire
+    a `taint_src` node to an `exec_sink` node and the solver must report it.
+    """
+    return Spec(
+        id="inj.fixture.v1",
+        class_="injection",
+        languages=("python",),
+        engine="ifds",
+        clauses=(Source(_SRC_PAT), Sink(_SINK_PAT)),
+    )
+
+
+def _single_proc_taint_cpg() -> CPG:
+    """One procedure: source -> intermediate -> sink, all via CFG edges.
+
+    Designed so the PR1 matcher fires (a real source->sink finding exists), which
+    is the anti-vacuity backbone of the determinism proxy test.
+    """
+    cpg = CPG()
+    entry = cpg.add_node("METHOD", resolved_fqn="m.main", enclosing_decl_fqn="m.main")
+    src = cpg.add_node(
+        "CALL", operator_or_literal="taint_src", enclosing_decl_fqn="m.main", structural_path="0"
+    )
+    mid = cpg.add_node(
+        "IDENTIFIER", operator_or_literal="x", enclosing_decl_fqn="m.main", structural_path="1"
+    )
+    sink = cpg.add_node(
+        "CALL", operator_or_literal="exec_sink", enclosing_decl_fqn="m.main", structural_path="2"
+    )
+    cpg.add_edge(entry, src, "CFG")
+    cpg.add_edge(src, mid, "CFG")
+    cpg.add_edge(mid, sink, "CFG")
+    return cpg
+
+
+def _call_chain_cpg() -> tuple[CPG, dict[str, ProcId]]:
+    """An interprocedural fixture with a call chain AND an independent procedure.
+
+    Call graph (CALL edges):  top -> mid -> leaf .   Plus an *isolated* procedure
+    ``other`` that is NOT a caller of ``leaf`` but carries its OWN taint source.
+
+    This shape is what makes the AC-CORE-01c negative control non-vacuous (per
+    the falsifier doctrine): if ``leaf`` is AFFECTED, the closure is
+    {leaf, mid, top}; ``other`` is OUTSIDE it. Because ``other`` is independently
+    seeded, a FULL solve DOES visit it — so "incremental did not visit other" is a
+    real restriction, not a trivially-unreachable node.
+
+    Returns the CPG and a name->ProcId map (proc id == the METHOD entry node id).
+    """
+    cpg = CPG()
+
+    # leaf procedure: contains the source->sink taint path.
+    leaf_entry = cpg.add_node("METHOD", resolved_fqn="p.leaf", enclosing_decl_fqn="p.leaf")
+    leaf_src = cpg.add_node(
+        "CALL", operator_or_literal="taint_src", enclosing_decl_fqn="p.leaf", structural_path="0"
+    )
+    leaf_sink = cpg.add_node(
+        "CALL", operator_or_literal="exec_sink", enclosing_decl_fqn="p.leaf", structural_path="1"
+    )
+    cpg.add_edge(leaf_entry, leaf_src, "CFG")
+    cpg.add_edge(leaf_src, leaf_sink, "CFG")
+
+    # mid procedure: calls leaf.
+    mid_entry = cpg.add_node("METHOD", resolved_fqn="p.mid", enclosing_decl_fqn="p.mid")
+    mid_call = cpg.add_node(
+        "CALL", operator_or_literal="call_leaf", enclosing_decl_fqn="p.mid", structural_path="0"
+    )
+    cpg.add_edge(mid_entry, mid_call, "CFG")
+    cpg.add_edge(mid_call, leaf_entry, "CALL")
+
+    # top procedure: calls mid.
+    top_entry = cpg.add_node("METHOD", resolved_fqn="p.top", enclosing_decl_fqn="p.top")
+    top_call = cpg.add_node(
+        "CALL", operator_or_literal="call_mid", enclosing_decl_fqn="p.top", structural_path="0"
+    )
+    cpg.add_edge(top_entry, top_call, "CFG")
+    cpg.add_edge(top_call, mid_entry, "CALL")
+
+    # other procedure: independent, NOT a caller of leaf, but carries its own
+    # taint source (so a full solve visits it — non-vacuity for the neg control).
+    other_entry = cpg.add_node("METHOD", resolved_fqn="p.other", enclosing_decl_fqn="p.other")
+    other_src = cpg.add_node(
+        "CALL", operator_or_literal="taint_src", enclosing_decl_fqn="p.other", structural_path="0"
+    )
+    cpg.add_edge(other_entry, other_src, "CFG")
+
+    procs = {
+        "leaf": ProcId(int(leaf_entry)),
+        "mid": ProcId(int(mid_entry)),
+        "top": ProcId(int(top_entry)),
+        "other": ProcId(int(other_entry)),
+    }
+    return cpg, procs
+
+
+# ---------------------------------------------------------------------------
 # CMP-CORE-01 — IFDS/IDE tabulation solver (Algorithm 2)
 # ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_core_01_determinism_proxy_byte_identical_solution_hash() -> None:
+    """PROXY for AC-CORE-01a: fixture-scale byte-identical solution hash.
+
+    Test id:       (CMP-CORE-01 PR1 determinism proxy — NOT TST-AC-CORE-01a)
+    Maps to AC:    proxy for AC-CORE-01a (the corpus-scale release blocker stays
+                   xfail until CMP-CORP-CANARY-01 + CMP-CP-05 land).
+    Kind tag:      [UNIT]
+    Inputs:        a single fixture taint CPG + a Stage-A injection spec, fixed
+                   (S_version, env_digest).
+    Outputs:       SolverResult.solution_hash from two independent solve() calls.
+    Pass criteria: (i) ANTI-VACUITY — the solver reports a non-empty finding set
+                   on the fixture (byte-identity is meaningless on an empty
+                   solver); (ii) the two solution_hashes are byte-identical.
+    Frequency:     every CI run.
+    Hard gate?:    proxy only — the hard AC-CORE-01a gate is the xfail above.
+    """
+    cpg = _single_proc_taint_cpg()
+    spec = _injection_spec()
+
+    r1 = solve(cpg, spec, S_version=_S_VERSION, env_digest=_ENV_DIGEST)
+    r2 = solve(cpg, spec, S_version=_S_VERSION, env_digest=_ENV_DIGEST)
+
+    # (i) ANTI-VACUITY: the adapter actually fired source->sink on the fixture.
+    #     Without this, byte-identity is vacuously true on an empty solver and a
+    #     do-nothing impl would pass. This is the falsifier-doctrine positive
+    #     control for the determinism proxy.
+    assert r1.findings, "expected at least one source->sink finding on the fixture"
+    only = next(iter(r1.findings))
+    # The single finding lands at the exec_sink node and threads provenance.
+    assert only.origin == "deterministic-core"  # INV-1
+    assert only.S_version == _S_VERSION and only.env_digest == _ENV_DIGEST  # INV-2
+    assert only.cpg_order_hash_annotation == CPG_ORDER_HASH_ANNOTATION  # INV-5
+    assert only.fingerprint_class in ("strong", "weak")
+
+    # (ii) byte-identical pre-serialisation solution hash across re-runs.
+    assert isinstance(r1.solution_hash, bytes) and len(r1.solution_hash) == 32
+    assert r1.solution_hash == r2.solution_hash
+
+
+@pytest.mark.unit
+def test_core_01_inv2_fail_fast_on_unpinned_params() -> None:
+    """INV-2: solve() refuses to run with an empty S_version or env_digest.
+
+    Negative control for the INV-2 fail-fast contract (DOC-CMP-CORE-01 §5.2,
+    §7): a silent default would be an invariant violation. A do-nothing guard
+    (returning a result anyway) fails this test.
+    """
+    cpg = _single_proc_taint_cpg()
+    spec = _injection_spec()
+    with pytest.raises(ValueError):
+        solve(cpg, spec, S_version="", env_digest=_ENV_DIGEST)
+    with pytest.raises(ValueError):
+        solve(cpg, spec, S_version=_S_VERSION, env_digest=Sha256(b""))
 
 
 @pytest.mark.unit
@@ -112,7 +282,6 @@ def test_core_01a_determinism_byte_identical_solution_hash() -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(reason="CMP-CORE-01 not yet implemented", strict=False)
 def test_core_01c_incremental_visits_only_affected_closure() -> None:
     """Incremental re-tabulation visits only AFFECTED + transitive callers.
 
@@ -129,9 +298,48 @@ def test_core_01c_incremental_visits_only_affected_closure() -> None:
     Frequency:     every CI run.
     Hard gate?:    yes.
     """
-    # TODO: call analysis.ifds.solver.incremental_solve(...); assert
-    #       result.visited_procs <= (affected_set | transitive_callers).
-    pytest.skip("CMP-CORE-01 not implemented yet")
+    cpg, procs = _call_chain_cpg()
+    spec = _injection_spec()
+
+    # Base full run tells us which procedures a FULL solve visits — the
+    # non-vacuity baseline for the negative control below.
+    base = solve(cpg, spec, S_version=_S_VERSION, env_digest=_ENV_DIGEST)
+
+    # A header-matching prior cache (keyed on the same (S_version, env_digest)).
+    from analysis.ifds.solver import SummaryCache
+
+    prior = SummaryCache(
+        header=(_S_VERSION, bytes(_ENV_DIGEST)),
+        summaries={},
+        visited=set(),
+    )
+
+    # AFFECTED = {leaf}. The LITERAL closure for this fixture is {leaf, mid, top}
+    # (mid calls leaf; top calls mid). ``other`` is OUTSIDE the closure.
+    affected = frozenset({procs["leaf"]})
+    expected_closure = frozenset({procs["leaf"], procs["mid"], procs["top"]})
+
+    # Cross-check the supergraph's own closure matches the hand-computed literal
+    # (guards against a tautological subset assertion that just echoes the impl).
+    sg = build_supergraph(cpg, canonical_order(cpg).canonical_order)
+    assert affected | sg.transitive_callers(affected) == expected_closure
+    assert procs["other"] not in expected_closure
+
+    incr = incremental_solve(
+        cpg, spec, affected, prior, S_version=_S_VERSION, env_digest=_ENV_DIGEST
+    )
+
+    # NON-VACUITY: a FULL solve DOES visit ``other`` (it is independently seeded),
+    # so excluding it is a real restriction, not a trivially-unreachable node.
+    assert procs["other"] in base.visited_procs
+
+    # AC-CORE-01c (positive): every visited proc lies in the AFFECTED closure.
+    assert incr.visited_procs <= expected_closure
+    # AC-CORE-01c (the work happened): the affected proc itself was re-tabulated.
+    assert procs["leaf"] in incr.visited_procs
+    # NEGATIVE CONTROL: the out-of-closure proc is NOT re-tabulated. A
+    # visit-everything impl (ignoring affected_set) would fail right here.
+    assert procs["other"] not in incr.visited_procs
 
 
 # ---------------------------------------------------------------------------
