@@ -77,9 +77,9 @@ def test_deploy_01a_every_clar_deploy_has_recorded_decision() -> None:
     decisions_text = _DECISIONS.read_text(encoding="utf-8")
 
     # Enumerate every CLAR-DEPLOY-NN that appears RESOLVED in the WBS §17 register.
-    # CLAR-DEPLOY-17 is DEFERRED (server-side branch protection) — it has no
-    # substrate decision section by design, so it is excluded from the
-    # required-record set per the docstring.
+    # As of 2026-06-03 every CLAR-DEPLOY-* is RESOLVED: the last two — DEPLOY-17
+    # (branch-protection process shims) and DEPLOY-18 (IaC placement) — were ratified
+    # then (DECISION-PART2), so each now carries a decision-record section below.
     resolved_ids: set[str] = set()
     deferred_ids: set[str] = set()
     for line in wbs_text.splitlines():
@@ -97,13 +97,15 @@ def test_deploy_01a_every_clar_deploy_has_recorded_decision() -> None:
             resolved_ids.add(clar_id)
         elif "DEFERRED" in cells:
             deferred_ids.add(clar_id)
-        # OPEN rows (e.g. CLAR-DEPLOY-18, filed but not yet decided) require no
-        # decision-record section and are intentionally excluded from both sets.
+        # OPEN rows (none today) would require no decision-record section and are
+        # intentionally excluded from both sets.
 
     assert resolved_ids, "no RESOLVED CLAR-DEPLOY-* rows found in WBS.md §17"
-    # CLAR-DEPLOY-17 is the deferred one and must NOT be required to have a record.
-    assert "CLAR-DEPLOY-17" in deferred_ids
-    assert "CLAR-DEPLOY-17" not in resolved_ids
+    # As of 2026-06-03 DEPLOY-17 and DEPLOY-18 are RESOLVED (ratified governance),
+    # so each must carry a decision record (enforced by the loop below); none remain
+    # deferred. This guards against silently dropping their records on a re-edit.
+    assert "CLAR-DEPLOY-17" in resolved_ids
+    assert "CLAR-DEPLOY-18" in resolved_ids
 
     # Split the decision record into ``## CLAR-DEPLOY-NN`` sections.
     sections: dict[str, str] = {}
