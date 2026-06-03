@@ -194,9 +194,7 @@ def _seed_sources(
 
 def _sanitized_at(sg: ExplodedSupergraph, spec: Spec, node: CPGNode) -> bool:
     """True if ``node`` matches any sanitize clause (kills taint along this node)."""
-    return any(
-        isinstance(c, Sanitize) and _pattern_matches(c.pattern, node) for c in spec.clauses
-    )
+    return any(isinstance(c, Sanitize) and _pattern_matches(c.pattern, node) for c in spec.clauses)
 
 
 def _is_sink(sg: ExplodedSupergraph, spec: Spec, node: CPGNode) -> bool:
@@ -350,9 +348,7 @@ def _build_findings(
     return findings
 
 
-def _hash_solution(
-    findings: list[Finding], canonical_order_index: dict[NodeId, int]
-) -> Sha256:
+def _hash_solution(findings: list[Finding], canonical_order_index: dict[NodeId, int]) -> Sha256:
     """Pre-serialisation hash over the canonical-order-sorted ``(sink, fact,
     witness)`` tuples (DOC §3.2 step 6). Byte-identical across runs on the same
     source for fixed ``(S_version, env_digest)`` (AC-CORE-01a foundation)."""
