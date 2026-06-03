@@ -239,6 +239,263 @@ def test_cp03a_migrations_apply_forward_and_roll_back_cleanly() -> None:
     assert final.returncode == 0, f"final downgrade base failed:\n{final.stderr}"
 
 
+# Every table that carries an RLS + FORCE policy after `upgrade head`
+# (the _STANDARD_RLS_TABLES set from migration 0002 plus the two custom
+# tables). Used by the test_cp03b catalog assertions for condition 2 (FORCE).
+_FORCED_RLS_TABLES = (
+    "memberships",
+    "projects",
+    "codebases",
+    "scm_credentials",
+    "org_policies",
+    "snapshots",
+    "proposed_specs",
+    "spec_versions",
+    "scans",
+    "attestations",
+    "findings",
+    "triage_scores",
+    "repartition_events",
+    "provenance_records",
+)
+
+
+@pytest.mark.integration
+def test_cp03b_recycled_pooled_connection_reads_zero_rows() -> None:
+    """A recycled pooled connection with no fresh SET LOCAL reads zero rows.
+
+    Test id:      TST-AC-CP-03b
+    Maps to AC:   AC-CP-03a (SDD §10 CMP-CP-03) — CLAR-DB-02 binding-conditions limb
+    Kind tag:     [INTEGRATION]
+    Inputs:       A fresh PostgreSQL 16 database at `upgrade head`; the CLAR-DB-02
+                  privilege-boundary roles (scanipy_system BYPASSRLS, scanipy_app
+                  NOBYPASSRLS) and FORCE ROW LEVEL SECURITY (migrations 0001/0002);
+                  a `projects` table seeded with rows for two orgs (A and B).
+    Outputs:      RLS-mediated SELECT visibility under (a) a bound `app.org_id`,
+                  (b) a recycled connection with the GUC reset by transaction end,
+                  (c) a session-scoped plain SET (the leak the condition forbids).
+    Pass criteria (the three CLAR-DB-02 conditions, DECISION-PART2 §5):
+        (1) SET LOCAL only — a bound `SET LOCAL app.org_id='<A>'` sees ONLY org-A
+            rows (positive, anti-vacuity: the set is non-empty); the SAME
+            connection in a NEW txn with no fresh SET LOCAL sees ZERO rows
+            (negative/leak control — proves the GUC is transaction-scoped); and a
+            plain session-scoped `SET app.org_id='<A>'` WOULD have leaked across
+            the recycled transaction (proves SET LOCAL — not SET — is mandatory).
+        (2) BYPASSRLS only on scanipy_system — `pg_roles` shows
+            rolbypassrls=true for scanipy_system and false for scanipy_app; and
+            setting `app.role='system'` on the NOBYPASSRLS scanipy_app connection
+            grants no extra visibility (no self-elevation); FORCE is asserted on
+            every RLS table via pg_class.relforcerowsecurity (negative control:
+            orgs, which is intentionally not RLS-protected, has
+            relrowsecurity=false).
+        (3) scanipy_triage NOBYPASSRLS and cannot INSERT into findings (the INV-3
+            REVOKE fence still holds).
+    Frequency:    every CI run
+    Hard gate?:   yes — Stage-A GA process gate; CLAR-DB-02 tenant-isolation backstop.
+    Notes:        RULE-9 — CMP-CP-03 RLS touches the INV-3 grant fence; this spec
+                  is part of the Security APPROVE-WITH-CONDITIONS sign-off.
+
+    Environment: requires a live PostgreSQL 16 via SCANIPY_DATABASE_URL (the CI
+    `integration-tests` job provides a `postgres:16` service, connecting as the
+    DB-owning superuser `scanipy`). When the URL is absent (local sandbox with no
+    Postgres) the test SKIPS rather than asserting a false pass.
+
+    Why `SET ROLE scanipy_app` is load-bearing: the CI connection is the DB owner
+    / superuser, which BYPASSes RLS unconditionally. Without `SET ROLE` to the
+    NOBYPASSRLS request-path role, BOTH the positive and negative legs would see
+    every row and the whole behavioural test would be vacuous. The `SET ROLE` is
+    therefore the anti-vacuity backbone of the SELECT legs.
+    """
+    database_url = os.environ.get("SCANIPY_DATABASE_URL")
+    if not database_url:
+        pytest.skip(
+            "SCANIPY_DATABASE_URL not configured — live PostgreSQL 16 integration "
+            "env gap; AC-CP-03b runs in the CI integration-tests job."
+        )
+
+    import uuid
+
+    import psycopg2  # imported lazily so collection does not require the driver
+    import psycopg2.errors  # bind the errors submodule (not auto-imported by psycopg2)
+
+    org_a = str(uuid.uuid4())
+    org_b = str(uuid.uuid4())
+
+    # Start from a known-clean state, then materialize the full schema (this test
+    # is self-contained: test_cp03a leaves the DB at `base`).
+    base = _alembic(["downgrade", "base"], database_url)
+    assert base.returncode == 0, f"pre-test downgrade failed:\n{base.stderr}"
+    up = _alembic(["upgrade", "head"], database_url)
+    assert up.returncode == 0, f"alembic upgrade head failed:\n{up.stderr}"
+
+    try:
+        # ---- Seed as the owner/superuser (RLS does not constrain seeding). ----
+        # `projects` is the minimal RLS table: org_id + name, FK to orgs only.
+        with psycopg2.connect(database_url) as seed_conn:
+            seed_conn.autocommit = True
+            with seed_conn.cursor() as cur:
+                cur.execute("INSERT INTO orgs (id, name) VALUES (%s, %s);", (org_a, "org-A"))
+                cur.execute("INSERT INTO orgs (id, name) VALUES (%s, %s);", (org_b, "org-B"))
+                cur.execute(
+                    "INSERT INTO projects (org_id, name) VALUES (%s, %s);", (org_a, "proj-A1")
+                )
+                cur.execute(
+                    "INSERT INTO projects (org_id, name) VALUES (%s, %s);", (org_a, "proj-A2")
+                )
+                cur.execute(
+                    "INSERT INTO projects (org_id, name) VALUES (%s, %s);", (org_b, "proj-B1")
+                )
+        seed_conn.close()
+
+        # ---- Condition 2: catalog assertions (FORCE + BYPASSRLS partition). ---
+        # Run as the superuser; these read pg_catalog and need no SET ROLE.
+        with psycopg2.connect(database_url) as cat_conn:
+            cat_conn.autocommit = True
+            with cat_conn.cursor() as cur:
+                # Every RLS table has BOTH relrowsecurity AND relforcerowsecurity.
+                cur.execute(
+                    "SELECT relname, relrowsecurity, relforcerowsecurity "
+                    "FROM pg_class WHERE relname = ANY(%s);",
+                    (list(_FORCED_RLS_TABLES),),
+                )
+                flags = {row[0]: (row[1], row[2]) for row in cur.fetchall()}
+                assert set(flags) == set(_FORCED_RLS_TABLES), (
+                    f"missing RLS tables in pg_class: {set(_FORCED_RLS_TABLES) - set(flags)}"
+                )
+                for table, (rls_on, force_on) in flags.items():
+                    assert rls_on is True, f"{table} missing ENABLE ROW LEVEL SECURITY"
+                    assert force_on is True, (
+                        f"{table} missing FORCE ROW LEVEL SECURITY (CLAR-DB-02 condition 2)"
+                    )
+
+                # Negative control: orgs is intentionally NOT RLS-protected. If a
+                # future migration blanket-enabled RLS, or if the query above
+                # blindly returned true, this discriminating assertion goes red.
+                cur.execute(
+                    "SELECT relrowsecurity, relforcerowsecurity "
+                    "FROM pg_class WHERE relname = 'orgs';"
+                )
+                orgs_flags = cur.fetchone()
+                assert orgs_flags is not None, "orgs table not found"
+                assert orgs_flags == (False, False), (
+                    "orgs must NOT be RLS-protected (it defines tenancy) — "
+                    "negative control for the FORCE catalog assertion"
+                )
+
+                # BYPASSRLS is on scanipy_system ONLY; the request-path role and
+                # the triage role are both NOBYPASSRLS.
+                cur.execute(
+                    "SELECT rolname, rolbypassrls FROM pg_roles WHERE rolname = ANY(%s);",
+                    (["scanipy_system", "scanipy_app", "scanipy_triage"],),
+                )
+                bypass = dict(cur.fetchall())
+                assert bypass.get("scanipy_system") is True, (
+                    "scanipy_system must carry BYPASSRLS (CLAR-DB-02 condition 2)"
+                )
+                assert bypass.get("scanipy_app") is False, (
+                    "scanipy_app must be NOBYPASSRLS (request-path role)"
+                )
+                assert bypass.get("scanipy_triage") is False, (
+                    "scanipy_triage must be NOBYPASSRLS (CLAR-DB-02 condition 3)"
+                )
+        cat_conn.close()
+
+        # ---- Condition 1: SET LOCAL discipline on a recycled connection. ------
+        # autocommit=True lets us drive explicit BEGIN/COMMIT so SET LOCAL is
+        # scoped to exactly the transaction we open. SET ROLE (session-scoped)
+        # persists across those transactions, putting us on the NOBYPASSRLS path.
+        app_conn = psycopg2.connect(database_url)
+        try:
+            app_conn.autocommit = True
+            with app_conn.cursor() as cur:
+                cur.execute("SET ROLE scanipy_app;")
+
+                def _project_org_ids() -> set[str]:
+                    cur.execute("SELECT org_id::text FROM projects;")
+                    return {row[0] for row in cur.fetchall()}
+
+                # POSITIVE leg: bound SET LOCAL app.org_id='<A>' sees ONLY org-A.
+                cur.execute("BEGIN;")
+                cur.execute("SET LOCAL app.org_id = %s;", (org_a,))
+                visible = _project_org_ids()
+                cur.execute("COMMIT;")
+                assert visible == {org_a}, (
+                    f"bound SET LOCAL app.org_id=A must see only org-A rows; saw {visible}"
+                )
+                # Anti-vacuity: org-A genuinely has rows (the SELECT is not
+                # trivially empty for some unrelated reason).
+                assert len(visible) >= 1, "positive leg saw zero rows — test is vacuous"
+
+                # NEGATIVE / leak control: SAME connection, NEW transaction, NO
+                # fresh SET LOCAL (the GUC was reset at the prior COMMIT). A
+                # recycled pooled connection that forgot to re-bind must read
+                # ZERO rows (current_setting('app.org_id', true) IS NULL → the
+                # predicate is false for every row).
+                cur.execute("BEGIN;")
+                recycled = _project_org_ids()
+                cur.execute("COMMIT;")
+                assert recycled == set(), (
+                    "recycled connection with no fresh SET LOCAL must read ZERO "
+                    f"rows (CLAR-DB-02 condition 1); leaked {recycled}"
+                )
+
+                # Self-elevation check (condition 2): setting app.role='system'
+                # on this NOBYPASSRLS connection grants NO extra visibility — the
+                # GUC is policy metadata, not a grant of the BYPASSRLS role.
+                cur.execute("BEGIN;")
+                cur.execute("SET LOCAL app.role = 'system';")
+                elevated = _project_org_ids()
+                cur.execute("COMMIT;")
+                assert elevated == set(), (
+                    "app.role='system' must NOT bypass RLS on a NOBYPASSRLS role "
+                    f"(no self-elevation, CLAR-DB-02 condition 2); leaked {elevated}"
+                )
+
+                # POSITIVE CONTROL proving SET LOCAL — not SET — is mandatory:
+                # a plain session-scoped SET persists past the transaction, so a
+                # subsequent recycled transaction WOULD leak org-A's rows. This is
+                # exactly the cross-tenant bleed the condition forbids; we
+                # demonstrate it to show the negative leg above is non-trivial.
+                cur.execute("SET app.org_id = %s;", (org_a,))  # session-scoped (forbidden in prod)
+                cur.execute("BEGIN;")
+                leaked = _project_org_ids()
+                cur.execute("COMMIT;")
+                assert leaked == {org_a}, (
+                    "a plain session-scoped SET app.org_id must persist across the "
+                    "recycled transaction (this is WHY SET LOCAL is mandatory); "
+                    f"saw {leaked}"
+                )
+                # Reset the leaked session GUC before reusing the connection.
+                cur.execute("RESET app.org_id;")
+                cur.execute("RESET ROLE;")
+        finally:
+            app_conn.close()
+
+        # ---- Condition 3: scanipy_triage cannot INSERT into findings. ---------
+        # The INV-3 REVOKE fence (migration 0001) must deny the write at the
+        # grant level — a permission error, aborting the transaction.
+        triage_conn = psycopg2.connect(database_url)
+        try:
+            triage_conn.autocommit = True
+            with triage_conn.cursor() as cur:
+                cur.execute("SET ROLE scanipy_triage;")
+                cur.execute("BEGIN;")
+                cur.execute("SET LOCAL app.org_id = %s;", (org_a,))
+                with pytest.raises(psycopg2.errors.InsufficientPrivilege):
+                    # Column list is irrelevant — the grant denial fires before
+                    # any row is constructed. INSERT ... DEFAULT VALUES would also
+                    # be denied; we use an explicit (org_id) form for clarity.
+                    cur.execute("INSERT INTO findings (org_id) VALUES (%s);", (org_a,))
+                cur.execute("ROLLBACK;")  # clear the aborted transaction
+                cur.execute("RESET ROLE;")
+        finally:
+            triage_conn.close()
+    finally:
+        # Leave the DB clean for any subsequent test in the session.
+        final = _alembic(["downgrade", "base"], database_url)
+        assert final.returncode == 0, f"final downgrade base failed:\n{final.stderr}"
+
+
 @pytest.mark.integration
 @pytest.mark.xfail(
     reason="CMP-CP-04 (auth + dashboard) not yet implemented — spec stub",
@@ -298,3 +555,71 @@ def test_cp05c_ci_runs_both_pipelines_on_canary_on_change() -> None:
     # covers the documented change surfaces, and attestor-core is wired as the required
     # check, once CMP-CP-05 is DONE.
     pytest.skip("CMP-CP-05 not implemented yet")
+
+
+@pytest.mark.integration
+def test_cp03c_scanipy_app_least_privilege_grants() -> None:
+    """scanipy_app (request-path role) is denied the two over-reaching grants.
+
+    Test id:      TST-AC-CP-03c
+    Maps to AC:   CLAR-DB-02 Security APPROVE-WITH-CONDITIONS (DECISION-PART2 §5);
+                  DOC-CMP-CP-03 §3.3 least-privilege grant surface.
+    Kind tag:     [INTEGRATION]
+    Pass criteria: bound to the request-path role scanipy_app, a connection
+                  - CANNOT SELECT from `orgs` (orgs is NOT RLS-protected, so a
+                    request-path SELECT would enumerate every tenant's org —
+                    InsufficientPrivilege), and
+                  - CANNOT UPDATE or DELETE `provenance_records` (append-only
+                    signed audit chain, CMP-FND-03 — InsufficientPrivilege),
+                  while RETAINING SELECT on provenance_records (positive control:
+                  the denials are grant-specific, not a blanket lockout).
+    Hard gate?:   yes — least-privilege tenant-isolation boundary.
+
+    Permission is checked before row access, so no seeded rows are required.
+    Requires live PostgreSQL 16 via SCANIPY_DATABASE_URL (CI integration job);
+    SKIPS with an explicit env-gap reason otherwise.
+    """
+    database_url = os.environ.get("SCANIPY_DATABASE_URL")
+    if not database_url:
+        pytest.skip(
+            "SCANIPY_DATABASE_URL not configured — live PostgreSQL 16 integration "
+            "env gap; runs in the CI integration-tests job."
+        )
+
+    import psycopg2  # imported lazily so collection does not require the driver
+    import psycopg2.errors  # bind the errors submodule (not auto-imported)
+
+    _alembic(["downgrade", "base"], database_url)
+    up = _alembic(["upgrade", "head"], database_url)
+    assert up.returncode == 0, f"alembic upgrade head failed:\n{up.stderr}"
+    try:
+        conn = psycopg2.connect(database_url)
+        try:
+            conn.autocommit = True  # each statement is its own txn (no abort state)
+
+            def _denied(sql: str) -> None:
+                with conn.cursor() as cur:
+                    cur.execute("SET ROLE scanipy_app;")
+                    try:
+                        with pytest.raises(psycopg2.errors.InsufficientPrivilege):
+                            cur.execute(sql)
+                    finally:
+                        cur.execute("RESET ROLE;")
+
+            # orgs has no RLS: a request-path SELECT would enumerate all tenants.
+            _denied("SELECT id FROM orgs;")
+            # provenance_records is append-only (signed audit chain).
+            _denied("UPDATE provenance_records SET org_id = org_id;")
+            _denied("DELETE FROM provenance_records;")
+
+            # Positive control: denials are grant-specific, not a lockout —
+            # scanipy_app RETAINS SELECT on provenance_records.
+            with conn.cursor() as cur:
+                cur.execute("SET ROLE scanipy_app;")
+                cur.execute("SELECT count(*) FROM provenance_records;")  # no raise
+                cur.fetchone()
+                cur.execute("RESET ROLE;")
+        finally:
+            conn.close()
+    finally:
+        _alembic(["downgrade", "base"], database_url)

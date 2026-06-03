@@ -671,12 +671,92 @@ def upgrade() -> None:
         """
     )
 
+    # CLAR-DB-02 privilege-boundary roles (DECISION-PART2 §5, Security
+    # APPROVE-WITH-CONDITIONS, 2026-06-03; DOC-DB §3.2). Created LAST so the
+    # scanipy_app DML grant can reference every multi-tenant table. The BYPASSRLS
+    # axis is split across two NOLOGIN roles (privilege holders assumed by a
+    # LOGIN role):
+    #
+    #   * scanipy_system — the ONLY role carrying BYPASSRLS. Reserved for
+    #     server-internal jobs (Attestor re-runs, scheduler, worker callbacks —
+    #     DOC-DB §3.2). It receives no table grants here; the internal jobs that
+    #     assume it run with their own ownership/superuser context.
+    #   * scanipy_app    — the customer-request-path role. NOBYPASSRLS (the
+    #     CREATE ROLE default), so every statement it issues is subject to RLS
+    #     AND to FORCE ROW LEVEL SECURITY (migration 0002). Condition 2: it
+    #     cannot self-elevate by setting `app.role='system'`, because that GUC is
+    #     application metadata read by the policy predicates — NOT the
+    #     BYPASSRLS-bearing scanipy_system DB role, and SET ROLE to scanipy_system
+    #     is not granted to it. Condition 3: its DML is granted WITHOUT GRANT
+    #     OPTION and WITHOUT ownership, so it cannot widen its own grants or ALTER
+    #     the policies / drop the FORCE flag (mirrors the scanipy_triage fence).
+    #
+    # Both roles are created idempotently (roles are cluster-global and may
+    # outlive a failed migration run), mirroring the scanipy_triage pattern.
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            CREATE ROLE scanipy_system NOLOGIN BYPASSRLS;
+        EXCEPTION WHEN duplicate_object THEN
+            NULL;
+        END
+        $$;
+        DO $$
+        BEGIN
+            CREATE ROLE scanipy_app NOLOGIN;
+        EXCEPTION WHEN duplicate_object THEN
+            NULL;
+        END
+        $$;
+        """
+    )
+    # scanipy_app gets request-path DML on every multi-tenant table; RLS + FORCE
+    # confine each statement to the bound `app.org_id` tenant. No GRANT OPTION
+    # (cannot re-grant) and no ownership (cannot ALTER policies / drop FORCE).
+    # Deliberately NOT granted (least privilege, DOC-CMP-CP-03 §3.3):
+    #   * SELECT on `orgs` — orgs is NOT RLS-protected, so a request-path GRANT
+    #     would enable cross-tenant enumeration of every org id/name. The request
+    #     path reaches its own org via the RLS-protected memberships/projects
+    #     tables; FK enforcement (org_id -> orgs(id)) needs no parent SELECT (RI
+    #     triggers run with elevated privilege).
+    #   * UPDATE/DELETE on `provenance_records` — append-only signed audit chain
+    #     (CMP-FND-03); the grant-level omission is the belt alongside the
+    #     RESTRICTIVE RLS suspenders, so an RLS refactor cannot silently open
+    #     audit-chain tampering on a request-path connection.
+    op.execute(
+        """
+        GRANT USAGE ON SCHEMA public TO scanipy_app;
+        GRANT SELECT, INSERT, UPDATE, DELETE ON
+            memberships, projects, codebases, scm_credentials, org_policies,
+            snapshots, proposed_specs, spec_versions, scans, attestations,
+            findings, triage_scores, repartition_events
+            TO scanipy_app;
+        GRANT SELECT, INSERT ON provenance_records TO scanipy_app;
+        """
+    )
+
 
 def downgrade() -> None:
     # Reverse topological order. DROP TABLE ... CASCADE is intentionally NOT
     # used so that an orphaned dependency surfaces as an error (the AC-CP-03a
     # falsifier requires a clean reversal, not a forced one). Tables are dropped
     # children-first so every FK is already gone by the time its parent drops.
+
+    # Reverse the CLAR-DB-02 privilege-boundary roles FIRST, while every table
+    # still exists: revoke every grant scanipy_app holds, then drop both roles so
+    # the downgrade leaves no residual catalog object (AC-CP-03a "no residuals").
+    # A role cannot be dropped while any grant on a surviving object references
+    # it; doing this before the DROP TABLEs keeps the reversal clean regardless
+    # of drop order. scanipy_system holds no grants, so its drop is unconditional.
+    op.execute(
+        """
+        REVOKE ALL ON ALL TABLES IN SCHEMA public FROM scanipy_app;
+        REVOKE USAGE ON SCHEMA public FROM scanipy_app;
+        DROP ROLE IF EXISTS scanipy_app;
+        DROP ROLE IF EXISTS scanipy_system;
+        """
+    )
     op.execute("DROP TABLE repartition_events;")
     # Reverse the INV-3 grant fence: revoke every privilege the role holds, then
     # drop the role so the downgrade leaves no residual catalog object. Revokes
