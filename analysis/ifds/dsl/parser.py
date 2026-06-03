@@ -267,14 +267,26 @@ def revalidate_spec(spec: Spec) -> None:
     out-of-grammar escape-hatch content past the registry's shape-only
     ``closure_check``. That is a one-sided INV-4 false negative.
 
-    ``revalidate_spec`` closes that gap by re-applying the SAME internal checks
-    ``parse_spec`` uses (not a parallel weaker check) over each already-frozen
-    clause:
+    ``revalidate_spec`` closes that gap by re-applying the parser's authoritative
+    *pattern-content* escape-hatch gate — :func:`_check_escape_hatches`
+    (E-DSL-001..004), the very function ``parse_spec`` calls — plus the
+    Propagate-endpoint grammar (E-DSL-008), over each already-frozen clause:
 
     - :class:`Source` / :class:`Sink` / :class:`Sanitize` pattern strings run
       through :func:`_check_escape_hatches` (E-DSL-001..004);
     - :class:`Propagate` endpoints re-validate against the existing
       ``_ARG_REF`` / ``_FIELD_REF`` / ``_RETURN_REF`` grammar (E-DSL-008).
+
+    The parser's *line-level composition* checks (``_check_composition_keywords``,
+    E-DSL-005..007: ``then`` / ``if``-``guard`` / ``fixpoint``) are intentionally
+    **not** re-run here. Those are source-text combinators, and a flat frozen
+    :class:`Spec` (``clauses`` is a tuple of leaf Source/Sink/Sanitize/Propagate
+    with no field that can encode a combinator) structurally cannot carry one; a
+    composition keyword surviving *inside* a pattern string is an opaque
+    fact-selector token (consumed only as such by :mod:`analysis.ifds.dsl.flow`,
+    composed solely by the distributive ``union_flow``), never a combinator, so
+    it cannot make the spec non-distributive. The hand-built-Spec INV-4 threat is
+    therefore fully captured by the 001-004 + 008 gate (CLAR-DET-02 scoping).
 
     Raises the verbatim :class:`DSLError` (``E-DSL-*``) on the first hit;
     rejection is total and fail-fast, exactly as on the parse path. A spec whose
