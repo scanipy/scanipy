@@ -712,18 +712,27 @@ def upgrade() -> None:
         """
     )
     # scanipy_app gets request-path DML on every multi-tenant table; RLS + FORCE
-    # confine each statement to the bound `app.org_id` tenant. orgs receives
-    # SELECT only (it defines tenancy and is not RLS-protected). No GRANT OPTION
+    # confine each statement to the bound `app.org_id` tenant. No GRANT OPTION
     # (cannot re-grant) and no ownership (cannot ALTER policies / drop FORCE).
+    # Deliberately NOT granted (least privilege, DOC-CMP-CP-03 §3.3):
+    #   * SELECT on `orgs` — orgs is NOT RLS-protected, so a request-path GRANT
+    #     would enable cross-tenant enumeration of every org id/name. The request
+    #     path reaches its own org via the RLS-protected memberships/projects
+    #     tables; FK enforcement (org_id -> orgs(id)) needs no parent SELECT (RI
+    #     triggers run with elevated privilege).
+    #   * UPDATE/DELETE on `provenance_records` — append-only signed audit chain
+    #     (CMP-FND-03); the grant-level omission is the belt alongside the
+    #     RESTRICTIVE RLS suspenders, so an RLS refactor cannot silently open
+    #     audit-chain tampering on a request-path connection.
     op.execute(
         """
         GRANT USAGE ON SCHEMA public TO scanipy_app;
-        GRANT SELECT ON orgs TO scanipy_app;
         GRANT SELECT, INSERT, UPDATE, DELETE ON
             memberships, projects, codebases, scm_credentials, org_policies,
             snapshots, proposed_specs, spec_versions, scans, attestations,
-            findings, provenance_records, triage_scores, repartition_events
+            findings, triage_scores, repartition_events
             TO scanipy_app;
+        GRANT SELECT, INSERT ON provenance_records TO scanipy_app;
         """
     )
 
