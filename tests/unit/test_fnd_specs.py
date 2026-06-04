@@ -956,6 +956,57 @@ def test_fnd_01_normalize_split_emits_two_single_run_files() -> None:
         assert doc["runs"][0]["properties"]["scanipy.partition"] == run.partition
 
 
+@pytest.mark.unit
+def test_fnd_01_normalize_split_enforces_canonical_order(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """NEGATIVE CONTROL: the split emitter runs the same post-serialisation
+    canonical-order check as ``normalize`` (review finding on PR #284): an
+    emitter whose result sort is broken must raise ``CanonicalEmissionFailure``
+    from ``normalize_split`` — never silently emit an out-of-order split file.
+    Two same-partition findings force a real ordering decision; the sort is
+    monkeypatched to be reversed (the broken-impl mutant).
+    """
+    import uuid as _uuid
+
+    from analysis.sarif import canonical_emit
+    from analysis.sarif.canonical_emit import (
+        CanonicalEmissionFailure,
+        normalize_split,
+    )
+    from tests.fnd01_fakes import make_finding
+
+    findings = frozenset(
+        {
+            make_finding(origin="deterministic-core", engine="ifds"),
+            make_finding(
+                origin="deterministic-core",
+                engine="ifds",
+                rule_id="scanipy/injection/zz",
+            ),
+        }
+    )
+
+    real_sorted_results = canonical_emit._sorted_results
+
+    def _reversed_results(*args: object, **kwargs: object) -> list[dict[str, object]]:
+        return list(reversed(real_sorted_results(*args, **kwargs)))  # type: ignore[arg-type]
+
+    monkeypatch.setattr(canonical_emit, "_sorted_results", _reversed_results)
+    with pytest.raises(CanonicalEmissionFailure):
+        normalize_split(
+            findings,
+            scan_id=_uuid.uuid4(),
+            snapshot_id=_uuid.uuid4(),
+            codebase_id=_uuid.uuid4(),
+            commit_sha="2" * 40,
+            S_version="1.4.0",
+            env_digest="sha256:" + ("7" * 64),
+            precondition_status="closed-world",
+            llm_triage_flag=False,
+        )
+
+
 @pytest.mark.invariant
 def test_inv_2_fnd_02_nonnull_sversion_envdigest_at_schema_level() -> None:
     """INV-2 at the store: S_version + env_digest NOT NULL; env_digest format CHECK.

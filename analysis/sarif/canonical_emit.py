@@ -836,6 +836,10 @@ def normalize_split(
             "runs": [run_obj],
         }
         file_bytes = _canonical_serialize(file_obj) + b"\n"
+        # Post-serialisation canonical-order check — the same defensive layer
+        # `normalize` applies (its docstring contract: every canonical /
+        # validation requirement applies independently to each split file).
+        _assert_canonical_order(file_bytes)
         run_errors = _validate_run_shape(run_obj, 0, expected)
         if run_errors:
             raise SARIFSchemaViolation("; ".join(run_errors))
