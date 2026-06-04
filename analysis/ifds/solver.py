@@ -598,6 +598,19 @@ def incremental_solve(
     # Preserve prior findings of procedures OUTSIDE the recomputed closure: they
     # were not re-tabulated, so their prior findings stand. In-closure prior
     # findings are dropped — the fresh read-out replaces them.
+    # INV-2 version-alignment guard (review finding, PR #287): a preserved
+    # finding is re-emitted into THIS run's result, so its pinned parameters
+    # must match this run's (S_version, env_digest) — silently merging findings
+    # from a different S or Env would thread stale provenance (INV-2).
+    for f in prior_findings:
+        if f.S_version != S_version or bytes(f.env_digest) != bytes(env_digest):
+            raise ValueError(
+                "INV-2: prior_findings carry (S_version, env_digest) "
+                f"({f.S_version!r}, {bytes(f.env_digest).hex()[:12]}…) that do not "
+                f"match this run's ({S_version!r}, {bytes(env_digest).hex()[:12]}…); "
+                "an incremental solve may only merge prior findings produced "
+                "under the identical pinned parameters"
+            )
     preserved = [f for f in prior_findings if sg.proc_of_node.get(f.sink) not in closure]
     findings = [*fresh, *preserved]
 
