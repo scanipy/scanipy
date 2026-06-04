@@ -5,6 +5,9 @@ registered stub (`xfail(strict=False)` + `pytest.skip`) that flips red→green w
 the implementation lands. Mirrors `tests/unit/test_dsl_proofs.py`.
 
 Scope of this file (disjoint from the unit file):
+  - TST-AC-CP-01b   [INTEGRATION] per-request RLS session binding (db/session.py
+                     acquire_for_request): a recycled pooled connection re-bound for
+                     a second org sees ONLY that org's rows (no stale-binding leak)
   - TST-AC-CP-02a   [INTEGRATION] credentials unreadable at rest without managed key;
                      rotation supported (RULE-9 Security Analyst review applies)
   - TST-AC-CP-03a   [INTEGRATION] migrations apply forward and roll back cleanly
@@ -623,3 +626,229 @@ def test_cp03c_scanipy_app_least_privilege_grants() -> None:
             conn.close()
     finally:
         _alembic(["downgrade", "base"], database_url)
+
+
+@pytest.mark.integration
+def test_cp01b_acquire_for_request_rebinds_recycled_pooled_connection() -> None:
+    """``acquire_for_request`` re-binds a recycled pooled connection per request.
+
+    Test id:      TST-AC-CP-01b
+    Maps to AC:   AC-CP-01a (SDD §10 CMP-CP-01) — CLAR-DEPLOY-16 layer-2 limb; the
+                  production session-binding seam deferred by migration 0002
+                  (db/migrations/versions/20260524_0002_rls_policies.py ≈line 29:
+                  "The application-side setter contract (db/session.py) is a
+                  CMP-CP-01 follow-up"). Residual follow-up to (closed) issue #34.
+    Kind tag:     [INTEGRATION]
+    Inputs:       A fresh PostgreSQL 16 database at `upgrade head`; the CLAR-DB-02
+                  request-path role scanipy_app (NOBYPASSRLS) + FORCE ROW LEVEL
+                  SECURITY (migrations 0001/0002); a `projects` table seeded with
+                  rows for two orgs (A and B); the production
+                  ``db.session.acquire_for_request`` context manager driven over
+                  the SAME pooled psycopg2 connection for two sequential requests.
+    Outputs:      RLS-mediated SELECT visibility seen by each request handler.
+    Pass criteria:
+        (1) POSITIVE (request 1, org A): inside
+            ``acquire_for_request(conn, org_id=A, ...)`` the handler sees ONLY
+            org-A's rows, and the set is NON-EMPTY (anti-vacuity — org A genuinely
+            has rows, so RLS is permitting the right rows, not trivially empty).
+        (2) RECYCLED ISOLATION (request 2, org B, SAME connection): after request 1
+            exits (COMMIT discards the SET LOCAL binding), re-entering
+            ``acquire_for_request(conn, org_id=B, ...)`` on the SAME pooled
+            connection sees ONLY org-B's rows — NEVER any org-A row. This is the
+            recycled-connection isolation guarantee through the new seam.
+        (3) STALE-BINDING DETECTION (negative control, MUTATION-VERIFIED): a
+            *broken* seam that binds session-wide (plain ``SET`` / ``set_config(...,
+            false)``) instead of ``SET LOCAL``, OR that skips re-binding on request
+            2, leaks org-A's rows into request 2. The test drives that broken seam
+            explicitly and asserts it leaks — proving the assertions in (2) are
+            non-vacuous and would catch a regression of the real seam to the bug.
+    Frequency:    every CI run
+    Hard gate?:   yes — Stage-A GA process gate; CLAR-DEPLOY-16 layer-2 tenant
+                  isolation through the request-path binding seam.
+    Notes:        RULE-9-adjacent — this seam is the application half of the
+                  tenant-isolation backstop; mirrors test_cp03b's SET LOCAL
+                  discipline and SET ROLE scanipy_app anti-vacuity backbone.
+
+    Environment: requires a live PostgreSQL 16 via SCANIPY_DATABASE_URL (the CI
+    `integration-tests` job provides a `postgres:16` service, connecting as the
+    DB-owning superuser `scanipy`). When the URL is absent (local sandbox with no
+    Postgres) the test SKIPS rather than asserting a false pass.
+
+    Why `SET ROLE scanipy_app` is load-bearing (identical to test_cp03b): the CI
+    connection is the DB owner/superuser, which BYPASSes RLS unconditionally.
+    Without `SET ROLE` to the NOBYPASSRLS request-path role, every leg would see
+    every row and the behavioural test would be vacuous. The `SET ROLE` is the
+    anti-vacuity backbone of every SELECT leg below.
+    """
+    database_url = os.environ.get("SCANIPY_DATABASE_URL")
+    if not database_url:
+        pytest.skip(
+            "SCANIPY_DATABASE_URL not configured — live PostgreSQL 16 integration "
+            "env gap; AC-CP-01b runs in the CI integration-tests job."
+        )
+
+    import uuid
+
+    import psycopg2  # imported lazily so collection does not require the driver
+    from db.session import SessionBindingError, acquire_for_request
+
+    org_a = str(uuid.uuid4())
+    org_b = str(uuid.uuid4())
+
+    base = _alembic(["downgrade", "base"], database_url)
+    assert base.returncode == 0, f"pre-test downgrade failed:\n{base.stderr}"
+    up = _alembic(["upgrade", "head"], database_url)
+    assert up.returncode == 0, f"alembic upgrade head failed:\n{up.stderr}"
+
+    try:
+        # ---- Seed as the owner/superuser (RLS does not constrain seeding). ----
+        with psycopg2.connect(database_url) as seed_conn:
+            seed_conn.autocommit = True
+            with seed_conn.cursor() as cur:
+                cur.execute("INSERT INTO orgs (id, name) VALUES (%s, %s);", (org_a, "org-A"))
+                cur.execute("INSERT INTO orgs (id, name) VALUES (%s, %s);", (org_b, "org-B"))
+                cur.execute(
+                    "INSERT INTO projects (org_id, name) VALUES (%s, %s);", (org_a, "proj-A1")
+                )
+                cur.execute(
+                    "INSERT INTO projects (org_id, name) VALUES (%s, %s);", (org_a, "proj-A2")
+                )
+                cur.execute(
+                    "INSERT INTO projects (org_id, name) VALUES (%s, %s);", (org_b, "proj-B1")
+                )
+        seed_conn.close()
+
+        def _visible_org_ids(conn: "psycopg2.extensions.connection") -> set[str]:
+            """org_ids visible to the CURRENTLY bound session on ``conn``.
+
+            Reads OUTSIDE an ``acquire_for_request`` context (the between-leg /
+            recycled-connection legs) open their own implicit transaction; we
+            COMMIT it afterwards so no read transaction lingers to interfere with
+            the next ``acquire_for_request`` and so a session-scoped GUC (the
+            negative-control leak) is observed under the same transaction
+            semantics the real seam uses.
+            """
+            with conn.cursor() as cur:
+                cur.execute("SELECT org_id::text FROM projects;")
+                rows = {row[0] for row in cur.fetchall()}
+            conn.commit()
+            return rows
+
+        # The "pooled connection": a SINGLE long-lived connection reused across
+        # the two sequential requests, exactly as a connection pool would hand
+        # the same physical connection back out. It is NON-autocommit — the
+        # production request-path convention the seam requires (acquire_for_request
+        # refuses an autocommit connection because SET LOCAL needs an enclosing
+        # transaction). SET ROLE is committed once so it is session-scoped and
+        # persists across the per-request transactions, keeping us NOBYPASSRLS.
+        pooled = psycopg2.connect(database_url)
+        assert pooled.autocommit is False, "test premise: pooled conn is non-autocommit"
+        try:
+            with pooled.cursor() as role_cur:
+                role_cur.execute("SET ROLE scanipy_app;")
+            pooled.commit()  # persist SET ROLE at session scope across requests
+
+            # ---- Request 1 (org A): the REAL seam binds, handler reads. --------
+            with acquire_for_request(pooled, org_id=org_a, user_id="scanner", role="scanner"):
+                req1 = _visible_org_ids(pooled)
+            assert req1 == {org_a}, (
+                "request 1 (org A) must see ONLY org-A rows through "
+                f"acquire_for_request; saw {req1}"
+            )
+            # Anti-vacuity: org A genuinely has rows — the SELECT is permitted the
+            # right rows, not trivially empty for some unrelated reason.
+            assert len(req1) >= 1, "request 1 saw zero rows — test would be vacuous"
+
+            # ---- DISCRIMINATING LEG: SET LOCAL was discarded at COMMIT. ---------
+            # After request 1's acquire_for_request context EXITS (its COMMIT ran),
+            # a query on the SAME pooled connection OUTSIDE any acquire context
+            # must see ZERO rows: SET LOCAL app.org_id is transaction-scoped, so it
+            # was discarded when the request's transaction committed. This is the
+            # leg that distinguishes SET LOCAL (is_local=true) from a session-wide
+            # SET (is_local=false): a session-wide bind would STILL expose org-A's
+            # rows here. A recycled connection that does not re-bind is therefore
+            # confined to zero rows, never a stale tenant's data.
+            between = _visible_org_ids(pooled)
+            assert between == set(), (
+                "after acquire_for_request exits, the recycled connection must see "
+                "ZERO rows (SET LOCAL app.org_id discarded at COMMIT); a non-empty "
+                "result means the binding leaked past the transaction (used SET, "
+                f"not SET LOCAL). saw {between}"
+            )
+
+            # ---- Request 2 (org B), SAME pooled connection, REAL seam. ---------
+            # The request-1 COMMIT discarded SET LOCAL app.org_id; the seam
+            # re-binds to org B. Recycled-connection isolation: ONLY org-B rows.
+            with acquire_for_request(pooled, org_id=org_b, user_id="scanner", role="scanner"):
+                req2 = _visible_org_ids(pooled)
+            assert req2 == {org_b}, (
+                "request 2 (org B) on the recycled pooled connection must see ONLY "
+                f"org-B rows; a stale org-A binding would leak. saw {req2}"
+            )
+            assert org_a not in req2, (
+                "STALE-BINDING LEAK: request 2 saw an org-A row — the seam did not "
+                "transaction-scope app.org_id (used SET instead of SET LOCAL, or "
+                "failed to re-bind)"
+            )
+
+            # ---- (3) NEGATIVE CONTROL — MUTATION-VERIFIED -----------------------
+            # Reproduce the *broken* seam in-test: bind session-wide
+            # (set_config(..., false) ≡ plain SET, the is_local=false bug) and then
+            # SKIP re-binding on the next request. If acquire_for_request had this
+            # bug, the between-leg / request-2 assertions above would have caught
+            # the leak. Driving the bug here proves the leak is real, so those
+            # assertions are non-vacuous and would catch a regression of the seam.
+            #
+            # Broken request 1 (org A): session-wide SET, then "return to pool".
+            # is_local=false → session-scoped, SURVIVES COMMIT (the bug). We commit
+            # via the connection (non-autocommit mode) — no raw SQL BEGIN/COMMIT.
+            with pooled.cursor() as bad_cur:
+                bad_cur.execute("SELECT set_config('app.org_id', %s, false);", (org_a,))
+            pooled.commit()
+            # Broken request 2 (org B): the buggy pool handler FORGETS to re-bind
+            # (the other half of the bug). Because the prior SET was session-wide,
+            # the stale org-A binding is still live → org-A rows leak into the
+            # would-be org-B request — exactly the cross-tenant bleed the real seam
+            # prevents by using SET LOCAL (is_local=true) inside the transaction.
+            leaked = _visible_org_ids(pooled)
+            assert leaked == {org_a}, (
+                "negative control is not exercising the leak it must catch: a "
+                "session-wide SET with no re-bind should still expose org-A rows; "
+                f"saw {leaked}"
+            )
+            assert org_b not in leaked, (
+                "negative control sanity: the broken seam never bound org B, so it "
+                f"must not see org-B rows either; saw {leaked}"
+            )
+
+            # Reset the leaked session GUC so the connection is left inert before
+            # the autocommit-refusal leg.
+            with pooled.cursor() as cur:
+                cur.execute("RESET app.org_id;")
+            pooled.commit()
+
+            # ---- (4) Autocommit is REFUSED (fail-closed) ------------------------
+            # The seam needs an enclosing transaction for SET LOCAL; an autocommit
+            # connection has none, so binding would leak (verified above with the
+            # is_local=false mutant under autocommit). acquire_for_request must
+            # refuse rather than bind into that hole.
+            ac_conn = psycopg2.connect(database_url)
+            ac_conn.autocommit = True
+            try:
+                with pytest.raises(SessionBindingError):
+                    with acquire_for_request(
+                        ac_conn, org_id=org_a, user_id="scanner", role="scanner"
+                    ):
+                        pass  # pragma: no cover — must not be reached
+            finally:
+                ac_conn.close()
+            # Reset the session role before the connection is returned/closed.
+            with pooled.cursor() as cur:
+                cur.execute("RESET ROLE;")
+            pooled.commit()
+        finally:
+            pooled.close()
+    finally:
+        # Leave the DB clean for any subsequent test in the session.
+        final = _alembic(["downgrade", "base"], database_url)
+        assert final.returncode == 0, f"final downgrade base failed:\n{final.stderr}"
