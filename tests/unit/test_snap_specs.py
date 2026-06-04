@@ -490,10 +490,6 @@ def test_snap_02_full_reparse_preserves_no_parent_ids() -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(
-    reason="CMP-SNAP-05 (Snapshot worker + env pinning) not yet implemented",
-    strict=False,
-)
 def test_snap_05a_argv_allowlist_rejects_non_sanctioned_flag() -> None:
     """The argument allowlist rejects any flag not on the sanctioned list.
 
@@ -511,19 +507,73 @@ def test_snap_05a_argv_allowlist_rejects_non_sanctioned_flag() -> None:
                     accepted (positive control).
     Frequency:      every CI run
     Hard gate?:     yes — security-relevant component gate for CMP-SNAP-05.
+
+    Falsifier discipline (per task brief):
+    * Positive control (anti-vacuity): a *sanctioned* flag passes the allowlist
+      gate — it does NOT raise; the rejection path is real and not blanket-deny.
+      (We monkeypatch the spawn so no real binary is needed; if the gate were a
+      blanket reject, this branch would raise and fail the test.)
+    * Negative control (MUTATION-VERIFIED): with a permissive allowlist mutation
+      (``_enforce_allowlist`` made a no-op / the ``arg.startswith("-") and ... not
+      in allowlist`` guard inverted to ``in allowlist``), the
+      ``pytest.raises(ArgvAllowlistViolation)`` block below stops raising and the
+      test FAILS. Empirically confirmed — see worker StructuredOutput.
     """
-    # TODO: import secure_run + ArgvAllowlistViolation from workers.snapshot
-    #       secure_subprocess when CMP-SNAP-05 is DONE.
-    # with pytest.raises(ArgvAllowlistViolation):
-    #     secure_run("joern", argv=["--evil-flag"], timeout_s=1, env={}, cwd="/tmp")
-    pytest.skip("CMP-SNAP-05 not implemented yet")
+    from tools.worker.secure_subprocess import (
+        ArgvAllowlistViolation,
+        secure_run,
+    )
+
+    # --- NEGATIVE: a non-sanctioned flag is rejected fail-closed, no spawn. ---
+    # joern has no "--evil-flag"; the allowlist gate must raise BEFORE any binary
+    # is resolved (the pinned path does not exist in the test env, so a spawn
+    # would raise FileNotFoundError, not ArgvAllowlistViolation — the precise
+    # exception type proves the gate fired first).
+    with pytest.raises(ArgvAllowlistViolation):
+        secure_run("joern", argv=["--evil-flag"], timeout_s=1, env={}, cwd="/tmp")
+
+    # Cross-tool: a flag sanctioned for one tool is still rejected for another
+    # (per-tool allowlists are not shared). "--threads" is a codeql flag, not git.
+    with pytest.raises(ArgvAllowlistViolation):
+        secure_run("git", argv=["--threads", "4"], timeout_s=1, env={}, cwd="/tmp")
+
+    # --- POSITIVE control (anti-vacuity): a sanctioned flag passes the gate. ---
+    # Patch the actual spawn so the test stays hermetic (no joern binary on the
+    # box). If the allowlist were a blanket-deny, "--language" would raise here
+    # and the test would fail — so this branch proves the gate accepts sanctioned
+    # flags rather than rejecting everything.
+    import subprocess
+
+    import tools.worker.secure_subprocess as ss
+
+    spawned: dict[str, object] = {}
+
+    def _fake_run(cmd: list[str], **kwargs: object) -> subprocess.CompletedProcess[bytes]:
+        spawned["cmd"] = cmd
+        spawned["kwargs"] = kwargs
+        return subprocess.CompletedProcess(cmd, 0, b"", b"")
+
+    orig = ss.subprocess.run
+    ss.subprocess.run = _fake_run  # type: ignore[assignment]
+    try:
+        result = secure_run(
+            "joern",
+            argv=["--language", "java", "--cpg-only"],
+            timeout_s=1,
+            env={"PATH": "/opt/joern/bin"},
+            cwd="/tmp",
+        )
+    finally:
+        ss.subprocess.run = orig  # type: ignore[assignment]
+
+    assert result.returncode == 0  # the sanctioned call reached (faked) spawn
+    # shell=False is a hard invariant of secure_run (DOC §3.3) — never shell=True.
+    assert spawned["kwargs"]["shell"] is False  # type: ignore[index]
+    # The pinned in-image binary path is used, NOT a bare "joern" from host PATH.
+    assert spawned["cmd"][0] == "/opt/joern/bin/joern"  # type: ignore[index]
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(
-    reason="CMP-SNAP-05 (Snapshot worker + env pinning) not yet implemented",
-    strict=False,
-)
 def test_snap_05b_image_digest_is_authoritative_env_digest() -> None:
     """Container image digest is the authoritative env_digest; tool change moves it.
 
@@ -542,13 +592,69 @@ def test_snap_05b_image_digest_is_authoritative_env_digest() -> None:
                     `SCANIPY_ENV_DIGEST` at boot refuses to start (EnvDigestMissing).
     Frequency:      pre-release
     Hard gate?:     yes — INV-2 origin gate for CMP-SNAP-05.
+
+    Build-ahead note (per task brief): SNAP-05 Depends-On CMP-DEPLOY-02, whose
+    real two-image ECR rebuild + digest diff runs in CI against built artifacts
+    (DOC §9) and ``workers/pins.json`` digests are all-zero PLACEHOLDERS (the AWS
+    team fills them). So the WORKER LOGIC half is verified hermetically here: the
+    worker resolves ``env_digest`` verbatim from the injected ``SCANIPY_ENV_DIGEST``
+    (the running image digest), and a missing/malformed digest is fail-closed.
+    The "two-tool-bump → different digest" half stays an image-build assertion on
+    the substrate track; we model it with two distinct fixture digests to prove
+    the worker reads the digest VERBATIM (so a different image really does yield a
+    different bound env_digest — the worker never collapses or defaults them).
+
+    Falsifier discipline (per task brief):
+    * Positive control (anti-vacuity): the worker binds the injected digest
+      VERBATIM and two distinct fixture digests resolve to two distinct bound
+      values — the worker neither hard-codes nor normalises them.
+    * Negative control (MUTATION-VERIFIED): with a default-digest mutation
+      (``resolve_env_digest`` returns a constant / falls back to a default when
+      the var is missing, instead of raising), the missing-digest
+      ``pytest.raises(EnvDigestMissing)`` block stops raising and the test FAILS.
+      Empirically confirmed against that mutation — see worker StructuredOutput.
     """
-    # TODO: import the worker bootstrap / digest resolver from workers.snapshot
-    #       when CMP-SNAP-05 is DONE. The two-image build comparison runs in CI
-    #       against the built ECR artifact (DOC-CMP-SNAP-05 §9).
-    # assert resolve_env_digest() == running_image_digest()
-    # assert build_digest(joern="vA") != build_digest(joern="vB")
-    pytest.skip("CMP-SNAP-05 not implemented yet")
+    from services.snapshot.worker import (
+        ENV_DIGEST_VAR,
+        EnvDigestMissing,
+        boot,
+        resolve_env_digest,
+    )
+
+    # --- POSITIVE: the worker binds the injected digest VERBATIM (INV-2). ---
+    # Hermetic fixture digest injected via the env mapping (no process mutation).
+    fixture_digest = "sha256:" + "ab" * 32  # a valid sha256 image digest
+    bound = resolve_env_digest({ENV_DIGEST_VAR: fixture_digest})
+    assert bound == fixture_digest  # equals the running image digest verbatim
+    # boot() is the entrypoint gate; it returns the same bound digest.
+    assert boot({ENV_DIGEST_VAR: fixture_digest}) == fixture_digest
+
+    # Two distinct images (different bundled tool pin -> different image digest)
+    # resolve to two DISTINCT bound env_digests: the worker reads the digest
+    # verbatim, so a digest change really does move env_digest (AC-SNAP-05b). If
+    # the worker hard-coded or defaulted the digest, these would be equal.
+    digest_baseline = "sha256:" + "11" * 32
+    digest_after_tool_bump = "sha256:" + "22" * 32
+    assert resolve_env_digest({ENV_DIGEST_VAR: digest_baseline}) == digest_baseline
+    assert resolve_env_digest({ENV_DIGEST_VAR: digest_after_tool_bump}) == digest_after_tool_bump
+    assert resolve_env_digest({ENV_DIGEST_VAR: digest_baseline}) != resolve_env_digest(
+        {ENV_DIGEST_VAR: digest_after_tool_bump}
+    )
+
+    # --- NEGATIVE: a MISSING digest at boot refuses to start (fail-closed). ---
+    # This is the mutation-killing assertion: a default-digest fallback would
+    # return a value here instead of raising.
+    with pytest.raises(EnvDigestMissing):
+        resolve_env_digest({})  # SCANIPY_ENV_DIGEST absent
+    with pytest.raises(EnvDigestMissing):
+        boot({ENV_DIGEST_VAR: ""})  # present-but-empty is equally fail-closed
+
+    # --- NEGATIVE: a MALFORMED digest (not sha256:<64-hex>) is also refused. ---
+    # An unpinned/placeholder-shaped value must never be accepted as env_digest.
+    with pytest.raises(EnvDigestMissing):
+        resolve_env_digest({ENV_DIGEST_VAR: "not-a-digest"})
+    with pytest.raises(EnvDigestMissing):
+        resolve_env_digest({ENV_DIGEST_VAR: "sha256:" + "zz" * 32})  # non-hex
 
 
 @pytest.mark.invariant
