@@ -91,6 +91,14 @@ on every PR), or ratify nightly+release as satisfying "continuously enforced" (a
 | CORP-17 | REFAC corpus topology-diversity bar for v1.0.0 | _____ | _____ | _____ |
 | CORP-19 | Vuln-corpus scale-up (currently DEFERRED — see Fork) | _____ | _____ | _____ |
 
+### F. New since 2026-06-04 (Wave-3 filings)
+
+| CLAR | Question | Decision | Owner | Date |
+|---|---|---|---|---|
+| DET-04 | Source/sink inventories for ssrf (java+py) + deserialization/python are absent from every DOC — supply the curated inventories, or descope those (class,language) pairs from Stage A | _____ | _____ | _____ |
+| DEPLOY-19 | Pin `fastapi` (version) + schedule the CP-01 request-lifecycle adapter follow-up (the framework-agnostic seam is merged, #286) — RULE-8: CTO approval needed before the dependent ORCH-01 integration | _____ | _____ | _____ |
+| PROC-01 | *(RESOLVED 2026-06-04 — recorded for visibility)* Build-ahead regime ratified by the project owner: hermetic-subset prep PRs sanctioned project-wide; component DONE stays RULE-2+RULE-3 gated | RESOLVED | Project owner | 2026-06-04 |
+
 *(CLAR-PARAM-02 π₀ is Phase-8 customer-enablement, not an MVP blocker — listed for completeness only.)*
 
 ---
