@@ -7,7 +7,7 @@ tool_versions:
 known_limitations: |
   v0.1.0 call-graph + PDG come from pipeline/extract_ground_truth.mjs, a
   documented intraprocedural resolver (hand-verifiable on these small programs),
-  NOT yet Jelly 1.4 / tsc (CLAR-CORP-12). Higher-order indirection (a returned
+  NOT yet Jelly 1.4 / tsc (CLAR-CORP-20). Higher-order indirection (a returned
   function bound to a local, then called) and TS type-informed dispatch are
   conservatively tagged `dynamic` and EXCLUDED from gate precision/recall.
   Sites at eval / new Function / computed member access (obj[name]()) are
