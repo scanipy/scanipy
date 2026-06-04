@@ -18,6 +18,7 @@ matching CMP-CORE-* lands. Marker = execution/frequency class only (the
 """
 
 import itertools
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -37,6 +38,9 @@ from analysis.ordering import (
     to_provenance_fields,
     to_sarif_properties,
 )
+
+if TYPE_CHECKING:
+    from analysis.ifds.solver import Finding
 
 # Fixed run parameters for the CMP-CORE-01 fixture-scale tests (INV-2).
 _S_VERSION = "1.0.0"
@@ -316,6 +320,61 @@ def _two_finding_cpg() -> tuple[CPG, dict[str, ProcId]]:
         "other": ProcId(int(other_entry)),
     }
     return cpg, procs
+
+
+# ---------------------------------------------------------------------------
+# CMP-CORE-02 fingerprint fixtures (a real Finding + its CPG, via the solver)
+# ---------------------------------------------------------------------------
+
+
+def _fingerprint_fixture() -> tuple[CPG, "Finding"]:
+    """An asymmetric two-proc taint CPG + the real Finding the solver emits over
+    it. 2-WL distinguishes every node, so the slice canonicalises STRONG.
+
+    Built through the shipped CMP-CORE-01 solver (typed interface, not a fake
+    witness) so ``finding.witness`` is the genuine connected source -> sink path
+    CMP-CORE-02 backward-slices along.
+    """
+    from analysis.ifds.solver import Finding, solve
+
+    cpg, _nodes = _interproc_taint_cpg()
+    result = solve(cpg, _injection_spec(), S_version=_S_VERSION, env_digest=_ENV_DIGEST)
+    assert len(result.findings) == 1, "fingerprint fixture must yield exactly one finding"
+    finding: Finding = next(iter(result.findings))
+    return cpg, finding
+
+
+def _symmetric_fingerprint_fixture() -> tuple[CPG, "Finding"]:
+    """A CPG whose backward-cone slice is 2-WL-symmetric, so a tight budget (B=1)
+    forces the WEAK witness-edge-sequence fallback through the REAL code path.
+
+    A diamond of two IDENTICAL ``relay`` CALL nodes: ``src -> {a, b} -> sink``.
+    ``a``/``b`` share every label and survive alpha-renaming (only IDENTIFIER nodes are
+    renamed). The backward cone from the sink keeps BOTH arms (the realising
+    witness took only one), so the normalised slice carries the residual symmetric
+    class ``{a, b}`` — individualisation-refinement must resolve it, and B=1 forces
+    BudgetExhausted -> ``weak``. The full budget resolves it ``strong`` (the
+    weakness is genuinely budget-driven). The Finding is produced by the real
+    solver so its witness is genuine.
+    """
+    from analysis.ifds.solver import Finding, solve
+
+    cpg = CPG()
+    entry = cpg.add_node("METHOD", resolved_fqn="s.main", enclosing_decl_fqn="s.main")
+    src = cpg.add_node("CALL", operator_or_literal="taint_src", enclosing_decl_fqn="s.main")
+    a = cpg.add_node("CALL", operator_or_literal="relay", enclosing_decl_fqn="s.main")
+    b = cpg.add_node("CALL", operator_or_literal="relay", enclosing_decl_fqn="s.main")
+    sink = cpg.add_node("CALL", operator_or_literal="exec_sink", enclosing_decl_fqn="s.main")
+    cpg.add_edge(entry, src, "CFG")
+    cpg.add_edge(src, a, "CFG")
+    cpg.add_edge(src, b, "CFG")
+    cpg.add_edge(a, sink, "CFG")
+    cpg.add_edge(b, sink, "CFG")
+
+    result = solve(cpg, _injection_spec(), S_version=_S_VERSION, env_digest=_ENV_DIGEST)
+    assert len(result.findings) == 1, "symmetric fixture must yield exactly one finding"
+    finding: Finding = next(iter(result.findings))
+    return cpg, finding
 
 
 # ---------------------------------------------------------------------------
@@ -1027,7 +1086,6 @@ def test_inv_5_core_03_annotation_coresident_everywhere(fingerprint_class: str) 
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(reason="CMP-CORE-02 not yet implemented", strict=False)
 def test_inv_5_core_02_weak_class_never_auto_suppressed() -> None:
     """INV-5: weak-classed findings flip class on budget exhaustion + are never
     auto-suppressed across a refactor.
@@ -1036,20 +1094,51 @@ def test_inv_5_core_02_weak_class_never_auto_suppressed() -> None:
     Maps to AC:    INV-5 (owner CMP-CORE-02)
     Kind tag:      [INVARIANT]
     Inputs:        a finding whose slice canonicalisation exhausts (B, T) ->
-                   fingerprint_class = "weak"; a refactored variant of the
-                   same finding.
-    Outputs:       SliceFingerprintResult.fingerprint_class + the CMP-FND-01
-                   baseline-lookup decision.
+                   fingerprint_class = "weak" (forced via B=1 on a symmetric
+                   slice; per advisor + _weak_result, T is flaky so we drive the
+                   REAL path through B); and a strong-class finding.
+    Outputs:       SliceFingerprintResult.fingerprint_class + the CORE-02-owned
+                   eligible_for_baseline_suppression() decision (the typed
+                   interface the CMP-FND-01 baseline policy consumes — build-ahead
+                   per CLAR-PROC-01).
     Pass criteria: (i) class is "weak" exactly when budget_exhausted is True
                    (truthful self-label, never "strong" on exhaustion);
-                   (ii) a weak-classed prior is never matched/auto-suppressed
-                   across a refactor by the baseline-lookup policy.
+                   (ii) a weak-classed result is NEVER eligible for baseline
+                   suppression across a refactor (the never-auto-suppress rule),
+                   while a strong-classed result IS eligible (non-vacuity: the
+                   predicate is not a constant-False).
     Frequency:     every CI run.
     Hard gate?:    yes.
     """
-    # TODO: force budget exhaustion -> assert class == "weak"; assert the
-    #       CMP-FND-01 baseline policy does not suppress a weak prior on refactor.
-    pytest.skip("CMP-CORE-02 not implemented yet")
+    from analysis.fingerprint import (
+        compute_slice_fingerprint,
+        eligible_for_baseline_suppression,
+    )
+
+    # A strong result on an asymmetric witness (2-WL distinguishes every node).
+    strong_cpg, strong_finding = _fingerprint_fixture()
+    strong = compute_slice_fingerprint(strong_finding, strong_cpg)
+    assert strong.fingerprint_class == "strong"
+    assert strong.budget_exhausted is False
+
+    # A weak result forced by B=1 on a symmetric witness slice (the REAL budget
+    # -exhausted path, not a hand-built dataclass): canonical_order raises
+    # BudgetExhausted -> witness-edge-sequence fallback -> class "weak".
+    weak_cpg, weak_finding = _symmetric_fingerprint_fixture()
+    weak = compute_slice_fingerprint(weak_finding, weak_cpg, B=1)
+
+    # (i) truthful self-label: class is exactly "weak" iff the budget was exhausted.
+    assert weak.fingerprint_class == "weak"
+    assert weak.budget_exhausted is True
+    # The annotation rides with the result on BOTH classes (INV-5 co-residency).
+    assert strong.cpg_order_hash_annotation == CPG_ORDER_HASH_ANNOTATION
+    assert weak.cpg_order_hash_annotation == CPG_ORDER_HASH_ANNOTATION
+
+    # (ii) the never-auto-suppress rule: a weak result is NEVER eligible for a
+    # cross-refactor baseline match; a strong result IS (non-vacuity — the
+    # predicate is not constant-False, so the weak=False assertion is meaningful).
+    assert eligible_for_baseline_suppression(weak) is False
+    assert eligible_for_baseline_suppression(strong) is True
 
 
 @pytest.mark.invariant
