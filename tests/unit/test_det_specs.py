@@ -1050,13 +1050,13 @@ def test_det_03_real_spec_is_queryable_by_language_and_class(
     [
         # Deferred / unspecified pairs MUST NOT be silently present: authoring them
         # would be invented scope (RULE-4) and dishonest per-language labeling (INV-6).
-        # TRIPWIRE: delete the matching row(s) when CLAR-DET-03 (ssrf + deser/python)
+        # TRIPWIRE: delete the matching row(s) when CLAR-DET-04 (ssrf + deser/python)
         # or CLAR-MIGRATION-02 (path-traversal/java) resolves and the spec is
         # legitimately authored — otherwise this guard goes red on the real spec.
-        ("python", "deserialization"),  # no Python deser inventory in any DOC (CLAR-DET-03)
+        ("python", "deserialization"),  # no Python deser inventory in any DOC (CLAR-DET-04)
         ("java", "path-traversal"),  # only "Java sibling for CVE-2025-61765" (CLAR-MIGRATION-02)
-        ("java", "ssrf"),  # ssrf appears only in the malformed broken-3 example §8.6 (CLAR-DET-03)
-        ("python", "ssrf"),  # no ssrf inventory in any DOC (CLAR-DET-03)
+        ("java", "ssrf"),  # ssrf appears only in the malformed broken-3 example §8.6 (CLAR-DET-04)
+        ("python", "ssrf"),  # no ssrf inventory in any DOC (CLAR-DET-04)
     ],
 )
 def test_det_03_deferred_pairs_are_not_authored(language: str, class_name: str) -> None:
