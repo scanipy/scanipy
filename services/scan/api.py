@@ -875,6 +875,12 @@ def post_job_status(
 ) -> None:
     """Worker callback (DOC §3.1 / §6, AC-ORCH-01b) — HMAC-only, fail-closed.
 
+    SIGNED-BYTES CONTRACT (security co-sign C-1, binding for the DEPLOY-19
+    adapter): the HMAC verifies ``body_bytes``; the handler acts on the parsed
+    ``body``. The caller MUST derive ``body`` by parsing the exact verified
+    ``body_bytes`` — never an independent re-read; the HTTP adapter must pin
+    ``body == parse(body_bytes)`` structurally.
+
     Worker callbacks carry NO ``X-Scanipy-Org-Id`` (DOC-API §2.5): tenant identity
     is implicit in the HMAC-keyed job, so this handler does NOT run the CP-01
     tenancy guard — it authenticates by HMAC only.
