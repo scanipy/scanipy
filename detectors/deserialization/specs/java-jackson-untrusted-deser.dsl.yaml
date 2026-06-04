@@ -1,0 +1,16 @@
+id: "java-jackson-untrusted-deser"
+class: "deserialization"
+languages: ["java"]
+engine: "ifds"
+
+# Faithful encoding of DOC-DSL §8.3 (Java Jackson untrusted deserialization).
+# Sources: untrusted request body streams.
+source(?T<:javax.servlet.http.HttpServletRequest.getInputStream)
+source(?T<:javax.servlet.http.HttpServletRequest.getReader)
+
+# Propagator: stream/string conversions carrying the tainted body forward.
+propagate(arg[0] → ret)
+
+# Sinks: untrusted-data deserialization entry points.
+sink(?T<:com.fasterxml.jackson.databind.ObjectMapper.readValue(arg[0]))
+sink(?T<:java.io.ObjectInputStream.readObject)

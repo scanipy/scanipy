@@ -1,0 +1,22 @@
+id: "python-os-path-traversal"
+class: "path-traversal"
+languages: ["python"]
+engine: "ifds"
+
+# Faithful subset of DOC-DSL §8.2 (migrated tarslip.yaml semantics).
+# Sources: HTTP request parameters and CLI argv.
+source(flask.request.args.get(*))
+source(flask.request.form.get(*))
+source(sys.argv)
+
+# Propagators: path-join and string concatenation.
+propagate(arg[0] → ret)
+propagate(arg[1] → ret)
+
+# Sanitizers: secure path normalization.
+sanitize(werkzeug.utils.secure_filename(arg[0]))
+sanitize(pathlib.Path.resolve)
+
+# Sinks: file-system entry points.
+sink(builtins.open(arg[0]))
+sink(os.path.read(arg[0]))

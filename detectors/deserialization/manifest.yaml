@@ -1,0 +1,14 @@
+# CMP-DET-03 — deserialization detector manifest (Stage-A, Java).
+# Python is NOT covered: no Python deserialization source/sink inventory exists
+# in DOC-CMP-DET-03 / DOC-DSL / DOC-CMP-DET-01. Authoring one from memory would
+# violate RULE-4; `languages` lists only `java`. See CLAR (returned to
+# orchestrator) for the missing-inventory request.
+# determinism_partition is DERIVED downstream by CMP-DET-02 from `engine`.
+id: "java-jackson-untrusted-deser"
+cwes: ["CWE-502"]
+languages: ["java"]
+frameworks: ["jackson", "servlet"]
+engine: "ifds"
+severity_default: "critical"
+per_language_readiness:
+  java: "ready"
