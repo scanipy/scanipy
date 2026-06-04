@@ -629,26 +629,42 @@ def test_orch_03_resolves_real_det02_registry_detector() -> None:
 
 
 @pytest.mark.unit
-def test_orch_03_build_ahead_seams_fail_closed() -> None:
-    """The build-ahead seams fail closed on the PRODUCTION path (CLAR-PROC-01
-    condition (2)): no fake is ever computed in prod; the seam raises a typed
-    ``NotImplementedError`` naming the gated dependency.
+def test_orch_03_core_fingerprinted_upstream_oracle_seam_fail_closed() -> None:
+    """Post-wiring contract (CORE-02 -> ORCH-03 integration): CORE findings are
+    fingerprinted upstream by the REAL CMP-CORE-02 (Algorithm 3) in
+    ``_findings_from_core``, so a production-default core run NO LONGER hits the
+    fail-closed slice seam — it yields a real 64-hex ``slice_fingerprint``. The
+    fail-closed slice/oracle seams now cover only what remains build-ahead: the
+    ORACLE adapter (env-gated Semgrep/Joern/CodeQL binaries, CLAR-PROC-01), and
+    by extension the slice fallback for oracle findings (no slice witness).
 
-    Test id:        ORCH-03 build-ahead negative control
+    NOTE (wiring blast radius — reported in the PR body): closing the
+    CORE-02->ORCH-03 build-ahead gap NECESSARILY inverts the core half of the
+    former ``test_orch_03_build_ahead_seams_fail_closed`` (it asserted a core run
+    raises ``NotImplementedError`` naming CMP-CORE-02 — exactly the gap this PR
+    closes). The ORACLE half is retained verbatim below as a still-valid negative
+    control: no fake oracle finding is ever computed on the production path.
+
+    Test id:        ORCH-03 post-wiring contract + oracle-seam negative control
     Kind tag:       [UNIT/NEGATIVE]
-    Pass criteria:  With NO slice fingerprinter injected, a core run raises
-                    NotImplementedError naming CMP-CORE-02. With NO oracle adapter
-                    injected, an oracle run raises NotImplementedError naming the
-                    env-gated adapters. (A test must INJECT a double to proceed —
-                    the prod path never silently produces a value.)
+    Pass criteria:  (1) With NO slice fingerprinter injected, a core run SUCCEEDS
+                    and every finding carries a real 64-hex ``slice_fingerprint``
+                    (the real CMP-CORE-02, not the fail-closed seam). (2) With NO
+                    oracle adapter injected, an oracle run raises
+                    NotImplementedError naming the env-gated adapters (the prod
+                    path never silently fabricates an oracle finding).
     """
     cpg = injection_taint_cpg()
     job = good_job()
 
-    # Core run with no CORE-02 slice fingerprinter -> fail-closed.
-    with pytest.raises(NotImplementedError, match=r"CMP-CORE-02"):
-        run_detector(core_injection_detector(), cpg, job)
+    # Core run with NO injected slice fingerprinter now SUCCEEDS: the real
+    # CMP-CORE-02 fingerprints core findings upstream (the wired-in integration).
+    core_findings = run_detector(core_injection_detector(), cpg, job)
+    assert core_findings, "anti-vacuity: the core run must emit at least one finding"
+    for f in core_findings:
+        assert len(f.slice_fingerprint) == 64
+        assert all(c in "0123456789abcdef" for c in f.slice_fingerprint)
 
-    # Oracle run with no oracle adapter -> fail-closed.
+    # Oracle run with no oracle adapter -> still fail-closed (env-gated; unchanged).
     with pytest.raises(NotImplementedError, match=r"env-gated|Semgrep"):
         run_detector(oracle_semgrep_detector(), cpg, job)
