@@ -41,19 +41,33 @@ BUILD-AHEAD REGIME (sanctioned by CLAR-PROC-01, WBS §17 RESOLVED 2026-06-04).
      via the same typed seam — never a host-binary shell-out.
 
   2. **CMP-CORE-02** (``slice_fingerprint`` / ``fingerprint_class`` per finding)
-     is not built. CMP-FND-01's ``normalize`` rejects an empty
-     ``slice_fingerprint``, so the worker consumes a TYPED
-     :class:`SliceFingerprinter` port; the production default
-     (:func:`fail_closed_slice_fingerprinter`) raises ``NotImplementedError``
-     naming CMP-CORE-02. The hermetic test injects a deterministic fake.
+     HAS LANDED (``analysis.fingerprint.compute_slice_fingerprint``, Algorithm 3).
+     Core findings are now fingerprinted by the REAL CMP-CORE-02 upstream, in
+     :func:`_findings_from_core` — the one site where the solver finding's real
+     ``witness`` and the ``cpg`` are both live — and the per-finding
+     ``slice_fingerprint`` is pre-filled at construction. The typed
+     :class:`SliceFingerprinter` port and its fail-closed production default
+     (:func:`fail_closed_slice_fingerprinter`) are RETAINED but now cover ONLY
+     findings the upstream did NOT pre-fill — i.e. ORACLE findings, which have no
+     slice witness through the CPG (their fingerprint stays fail-closed; a real
+     oracle slice-identity is out of scope here). The run_detector threading loop
+     respects the upstream pre-fill via ``if not f.slice_fingerprint`` and never
+     re-computes a core finding's fingerprint. The hermetic ORCH-03 spec tests
+     still inject a deterministic fake to exercise the port in isolation.
 
-  Neither value is ever computed-as-fake on the production path (CLAR-PROC-01
-  condition (2)): the prod seam raises; only a test double supplies a value.
-  ``fingerprint_class`` is sourced from CMP-CORE-03 (it rides on
+  The oracle adapter value is never computed-as-fake on the production path
+  (CLAR-PROC-01 condition (2)): the prod seam raises; only a test double supplies
+  a value.
+  ``fingerprint_class`` is sourced from CMP-CORE-03 (it rides on the run-level
   ``canonical_order(cpg)``), which deviates from DOC §4.2's "carried from
   CMP-CORE-02" — the source-attribution conflict is filed as CLAR-ORCH-03
-  (Architect to reconcile); the CORE-02 port supplies only the per-finding
-  ``slice_fingerprint`` hex.
+  (OPEN; Architect to reconcile). This wiring does NOT resolve it: the run-level
+  ``fingerprint_class`` threading stays byte-for-byte unchanged. The real
+  CMP-CORE-02 ``compute_slice_fingerprint`` (now wired in
+  :func:`_findings_from_core`) supplies only the per-finding ``slice_fingerprint``
+  hex; whether the per-finding CMP-CORE-02 ``fingerprint_class`` should also flow
+  here, replacing the run-level CMP-CORE-03 value, remains the OPEN CLAR-ORCH-03
+  question and is left untouched.
 
 INTERFACE RECONCILE: CLAR-ORCH-02 (is_mixed sourcing); WorkerJob shape
 deviations filed as CLAR-ORCH-04 (precondition_status source) and
@@ -74,6 +88,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 from uuid import UUID
 
+from analysis.fingerprint import compute_slice_fingerprint
 from analysis.ordering import (
     CPG,
     CPG_ORDER_HASH_ANNOTATION,
@@ -205,7 +220,9 @@ class Finding:
     cpg_order_hash: str = ""  # hex; carried from CMP-CORE-03 (INV-5)
     cpg_order_hash_annotation: str = CPG_ORDER_HASH_ANNOTATION  # INV-5 pinned literal
     fingerprint_class: str = ""  # "strong" | "weak"; carried from CMP-CORE-03
-    slice_fingerprint: str = ""  # hex; carried from CMP-CORE-02 (build-ahead port)
+    slice_fingerprint: str = ""  # hex; from real CMP-CORE-02 for core findings
+    #   (pre-filled in _findings_from_core); the SliceFingerprinter port now only
+    #   covers findings not pre-filled upstream (oracle — no slice witness)
     witness_blob_uri: str | None = None
     spec_provenance: str | None = None
 
@@ -277,12 +294,17 @@ class OracleAdapter(Protocol):
 
 @runtime_checkable
 class SliceFingerprinter(Protocol):
-    """CMP-CORE-02 port (Algorithm 3): backward slice fingerprint per finding.
+    """Fallback slice-fingerprint port for findings NOT pre-filled upstream.
 
-    CLAR-PROC-01 build-ahead: CORE-02 is not built. ``fingerprint(witness)``
-    returns the 64-hex ``slice_fingerprint`` for a finding's witness path. The
-    production default raises ``NotImplementedError`` naming CMP-CORE-02; the
-    hermetic test injects a deterministic fake.
+    CMP-CORE-02 (Algorithm 3) has landed and is wired into
+    :func:`_findings_from_core`, so CORE findings arrive at the threading loop
+    already carrying a real ``slice_fingerprint`` (the ``if not f.slice_fingerprint``
+    guard skips them). This port therefore now serves only findings WITHOUT an
+    upstream pre-fill — i.e. ORACLE findings, which have no slice witness through
+    the CPG. ``fingerprint(witness)`` returns the 64-hex ``slice_fingerprint`` for
+    such a finding's witness projection. The production default fails closed (an
+    oracle slice-identity is out of scope); the hermetic ORCH-03 spec tests inject
+    a deterministic fake to exercise this seam in isolation.
     """
 
     def fingerprint(self, witness: tuple[int, ...]) -> str: ...
@@ -306,13 +328,22 @@ class _FailClosedOracleAdapter:
 
 
 class _FailClosedSliceFingerprinter:
-    """Production slice fingerprinter: raises until CMP-CORE-02 lands."""
+    """Production fallback fingerprinter for findings NOT pre-filled upstream.
+
+    CMP-CORE-02 fingerprints CORE findings upstream in :func:`_findings_from_core`,
+    so this default only ever fires for a finding that reached the threading loop
+    WITHOUT a ``slice_fingerprint`` — i.e. an ORACLE finding (no slice witness
+    through the CPG). A real oracle slice-identity is out of scope here, so the
+    production seam fails closed (it does not fabricate a value).
+    """
 
     def fingerprint(self, witness: tuple[int, ...]) -> str:
         raise NotImplementedError(
-            "slice_fingerprint requires CMP-CORE-02 (Algorithm 3), not yet built "
-            "(CMP-ORCH-03 build-ahead, CLAR-PROC-01). Inject a SliceFingerprinter "
-            "via run_detector(..., slice_fingerprinter=...) in a hermetic test."
+            "slice_fingerprint for a finding without an upstream CMP-CORE-02 "
+            "pre-fill (an oracle finding has no slice witness through the CPG) is "
+            "out of scope (CMP-ORCH-03 build-ahead, CLAR-PROC-01). Inject a "
+            "SliceFingerprinter via run_detector(..., slice_fingerprinter=...) in a "
+            "hermetic test to exercise this fallback seam."
         )
 
 
@@ -322,7 +353,8 @@ def fail_closed_oracle_adapter() -> OracleAdapter:
 
 
 def fail_closed_slice_fingerprinter() -> SliceFingerprinter:
-    """The default slice fingerprinter: fail-closed until CMP-CORE-02 lands."""
+    """The default fallback fingerprinter: fail-closed for findings without an
+    upstream CMP-CORE-02 pre-fill (oracle findings; out of scope here)."""
     return _FailClosedSliceFingerprinter()
 
 
@@ -505,6 +537,21 @@ def _findings_from_core(
     out: list[Finding] = []
     for sf in result.findings:
         uri, sl, sc, el, ec = _physical_location(int(sf.sink))
+        # CMP-CORE-02 wiring (CLAR-PROC-01 build-ahead composition; class sourcing
+        # is CLAR-ORCH-03, OPEN — untouched here). This is the ONE site where the
+        # solver finding ``sf`` (carrying the real ``witness: tuple[NodeId, ...]``)
+        # and the ``cpg`` are both live, so it is where Algorithm 3 must run. The
+        # real :func:`compute_slice_fingerprint` consumes ``sf.witness`` directly
+        # (it never sees the worker Finding's location projection); the run_detector
+        # threading loop's ``if not f.slice_fingerprint`` then respects this
+        # pre-fill and the fail-closed port never fires for a core finding.
+        # ``compute_slice_fingerprint`` raises EmptyWitness / WitnessNotInCPG
+        # (DOC-CMP-CORE-02 §7) — we let them PROPAGATE (fail-closed; never a
+        # silent fallback). ``slice_fingerprint`` is ``Sha256`` (raw bytes, per
+        # ``analysis.ordering``); ``.hex()`` yields the 64-hex ``str`` the worker
+        # Finding field / CMP-FND-01 ``WorkerFinding`` Protocol expect — the same
+        # conversion the run-level ``order.cpg_order_hash.hex()`` uses below.
+        slice_fingerprint_hex = compute_slice_fingerprint(sf, cpg).slice_fingerprint.hex()
         out.append(
             Finding(
                 rule_id=sf.spec_id,
@@ -523,6 +570,7 @@ def _findings_from_core(
                 # cpg_order_hash / fingerprint_class threaded at run_detector
                 # from the worker-level canonical_order (advisor trap #3), NOT
                 # read off the solver finding (oracle findings have no solver).
+                slice_fingerprint=slice_fingerprint_hex,  # CMP-CORE-02 (Algorithm 3)
                 witness_blob_uri=None,
             )
         )
@@ -601,19 +649,26 @@ def run_detector(
         f.cpg_order_hash_annotation = CPG_ORDER_HASH_ANNOTATION  # INV-5 pinned literal
         f.fingerprint_class = fingerprint_class  # INV-5 conditional class
         if not f.slice_fingerprint:
-            # CMP-CORE-02 port (build-ahead): the prod seam raises; a test injects.
+            # CORE findings already carry a real CMP-CORE-02 ``slice_fingerprint``
+            # (pre-filled in _findings_from_core via compute_slice_fingerprint), so
+            # this branch is reached ONLY for findings without an upstream pre-fill
+            # — i.e. oracle findings (no slice witness through the CPG). The prod
+            # fallback seam fails closed; an ORCH-03 hermetic test injects a fake.
             f.slice_fingerprint = slice_fp.fingerprint(_witness_of(f))
         out.add(f)
     return out
 
 
 def _witness_of(finding: Finding) -> tuple[int, ...]:
-    """The witness node-id tuple for the CORE-02 slice fingerprint port.
+    """The location projection feeding the injected/fallback SliceFingerprinter port.
 
     The worker :class:`Finding` does not retain the solver witness (it is not a
-    SARIF field); the CORE-02 port keys on the finding's location for the
-    build-ahead seam. The real CMP-CORE-02 consumes ``Finding.witness`` directly
-    upstream of this projection (DOC-CMP-ORCH-03 §6 step 6a)."""
+    SARIF field), so this projects the finding's location for the fallback seam
+    (now reached only for findings without an upstream pre-fill — oracle findings).
+    The REAL CMP-CORE-02 does NOT consume this projection: it consumes the solver
+    finding's ``witness`` directly, upstream in :func:`_findings_from_core`
+    (DOC-CMP-ORCH-03 §6 step 6a) — which is exactly what this docstring always
+    promised, now realised by the live wiring."""
     return (finding.start_line, finding.start_col, finding.end_line, finding.end_col)
 
 
