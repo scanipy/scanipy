@@ -1,10 +1,11 @@
 """FND-family unit + invariant specs — TST-AC-FND-* (unit/invariant-shaped) + TST-INV-*.
 
-Spec-first TDD: production code for the Findings & Provenance subsystem does
-not exist yet, so every spec below is a registered-but-dormant stub. Each
-carries an ``@pytest.mark.xfail(strict=False)`` so the suite collects and runs
-without blocking; the body calls ``pytest.skip`` until the owning CMP is DONE,
-at which point the skip is removed and the stubbed assertion goes live.
+Spec-first TDD: as each owning CMP lands, its stub goes live. The FND-02
+(schema) and FND-03 (signed chain) specs are live; the FND-01 (normalizer /
+SARIF emitter) specs are now live too — their previous ``@pytest.mark.xfail`` +
+``pytest.skip`` guards were removed when CMP-FND-01 shipped
+``analysis.sarif.canonical_emit``. Any spec for a still-unbuilt CMP keeps the
+xfail/skip guard until that CMP is DONE.
 
 Pattern mirrors ``tests/unit/test_dsl_proofs.py`` (the canonical convention).
 
@@ -28,6 +29,7 @@ Covers (from WBS §4.2 / §4.3):
   - TST-INV-2-FND-01 [INVARIANT] — non-null S_version + env_digest at the normalizer
   - TST-INV-2-FND-02 [INVARIANT] — non-null S_version + env_digest at schema level
   - TST-INV-2-FND-03 [INVARIANT] — S_version + env_digest as links in the signed chain
+  - TST-INV-5-FND-01 [INVARIANT] — annotation literal on every emitted Result
   - TST-INV-5-FND-03 [INVARIANT] — annotation literal in chain + auditor export
 """
 
@@ -56,12 +58,8 @@ def _check_sqltext(table: object, name: str) -> str:
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(
-    reason="CMP-FND-01 (Findings normalizer) not yet implemented",
-    strict=False,
-)
 def test_fnd_01a_outputs_validate_against_sarif_210() -> None:
-    """Every detector output validates against the SARIF 2.1.0 schema.
+    """Every detector output validates against the SARIF 2.1.0 (shape) schema.
 
     Test id:        TST-AC-FND-01a
     Maps to AC:     AC-FND-01a — "All detector outputs validate against SARIF
@@ -70,30 +68,95 @@ def test_fnd_01a_outputs_validate_against_sarif_210() -> None:
     Inputs:         A ``frozenset[Finding]`` spanning both partitions, fed to
                     ``analysis.sarif.canonical_emit.normalize(...)`` with pinned
                     scan_id/snapshot_id/codebase_id/commit_sha/S_version/
-                    env_digest/precondition_status, llm_triage_flag=False. The
-                    OASIS SARIF v2.1.0 JSON schema (DOC-SARIF §11) + the vendored
-                    Scanipy extension schema (schemas/sarif-extension/v1.0.0.json).
+                    env_digest/precondition_status, llm_triage_flag=False.
     Outputs:        ``SARIFLog.canonical_bytes`` — a two-Run log (runs[0]=core,
                     runs[1]=oracle), minified, UTF-8/LF.
-    Pass criteria:  ``SARIFLog.canonical_bytes`` validates against the OASIS
-                    SARIF 2.1.0 schema with zero errors; every Result carries the
-                    required ``scanipy.*`` properties (DOC-CMP-FND-01 §7.1). A
-                    schema failure raises ``SARIFSchemaViolation`` (halt, no
-                    partial emit).
+    Pass criteria:  ``SARIFLog.canonical_bytes`` validates against the SARIF
+                    v2.1.0 + Scanipy-extension STRUCTURAL validator
+                    (``validate_sarif_210``) with zero errors; every Result
+                    carries the required ``scanipy.*`` properties
+                    (DOC-CMP-FND-01 §7.1). A schema failure raises
+                    ``SARIFSchemaViolation`` (halt, no partial emit).
+    Method note:    The OASIS jsonschema is not vendored and ``jsonschema`` is not
+                    a declared CI dependency (CLAR-SARIF-01 DEFERRED); per the task
+                    this is SARIF-2.1.0 *shape* validation in pure Python, behind
+                    the same ``bytes -> list[str]`` signature the OASIS validator
+                    would expose (drop-in swap once the schema is vendored).
     Frequency:      every CI run
     Hard gate?:     yes — DOC-SARIF §12 gate 1 (release blocker).
     """
-    # TODO: from analysis.sarif.canonical_emit import normalize when CMP-FND-01 is DONE
-    # log = normalize(findings, scan_id=..., ..., llm_triage_flag=False)
-    # assert sarif_210_validator.validate(log.canonical_bytes) == []
-    pytest.skip("CMP-FND-01 not implemented yet")
+    import uuid as _uuid
+
+    from analysis.sarif.canonical_emit import (
+        InvariantViolation,
+        SARIFSchemaViolation,
+        normalize,
+        validate_sarif_210,
+    )
+    from tests.fnd01_fakes import make_broken_finding, make_finding
+
+    findings = frozenset(
+        {
+            make_finding(origin="deterministic-core", engine="ifds"),
+            make_finding(
+                origin="oracle-passthrough",
+                engine="semgrep",
+                rule_id="scanipy/secrets/aws-access-key",
+                uri="config/dev.env",
+                start_line=14,
+                severity="medium",
+                class_="secrets",
+                witness_blob_uri=None,
+                spec_provenance=None,
+            ),
+        }
+    )
+    log = normalize(
+        findings,
+        scan_id=_uuid.uuid4(),
+        snapshot_id=_uuid.uuid4(),
+        codebase_id=_uuid.uuid4(),
+        commit_sha="a" * 40,
+        S_version="1.4.0",
+        env_digest="sha256:" + ("7" * 64),
+        precondition_status="closed-world",
+        llm_triage_flag=False,
+    )
+
+    # Anti-vacuity: the emission is non-empty; both partitions present, 1 each.
+    assert len(log.canonical_bytes) > 0
+    assert log.runs[0].partition == "core" and log.runs[0].result_count == 1
+    assert log.runs[1].partition == "oracle" and log.runs[1].result_count == 1
+
+    # The structural SARIF 2.1.0 + extension validator returns ZERO errors.
+    assert validate_sarif_210(log.canonical_bytes) == []
+
+    # Anti-vacuity for the validator itself: a corrupted (provenance-stripped)
+    # log must FAIL the same validator, proving it is not trivially returning [].
+    corrupted = log.canonical_bytes.replace(
+        b'"scanipy.origin":"deterministic-core"', b'"scanipy.origin":""'
+    )
+    assert corrupted != log.canonical_bytes  # the substitution actually happened
+    assert validate_sarif_210(corrupted) != []
+
+    # Halt-on-bad-input: a finding missing a required Result property is rejected
+    # before any partial emit (DOC §7.1) — either fail-fast (InvariantViolation)
+    # or the post-build schema check (SARIFSchemaViolation); both halt emission.
+    with pytest.raises((InvariantViolation, SARIFSchemaViolation)):
+        normalize(
+            frozenset({make_broken_finding("rule_id")}),
+            scan_id=_uuid.uuid4(),
+            snapshot_id=_uuid.uuid4(),
+            codebase_id=_uuid.uuid4(),
+            commit_sha="b" * 40,
+            S_version="1.4.0",
+            env_digest="sha256:" + ("7" * 64),
+            precondition_status="closed-world",
+            llm_triage_flag=False,
+        )
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(
-    reason="CMP-FND-01 (Findings normalizer) not yet implemented",
-    strict=False,
-)
 def test_fnd_01b_result_ordering_is_canonical_cpg_order() -> None:
     """Result ordering within each Run is the canonical CPG order from CORE-03.
 
@@ -102,22 +165,71 @@ def test_fnd_01b_result_ordering_is_canonical_cpg_order() -> None:
                     CMP-CORE-03."
     Kind tag:       [UNIT]
     Inputs:         A ``frozenset[Finding]`` deliberately constructed with
-                    findings out of canonical order; ``normalize(...)`` output.
+                    findings whose canonical sort keys are out of order;
+                    ``normalize(...)`` output.
     Outputs:        Two SARIF Runs, each with its ``results`` array.
-    Pass criteria:  Within each Run, ``results`` is sorted ascending by the
-                    canonical key tuple ``(cpg_order_hash, rule_id, uri,
-                    start_line)`` (DOC-SARIF §7); a re-parse of
-                    ``canonical_bytes`` confirms the serialiser never reordered.
-                    Independent of input iteration order. A failure raises
-                    ``CanonicalEmissionFailure``.
+    Pass criteria:  Within each Run, ``results`` (re-parsed from
+                    ``canonical_bytes``) is sorted ascending by the canonical key
+                    tuple ``(cpg_order_hash, rule_id, uri, start_line)``
+                    (DOC-SARIF §7); the order is independent of input iteration
+                    order. A non-canonical serialisation raises
+                    ``CanonicalEmissionFailure`` inside ``normalize``.
     Frequency:      every CI run
     Hard gate?:     yes — DOC-SARIF §12 gate 4.
     """
-    # TODO: assert results sorted by (cpg_order_hash, rule_id, uri, start_line)
-    # for run in normalize(findings, ...).runs:
-    #     keys = [_result_sort_key(r) for r in _parse(run.canonical_bytes)["results"]]
-    #     assert keys == sorted(keys)
-    pytest.skip("CMP-FND-01 not implemented yet")
+    import json as _json
+    import uuid as _uuid
+
+    from analysis.sarif.canonical_emit import normalize
+    from tests.fnd01_fakes import make_finding
+
+    def _key(result: dict) -> tuple[str, str, str, int]:
+        properties = result["properties"]
+        region = result["locations"][0]["physicalLocation"]
+        return (
+            properties["scanipy.cpg_order_hash"],
+            result["ruleId"],
+            region["artifactLocation"]["uri"],
+            region["region"]["startLine"],
+        )
+
+    # Three CORE findings with cpg_order_hashes that, sorted, do NOT match the
+    # order they are passed in. ``cpg_order_hash`` is the PRIMARY sort key, so a
+    # missing/incorrect sort surfaces here. Pin distinct hashes explicitly so the
+    # expected order is unambiguous.
+    h_lo = "0" * 64
+    h_mid = "5" * 64
+    h_hi = "f" * 64
+    findings = frozenset(
+        {
+            make_finding(cpg_order_hash=h_hi, rule_id="scanipy/ssrf/a", uri="z.py", start_line=9),
+            make_finding(cpg_order_hash=h_lo, rule_id="scanipy/ssrf/b", uri="a.py", start_line=1),
+            make_finding(cpg_order_hash=h_mid, rule_id="scanipy/ssrf/c", uri="m.py", start_line=5),
+        }
+    )
+
+    log = normalize(
+        findings,
+        scan_id=_uuid.uuid4(),
+        snapshot_id=_uuid.uuid4(),
+        codebase_id=_uuid.uuid4(),
+        commit_sha="c" * 40,
+        S_version="1.4.0",
+        env_digest="sha256:" + ("7" * 64),
+        precondition_status="closed-world",
+        llm_triage_flag=False,
+    )
+
+    doc = _json.loads(log.canonical_bytes)
+    core_results = doc["runs"][0]["results"]
+    keys = [_key(r) for r in core_results]
+
+    # Anti-vacuity: there really are 3 results to order.
+    assert len(keys) == 3
+    # The serialised order is exactly the canonically-sorted order (DOC-SARIF §7).
+    assert keys == sorted(keys)
+    # And concretely: cpg_order_hash ascending (0.. < 5.. < f..).
+    assert [k[0] for k in keys] == [h_lo, h_mid, h_hi]
 
 
 @pytest.mark.invariant
@@ -406,10 +518,6 @@ def test_fnd_03c_repartition_events_appear_in_the_record() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-FND-01 (Findings normalizer) not yet implemented",
-    strict=False,
-)
 def test_inv_1_fnd_01_origin_partition_at_normalizer() -> None:
     """INV-1 at the normalizer: per-finding origin drives the two-Run partition.
 
@@ -417,6 +525,8 @@ def test_inv_1_fnd_01_origin_partition_at_normalizer() -> None:
     Maps to AC:     INV-1 (CMP-FND-01 emitter) — every finding carries
                     ``origin ∈ {deterministic-core, oracle-passthrough}``; the
                     two-Run emission is the wire-level expression of the partition.
+                    Also exercises the byte-identity guarantee that feeds CMP-CP-05
+                    (AC-CP-05a): same inputs ⇒ byte-identical canonical bytes.
     Kind tag:       [INVARIANT]
     Inputs:         A ``frozenset[Finding]`` with a mix of
                     ``origin='deterministic-core'`` and
@@ -427,14 +537,74 @@ def test_inv_1_fnd_01_origin_partition_at_normalizer() -> None:
                     lands in ``runs[1]`` (partition='oracle'); no Run mixes
                     partitions; every ``Result.properties["scanipy.origin"]`` is
                     set verbatim from the Finding and is never the value
-                    ``"mixed"`` (DOC-CMP-FND-01 §5.1).
+                    ``"mixed"`` (DOC-CMP-FND-01 §5.1). Re-running ``normalize`` on
+                    the same inputs yields byte-identical ``canonical_bytes``.
     Frequency:      every CI run
     Hard gate?:     yes — INV-1 emitter gate; feeds CMP-CP-05 (AC-CP-05a).
     """
-    # TODO: log = normalize(findings, ...)
-    # assert all(r["properties"]["scanipy.origin"] == "deterministic-core"
-    #            for r in core_results) and "mixed" not in all_origins
-    pytest.skip("CMP-FND-01 not implemented yet")
+    import json as _json
+    import uuid as _uuid
+
+    from analysis.sarif.canonical_emit import normalize
+    from tests.fnd01_fakes import make_finding
+
+    scan_id = _uuid.uuid4()
+    snapshot_id = _uuid.uuid4()
+    codebase_id = _uuid.uuid4()
+    findings = frozenset(
+        {
+            make_finding(origin="deterministic-core", engine="ifds", rule_id="scanipy/injection/a"),
+            make_finding(origin="deterministic-core", engine="ide", rule_id="scanipy/injection/b"),
+            make_finding(
+                origin="oracle-passthrough",
+                engine="semgrep",
+                rule_id="scanipy/secrets/c",
+                class_="secrets",
+                witness_blob_uri=None,
+            ),
+        }
+    )
+
+    kwargs: dict[str, object] = {
+        "scan_id": scan_id,
+        "snapshot_id": snapshot_id,
+        "codebase_id": codebase_id,
+        "commit_sha": "d" * 40,
+        "S_version": "1.4.0",
+        "env_digest": "sha256:" + ("7" * 64),
+        "precondition_status": "closed-world",
+        "llm_triage_flag": False,
+    }
+    log = normalize(findings, **kwargs)  # type: ignore[arg-type]
+    doc = _json.loads(log.canonical_bytes)
+
+    core_run, oracle_run = doc["runs"][0], doc["runs"][1]
+    assert core_run["properties"]["scanipy.partition"] == "core"
+    assert oracle_run["properties"]["scanipy.partition"] == "oracle"
+
+    core_origins = [r["properties"]["scanipy.origin"] for r in core_run["results"]]
+    oracle_origins = [r["properties"]["scanipy.origin"] for r in oracle_run["results"]]
+
+    # Anti-vacuity: each partition actually received its findings.
+    assert len(core_origins) == 2 and len(oracle_origins) == 1
+    # No Run mixes partitions; origin is verbatim per finding; 'mixed' never appears.
+    assert set(core_origins) == {"deterministic-core"}
+    assert set(oracle_origins) == {"oracle-passthrough"}
+    assert b'"mixed"' not in log.canonical_bytes
+    # determinism_partition equals origin at emission time (DOC-SARIF §6).
+    for run in (core_run, oracle_run):
+        for r in run["results"]:
+            assert (
+                r["properties"]["scanipy.determinism_partition"]
+                == r["properties"]["scanipy.origin"]
+            )
+
+    # Byte-identity (AC-CP-05a foundation): re-running on identical inputs yields
+    # byte-identical canonical bytes. This is the mutation a clock read would
+    # break — ``normalize`` emits no timestamp, so it holds.
+    log2 = normalize(findings, **kwargs)  # type: ignore[arg-type]
+    assert log2.canonical_bytes == log.canonical_bytes
+    assert log2.sarif_hash == log.sarif_hash
 
 
 @pytest.mark.invariant
@@ -545,10 +715,6 @@ def test_inv_1_fnd_03_origin_partition_at_provenance() -> None:
 
 
 @pytest.mark.invariant
-@pytest.mark.xfail(
-    reason="CMP-FND-01 (Findings normalizer) not yet implemented",
-    strict=False,
-)
 def test_inv_2_fnd_01_nonnull_sversion_envdigest_at_normalizer() -> None:
     """INV-2 at the normalizer: S_version + env_digest threaded to every result.
 
@@ -564,19 +730,281 @@ def test_inv_2_fnd_01_nonnull_sversion_envdigest_at_normalizer() -> None:
                     env_digest/precondition_status, llm_triage_flag=False).
     Outputs:        ``SARIFLog`` with two Runs; per-Result ``properties`` block.
     Pass criteria:  Every normalized ``Result.properties`` carries
-                    ``scanipy.s_version`` and ``scanipy.env_digest``; both are
-                    non-null/non-empty; AND each equals the source Finding's
-                    ``S_version`` / ``env_digest`` verbatim (propagated unchanged,
-                    DOC-CMP-FND-01 §5.2 / DOC-SARIF §7). The normalizer never
-                    invents, defaults, or drops either field; a missing field on an
-                    input Finding raises (no silent null-stuffing).
+                    ``scanipy.S_version`` (capital S, per DOC-SARIF §5/§6/§8 — the
+                    capital S is load-bearing for canonical key order) and
+                    ``scanipy.env_digest``; both are non-null/non-empty; AND each
+                    equals the source Finding's ``S_version`` / ``env_digest``
+                    verbatim (propagated unchanged, DOC-CMP-FND-01 §5.2 /
+                    DOC-SARIF §7). The normalizer never invents, defaults, or drops
+                    either field; a missing field on an input Finding raises (no
+                    silent null-stuffing).
     Frequency:      every CI run
     Hard gate?:     yes — INV-2 emitter gate; feeds CMP-CP-05.
     """
-    # TODO: log = normalize(findings, ...)
-    # for r in all_results: assert r["properties"]["scanipy.s_version"] and \
-    #     r["properties"]["scanipy.env_digest"]  # both non-null, == source Finding
-    pytest.skip("CMP-FND-01 not implemented yet")
+    import json as _json
+    import uuid as _uuid
+
+    from analysis.sarif.canonical_emit import InvariantViolation, normalize
+    from tests.fnd01_fakes import make_broken_finding, make_finding
+
+    s_version = "2.7.1"
+    env_digest = "sha256:" + ("9" * 64)
+    findings = frozenset(
+        {
+            make_finding(origin="deterministic-core", S_version=s_version, env_digest=env_digest),
+            make_finding(
+                origin="oracle-passthrough",
+                engine="semgrep",
+                class_="secrets",
+                rule_id="scanipy/secrets/x",
+                witness_blob_uri=None,
+                S_version=s_version,
+                env_digest=env_digest,
+            ),
+        }
+    )
+    log = normalize(
+        findings,
+        scan_id=_uuid.uuid4(),
+        snapshot_id=_uuid.uuid4(),
+        codebase_id=_uuid.uuid4(),
+        commit_sha="e" * 40,
+        S_version=s_version,
+        env_digest=env_digest,
+        precondition_status="closed-world",
+        llm_triage_flag=False,
+    )
+    doc = _json.loads(log.canonical_bytes)
+
+    all_results = [r for run in doc["runs"] for r in run["results"]]
+    assert len(all_results) == 2  # anti-vacuity
+    for r in all_results:
+        props = r["properties"]
+        # Capital S per DOC-SARIF §5/§6/§8; both non-empty and verbatim.
+        assert props["scanipy.S_version"] == s_version
+        assert props["scanipy.env_digest"] == env_digest
+        assert "scanipy.s_version" not in props  # no lowercase variant leaked
+    # Run.properties carry the same pinned values (INV-2 at Run level too).
+    for run in doc["runs"]:
+        assert run["properties"]["scanipy.S_version"] == s_version
+        assert run["properties"]["scanipy.env_digest"] == env_digest
+
+    # No silent null-stuffing: a finding with a blank S_version is REJECTED
+    # fail-fast (negative control) — never emitted with an invented/blank value.
+    with pytest.raises(InvariantViolation):
+        normalize(
+            frozenset({make_broken_finding("S_version")}),
+            scan_id=_uuid.uuid4(),
+            snapshot_id=_uuid.uuid4(),
+            codebase_id=_uuid.uuid4(),
+            commit_sha="f" * 40,
+            S_version=s_version,
+            env_digest=env_digest,
+            precondition_status="closed-world",
+            llm_triage_flag=False,
+        )
+
+
+@pytest.mark.invariant
+def test_inv_5_fnd_01_annotation_literal_on_every_result() -> None:
+    """INV-5 at the normalizer: the conditional-canonicality annotation literal
+    is emitted on every Result, sourced from the single construction-site constant.
+
+    Test id:        TST-INV-5-FND-01
+    Maps to AC:     INV-5 (CMP-FND-01 emitter) — DOC-CMP-FND-01 §5.3: every
+                    ``Result.properties["scanipy.cpg_order_hash_annotation"]`` is
+                    the exact literal ``"canonical iff fingerprint_class =
+                    strong"``, JSON-adjacent to ``scanipy.cpg_order_hash``, and the
+                    string is imported from ``analysis.ordering`` rather than
+                    rebuilt. DOC-SARIF §9 lists this as forthcoming; it is the
+                    headline INV-5 requirement of the emitter, so it is authored
+                    here alongside 01a/01b.
+    Kind tag:       [INVARIANT]
+    Inputs:         A ``frozenset[Finding]`` (both ``strong`` and ``weak``
+                    fingerprint classes); ``normalize(...)``.
+    Outputs:        ``SARIFLog.canonical_bytes``.
+    Pass criteria:  Every emitted Result carries the EXACT annotation literal next
+                    to its ``cpg_order_hash``; no abbreviated / translated /
+                    truncated variant leaks; the literal equals
+                    ``analysis.ordering.CPG_ORDER_HASH_ANNOTATION``. An emission
+                    with the annotation stripped fails the INV-5 structural check.
+    Frequency:      every CI run
+    Hard gate?:     yes — INV-5 emitter gate; CMP-CI-01 annotation-presence gate
+                    (DOC-SARIF §12 gate 5).
+    """
+    import json as _json
+    import uuid as _uuid
+
+    from analysis.ordering import CPG_ORDER_HASH_ANNOTATION as ORDERING_ANNOTATION
+    from analysis.sarif.canonical_emit import normalize, validate_sarif_210
+    from tests.fnd01_fakes import make_finding
+
+    # The emitter must source the literal from the CORE-03 constant, never rebuild.
+    assert ORDERING_ANNOTATION == _ANNOTATION
+
+    findings = frozenset(
+        {
+            make_finding(
+                origin="deterministic-core", fingerprint_class="strong", rule_id="scanipy/ssrf/s"
+            ),
+            # A weak-classed finding STILL carries the annotation (the annotation
+            # is precisely what tells consumers canonicality holds only on strong).
+            make_finding(
+                origin="oracle-passthrough",
+                engine="semgrep",
+                class_="secrets",
+                rule_id="scanipy/secrets/w",
+                fingerprint_class="weak",
+                witness_blob_uri=None,
+            ),
+        }
+    )
+    log = normalize(
+        findings,
+        scan_id=_uuid.uuid4(),
+        snapshot_id=_uuid.uuid4(),
+        codebase_id=_uuid.uuid4(),
+        commit_sha="1" * 40,
+        S_version="1.4.0",
+        env_digest="sha256:" + ("7" * 64),
+        precondition_status="closed-world",
+        llm_triage_flag=False,
+    )
+    doc = _json.loads(log.canonical_bytes)
+    all_results = [r for run in doc["runs"] for r in run["results"]]
+
+    # Anti-vacuity: there are results to check, across both fingerprint classes.
+    assert len(all_results) == 2
+    assert {r["properties"]["scanipy.fingerprint_class"] for r in all_results} == {
+        "strong",
+        "weak",
+    }
+    for r in all_results:
+        props = r["properties"]
+        assert props["scanipy.cpg_order_hash_annotation"] == ORDERING_ANNOTATION
+        # JSON adjacency is enforced by the canonical key sort: with keys sorted,
+        # ``scanipy.cpg_order_hash_annotation`` immediately follows
+        # ``scanipy.cpg_order_hash`` (no scanipy.cpg_order_hash* key sorts between
+        # them). Assert both keys are present together on every Result.
+        assert "scanipy.cpg_order_hash" in props
+
+    # No abbreviated / truncated annotation variant leaks anywhere in the bytes.
+    for variant in (b"canonical hash", b"cpg_canonical_hash", b"canonical CPG"):
+        assert variant not in log.canonical_bytes
+    # The full literal appears exactly twice (once per Result).
+    assert log.canonical_bytes.count(_ANNOTATION.encode("utf-8")) == 2
+
+    # Negative control (c): an annotation-stripped emission fails the INV-5 leg of
+    # the structural validator (the const check), proving the assertion is not
+    # vacuous.
+    stripped = log.canonical_bytes.replace(
+        b'"scanipy.cpg_order_hash_annotation":"' + _ANNOTATION.encode("utf-8") + b'"',
+        b'"scanipy.cpg_order_hash_annotation":"canonical hash"',
+    )
+    assert stripped != log.canonical_bytes
+    errors = validate_sarif_210(stripped)
+    assert any("cpg_order_hash_annotation" in e for e in errors)
+
+
+@pytest.mark.unit
+def test_fnd_01_normalize_split_emits_two_single_run_files() -> None:
+    """Smoke test for the opt-in split-file emitter (DOC-SARIF §4 alternate).
+
+    Not in the four target ACs, but ``normalize_split`` is a shipped emit path;
+    assert it produces two standalone single-Run SARIF files (``*-core``,
+    ``*-oracle``), each one canonical, non-empty, and re-parseable to exactly one
+    Run whose partition matches. The per-file canonical/validation requirements
+    are the same as :func:`normalize` applied independently (DOC-SARIF §4).
+    """
+    import json as _json
+    import uuid as _uuid
+
+    from analysis.sarif.canonical_emit import normalize_split
+    from tests.fnd01_fakes import make_finding
+
+    findings = frozenset(
+        {
+            make_finding(origin="deterministic-core", engine="ifds"),
+            make_finding(
+                origin="oracle-passthrough",
+                engine="semgrep",
+                class_="secrets",
+                rule_id="scanipy/secrets/k",
+                witness_blob_uri=None,
+            ),
+        }
+    )
+    core_run, oracle_run = normalize_split(
+        findings,
+        scan_id=_uuid.uuid4(),
+        snapshot_id=_uuid.uuid4(),
+        codebase_id=_uuid.uuid4(),
+        commit_sha="2" * 40,
+        S_version="1.4.0",
+        env_digest="sha256:" + ("7" * 64),
+        precondition_status="closed-world",
+        llm_triage_flag=False,
+    )
+
+    assert core_run.partition == "core" and oracle_run.partition == "oracle"
+    assert core_run.result_count == 1 and oracle_run.result_count == 1
+    for run in (core_run, oracle_run):
+        assert len(run.canonical_bytes) > 0
+        doc = _json.loads(run.canonical_bytes)
+        # Each split file is a single-Run document of its own partition.
+        assert len(doc["runs"]) == 1
+        assert doc["runs"][0]["properties"]["scanipy.partition"] == run.partition
+
+
+@pytest.mark.unit
+def test_fnd_01_normalize_split_enforces_canonical_order(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """NEGATIVE CONTROL: the split emitter runs the same post-serialisation
+    canonical-order check as ``normalize`` (review finding on PR #284): an
+    emitter whose result sort is broken must raise ``CanonicalEmissionFailure``
+    from ``normalize_split`` — never silently emit an out-of-order split file.
+    Two same-partition findings force a real ordering decision; the sort is
+    monkeypatched to be reversed (the broken-impl mutant).
+    """
+    import uuid as _uuid
+
+    from analysis.sarif import canonical_emit
+    from analysis.sarif.canonical_emit import (
+        CanonicalEmissionFailure,
+        normalize_split,
+    )
+    from tests.fnd01_fakes import make_finding
+
+    findings = frozenset(
+        {
+            make_finding(origin="deterministic-core", engine="ifds"),
+            make_finding(
+                origin="deterministic-core",
+                engine="ifds",
+                rule_id="scanipy/injection/zz",
+            ),
+        }
+    )
+
+    real_sorted_results = canonical_emit._sorted_results
+
+    def _reversed_results(*args: object, **kwargs: object) -> list[dict[str, object]]:
+        return list(reversed(real_sorted_results(*args, **kwargs)))  # type: ignore[arg-type]
+
+    monkeypatch.setattr(canonical_emit, "_sorted_results", _reversed_results)
+    with pytest.raises(CanonicalEmissionFailure):
+        normalize_split(
+            findings,
+            scan_id=_uuid.uuid4(),
+            snapshot_id=_uuid.uuid4(),
+            codebase_id=_uuid.uuid4(),
+            commit_sha="2" * 40,
+            S_version="1.4.0",
+            env_digest="sha256:" + ("7" * 64),
+            precondition_status="closed-world",
+            llm_triage_flag=False,
+        )
 
 
 @pytest.mark.invariant
