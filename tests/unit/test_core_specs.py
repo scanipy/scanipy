@@ -199,6 +199,125 @@ def _call_chain_cpg() -> tuple[CPG, dict[str, ProcId]]:
     return cpg, procs
 
 
+def _interproc_taint_cpg() -> tuple[CPG, dict[str, NodeId]]:
+    """Two procedures: source in the CALLER, taint flows into the CALLEE, sink
+    INSIDE the callee (PR3 Deliverable 1).
+
+    Caller ``c.caller``:  entry -> taint_src -> call_callee --CALL--> callee.entry
+    Callee ``c.callee``:  entry -> y -> exec_sink
+
+    The realising witness must cross the call boundary: it starts at the caller's
+    ``taint_src``, walks the caller CFG to the call site, follows the CALL edge to
+    the callee entry, then walks the callee CFG to ``exec_sink``. This is the only
+    fixture shape that yields a NON-VACUOUS interprocedural witness in the PR1-PR3
+    solver: return-flow (sink in the caller AFTER the call) is inert because the
+    structural supergraph builds no RETURN adjacency and the summary splice never
+    fires in a full solve (it reads ``summaries.summaries`` which is empty until
+    the post-loop write). See the Deliverable-1 docstring + CLAR-CORE-01 note.
+
+    Returns the CPG and a name->NodeId map for the load-bearing nodes.
+    """
+    cpg = CPG()
+    caller_entry = cpg.add_node("METHOD", resolved_fqn="c.caller", enclosing_decl_fqn="c.caller")
+    src = cpg.add_node(
+        "CALL", operator_or_literal="taint_src", enclosing_decl_fqn="c.caller", structural_path="0"
+    )
+    call_site = cpg.add_node(
+        "CALL",
+        operator_or_literal="call_callee",
+        enclosing_decl_fqn="c.caller",
+        structural_path="1",
+    )
+    cpg.add_edge(caller_entry, src, "CFG")
+    cpg.add_edge(src, call_site, "CFG")
+
+    callee_entry = cpg.add_node("METHOD", resolved_fqn="c.callee", enclosing_decl_fqn="c.callee")
+    callee_mid = cpg.add_node(
+        "IDENTIFIER", operator_or_literal="y", enclosing_decl_fqn="c.callee", structural_path="0"
+    )
+    callee_sink = cpg.add_node(
+        "CALL", operator_or_literal="exec_sink", enclosing_decl_fqn="c.callee", structural_path="1"
+    )
+    cpg.add_edge(call_site, callee_entry, "CALL")
+    cpg.add_edge(callee_entry, callee_mid, "CFG")
+    cpg.add_edge(callee_mid, callee_sink, "CFG")
+
+    nodes = {
+        "caller_entry": caller_entry,
+        "src": src,
+        "call_site": call_site,
+        "callee_entry": callee_entry,
+        "callee_mid": callee_mid,
+        "callee_sink": callee_sink,
+    }
+    return cpg, nodes
+
+
+def _two_finding_cpg() -> tuple[CPG, dict[str, ProcId]]:
+    """A call chain WITH a finding AND an independent out-of-closure proc that
+    ALSO carries a complete source -> sink finding (PR3 Deliverable 2).
+
+    Differs from :func:`_call_chain_cpg` in one load-bearing way: the independent
+    ``other`` procedure here has its OWN ``taint_src -> exec_sink`` CFG path, so a
+    FULL solve emits TWO findings (one in ``leaf``, one in ``other``). When
+    AFFECTED = {leaf}, the closure is {leaf, mid, top} and ``other`` is OUTSIDE it.
+    A naive incremental_solve (no prior-findings merge) re-tabulates only the
+    closure and emits ONLY the ``leaf`` finding — DROPPING the ``other`` finding.
+    That dropped finding is exactly the out-of-closure-WITH-finding case PR1/PR2
+    could not preserve and PR3 fixes.
+
+    Returns the CPG and a name->ProcId map (proc id == the METHOD entry node id).
+    """
+    cpg = CPG()
+
+    # leaf procedure: source -> sink (in the AFFECTED closure when affected={leaf}).
+    leaf_entry = cpg.add_node("METHOD", resolved_fqn="p.leaf", enclosing_decl_fqn="p.leaf")
+    leaf_src = cpg.add_node(
+        "CALL", operator_or_literal="taint_src", enclosing_decl_fqn="p.leaf", structural_path="0"
+    )
+    leaf_sink = cpg.add_node(
+        "CALL", operator_or_literal="exec_sink", enclosing_decl_fqn="p.leaf", structural_path="1"
+    )
+    cpg.add_edge(leaf_entry, leaf_src, "CFG")
+    cpg.add_edge(leaf_src, leaf_sink, "CFG")
+
+    # mid procedure: calls leaf.
+    mid_entry = cpg.add_node("METHOD", resolved_fqn="p.mid", enclosing_decl_fqn="p.mid")
+    mid_call = cpg.add_node(
+        "CALL", operator_or_literal="call_leaf", enclosing_decl_fqn="p.mid", structural_path="0"
+    )
+    cpg.add_edge(mid_entry, mid_call, "CFG")
+    cpg.add_edge(mid_call, leaf_entry, "CALL")
+
+    # top procedure: calls mid.
+    top_entry = cpg.add_node("METHOD", resolved_fqn="p.top", enclosing_decl_fqn="p.top")
+    top_call = cpg.add_node(
+        "CALL", operator_or_literal="call_mid", enclosing_decl_fqn="p.top", structural_path="0"
+    )
+    cpg.add_edge(top_entry, top_call, "CFG")
+    cpg.add_edge(top_call, mid_entry, "CALL")
+
+    # other procedure: independent, OUT of the {leaf} closure, with its OWN
+    # complete source -> sink finding (this is the finding PR3 must preserve).
+    other_entry = cpg.add_node("METHOD", resolved_fqn="p.other", enclosing_decl_fqn="p.other")
+    other_src = cpg.add_node(
+        "CALL", operator_or_literal="taint_src", enclosing_decl_fqn="p.other", structural_path="0"
+    )
+    other_sink = cpg.add_node(
+        "CALL", operator_or_literal="exec_sink", enclosing_decl_fqn="p.other", structural_path="1"
+    )
+    cpg.add_edge(other_entry, other_src, "CFG")
+    cpg.add_edge(other_src, other_sink, "CFG")
+
+    procs = {
+        "leaf": ProcId(int(leaf_entry)),
+        "mid": ProcId(int(mid_entry)),
+        "top": ProcId(int(top_entry)),
+        "other": ProcId(int(other_entry)),
+    }
+    return cpg, procs
+
+
 # ---------------------------------------------------------------------------
 # CMP-CORE-01 — IFDS/IDE tabulation solver (Algorithm 2)
 # ---------------------------------------------------------------------------
@@ -498,6 +617,186 @@ def test_core_01c_incremental_visits_only_affected_closure() -> None:
     # NEGATIVE CONTROL: the out-of-closure proc is NOT re-tabulated. A
     # visit-everything impl (ignoring affected_set) would fail right here.
     assert procs["other"] not in incr.visited_procs
+
+
+@pytest.mark.unit
+def test_core_01_interproc_witness_connected_across_call_boundary() -> None:
+    """PR3 (DELIVERABLE 1): the witness is a CONNECTED path across a call boundary.
+
+    Test id:       (CMP-CORE-01 PR3 interprocedural witness verification)
+    Maps to AC:    PREP for AC-CORE-01a/01b (the interprocedural witness is the
+                   input CMP-CORE-02 backward-slices along, DOC-CMP-CORE-01 §3.3).
+    Kind tag:      [UNIT]
+    Inputs:        the two-procedure fixture — source in the CALLER, taint flows
+                   through a CALL edge into the CALLEE, sink INSIDE the callee.
+    Outputs:       the realising ``Finding.witness`` tuple.
+    Pass criteria: (i) ANTI-VACUITY — exactly one finding at the callee's
+                   exec_sink; (ii) the witness STARTS at the caller's seeded
+                   ``taint_src`` and ENDS at the callee sink, so it genuinely
+                   spans two procedures; (iii) every consecutive pair is a real
+                   CFG or CALL edge in the supergraph — i.e. the path is
+                   CONNECTED across the call boundary, NOT a disconnected node
+                   bag; (iv) EXACTLY ONE consecutive pair is a CALL edge (the
+                   boundary crossing), and it goes from a CALLER node to the
+                   CALLEE entry; (v) CALLEE-INTERNAL nodes appear in the witness
+                   (no elision on this path) — the callee entry and the callee's
+                   internal CFG node both lie on the realising path.
+
+    Empirical shape (DOC-CMP-CORE-01 §3.3, "summary-level witnesses"): on this
+    fixture the witness is the FULL connected node sequence
+    ``src -> call_site -> callee_entry -> callee_mid -> callee_sink`` with the
+    boundary pred written at solver.py ``add(callee.entry, fact, (call_node,
+    fact))`` (the CALL-edge propagation), NOT the summary splice. There is NO
+    callee-internal elision here: the boundary pred records the CALL node as the
+    predecessor of the callee entry, and the callee's own intraprocedural CFG
+    walk supplies every node between the entry and the sink. The latent
+    summary-splice elision DOC §3.3 sanctions (the splice records the call node
+    as the return-site predecessor) would only surface for a sink reached via
+    RETURN-flow back into the caller — a path that is INERT in the PR1-PR3 solver
+    (the structural supergraph builds no RETURN adjacency, and the splice reads
+    an empty summary table during a full solve). See clar_filed for the
+    CLAR-CORE-01 amendment recording this precisely.
+
+    Frequency:     every CI run.
+    Hard gate?:    no — PREP that unblocks CMP-CORE-02 interprocedural witness
+                   consumption + removes a recorded CORE-02-start blocker.
+    """
+    cpg, nodes = _interproc_taint_cpg()
+    spec = _injection_spec()
+
+    result = solve(cpg, spec, S_version=_S_VERSION, env_digest=_ENV_DIGEST)
+
+    # (i) ANTI-VACUITY: exactly one source->sink finding, at the callee sink.
+    assert len(result.findings) == 1, "expected exactly one interprocedural finding"
+    finding = next(iter(result.findings))
+    assert finding.sink == nodes["callee_sink"], "the sink must be the callee's exec_sink"
+    witness = finding.witness
+
+    # Recompute source/sink node ids from the CPG itself (independent of the
+    # solver internals — not a tautology against the solver's own pred map).
+    source_node_ids = {n.node_id for n in cpg.nodes if n.operator_or_literal == str(_SRC_PAT)}
+    assert nodes["src"] in source_node_ids
+
+    # (ii) the witness spans two procedures: caller source -> callee sink.
+    assert len(witness) > 1, "witness must be a real path, not the (sink,) placeholder"
+    assert witness[0] == nodes["src"], "witness must start at the caller's taint source"
+    assert witness[-1] == nodes["callee_sink"], "witness must end at the callee sink"
+
+    sg = build_supergraph(cpg, canonical_order(cpg).canonical_order)
+
+    def _is_cfg_edge(a: NodeId, b: NodeId) -> bool:
+        return b in sg.cfg_succ.get(a, [])
+
+    def _is_call_edge(a: NodeId, b: NodeId) -> bool:
+        # CALL edge: a is a call site whose callee's ENTRY is b.
+        return any(sg.procs[p].entry == b for p in sg.call_succ.get(a, []))
+
+    # (iii) CONNECTED across the boundary: every consecutive pair is a real edge.
+    call_edges = []
+    for a, b in itertools.pairwise(witness):
+        assert _is_cfg_edge(a, b) or _is_call_edge(a, b), (
+            f"witness edge {a}->{b} is neither a CFG nor a CALL edge — disconnected"
+        )
+        if _is_call_edge(a, b):
+            call_edges.append((a, b))
+
+    # (iv) EXACTLY ONE boundary crossing, from a caller node to the callee entry.
+    assert len(call_edges) == 1, "the witness must cross the call boundary exactly once"
+    (cross_from, cross_to) = call_edges[0]
+    assert sg.proc_of_node.get(cross_from) == ProcId(int(nodes["caller_entry"])), (
+        "the CALL edge must originate in the caller procedure"
+    )
+    assert cross_to == nodes["callee_entry"], "the CALL edge must land on the callee entry"
+
+    # (v) CALLEE-INTERNAL nodes appear (no elision on this path): the callee entry
+    # AND its internal CFG node both lie on the realising witness.
+    assert nodes["callee_entry"] in witness, "callee entry must appear in the witness"
+    assert nodes["callee_mid"] in witness, "callee-internal CFG node must appear (no elision)"
+    # The portion of the witness inside the callee is a contiguous tail.
+    callee_pid = ProcId(int(nodes["callee_entry"]))
+    callee_nodes_on_path = [n for n in witness if sg.proc_of_node.get(n) == callee_pid]
+    assert callee_nodes_on_path == [
+        nodes["callee_entry"],
+        nodes["callee_mid"],
+        nodes["callee_sink"],
+    ], "the callee-internal witness segment must be the full entry->mid->sink path"
+
+
+@pytest.mark.unit
+def test_core_01_incremental_preserves_out_of_closure_finding() -> None:
+    """PR3 (DELIVERABLE 2): incremental_solve preserves an out-of-closure finding.
+
+    Test id:       (CMP-CORE-01 PR3 incremental == full equality, out-of-closure)
+    Maps to AC:    AC-CORE-01c completeness side (the readout must not DROP a
+                   finding in an unchanged, out-of-closure procedure relative to a
+                   full solve — DOC-ALGS §2 Algorithm-1 handoff, property (b)).
+    Kind tag:      [UNIT]
+    Inputs:        a fixture with an AFFECTED call chain ({leaf, mid, top}) AND an
+                   independent out-of-closure procedure ``other`` that carries its
+                   OWN complete source->sink finding; a prior full SolverResult fed
+                   back as ``prior_summaries`` + ``prior_findings``.
+    Outputs:       incremental_solve().findings and .solution_hash.
+    Pass criteria: (i) ANTI-VACUITY — a FULL solve emits TWO findings, one in the
+                   closure (``leaf``) and one OUTSIDE it (``other``); the
+                   out-of-closure finding is real, not vacuously absent;
+                   (ii) the incremental result, given the prior findings, is EQUAL
+                   to the full result on BOTH the finding set AND the
+                   pre-serialisation ``solution_hash`` — i.e. the out-of-closure
+                   finding is PRESERVED, not dropped; (iii) AC-CORE-01c still
+                   holds — ``other`` is NOT re-tabulated (its finding is reused,
+                   not recomputed).
+
+    THIS IS THE NEGATIVE CONTROL PR1/PR2 DELIBERATELY COULD NOT PASS. Reverting
+    the prior-findings merge in incremental_solve drops the ``other`` finding and
+    fails the equality assertion (mutation-verified).
+
+    Frequency:     every CI run.
+    Hard gate?:    yes — completeness of the incremental readout.
+    """
+    cpg, procs = _two_finding_cpg()
+    spec = _injection_spec()
+
+    full = solve(cpg, spec, S_version=_S_VERSION, env_digest=_ENV_DIGEST)
+
+    # (i) ANTI-VACUITY: the full solve finds TWO sinks — one in leaf (in closure),
+    # one in other (OUT of the {leaf} closure). Both are real source->sink paths.
+    sg = build_supergraph(cpg, canonical_order(cpg).canonical_order)
+    sink_procs = {sg.proc_of_node.get(f.sink) for f in full.findings}
+    assert len(full.findings) == 2, "full solve must emit two findings (leaf + other)"
+    assert procs["leaf"] in sink_procs
+    assert procs["other"] in sink_procs
+
+    # AFFECTED = {leaf}; closure = {leaf, mid, top}; ``other`` is OUTSIDE it.
+    affected = frozenset({procs["leaf"]})
+    expected_closure = frozenset({procs["leaf"], procs["mid"], procs["top"]})
+    assert affected | sg.transitive_callers(affected) == expected_closure
+    assert procs["other"] not in expected_closure
+
+    # (ii) incremental_solve, given the prior summaries + prior findings, is EQUAL
+    # to the full solve on the finding set AND the byte-level solution_hash. The
+    # out-of-closure ``other`` finding is preserved via the prior-findings merge.
+    incr = incremental_solve(
+        cpg,
+        spec,
+        affected,
+        full.summaries,
+        S_version=_S_VERSION,
+        env_digest=_ENV_DIGEST,
+        prior_findings=full.findings,
+    )
+    assert incr.findings == full.findings, (
+        "incremental readout must preserve the out-of-closure finding (== full)"
+    )
+    assert incr.solution_hash == full.solution_hash, (
+        "merged solution_hash must be byte-identical to the full-solve hash"
+    )
+
+    # (iii) AC-CORE-01c still holds: ``other`` was NOT re-tabulated — its finding
+    # was REUSED from prior_findings, not recomputed. (A merge that secretly
+    # re-tabulated everything would defeat property (b).)
+    assert incr.visited_procs <= expected_closure
+    assert procs["other"] not in incr.visited_procs
+    assert procs["leaf"] in incr.visited_procs
 
 
 # ---------------------------------------------------------------------------
