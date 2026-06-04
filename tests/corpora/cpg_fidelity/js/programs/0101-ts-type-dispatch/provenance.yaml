@@ -12,4 +12,4 @@ notes: |
   Authored for this corpus (Apache-2.0). TS surface; tsconfig.json included
   (DOC §7: surface=ts requires a tsconfig for reproducible tsc). The s.area()
   site is type-informed dispatch (target set {Circle.area, Square.area});
-  v1.0.0 resolves it via tsc --noEmit --declaration (CLAR-CORP-20).
+  v1.0.0 resolves it via tsc --noEmit --declaration (CLAR-CORP-12).
