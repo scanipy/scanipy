@@ -62,6 +62,12 @@ CODEQL_ARGV_ALLOWLIST: Final[frozenset[str]] = frozenset(
     }
 )
 GIT_ARGV_ALLOWLIST: Final[frozenset[str]] = frozenset(
+# NOTE (review finding, PR #285 / deferred to the execute-loop phase): the
+# allowlist gates flag TOKENS only — "-c" is admitted unconditionally, so a
+# paired "key=value" override is not value-checked here, and the bare
+# "core.sshCommand" entry never matches enforcement (non-flag token). A
+# value-level check for "-c" pairs MUST land with the execute loop, where git
+# is first actually spawned (run_execute_loop is NotImplementedError today).
     {
         "clone",
         "checkout",
