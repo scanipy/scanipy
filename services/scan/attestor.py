@@ -70,6 +70,11 @@ BUILD-AHEAD REGIME (sanctioned by CLAR-PROC-01, WBS §17 RESOLVED 2026-06-04).
          ``UUID | None`` field permits). No DB row is written in the hermetic
          surface; ``CMP-CP-05`` stays IN-PROGRESS until CANARY-01 + the
          persistence layer land.
+
+Interface-shape deviations vs DOC §3.4 are consolidated in CLAR-CP-05-03
+(WBS §17): injected ScanRunner F-port, caller-supplied s_version/env_digest,
+fresh double-run, persistence-gated attestations/provenance seams, and the
+oracle-rate denominator reading.
 """
 
 from __future__ import annotations
