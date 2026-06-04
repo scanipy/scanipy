@@ -44,7 +44,7 @@ here: :func:`authorize_request_for_binding` (the tenancy + RBAC decision) and
 The §3.1 FastAPI ``Request``/``call_next`` ASGI middleware that *wraps* this seam
 is deliberately NOT built here: no test in scope exercises it and FastAPI is not
 a pinned dependency. Per RULE-4 (no invented scope), wiring an unpinned web
-framework is filed as a CLAR-DEPLOY (FastAPI request-lifecycle adapter for the
+framework is filed as CLAR-DEPLOY-19 (FastAPI request-lifecycle adapter for the
 CP-01 middleware stack) rather than guessed at here.
 
 Provenance / RULE-6 note: CP-01 is a **non-emitting** component (DOC-CMP-CP-01
