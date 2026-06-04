@@ -55,7 +55,10 @@ BUILD-AHEAD REGIME (sanctioned by CLAR-PROC-01, WBS §17 RESOLVED 2026-06-04).
   (Architect to reconcile); the CORE-02 port supplies only the per-finding
   ``slice_fingerprint`` hex.
 
-INTERFACE RECONCILE: CLAR-ORCH-02 (is_mixed sourcing); WorkerJob shape deviations filed as CLAR-ORCH-04 (precondition_status source) + CLAR-ORCH-05 (hmac_key_id/callback_path omitted until the callback glue lands).
+INTERFACE RECONCILE: CLAR-ORCH-02 (is_mixed sourcing); WorkerJob shape
+deviations filed as CLAR-ORCH-04 (precondition_status source) and
+CLAR-ORCH-05 (hmac_key_id/callback_path omitted until the callback glue
+lands).
   The shipped ``detectors.registry.Detector`` (CMP-DET-02) has no ``is_mixed``
   flag and carries a single ``spec`` (not a ``specs`` list) as
   DOC-CMP-ORCH-03 §3.1 sketches. AC-ORCH-03b (mixed-detector per-finding origin)
