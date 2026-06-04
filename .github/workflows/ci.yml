@@ -126,6 +126,15 @@ jobs:
         # them (CLAR-CI-01, WBS §17). The DB-backed invariant falsifiers carry
         # `integration` and run in the integration-tests job instead.
         #
+        # CMP-CI-01 staging-table DRIFT GUARD rides this job: the
+        # `@pytest.mark.unit` test in tests/unit/test_staging_status_table.py
+        # FAILS if the committed docs/cross-cutting/DOC-STAGING-STATUS.md has
+        # drifted from a regeneration (it stops the AC-driven table from rotting
+        # back into hand-edited prose — WBS §21-L9). It is a developer-experience
+        # quality bar carried HERE, NOT a fifth Gate-class check (DOC-CMP-CI-01
+        # §7.1 forbids a fifth gate without an SDD AC); it is never a release
+        # blocker, just a loud red unit test like any other.
+        #
         # `coverage.fail_under = 80` in pyproject.toml is the production
         # contract. During the scaffold phase, no application source
         # exists yet (analysis/, detectors/, integrations/, services/,
