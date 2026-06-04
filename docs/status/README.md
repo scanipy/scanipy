@@ -21,6 +21,20 @@ between the engineering agent waves and the human tracks.
 4. When a row's completion flips a `TST-AC-*` from xfail/skip to green, say so in the PR body — the
    engineering side re-runs the §21 scorecard after every merge here.
 
+## Board conventions (Project #5)
+
+- **`Exec Wave` field** (single-select): the engineering wave that last shipped substantive work
+  for the item — `Wave 1..6` for the 12/12 push, `AWS track` for the #273 epic. Multi-wave history
+  lives in the **`wave:N` labels** (an issue touched by several waves carries several labels;
+  the matching PRs carry the same label).
+- **PR ↔ issue linkage** is by `Refs #N` mention (deliberate: wave PRs must not auto-close
+  components that are not DONE — RULE-3), so the board's built-in "Linked pull requests" column
+  stays empty by design. To see a wave's PRs: filter PRs by `label:wave:N`; to see an issue's PRs:
+  its timeline mentions.
+- The setup-era dependency-readiness field was renamed **"Kickoff readiness (setup-era)"**
+  (historical; do not confuse with `Exec Wave`).
+- `Status` transitions remain `scripts/board.sh`-only (RULE-11).
+
 ## Provenance of these documents
 
 Derived from the 2026-06-04 five-area MVP gap audit (component truth counted by **green ACs only**,
