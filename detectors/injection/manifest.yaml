@@ -1,0 +1,12 @@
+# CMP-DET-03 — injection detector manifest (Stage-A, Java + Python).
+# determinism_partition is DERIVED downstream by CMP-DET-02 from `engine`
+# (ifds -> deterministic-core); it is NOT authored here (DOC-CMP-DET-03 §4.4).
+id: "java-py-injection"
+cwes: ["CWE-89", "CWE-78"]
+languages: ["java", "python"]
+frameworks: ["jdbc", "spring-jdbc", "flask", "subprocess"]
+engine: "ifds"
+severity_default: "high"
+per_language_readiness:
+  java: "ready"
+  python: "ready"

@@ -931,3 +931,190 @@ def test_inv4_register_admits_well_formed_parsed_spec_negative_control() -> None
     reg.register(det)  # must not raise: parsed in-grammar spec admits cleanly
     assert reg.all() == (det,)
     assert reg.by_id("handbuilt-good") is det
+
+
+# ─── CMP-DET-03 — real Stage-A detector specs (replace the stub specs) ───────
+# The four-class scaffold residual: author the REAL Java+Python taint specs for
+# the Stage-A classes in the combinator DSL (engine=ifds → deterministic-core),
+# parsed by CMP-DET-01 parse_spec and registered by CMP-DET-02. SOURCE OF TRUTH
+# for each (class, language) inventory is the "Well-formed spec" doc sections:
+#   - injection      java+python  DOC-DSL §8.1 + DOC-CMP-DET-01 §7.4
+#   - path-traversal python       DOC-DSL §8.2
+#   - deserialization java        DOC-DSL §8.3
+# ssrf (java+python), deserialization/python, and path-traversal/java are NOT
+# specified by any DOC and are deferred via CLAR (path-traversal/java ties to the
+# existing CLAR-MIGRATION-02 / AC-DET-03b CVE-reproduction work). They are NOT
+# authored here — encoding them would be inventing scope from memory (RULE-4 /
+# INV-6 dishonest per-language labeling). AC-DET-03b stays deferred.
+#
+# These rows hydrate red→green when the real specs land under detectors/<class>/.
+# No (class, language) pair enters Algorithm-2 benchmarking before CMP-CP-06 is
+# green for that language (RULE-7); these specs only make Stage-A possible.
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_REAL_DETECTORS_ROOT = _REPO_ROOT / "detectors"
+
+# (authored detector id, spec class, manifest languages) for the three real,
+# DOC-specified Stage-A specs. Asserted by id/class/query — NOT by len() of the
+# whole tree — so additional class dirs authored by other agents do not break
+# these tests.
+_STAGE_A_REAL_SPECS: list[tuple[str, str, tuple[str, ...]]] = [
+    ("java-py-injection", "injection", ("java", "python")),
+    ("python-os-path-traversal", "path-traversal", ("python",)),
+    ("java-jackson-untrusted-deser", "deserialization", ("java",)),
+]
+
+
+def _load_real_registry() -> DetectorRegistry:
+    """Load the committed detectors/ tree (the real authored specs).
+
+    Atomic load (DOC-CMP-DET-02 §7.3): if ANY committed detector were malformed
+    this raises, so a clean load is itself evidence every authored spec passes
+    the CMP-DET-01 closure check (Gate 1) and the CMP-DET-02 manifest checks.
+    """
+    reg = DetectorRegistry()
+    reg.load_manifests(str(_REAL_DETECTORS_ROOT))
+    return reg
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("detector_id", "class_name", "languages"),
+    _STAGE_A_REAL_SPECS,
+    ids=[d for d, _, _ in _STAGE_A_REAL_SPECS],
+)
+def test_det_03_real_stage_a_spec_loads_and_registers_as_core(
+    detector_id: str, class_name: str, languages: tuple[str, ...]
+) -> None:
+    """CMP-DET-03 real Stage-A specs / Maps to AC-DET-03a, AC-DET-02b/c / [UNIT].
+
+    Inputs: the committed detectors/<class>/ tree (real authored DSL specs).
+    Outputs: each authored spec parses through CMP-DET-01 parse_spec (proven by a
+        clean atomic load_manifests), registers with engine='ifds', carries the
+        DERIVED determinism_partition='deterministic-core', and its DSL spec class
+        matches the class directory.
+    Pass criteria: the detector is present by id; engine=='ifds'; partition is
+        DERIVED == derive_partition('ifds') == 'deterministic-core' (INV-1);
+        spec.class_ == class_name; manifest languages == declared languages.
+    Frequency: every CI run. Hard gate? yes (Gate 1 closure check on real specs).
+    """
+    reg = _load_real_registry()
+    det = reg.by_id(detector_id)
+
+    # engine=ifds → deterministic-core, DERIVED (not authored on the manifest).
+    assert det.engine == "ifds"
+    assert det.determinism_partition == derive_partition("ifds") == "deterministic-core"
+
+    # The carried DSL Spec cleared parse_spec (closure check / Gate 1) and matches
+    # its class directory; a real (non-stub) spec has concrete clauses.
+    assert det.spec is not None
+    assert det.spec.class_ == class_name
+    assert det.spec.engine == "ifds"
+    assert len(det.spec.clauses) >= 2  # real source/sink content, not an empty stub
+    assert det.languages == languages
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("language", "class_name", "expected_id"),
+    [
+        ("java", "injection", "java-py-injection"),
+        ("python", "injection", "java-py-injection"),
+        ("python", "path-traversal", "python-os-path-traversal"),
+        ("java", "deserialization", "java-jackson-untrusted-deser"),
+    ],
+)
+def test_det_03_real_spec_is_queryable_by_language_and_class(
+    language: str, class_name: str, expected_id: str
+) -> None:
+    """CMP-DET-03 real Stage-A specs / Maps to AC-DET-02 query contract / [UNIT].
+
+    Inputs: the committed detectors/ tree.
+    Outputs: DetectorRegistry.all_for(language=, class_=) — consumed by CMP-ORCH-03
+        when dispatching detectors — returns the authored detector for every
+        DOC-specified (class, language) pair. This is the single-spec/multi-language
+        design (injection declares languages=['java','python']) paying off: the one
+        combined injection spec is returned for BOTH (java, injection) and
+        (python, injection).
+    Pass criteria: expected_id is in all_for(language, class_).
+    Frequency: every CI run. Hard gate? yes.
+    """
+    reg = _load_real_registry()
+    got = [d.id for d in reg.all_for(language=language, class_=class_name)]
+    assert expected_id in got, f"({language}, {class_name}) expected {expected_id}, got {got}"
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("language", "class_name"),
+    [
+        # Deferred / unspecified pairs MUST NOT be silently present: authoring them
+        # would be invented scope (RULE-4) and dishonest per-language labeling (INV-6).
+        # TRIPWIRE: delete the matching row(s) when CLAR-DET-03 (ssrf + deser/python)
+        # or CLAR-MIGRATION-02 (path-traversal/java) resolves and the spec is
+        # legitimately authored — otherwise this guard goes red on the real spec.
+        ("python", "deserialization"),  # no Python deser inventory in any DOC (CLAR-DET-03)
+        ("java", "path-traversal"),  # only "Java sibling for CVE-2025-61765" (CLAR-MIGRATION-02)
+        ("java", "ssrf"),  # ssrf appears only in the malformed broken-3 example §8.6 (CLAR-DET-03)
+        ("python", "ssrf"),  # no ssrf inventory in any DOC (CLAR-DET-03)
+    ],
+)
+def test_det_03_deferred_pairs_are_not_authored(language: str, class_name: str) -> None:
+    """CMP-DET-03 honesty guard / Maps to RULE-4 + INV-6 / [UNIT].
+
+    Inputs: the committed detectors/ tree.
+    Outputs: no detector is queryable for a (class, language) pair whose inventory
+        is NOT specified in DOC-CMP-DET-03 / DOC-DSL / DOC-CMP-DET-01. This is the
+        anti-invention guard: if a later edit fabricated a Python deserialization
+        or Java path-traversal spec from memory, this test goes red.
+    Pass criteria: all_for(language, class_) is empty for every deferred pair.
+    Frequency: every CI run. Hard gate? yes.
+    """
+    reg = _load_real_registry()
+    assert reg.all_for(language=language, class_=class_name) == ()
+
+
+@pytest.mark.invariant
+def test_det_03_non_distributive_mutation_of_real_spec_is_rejected() -> None:
+    """CMP-DET-03 negative control / Maps to INV-4 (Gate-1 teeth) / [INVARIANT].
+
+    MUTATION-VERIFIED negative control: proves the DSL closure check (Gate 1) has
+    teeth on the REAL authored injection spec, not only on synthetic fixtures.
+
+    A non-distributive mutation — a §4.3 sequencing combinator (`then`), which the
+    DSL excludes precisely because it would break the distributivity identity
+    f(X union Y) = f(X) union f(Y) — is injected into the committed injection spec
+    and must be rejected at parse with the precise E-DSL-005 diagnostic. Empirically
+    confirmed FAILING against the
+    mutated real spec (the broken impl this guards) and PASSING (no raise) on the
+    un-mutated real spec.
+
+    Anti-vacuity: the un-mutated committed spec parses cleanly (a check that
+    rejected everything would also "reject the mutation" but be useless). The pair
+    of assertions makes the control one-sided and non-vacuous.
+
+    Inputs: the committed injection spec text; a `then`-mutated copy of it.
+    Outputs: parse_spec(unmutated) returns a Spec; parse_spec(mutated) raises
+        DSLError(code='E-DSL-005') with the §4.3 sequencing diagnostic.
+    Pass criteria: un-mutated parses (≥4 clauses); mutated raises E-DSL-005.
+    Frequency: every CI run. Hard gate? yes.
+    """
+    spec_path = _REAL_DETECTORS_ROOT / "injection" / "specs" / "java-py-injection.dsl.yaml"
+    real_text = spec_path.read_text(encoding="utf-8")
+
+    # Anti-vacuity: the un-mutated real spec is admitted (it is in-grammar).
+    accepted = parse_spec(real_text)
+    assert isinstance(accepted, Spec)
+    assert accepted.id == "java-py-injection"
+    assert len(accepted.clauses) >= 4
+
+    # Non-distributive mutation: prepend a `then` sequencing combinator (§4.3) to a
+    # real propagate clause. This is the specific broken impl the gate must catch.
+    mutated_text = real_text.replace("propagate(arg[0] → ret)", "then propagate(arg[0] → ret)", 1)
+    assert mutated_text != real_text, "mutation must actually change the spec text"
+
+    with pytest.raises(DSLError) as exc:
+        parse_spec(mutated_text)
+    assert exc.value.code == "E-DSL-005"
+    assert "sequencing" in exc.value.message.lower()
+    assert exc.value.suggested_fix  # structured diagnostic
