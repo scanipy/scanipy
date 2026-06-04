@@ -1,0 +1,27 @@
+id: "java-py-injection"
+class: "injection"
+languages: ["java", "python"]
+engine: "ifds"
+
+# ─── Java: JDBC SQL injection (faithful subset of DOC-DSL §8.1) ───────────────
+# Sources: HTTP request parameters/headers reaching the application.
+source(?T<:javax.servlet.http.HttpServletRequest.getParameter(*))
+source(?T<:javax.servlet.http.HttpServletRequest.getHeader(*))
+# Propagators: String concat and StringBuilder.append.
+propagate(arg[0] → ret)
+propagate(arg[0] → field[buf])
+propagate(field[buf] → ret)
+# Sanitizer: PreparedStatement parameter binding.
+sanitize(?T<:java.sql.PreparedStatement.setString(*))
+# Sinks: raw query execution APIs.
+sink(?T<:java.sql.Statement.executeQuery(arg[0]))
+sink(?T<:java.sql.Statement.executeUpdate(arg[0]))
+
+# ─── Python: command injection (faithful subset of DOC-CMP-DET-01 §7.4) ───────
+# Sources: Flask request parameters.
+source(flask.request.args.get(*))
+source(flask.request.form.get(*))
+# Sanitizer: shell-argument quoting.
+sanitize(shlex.quote(arg[0]))
+# Sink: subprocess command execution.
+sink(subprocess.Popen(arg[0]))

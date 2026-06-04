@@ -1,0 +1,15 @@
+# CMP-DET-03 — path-traversal detector manifest (Stage-A, Python).
+# Java is NOT covered here: the only Java path-traversal content the docs
+# describe is "any Java sibling required by CVE-2025-61765" (DOC-CMP-DET-03
+# §4.2 / AC-DET-03b), which is deferred under CLAR-MIGRATION-02. Declaring
+# `java` ready here would be dishonest labeling (INV-6), so `languages` lists
+# only `python`.
+# determinism_partition is DERIVED downstream by CMP-DET-02 from `engine`.
+id: "python-os-path-traversal"
+cwes: ["CWE-22"]
+languages: ["python"]
+frameworks: ["flask", "werkzeug"]
+engine: "ifds"
+severity_default: "high"
+per_language_readiness:
+  python: "ready"
