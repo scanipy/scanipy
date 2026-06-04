@@ -59,11 +59,41 @@ jobs:
             echo "CMP-CORP-CANARY-01 must be DONE before Attestor can run the full 100-repo suite."
           fi
 
+      # Gate-3 selector widening (security co-sign rec on #293, accepted):
+      # the original -k "attestor or determinism or core_partition" did NOT
+      # collect the oracle-never-claims-theorem contract test
+      # (test_cp05b_oracle_pipeline_reports_rate_never_theorem), because its
+      # node name carries no "attestor"/"determinism"/"core_partition"
+      # substring. Adding `or cp05b` widens the selector to ALSO collect that
+      # one test. `cp05b` is unique repo-wide (verified by --collect-only), so
+      # the widening adds exactly +1 test and nothing unintended. cp05b is an
+      # @pytest.mark.invariant test, so the "invariant or empirical" marker gate
+      # keeps it; it runs GREEN today (CP-05 landed in #293), so this gate is
+      # not vacuous.
+      - name: Assert Gate-3 selector collects the cp05b oracle-theorem contract
+        # Workflow-side falsifier (drift guard for the -k expression): if a
+        # future edit narrows -k so cp05b is dropped, this step FAILS the
+        # workflow before the suite runs. This is the gate-side analogue of the
+        # committed-table drift guard. A deliberately-wrong -k (e.g. dropping
+        # `or cp05b`) makes the grep miss and this step exit 1.
+        run: |
+          if ! pytest tests/ \
+            -m "invariant or empirical" \
+            -k "attestor or determinism or core_partition or cp05b" \
+            --collect-only 2>/dev/null \
+            | grep -q "test_cp05b_oracle_pipeline_reports_rate_never_theorem"; then
+            echo "::error::Gate-3 -k no longer collects the cp05b oracle-theorem" \
+                 "contract (test_cp05b_oracle_pipeline_reports_rate_never_theorem)." \
+                 "Restore 'or cp05b' in the -k expression."
+            exit 1
+          fi
+          echo "Gate-3 selector collects the cp05b oracle-theorem contract test."
+
       - name: Run Attestor core tests
         run: |
           pytest tests/ \
             -m "invariant or empirical" \
-            -k "attestor or determinism or core_partition" \
+            -k "attestor or determinism or core_partition or cp05b" \
             -q --tb=long -v \
             --junit-xml=attestor-results.xml
         env:
