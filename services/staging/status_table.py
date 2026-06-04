@@ -46,13 +46,13 @@ if TYPE_CHECKING:
 # the paths below are this module's working assumption, surfaced for ratification
 # in CLAR-CI-02 (the staging-status-table CLAR).
 DEFAULT_FIDELITY_ROOT = Path("tests/results/cpg_fidelity")
-# INTERFACE-SHAPE DEVIATION (the staging-status-table CLAR, orchestrator-numbered):
+# INTERFACE-SHAPE DEVIATION (CLAR-CI-02):
 # DOC-CMP-CP-05 pins NO on-disk verdict artifact — ``AttestationVerdict`` is
 # in-memory / DB-bound (a repo-wide grep for a CP-05 verdict JSON path was empty).
 # This generator reads an OPTIONAL per-stage attestation verdict file; absent →
 # ``not-attested``. It never invents a CP-05 format and renders it as real.
 DEFAULT_ATTESTATION_ROOT = Path("tests/results/attestation")
-# INTERFACE-SHAPE DEVIATION (the staging-status-table CLAR, orchestrator-numbered):
+# INTERFACE-SHAPE DEVIATION (CLAR-CI-02):
 # the named-AC-outcome file path is likewise undefined in any DOC; absent → not green.
 DEFAULT_AC_RESULTS_ROOT = Path("tests/results/ac_outcomes")
 # DOC-STAGING §7.3 points the AC-driven table at WBS §13 prose, which is NOT editable
