@@ -23,7 +23,7 @@ import pytest
 
 from analysis.ifds.dsl.primitives import AccessPathPattern, Sink, Source
 from analysis.ifds.dsl.spec import Spec
-from analysis.ifds.solver import incremental_solve, solve
+from analysis.ifds.solver import SummaryCache, incremental_solve, solve
 from analysis.ifds.supergraph import ProcId, build_supergraph
 from analysis.ordering import (
     CPG,
@@ -797,6 +797,50 @@ def test_core_01_incremental_preserves_out_of_closure_finding() -> None:
     assert incr.visited_procs <= expected_closure
     assert procs["other"] not in incr.visited_procs
     assert procs["leaf"] in incr.visited_procs
+
+
+@pytest.mark.unit
+@pytest.mark.invariant
+def test_core_01_incremental_rejects_version_mismatched_prior_findings() -> None:
+    """INV-2 guard (PR #287 review finding): prior findings from a DIFFERENT
+    pinned (S_version, env_digest) must be REJECTED, never silently merged.
+
+    A preserved finding is re-emitted into this run's result; merging one
+    produced under a different S or Env would thread stale provenance. Both
+    mismatch axes are exercised; the matching case is the existing preservation
+    test (anti-vacuity lives there).
+    """
+    cpg, procs = _two_finding_cpg()
+    spec = _injection_spec()
+    full = solve(cpg, spec, S_version=_S_VERSION, env_digest=_ENV_DIGEST)
+    affected = frozenset({procs["leaf"]})
+
+    # Key fresh (empty) summaries to the RUN's bumped params so the
+    # pre-existing SummaryCacheVersionMismatch guard does NOT fire first —
+    # isolating the prior_FINDINGS guard under test.
+    bumped_s = _S_VERSION + "-bumped"
+    with pytest.raises(ValueError, match="INV-2"):
+        incremental_solve(
+            cpg,
+            spec,
+            affected,
+            SummaryCache(header=(bumped_s, bytes(_ENV_DIGEST)), summaries={}, visited=set()),
+            S_version=bumped_s,  # S mismatch vs the prior findings
+            env_digest=_ENV_DIGEST,
+            prior_findings=full.findings,
+        )
+
+    other_env = Sha256(bytes([1]) * 32)
+    with pytest.raises(ValueError, match="INV-2"):
+        incremental_solve(
+            cpg,
+            spec,
+            affected,
+            SummaryCache(header=(_S_VERSION, bytes(other_env)), summaries={}, visited=set()),
+            S_version=_S_VERSION,
+            env_digest=other_env,  # Env mismatch vs the prior findings
+            prior_findings=full.findings,
+        )
 
 
 # ---------------------------------------------------------------------------
