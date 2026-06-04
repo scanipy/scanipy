@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 # ``tests/results/cpg_fidelity/{language}/latest.json``. The CP-05 attestation
 # verdict and the named-AC-outcome files have NO path pinned in any DOC today;
 # the paths below are this module's working assumption, surfaced for ratification
-# in the staging-status-table CLAR (orchestrator-numbered).
+# in CLAR-CI-02 (the staging-status-table CLAR).
 DEFAULT_FIDELITY_ROOT = Path("tests/results/cpg_fidelity")
 # INTERFACE-SHAPE DEVIATION (the staging-status-table CLAR, orchestrator-numbered):
 # DOC-CMP-CP-05 pins NO on-disk verdict artifact — ``AttestationVerdict`` is
