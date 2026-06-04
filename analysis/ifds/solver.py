@@ -493,6 +493,7 @@ def incremental_solve(
     *,
     S_version: str,  # noqa: N803  (INV-2 provenance field name — normative, DOC §3.1)
     env_digest: Sha256,
+    prior_findings: frozenset[Finding] = frozenset(),
 ) -> SolverResult:
     """Bounded incremental mode (AC-CORE-01c).
 
@@ -501,6 +502,59 @@ def incremental_solve(
     ``SolverResult.visited_procs`` is a subset of
     ``affected_set | transitive_callers(affected_set)`` — that is the AC-CORE-01c
     guarantee the unit test asserts.
+
+    OUT-OF-CLOSURE FINDINGS PRESERVATION (PR3; DOC-ALGS §2 Algorithm-1 handoff,
+    DOC-CMP-CORE-01 §3.1 incremental contract). The bounded re-tabulation only
+    seeds sources inside the closure (``proc_in_scope`` gates seeding in
+    :func:`_tabulate`), so the freshly read-out findings carry **only**
+    closure-procedure findings. A finding in an UNCHANGED, out-of-closure
+    procedure would therefore silently vanish relative to a full :func:`solve`:
+    PR1/PR2 reused summaries but never prior *findings*, and ``_build_findings``
+    reads only the restricted ``facts_at``. To honour property (b) ("rebuild ∝
+    semantic delta") while keeping the readout COMPLETE, this PR merges the
+    **out-of-closure** subset of ``prior_findings`` — the previous
+    :class:`SolverResult`.``findings`` (the existing typed interface) — into the
+    readout. A prior finding is preserved iff the procedure owning its sink node
+    lies OUTSIDE the recomputed closure: that procedure was not re-tabulated, so
+    its prior finding still stands. In-closure prior findings are intentionally
+    DROPPED and replaced by the fresh read-out (which reflects any change).
+    ``prior_findings`` defaults to empty, so existing call sites that only need
+    the closure subset are unaffected. ``solution_hash`` is computed over the
+    MERGED set, so an incremental run and a full :func:`solve` over the same
+    source agree on both ``findings`` and ``solution_hash``.
+
+    SOUNDNESS NOTE + KNOWN LIMITATION (CLAR-CORE-01 amendment, PR3). The merge
+    key is ``proc_of_node(finding.sink)`` — the procedure owning the finding's
+    SINK. Cross-procedure findings DO exist as of PR3: forward caller->callee
+    taint flow produces a finding whose seeding source is in the CALLER and whose
+    sink is in the CALLEE (the Deliverable-1 fixture is exactly this shape; its
+    witness ``src(caller) -> call_site -> callee_entry -> ... -> sink(callee)``
+    spans two procedures). So the merge key is the SINK proc, not "the finding's
+    proc" — there is no single proc. Directional analysis of the sink-proc key:
+
+      - ``affected ⊇ {sink-proc}`` (e.g. the changed proc IS or CALLS the
+        sink-proc): the closure is upward-closed under callers, so when the
+        sink-proc is in the closure every CALLER of it (including the source's
+        proc, which must reach the sink-proc to taint it) is ALSO in the closure.
+        The bounded re-tabulation therefore reproduces the cross-proc finding
+        from scratch, and the in-closure prior finding is dropped and replaced.
+        SOUND.
+
+      - ``affected = {source-proc}`` only, with the sink in a CALLEE that is NOT
+        a caller of anything affected: the callee (sink-proc) is OUTSIDE the
+        closure (callees are not in the upward caller-closure). The bounded
+        re-tabulation seeds the caller but ``proc_in_scope(callee)`` is False, so
+        it does NOT reproduce the cross-proc finding; the merge then PRESERVES
+        the prior finding by its sink-proc. If the caller's edit REMOVED the
+        source, this retains a now-STALE cross-proc finding. KNOWN LIMITATION,
+        deferred: a correct fix needs the (still-unbuilt) incremental
+        cross-procedure summary-reuse machinery that re-derives caller->callee
+        flow inside the closure; the minimal closure-respecting merge sanctioned
+        for PR3 cannot do this without re-tabulating callees (which would defeat
+        property (b)). Reported in CLAR-CORE-01 (PR3 amendment) for the
+        orchestrator. The PR3 test exercises the SOUND ``affected ⊆ {sink-proc's
+        own proc}`` / out-of-closure-independent-proc case, which is the recorded
+        PR1/PR2 blocker this PR removes.
 
     Raises ``SummaryCacheVersionMismatch`` semantics via ``ValueError`` if the
     prior cache was keyed under a different ``(S_version, env_digest)``.
@@ -529,7 +583,7 @@ def incremental_solve(
         sg, spec, seeded, restrict_to=closure, summaries=summaries, canon_index=canon_index
     )
 
-    findings = _build_findings(
+    fresh = _build_findings(
         sg,
         spec,
         facts_at,
@@ -540,6 +594,26 @@ def incremental_solve(
         fingerprint_class=order_result.fingerprint_class,
         canon_index=canon_index,
     )
+
+    # Preserve prior findings of procedures OUTSIDE the recomputed closure: they
+    # were not re-tabulated, so their prior findings stand. In-closure prior
+    # findings are dropped — the fresh read-out replaces them.
+    # INV-2 version-alignment guard (review finding, PR #287): a preserved
+    # finding is re-emitted into THIS run's result, so its pinned parameters
+    # must match this run's (S_version, env_digest) — silently merging findings
+    # from a different S or Env would thread stale provenance (INV-2).
+    for f in prior_findings:
+        if f.S_version != S_version or bytes(f.env_digest) != bytes(env_digest):
+            raise ValueError(
+                "INV-2: prior_findings carry (S_version, env_digest) "
+                f"({f.S_version!r}, {bytes(f.env_digest).hex()[:12]}…) that do not "
+                f"match this run's ({S_version!r}, {bytes(env_digest).hex()[:12]}…); "
+                "an incremental solve may only merge prior findings produced "
+                "under the identical pinned parameters"
+            )
+    preserved = [f for f in prior_findings if sg.proc_of_node.get(f.sink) not in closure]
+    findings = [*fresh, *preserved]
+
     solution_hash = _hash_solution(findings, canon_index)
     return SolverResult(
         findings=frozenset(findings),
