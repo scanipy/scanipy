@@ -30,21 +30,27 @@ real) require to certify. As currently decided, those lines are **uncertifiable 
 ## 2. §21 scorecard tracker (12 lines)
 
 Verdicts are the 2026-06-04 audit; engineering re-scores after every relevant merge.
+**Engineering re-score 2026-06-04 (post-#297):** the engineering lane is complete — 17 code PRs
+(#262–#297) merged across 6 waves + the composition PR. Every §21 *mechanism* is built and
+mutation-tested, including the first zero-fakes end-to-end run of the assembled core lane
+(spec → registry → worker → solver witness → real CORE-02 fingerprint → byte-identical SARIF →
+CP-05 core attestation, PR #297). What remains red is **not engineering**: corpus campaigns
+(STATUS-CORPUS-TEAM.md), the AWS runbook (#273/#274→#283), and the §3 signature backlog.
 
 | # | §21 line | Verdict 2026-06-04 | What flips it | Owner track | Status (fill) |
 |---|---|---|---|---|---|
 | L1 | Phase 0 — every CMP has DOC-CMP-* | **MET** | — | — | MET |
-| L2 | Phase 1 — every AC has TST-AC-*, every INV has TST-INV-* | MET-as-artifacts | Stays met; stubs go green under L3 | Engineering | _____ |
-| L3 | Stage A — every Stage-A CMP all ACs green (Java+Py) | UNMET | Waves 3–7 code (CORE-02, FND-01, ORCH-01/03, CP-05, CP-06) **+** corpora at gate-strength **+** Fork §1 | Engineering + Corpus + CTO | _____ |
-| L4 | CP-05 — byte-identical core SARIF | UNMET (Gate 3 passes **vacuously** today) | FND-01 (Wave 3, in flight) → CP-05 build (Waves 4–5) + CANARY-01 corpus | Engineering + Corpus | _____ |
-| L5 | SNAP-04 — re-partition on seeded CW-DETECT FN; SLA published | UNMET (mechanism merged; **detection scanner unbuilt**) | CLAR-FE-03 decision → scanner build + adversarial corpus + falsifier-cw PR trigger | CTO (fund) + Engineering | _____ |
+| L2 | Phase 1 — every AC has TST-AC-*, every INV has TST-INV-* | MET-as-artifacts | Stays met; stubs go green under L3 | Engineering | MET-as-artifacts (corpus-gated stubs stay honest xfail/skip — CLAR-PROC-01) |
+| L3 | Stage A — every Stage-A CMP all ACs green (Java+Py) | UNMET | Waves 3–7 code (CORE-02, FND-01, ORCH-01/03, CP-05, CP-06) **+** corpora at gate-strength **+** Fork §1 | Engineering + Corpus + CTO | UNMET — engineering half DONE (#284–#297); blocked on corpus campaigns at gate-strength + Fork §1 |
+| L4 | CP-05 — byte-identical core SARIF | UNMET (Gate 3 passes **vacuously** today) | FND-01 (Wave 3, in flight) → CP-05 build (Waves 4–5) + CANARY-01 corpus | Engineering + Corpus | MECHANISM MET (#293 attestor, Gate 3 = 5 real tests #296, end-to-end composition proof #297); full claim corpus-gated on CANARY-01 |
+| L5 | SNAP-04 — re-partition on seeded CW-DETECT FN; SLA published | UNMET (mechanism merged; **detection scanner unbuilt**) | CLAR-FE-03 decision → scanner build + adversarial corpus + falsifier-cw PR trigger | CTO (fund) + Engineering | UNMET — unchanged; awaiting CLAR-FE-03 signature (§3-A) |
 | L6 | TRI-02 — adversarial + martingale tests | **MET** | — | — | MET |
-| L7 | CI-01 — four gates as hard pipeline failures | PARTIAL (Gates 1+4 real; Gate 2 never runs on PR; Gate 3 vacuous) | Gate 2: REFL corpus + PR-trigger decision (§3-D). Gate 3: CP-05 + CANARY-01 | Engineering + Corpus + CTO | _____ |
-| L8 | DEPLOY-01..05 — substrate, signed image, observability, isolation | PARTIAL (decisions recorded; **execution not started**) | `STATUS-AWS-TEAM.md` runbook, items 1–9 | AWS/SRE | _____ |
-| L9 | Staging table AC-driven (not prose) | UNMET | CP-06 harness (Wave 6) + corpora verdicts + table publisher | Engineering + Corpus | _____ |
-| L10 | CLAR register — all RESOLVED or explicitly deferred | UNMET (19 OPEN) | §3 decisions below | CTO/Architect | _____ |
+| L7 | CI-01 — four gates as hard pipeline failures | PARTIAL (Gates 1+4 real; Gate 2 never runs on PR; Gate 3 vacuous) | Gate 2: REFL corpus + PR-trigger decision (§3-D). Gate 3: CP-05 + CANARY-01 | Engineering + Corpus + CTO | PARTIAL — Gates 1+3+4 now real (Gate 3 de-vacuized #293/#296/#297); Gate 2 corpus-gated + §3-D trigger decision |
+| L8 | DEPLOY-01..05 — substrate, signed image, observability, isolation | PARTIAL (decisions recorded; **execution not started**) | `STATUS-AWS-TEAM.md` runbook, items 1–9 | AWS/SRE | PARTIAL — handed to AWS track (#273; critical chain #274→#278 = first real env_digest) |
+| L9 | Staging table AC-driven (not prose) | UNMET | CP-06 harness (Wave 6) + corpora verdicts + table publisher | Engineering + Corpus | MECHANISM MET (#295 CP-06 + #296 publisher; table is AC-driven and honestly all-ungated); real passes need corpora + CLAR-CI-02 verdict-home signature |
+| L10 | CLAR register — all RESOLVED or explicitly deferred | UNMET (19 OPEN) | §3 decisions below | CTO/Architect | UNMET — 31 OPEN / 55 RESOLVED / 3 DEFERRED (Waves 3–6 filed honest deviations rather than inventing scope; 13 need a §3 signature) |
 | L11 | OOS register — no drift | **MET** | — | — | MET |
-| L12 | Risks R-1..R-5 — DONE or LIVE-AS-POLICY | UNMET (R-3 done, R-5 policy; R-1/R-4 need SNAP-04+CP-05; R-2 needs CP-06) | Same dependencies as L4/L5 + CP-06 | All three tracks | _____ |
+| L12 | Risks R-1..R-5 — DONE or LIVE-AS-POLICY | UNMET (R-3 done, R-5 policy; R-1/R-4 need SNAP-04+CP-05; R-2 needs CP-06) | Same dependencies as L4/L5 + CP-06 | All three tracks | UNMET — unchanged deps (R-1/R-4: CLAR-FE-03 + CANARY-01; R-2: CP-06 corpora verdicts) |
 
 ---
 
