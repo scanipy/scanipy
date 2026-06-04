@@ -49,11 +49,13 @@ BUILD-AHEAD REGIME (sanctioned by CLAR-PROC-01, WBS §17 RESOLVED 2026-06-04).
 
   Neither value is ever computed-as-fake on the production path (CLAR-PROC-01
   condition (2)): the prod seam raises; only a test double supplies a value.
-  ``fingerprint_class`` for a finding is the REAL value threaded from
-  CMP-CORE-03 (it rides on ``canonical_order(cpg)``); the CORE-02 port supplies
-  only the per-finding ``slice_fingerprint`` hex.
+  ``fingerprint_class`` is sourced from CMP-CORE-03 (it rides on
+  ``canonical_order(cpg)``), which deviates from DOC §4.2's "carried from
+  CMP-CORE-02" — the source-attribution conflict is filed as CLAR-ORCH-03
+  (Architect to reconcile); the CORE-02 port supplies only the per-finding
+  ``slice_fingerprint`` hex.
 
-INTERFACE RECONCILE (reported — CLAR-ORCH-02, surfaced for filing).
+INTERFACE RECONCILE: CLAR-ORCH-02 (is_mixed sourcing); WorkerJob shape deviations filed as CLAR-ORCH-04 (precondition_status source) + CLAR-ORCH-05 (hmac_key_id/callback_path omitted until the callback glue lands).
   The shipped ``detectors.registry.Detector`` (CMP-DET-02) has no ``is_mixed``
   flag and carries a single ``spec`` (not a ``specs`` list) as
   DOC-CMP-ORCH-03 §3.1 sketches. AC-ORCH-03b (mixed-detector per-finding origin)
@@ -132,7 +134,9 @@ class WorkerJob:
     detector_id: str
     S_version: str  # semver — INV-2; bound by CMP-ORCH-01 at scan submission
     env_digest: str  # "sha256:" + 64 hex — INV-2; from CMP-SNAP-01 image digest
-    precondition_status: PreconditionStatus = "closed-world"
+    precondition_status: PreconditionStatus = (
+        "closed-world"  # job-carried provisionally — CLAR-ORCH-04
+    )
     policy_overrides: dict[str, object] = field(default_factory=dict)
 
 
