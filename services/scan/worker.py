@@ -140,6 +140,15 @@ class WorkerJob:
     precondition_status: PreconditionStatus = (
         "closed-world"  # job-carried provisionally — CLAR-ORCH-04
     )
+    # CLAR-ORCH-05 DISCHARGE (CMP-ORCH-01 PR): the HMAC-callback glue lands with
+    # CMP-ORCH-01, so DOC-CMP-ORCH-03 §3.1's two required fields become REAL here.
+    # ``hmac_key_id`` keys the per-job HMAC secret the worker signs its callback
+    # with (DOC-API §2.3); ``callback_path`` is the SDD-normative status path with
+    # ``job_id`` substituted (DOC-API §4.5). Defaulted "" so the CMP-ORCH-03
+    # hermetic fakes (which predate the callback glue) still construct unchanged;
+    # CMP-ORCH-01's ``post_scans`` populates both on every fanned job.
+    hmac_key_id: str = ""  # CLAR-ORCH-05 — keys the per-job HMAC secret
+    callback_path: str = ""  # CLAR-ORCH-05 — "/api/v1/jobs/{job_id}/status"
     policy_overrides: dict[str, object] = field(default_factory=dict)
 
 

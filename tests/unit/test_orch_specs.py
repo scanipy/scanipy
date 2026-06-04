@@ -31,6 +31,7 @@ Covers (from WBS §4.2 / §4.3):
 """
 
 import re
+import uuid
 from pathlib import Path
 
 import pytest
@@ -85,10 +86,6 @@ _QUALIFIERS = (
 
 
 @pytest.mark.unit
-@pytest.mark.xfail(
-    reason="CMP-ORCH-01 (Scan API) not yet implemented",
-    strict=False,
-)
 def test_orch_01b_worker_callback_rejects_invalid_hmac() -> None:
     """Worker callback rejects a payload with an invalid HMAC (negative test).
 
@@ -107,14 +104,81 @@ def test_orch_01b_worker_callback_rejects_invalid_hmac() -> None:
                     `jobs`/`scans` row mutation; constant-time digest compare.
     Frequency:      every CI run
     Hard gate?:     yes — component acceptance gate for CMP-ORCH-01.
+
+    Now LIVE (CMP-ORCH-01 implemented at ``services.scan.api``). The full
+    fan-out / cross-org / threading legs and the MUTATION-VERIFIED negative
+    controls live in ``tests/unit/test_orch01_scan_api.py``; this stub asserts
+    the AC-ORCH-01b headline (both HMAC failure modes reject at 401).
     """
-    # TODO: import the scan API from services.scan.api when CMP-ORCH-01 is DONE
-    # from services.scan.api import post_job_status, InvalidHmacError
-    # with pytest.raises(InvalidHmacError) as exc:  # forged digest
-    #     post_job_status(job_id, body, hmac_header="HMAC k1:deadbeef", ...)
-    # assert exc.value.http_status == 401 and exc.value.error_code == "invalid_hmac"
-    # # second case: valid digest, timestamp skew > 300s -> same rejection
-    pytest.skip("CMP-ORCH-01 not implemented yet")
+    from services.scan.api import (
+        InvalidHmacError,
+        JobStatusReport,
+        post_job_status,
+    )
+    from tests.orch01_fakes import (
+        FAKE_ENV_DIGEST,
+        FakeHmacKeyIssuer,
+        done_report,
+        sign_callback,
+    )
+    from tests.orch01_test_support import build_scan_store
+
+    job_id = uuid.UUID(int=10)
+    scan_id = uuid.UUID(int=11)
+    issuer = FakeHmacKeyIssuer()
+    key_id, secret = issuer.issue(job_id=job_id, scan_id=scan_id)
+    store = build_scan_store()
+    body = done_report(job_id, scan_id)
+
+    # (1) Forged digest → 401 invalid_hmac (the AC headline negative).
+    _, body_bytes = sign_callback(
+        job_id=job_id,
+        worker_id="worker-1",
+        timestamp=1000,
+        body=body,
+        key_id=key_id,
+        secret=secret,
+    )
+    with pytest.raises(InvalidHmacError) as exc:
+        post_job_status(
+            job_id,
+            body,
+            body_bytes,
+            hmac_header=f"HMAC {key_id}:{'0' * 64}",  # forged digest
+            worker_id_header="worker-1",
+            timestamp_header=1000,
+            key_issuer=issuer,
+            scan_store=store,
+            now=lambda: 1000,
+        )
+    assert exc.value.http_status == 401
+    assert exc.value.error_code == "invalid_hmac"
+    assert isinstance(body, JobStatusReport)  # body unchanged (no mutation)
+
+    # (2) Valid digest but timestamp skew > 300s → same 401 (anti-replay).
+    auth_header, body_bytes = sign_callback(
+        job_id=job_id,
+        worker_id="worker-1",
+        timestamp=1000,
+        body=body,
+        key_id=key_id,
+        secret=secret,
+    )
+    with pytest.raises(InvalidHmacError) as exc2:
+        post_job_status(
+            job_id,
+            body,
+            body_bytes,
+            hmac_header=auth_header,
+            worker_id_header="worker-1",
+            timestamp_header=1000,
+            key_issuer=issuer,
+            scan_store=store,
+            now=lambda: 1000 + 301,  # 301s skew > 300s window
+        )
+    assert exc2.value.http_status == 401
+    assert exc2.value.error_code == "invalid_hmac"
+    assert FAKE_ENV_DIGEST  # anti-vacuity anchor
 
 
 @pytest.mark.invariant
