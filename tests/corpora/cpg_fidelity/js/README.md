@@ -18,7 +18,7 @@ This is a **provisional, scaffolding** build. It delivers the load-bearing,
 
 - the v0.1.0 **call-graph + PDG** come from a documented *intraprocedural* resolver
   (`pipeline/extract_ground_truth.mjs`), **not** Jelly 1.4 + `tsc` as
-  `DOC §3.4` requires (filed as **CLAR-CORP-12**);
+  `DOC §3.4` requires (filed as **CLAR-CORP-20**);
 - program count (9) is a coverage skeleton, not a statistically-meaningful gate set
   (minimum-N is **CLAR-CORP-13**).
 
@@ -32,7 +32,7 @@ v0.1.0 ground truth** — see Open CLARs below.
 | Surfaces | js (7) + ts (2) | both, balanced |
 | AST ground truth | typescript-estree 6.18.0 (production tool) | same |
 | CFG ground truth | documented per-function visitor | same / Jelly-corroborated |
-| Call-graph + PDG ground truth | intraprocedural resolver (CLAR-CORP-12) | Jelly 1.4 + tsc type-informed |
+| Call-graph + PDG ground truth | intraprocedural resolver (CLAR-CORP-20) | Jelly 1.4 + tsc type-informed |
 
 ## What is SOURCED vs SYNTHESIZED
 
@@ -67,7 +67,7 @@ Per `FunctionDeclaration` / `FunctionExpression` / `ArrowFunctionExpression`
 `seq` (sequential), branch (`if`/`for`/`while`/`switch` bodies), `loop-back`, and
 explicit `await` / `yield` suspension self-edges. Output: `cfg.json`.
 
-## 3. Call-graph extraction (v0.1.0 resolver — CLAR-CORP-12)
+## 3. Call-graph extraction (v0.1.0 resolver — CLAR-CORP-20)
 
 `pipeline/extract_ground_truth.mjs` emits `(caller, callee, line)` triples tagged:
 
@@ -82,14 +82,14 @@ explicit `await` / `yield` suspension self-edges. Output: `cfg.json`.
 > **v1.0.0 replaces this resolver with Jelly 1.4** over the source tree, and a
 > second `tsc --noEmit --declaration` pass for TS type-informed edges, taking the
 > UNION tagged `jelly-only` / `tsc-only` / `both` / `type-informed` (`DOC §3.4`).
-> Filed as **CLAR-CORP-12**. Until then, gate call-edge numbers on this corpus are
+> Filed as **CLAR-CORP-20**. Until then, gate call-edge numbers on this corpus are
 > not authoritative.
 
 ## 4. PDG dependence edges (v0.1.0)
 
 Intra-function def→use data-dependence edges over variable declarations /
 assignments and their later identifier reads. Output: `pdg.json`. v1.0.0 uses
-Jelly's dataflow output (CLAR-CORP-12).
+Jelly's dataflow output (CLAR-CORP-20).
 
 ## 5. Determinism contract
 
@@ -124,7 +124,7 @@ MPL-2.0, ISC. Refusals recorded in `LICENSES.md`.
 
 ## Open CLARs (block v1.0.0 / gate-passing, not v0.1.0)
 
-- **CLAR-CORP-12** — adopt Jelly 1.4 (+ `tsc --noEmit --declaration` for TS
+- **CLAR-CORP-20** — adopt Jelly 1.4 (+ `tsc --noEmit --declaration` for TS
   type-informed edges) as the call-graph / PDG ground-truth tool, replacing the
   v0.1.0 intraprocedural resolver. Until resolved, JS/TS call-edge + PDG gate
   numbers on this corpus are NOT authoritative and `CMP-CP-06` must NOT declare the
