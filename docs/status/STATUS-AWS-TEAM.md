@@ -18,8 +18,8 @@ via the OIDC role; no long-lived keys.
 ### 1. AWS account + GitHub-Actions OIDC role *(CLAR-DEPLOY-13 — keyless CI→AWS)*
 Create/designate the deployment account; create the OIDC-federated deploy role; set repo secrets
 `AWS_DEPLOY_ROLE_ARN` + `AWS_ACCOUNT_ID` (used by `.github/workflows/deploy.yml` `build-images`).
-> **Status:** _____ · **Owner:** _____ · **Date:** _____
-> **Evidence:** account `_____` · role `arn:aws:iam::<ACCOUNT_ID>:role/_____`
+> **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-06
+> **Evidence:** account `508703380027` · role `arn:aws:iam::<ACCOUNT_ID>:role/scanipy-github-deploy` · secrets `AWS_DEPLOY_ROLE_ARN` + `AWS_ACCOUNT_ID` set on repo
 
 ### 2. ECR repositories + first real image build
 Create ECR repos for `workers/snapshot` + `workers/detector`; run the first real `docker buildx`
