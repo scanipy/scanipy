@@ -216,7 +216,7 @@ The source documents do not pin a cloud vendor, region strategy, queue technolog
 - AC-DEPLOY-03b: Every emitted log line carries a service name, build commit, and `env_digest`.
 - AC-DEPLOY-03c: Alarms exist for: snapshot-worker failure rate, detector-worker failure rate, callback HMAC rejection rate, Attestor core-partition diff (any non-zero rate is a hard incident), `CW-DETECT` differential-oracle disagreement rate, e-process martingale-unit-test failure.
 
-#### CMP-DEPLOY-04 — CI/CD pipeline (build, test, deploy)
+#### CMP-DEPLOY-04 — CI/CD pipeline (build, test, deploy) `IN-PROGRESS`
 **Depends-On:** CMP-DEPLOY-01, CMP-DEPLOY-02 · **Staging:** cross-cutting
 **Purpose:** Pipelines for building worker images, running every CI gate enumerated under `CMP-CI-01`, deploying behind controlled gates, and registering signed image digests as the active `env_digest` for the next snapshot run. Pinned-image discipline is enforced here so it cannot be bypassed at deploy time.
 **Acceptance criteria:**
