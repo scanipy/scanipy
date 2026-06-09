@@ -1,5 +1,5 @@
 output "alarm_sns_arn" {
-  description = "SNS topic ARN for alarm notifications (scanipy-prod-alarms)"
+  description = "SNS topic ARN for alarm notifications (scanipy-{env}-alarms)"
   value       = aws_sns_topic.alarms.arn
 }
 

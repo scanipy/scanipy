@@ -95,14 +95,20 @@ put_alarm() {
 }
 
 # [AC] snapshot-worker failure rate
+# NOTE: the Terraform module implements the precise 5%-rate math expression
+# (100*failure/total > 5). The CLI put-metric-alarm command does not support
+# --metrics math expressions in the simple helper format used here; this alarm
+# fires on ANY failure (threshold 0) as a conservative proxy. Replace with the
+# Terraform module for the production-accurate rate threshold.
 put_alarm "snapshot-worker-failure-rate" \
-  "Snapshot worker failure rate >5% over 15min (CMP-SNAP-05). AC-DEPLOY-03c." \
+  "Snapshot worker failure detected (CMP-SNAP-05). AC-DEPLOY-03c. NOTE: conservative threshold — Terraform module implements the 5%/15min rate alarm." \
   "snapshot_worker.failure_count" "${NAMESPACE}" "Sum" \
   "GreaterThanThreshold" "0" "300" "3" "high"
 
 # [AC] detector-worker failure rate
+# NOTE: same conservative proxy as snapshot above. Terraform module has the rate math.
 put_alarm "detector-worker-failure-rate" \
-  "Detector worker failure rate >5% over 15min (CMP-ORCH-03). AC-DEPLOY-03c." \
+  "Detector worker failure detected (CMP-ORCH-03). AC-DEPLOY-03c. NOTE: conservative threshold — Terraform module implements the 5%/15min rate alarm." \
   "detector_worker.failure_count" "${NAMESPACE}" "Sum" \
   "GreaterThanThreshold" "0" "300" "3" "high"
 
@@ -193,7 +199,10 @@ done_ "Dashboard: ${DASHBOARD_URL}"
 # OTel collector task definition
 # ---------------------------------------------------------------------------
 log "Registering OTel collector task definition..."
-TASK_DEF=$(sed "s/<ACCOUNT_ID>/${ACCOUNT_ID}/g" \
+TASK_DEF=$(sed \
+  -e "s/<ACCOUNT_ID>/${ACCOUNT_ID}/g" \
+  -e "s/<REGION>/${REGION}/g" \
+  -e "s/<ENV>/${ENV}/g" \
   "$(dirname "$0")/otel-collector/task-definition.json")
 TASK_DEF_ARN=$(aws ecs register-task-definition \
   --cli-input-json "${TASK_DEF}" \

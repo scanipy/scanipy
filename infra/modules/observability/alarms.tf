@@ -9,7 +9,7 @@
 
 locals {
   namespace = "Scanipy/v3.2"
-  alarm_sns = [var.alarm_sns_arn]
+  alarm_sns = [aws_sns_topic.alarms.arn]
 }
 
 # [AC] snapshot-worker failure rate > 5% over 15 min
@@ -28,7 +28,7 @@ resource "aws_cloudwatch_metric_alarm" "snapshot_worker_failure_rate" {
       namespace   = local.namespace
       period      = 300
       stat        = "Sum"
-      dimensions  = { env_digest = "all" }
+      dimensions  = {}
     }
   }
 

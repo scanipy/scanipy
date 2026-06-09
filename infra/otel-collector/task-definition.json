@@ -17,14 +17,14 @@
       ],
       "command": ["--config=/etc/ecs/ecs-cloudwatch-xray.yaml"],
       "environment": [
-        { "name": "AWS_REGION",    "value": "us-east-1" },
+        { "name": "AWS_REGION",    "value": "<REGION>" },
         { "name": "AOT_CONFIG_CONTENT", "value": "" }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group":         "/scanipy/prod/otel-collector",
-          "awslogs-region":        "us-east-1",
+          "awslogs-group":         "/scanipy/<ENV>/otel-collector",
+          "awslogs-region":        "<REGION>",
           "awslogs-stream-prefix": "otel"
         }
       },

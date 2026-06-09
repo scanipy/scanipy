@@ -87,8 +87,8 @@ resource "aws_cloudwatch_dashboard" "scanipy" {
           title  = "DLQ depth — snapshot + detector"
           region = var.region
           metrics = [
-            ["AWS/SQS", "ApproximateNumberOfMessagesVisible", "QueueName", "scanipy-snapshot-dlq"],
-            ["AWS/SQS", "ApproximateNumberOfMessagesVisible", "QueueName", "scanipy-detector-dlq"]
+            ["AWS/SQS", "ApproximateNumberOfMessagesVisible", "QueueName", var.snapshot_dlq_name],
+            ["AWS/SQS", "ApproximateNumberOfMessagesVisible", "QueueName", var.detector_dlq_name]
           ]
           view = "timeSeries"; stat = "Maximum"; period = 600
         }

@@ -8,11 +8,6 @@ variable "env" {
   default = "prod"
 }
 
-variable "alarm_sns_arn" {
-  description = "ARN of the SNS topic that receives all CloudWatch alarm notifications"
-  type        = string
-}
-
 variable "snapshot_dlq_name" {
   type    = string
   default = "scanipy-snapshot-dlq"
