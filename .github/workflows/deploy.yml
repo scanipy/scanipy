@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   id-token: write   # OIDC for AWS credential exchange
+  checks: read      # pre-deploy gate verification via Checks API
 
 env:
   AWS_REGION: us-east-1
