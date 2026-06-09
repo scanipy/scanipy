@@ -15,8 +15,9 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Pre-deploy gate checks — all four named gates must show green on this SHA
-  # Uses the GitHub Checks API to verify required status checks actually passed.
+  # Pre-deploy gate checks — all named gates must pass on this commit SHA.
+  # Gate 2 (Falsifier CW) also triggers on the same tag push; we wait up to
+  # 20 min for it to complete before checking its conclusion.
   # ---------------------------------------------------------------------------
   pre-deploy-checks:
     name: Pre-deploy gate verification
@@ -31,24 +32,47 @@ jobs:
           SHA="${{ github.sha }}"
           REPO="${{ github.repository }}"
 
+          # check_gate NAME [MAX_WAIT_SECONDS]
+          # Polls until the named check-run posts a conclusion, then verifies it
+          # is "success".  MAX_WAIT_SECONDS defaults to 0 (no waiting).
           check_gate() {
             local check_name="$1"
+            local max_wait="${2:-0}"
+            local elapsed=0
             local result
-            result=$(gh api "repos/${REPO}/commits/${SHA}/check-runs" \
-              --jq ".check_runs[] | select(.name == \"${check_name}\") | .conclusion" \
-              2>/dev/null | tail -1)
 
-            if [ "${result}" != "success" ]; then
-              echo "GATE FAIL: '${check_name}' conclusion='${result:-not found}' on ${SHA}"
-              return 1
-            fi
-            echo "GATE PASS: '${check_name}'"
+            while true; do
+              result=$(gh api "repos/${REPO}/commits/${SHA}/check-runs" \
+                --jq ".check_runs[] | select(.name == \"${check_name}\") | .conclusion" \
+                2>/dev/null | tail -1)
+
+              if [ "${result}" = "success" ]; then
+                echo "GATE PASS: '${check_name}'"
+                return 0
+              elif [ -n "${result}" ] && [ "${result}" != "null" ]; then
+                echo "GATE FAIL: '${check_name}' conclusion='${result}' on ${SHA}"
+                return 1
+              fi
+
+              if [ "${elapsed}" -ge "${max_wait}" ]; then
+                echo "GATE FAIL: '${check_name}' not found / not complete on ${SHA}"
+                return 1
+              fi
+
+              echo "Waiting for '${check_name}' … ${elapsed}/${max_wait}s"
+              sleep 30
+              elapsed=$((elapsed + 30))
+            done
           }
 
+          # All four gates wait up to 20 min. Gates 1/3/4 typically complete on the
+          # push-to-main CI run before the tag is cut; Gate 2 also fires on this
+          # same tag push. The wait loop handles both cases: already-done gates
+          # resolve instantly; concurrently-running ones are polled until done.
           failed=0
-          check_gate "Gate 1 — DSL proofs (AC-DET-01a)"       || failed=1
-          check_gate "Gate 2 — Falsifier CW — zero false negatives (AC-SNAP-03a)" || failed=1
-          check_gate "Gate 3 — Attestor core pipeline (AC-CP-05a/c)" || failed=1
+          check_gate "Gate 1 — DSL proofs (AC-DET-01a)"                                     1200 || failed=1
+          check_gate "Gate 2 — Falsifier CW — zero false negatives (AC-SNAP-03a)"           1200 || failed=1
+          check_gate "Gate 3 — Attestor core pipeline (AC-CP-05a/c)"                        1200 || failed=1
 
           if [ "$failed" -ne 0 ]; then
             echo ""
@@ -71,6 +95,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify worker image pins (AC-DEPLOY-02c)
+        run: python workers/build/verify_pins.py
+
+      - name: Read tool pins from pins.json
+        id: pins
+        run: |
+          python - <<'PY'
+          import json, os
+          d = json.load(open("workers/pins.json"))
+          out = os.environ["GITHUB_OUTPUT"]
+          with open(out, "a") as f:
+              f.write(f"joern_version={d['tools']['joern']['version']}\n")
+              f.write(f"joern_sha256={d['tools']['joern']['sha256']}\n")
+              f.write(f"codeql_version={d['tools']['codeql']['version']}\n")
+              f.write(f"codeql_sha256={d['tools']['codeql']['sha256']}\n")
+              f.write(f"git_version={d['tools']['git']['version']}\n")
+              f.write(f"git_sha256={d['tools']['git']['sha256']}\n")
+          PY
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -87,9 +130,17 @@ jobs:
         id: push-snapshot
         uses: docker/build-push-action@v5
         with:
-          context: workers/snapshot
+          context: .
+          file: workers/snapshot/Dockerfile
           push: true
           tags: ${{ env.ECR_REGISTRY }}/scanipy-snapshot:${{ github.ref_name }}
+          build-args: |
+            JOERN_VERSION=${{ steps.pins.outputs.joern_version }}
+            JOERN_SHA256=${{ steps.pins.outputs.joern_sha256 }}
+            CODEQL_VERSION=${{ steps.pins.outputs.codeql_version }}
+            CODEQL_SHA256=${{ steps.pins.outputs.codeql_sha256 }}
+            GIT_VERSION=${{ steps.pins.outputs.git_version }}
+            GIT_SHA256=${{ steps.pins.outputs.git_sha256 }}
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.version=${{ github.ref_name }}
@@ -98,9 +149,17 @@ jobs:
         id: push-detector
         uses: docker/build-push-action@v5
         with:
-          context: workers/detector
+          context: .
+          file: workers/detector/Dockerfile
           push: true
           tags: ${{ env.ECR_REGISTRY }}/scanipy-detector:${{ github.ref_name }}
+          build-args: |
+            JOERN_VERSION=${{ steps.pins.outputs.joern_version }}
+            JOERN_SHA256=${{ steps.pins.outputs.joern_sha256 }}
+            CODEQL_VERSION=${{ steps.pins.outputs.codeql_version }}
+            CODEQL_SHA256=${{ steps.pins.outputs.codeql_sha256 }}
+            GIT_VERSION=${{ steps.pins.outputs.git_version }}
+            GIT_SHA256=${{ steps.pins.outputs.git_sha256 }}
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.version=${{ github.ref_name }}
@@ -110,11 +169,27 @@ jobs:
 
       - name: Sign images with Cosign (keyless OIDC)
         run: |
-          cosign sign --yes ${{ env.ECR_REGISTRY }}/scanipy-snapshot@${{ steps.push-snapshot.outputs.digest }}
-          cosign sign --yes ${{ env.ECR_REGISTRY }}/scanipy-detector@${{ steps.push-detector.outputs.digest }}
+          cosign sign --yes \
+            ${{ env.ECR_REGISTRY }}/scanipy-snapshot@${{ steps.push-snapshot.outputs.digest }}
+          cosign sign --yes \
+            ${{ env.ECR_REGISTRY }}/scanipy-detector@${{ steps.push-detector.outputs.digest }}
+
+      - name: Verify Cosign signatures
+        run: |
+          cosign verify \
+            --certificate-identity-regexp \
+              "https://github.com/${{ github.repository }}/.github/workflows/deploy.yml@.*" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            ${{ env.ECR_REGISTRY }}/scanipy-snapshot@${{ steps.push-snapshot.outputs.digest }}
+          cosign verify \
+            --certificate-identity-regexp \
+              "https://github.com/${{ github.repository }}/.github/workflows/deploy.yml@.*" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            ${{ env.ECR_REGISTRY }}/scanipy-detector@${{ steps.push-detector.outputs.digest }}
 
   # ---------------------------------------------------------------------------
-  # Deploy to ECS Fargate
+  # Deploy to ECS Fargate — updates task definitions to the new image digests,
+  # then rolls out via the service deployment circuit-breaker.
   # ---------------------------------------------------------------------------
   deploy-ecs:
     name: Deploy to ECS Fargate
@@ -130,25 +205,95 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Update ECS service — snapshot worker
+      # --- snapshot worker ---------------------------------------------------
+      # Update both the image AND SCANIPY_ENV_DIGEST env var in the task def,
+      # then register the new revision and wait for the service to stabilise.
+
+      - name: Update and deploy snapshot worker task definition
+        env:
+          SNAPSHOT_DIGEST: ${{ needs.build-images.outputs.snapshot_digest }}
         run: |
+          SNAPSHOT_IMAGE="${ECR_REGISTRY}/scanipy-snapshot@${SNAPSHOT_DIGEST}"
+
+          # Fetch, patch image + env_digest, strip read-only fields, register.
+          aws ecs describe-task-definition \
+            --task-definition scanipy-snapshot-worker \
+            --query taskDefinition \
+            --region "$AWS_REGION" | \
+          jq --arg img "$SNAPSHOT_IMAGE" \
+             --arg digest "$SNAPSHOT_DIGEST" \
+            '
+              .containerDefinitions[0].image = $img |
+              .containerDefinitions[0].environment = (
+                .containerDefinitions[0].environment //= [] |
+                map(select(.name != "SCANIPY_ENV_DIGEST")) +
+                [{"name": "SCANIPY_ENV_DIGEST", "value": $digest}]
+              ) |
+              del(.taskDefinitionArn, .revision, .status,
+                  .requiresAttributes, .compatibilities,
+                  .registeredAt, .registeredBy, .deregisteredAt)
+            ' > snapshot-task-def-new.json
+
+          NEW_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://snapshot-task-def-new.json \
+            --region "$AWS_REGION" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "Registered snapshot task definition: ${NEW_ARN}"
+
           aws ecs update-service \
             --cluster scanipy-prod \
             --service snapshot-worker \
-            --force-new-deployment \
-            --region ${{ env.AWS_REGION }}
+            --task-definition "${NEW_ARN}" \
+            --region "$AWS_REGION" > /dev/null
 
-      - name: Update ECS service — detector worker
+          aws ecs wait services-stable \
+            --cluster scanipy-prod \
+            --services snapshot-worker \
+            --region "$AWS_REGION"
+          echo "Snapshot worker deployed and stable."
+
+      # --- detector worker ---------------------------------------------------
+
+      - name: Update and deploy detector worker task definition
+        env:
+          DETECTOR_DIGEST: ${{ needs.build-images.outputs.detector_digest }}
         run: |
+          DETECTOR_IMAGE="${ECR_REGISTRY}/scanipy-detector@${DETECTOR_DIGEST}"
+
+          aws ecs describe-task-definition \
+            --task-definition scanipy-detector-worker \
+            --query taskDefinition \
+            --region "$AWS_REGION" | \
+          jq --arg img "$DETECTOR_IMAGE" \
+             --arg digest "$DETECTOR_DIGEST" \
+            '
+              .containerDefinitions[0].image = $img |
+              .containerDefinitions[0].environment = (
+                .containerDefinitions[0].environment //= [] |
+                map(select(.name != "SCANIPY_ENV_DIGEST")) +
+                [{"name": "SCANIPY_ENV_DIGEST", "value": $digest}]
+              ) |
+              del(.taskDefinitionArn, .revision, .status,
+                  .requiresAttributes, .compatibilities,
+                  .registeredAt, .registeredBy, .deregisteredAt)
+            ' > detector-task-def-new.json
+
+          NEW_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://detector-task-def-new.json \
+            --region "$AWS_REGION" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "Registered detector task definition: ${NEW_ARN}"
+
           aws ecs update-service \
             --cluster scanipy-prod \
             --service detector-worker \
-            --force-new-deployment \
-            --region ${{ env.AWS_REGION }}
+            --task-definition "${NEW_ARN}" \
+            --region "$AWS_REGION" > /dev/null
 
-      - name: Wait for deployment stability
-        run: |
           aws ecs wait services-stable \
             --cluster scanipy-prod \
-            --services snapshot-worker detector-worker \
-            --region ${{ env.AWS_REGION }}
+            --services detector-worker \
+            --region "$AWS_REGION"
+          echo "Detector worker deployed and stable."
