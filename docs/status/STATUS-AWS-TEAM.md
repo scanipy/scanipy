@@ -63,7 +63,9 @@ Terraform the IAM session policies (`infra/modules/compute/session_policy.tf`) +
 path + S3 `orgs/{org_id}/` prefix denies. RDS RLS is already merged (CP-03, PR #265); the app-layer
 `app.org_id` seam is landing in engineering Wave 3. Live cross-org negative test (AC-DEPLOY-05a/b)
 runs after ORCH-01 exists (Wave 5).
-> **Status:** _____ · **Owner:** _____ · **Date:** _____ · **Evidence:** plan/apply links `_____`
+> **Status:** IN-PROGRESS · **Owner:** @papadoxie · **Date:** 2026-06-10
+> **IaC:** `infra/modules/compute/session_policy.tf` (Layer 1 IAM template) · `infra/modules/kms/` (Layer 3 CMK Lambda) · `infra/tenant-isolation-apply.sh` (apply script). Layer 2 (RLS) already applied via PR #265. **RULE-9:** Security Analyst sign-off required before merge.
+> **Evidence:** Lambda ARN + Secrets Manager session-policy secret `_____` ← fill after `infra/tenant-isolation-apply.sh`
 
 ### 9. Canary SCM orgs + credentials *(for the corpus team — CANARY-01)*
 Create `scanipy-canary` orgs/projects on GitHub, GitLab, Bitbucket, Azure DevOps; store push
