@@ -1,34 +1,34 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-06-02T00:00:00Z",
-  "comment": "CMP-DEPLOY-02 pinning manifest. Every base_images.* entry MUST have a non-empty sha256; every tools.* entry MUST have a non-empty version AND sha256; python_packages_lockfile_sha256 MUST be non-empty. workers/build/verify_pins.py (AC-DEPLOY-02c) refuses to build if any is empty. Values below are non-empty PLACEHOLDERS pending the real env_digest rollover (AC-DEPLOY-02a/02b, deferred until a real ECR build); the SHAPE and the unspecified-refuse gate are the delivered contract.",
+  "generated_at": "2026-06-08T00:00:00Z",
+  "comment": "CMP-DEPLOY-02 pinning manifest. Every base_images.* entry MUST have a non-empty sha256; every tools.* entry MUST have a non-empty version AND sha256; python_packages_lockfile_sha256 MUST be non-empty. workers/build/verify_pins.py (AC-DEPLOY-02c) refuses to build if any is empty.",
   "base_images": {
     "debian": {
       "tag": "12-slim",
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      "sha256": "0104b334637a5f19aa9c983a91b54c89887c0984081f2068983107a6f6c21eeb"
     },
     "python": {
       "tag": "3.11-slim-bookworm",
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      "sha256": "8dca233de9f3d9bb410665f00a4da6dd06f331083137e0e98ccf227236fcc438"
     }
   },
   "tools": {
     "joern": {
-      "version": "v4.0.0",
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
-      "source": "https://github.com/joernio/joern/releases/download/v4.0.0/joern-cli.zip"
+      "version": "v4.0.554",
+      "sha256": "54906d051eebcb5f7eb7428b2f230cb4a4481972b2c192dc8fd675159c607802",
+      "source": "https://github.com/joernio/joern/releases/download/v4.0.554/joern-cli.zip"
     },
     "codeql": {
       "version": "v2.20.0",
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "sha256": "669f70ead993acbc04a719be342d761544e4240209a283c9d1e1916402930460",
       "source": "https://github.com/github/codeql-cli-binaries/releases/download/v2.20.0/codeql-linux64.zip"
     },
     "git": {
-      "version": "1:2.39.5-0+deb12u1",
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
-      "source": "https://snapshot.debian.org/archive/debian/"
+      "version": "1:2.39.5-0+deb12u3",
+      "sha256": "637a85ddd6247fab13bdd0592f2f39aff04ce4dbf0655d3ab553ac359a38ce6f",
+      "source": "https://deb.debian.org/debian"
     }
   },
   "python_packages_lockfile": "workers/snapshot/requirements.txt",
-  "python_packages_lockfile_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  "python_packages_lockfile_sha256": "aad38638969e79d16db3ee3d55f605fb08119f35a1ae6d34309e29f8ea341add"
 }
