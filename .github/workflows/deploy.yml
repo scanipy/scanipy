@@ -15,9 +15,10 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Pre-deploy gate checks — all named gates must pass on this commit SHA.
-  # Gate 2 (Falsifier CW) also triggers on the same tag push; we wait up to
-  # 20 min for it to complete before checking its conclusion.
+  # Pre-deploy gate checks — all four named gates must pass on this commit SHA.
+  # Gates 1/3/4 complete on the push-to-main CI run before the tag is cut.
+  # Gate 2 (Falsifier CW) also triggers on this same tag push and runs
+  # concurrently. All four use a 20-min wait loop to handle both cases.
   # ---------------------------------------------------------------------------
   pre-deploy-checks:
     name: Pre-deploy gate verification
@@ -32,12 +33,12 @@ jobs:
           SHA="${{ github.sha }}"
           REPO="${{ github.repository }}"
 
-          # check_gate NAME [MAX_WAIT_SECONDS]
+          # check_gate NAME MAX_WAIT_SECONDS
           # Polls until the named check-run posts a conclusion, then verifies it
-          # is "success".  MAX_WAIT_SECONDS defaults to 0 (no waiting).
+          # is "success".
           check_gate() {
             local check_name="$1"
-            local max_wait="${2:-0}"
+            local max_wait="$2"
             local elapsed=0
             local result
 
@@ -65,14 +66,11 @@ jobs:
             done
           }
 
-          # All four gates wait up to 20 min. Gates 1/3/4 typically complete on the
-          # push-to-main CI run before the tag is cut; Gate 2 also fires on this
-          # same tag push. The wait loop handles both cases: already-done gates
-          # resolve instantly; concurrently-running ones are polled until done.
           failed=0
           check_gate "Gate 1 — DSL proofs (AC-DET-01a)"                                     1200 || failed=1
           check_gate "Gate 2 — Falsifier CW — zero false negatives (AC-SNAP-03a)"           1200 || failed=1
           check_gate "Gate 3 — Attestor core pipeline (AC-CP-05a/c)"                        1200 || failed=1
+          check_gate "Gate 4 — e-process martingale (AC-TRI-02b)"                           1200 || failed=1
 
           if [ "$failed" -ne 0 ]; then
             echo ""
@@ -94,6 +92,11 @@ jobs:
       detector_digest: ${{ steps.push-detector.outputs.digest }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
       - name: Verify worker image pins (AC-DEPLOY-02c)
         run: python workers/build/verify_pins.py
@@ -188,8 +191,9 @@ jobs:
             ${{ env.ECR_REGISTRY }}/scanipy-detector@${{ steps.push-detector.outputs.digest }}
 
   # ---------------------------------------------------------------------------
-  # Deploy to ECS Fargate — updates task definitions to the new image digests,
-  # then rolls out via the service deployment circuit-breaker.
+  # Deploy to ECS Fargate — renders each task definition with the new image
+  # digest (updating both the container image and SCANIPY_ENV_DIGEST env var),
+  # registers the new revision, and waits for service stability.
   # ---------------------------------------------------------------------------
   deploy-ecs:
     name: Deploy to ECS Fargate
@@ -206,94 +210,59 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       # --- snapshot worker ---------------------------------------------------
-      # Update both the image AND SCANIPY_ENV_DIGEST env var in the task def,
-      # then register the new revision and wait for the service to stabilise.
 
-      - name: Update and deploy snapshot worker task definition
-        env:
-          SNAPSHOT_DIGEST: ${{ needs.build-images.outputs.snapshot_digest }}
+      - name: Fetch snapshot task definition
         run: |
-          SNAPSHOT_IMAGE="${ECR_REGISTRY}/scanipy-snapshot@${SNAPSHOT_DIGEST}"
-
-          # Fetch, patch image + env_digest, strip read-only fields, register.
           aws ecs describe-task-definition \
             --task-definition scanipy-snapshot-worker \
             --query taskDefinition \
-            --region "$AWS_REGION" | \
-          jq --arg img "$SNAPSHOT_IMAGE" \
-             --arg digest "$SNAPSHOT_DIGEST" \
-            '
-              .containerDefinitions[0].image = $img |
-              .containerDefinitions[0].environment = (
-                .containerDefinitions[0].environment //= [] |
-                map(select(.name != "SCANIPY_ENV_DIGEST")) +
-                [{"name": "SCANIPY_ENV_DIGEST", "value": $digest}]
-              ) |
-              del(.taskDefinitionArn, .revision, .status,
-                  .requiresAttributes, .compatibilities,
-                  .registeredAt, .registeredBy, .deregisteredAt)
-            ' > snapshot-task-def-new.json
+            --region ${{ env.AWS_REGION }} \
+            > snapshot-task-def.json
 
-          NEW_ARN=$(aws ecs register-task-definition \
-            --cli-input-json file://snapshot-task-def-new.json \
-            --region "$AWS_REGION" \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text)
-          echo "Registered snapshot task definition: ${NEW_ARN}"
+      - name: Render snapshot task definition — image + SCANIPY_ENV_DIGEST
+        id: render-snapshot
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: snapshot-task-def.json
+          container-name: snapshot-worker
+          image: >-
+            ${{ env.ECR_REGISTRY }}/scanipy-snapshot@${{ needs.build-images.outputs.snapshot_digest }}
+          environment-variables: |
+            SCANIPY_ENV_DIGEST=${{ needs.build-images.outputs.snapshot_digest }}
 
-          aws ecs update-service \
-            --cluster scanipy-prod \
-            --service snapshot-worker \
-            --task-definition "${NEW_ARN}" \
-            --region "$AWS_REGION" > /dev/null
-
-          aws ecs wait services-stable \
-            --cluster scanipy-prod \
-            --services snapshot-worker \
-            --region "$AWS_REGION"
-          echo "Snapshot worker deployed and stable."
+      - name: Deploy snapshot worker to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-snapshot.outputs.task-definition }}
+          service: snapshot-worker
+          cluster: scanipy-prod
+          wait-for-service-stability: true
 
       # --- detector worker ---------------------------------------------------
 
-      - name: Update and deploy detector worker task definition
-        env:
-          DETECTOR_DIGEST: ${{ needs.build-images.outputs.detector_digest }}
+      - name: Fetch detector task definition
         run: |
-          DETECTOR_IMAGE="${ECR_REGISTRY}/scanipy-detector@${DETECTOR_DIGEST}"
-
           aws ecs describe-task-definition \
             --task-definition scanipy-detector-worker \
             --query taskDefinition \
-            --region "$AWS_REGION" | \
-          jq --arg img "$DETECTOR_IMAGE" \
-             --arg digest "$DETECTOR_DIGEST" \
-            '
-              .containerDefinitions[0].image = $img |
-              .containerDefinitions[0].environment = (
-                .containerDefinitions[0].environment //= [] |
-                map(select(.name != "SCANIPY_ENV_DIGEST")) +
-                [{"name": "SCANIPY_ENV_DIGEST", "value": $digest}]
-              ) |
-              del(.taskDefinitionArn, .revision, .status,
-                  .requiresAttributes, .compatibilities,
-                  .registeredAt, .registeredBy, .deregisteredAt)
-            ' > detector-task-def-new.json
+            --region ${{ env.AWS_REGION }} \
+            > detector-task-def.json
 
-          NEW_ARN=$(aws ecs register-task-definition \
-            --cli-input-json file://detector-task-def-new.json \
-            --region "$AWS_REGION" \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text)
-          echo "Registered detector task definition: ${NEW_ARN}"
+      - name: Render detector task definition — image + SCANIPY_ENV_DIGEST
+        id: render-detector
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: detector-task-def.json
+          container-name: detector-worker
+          image: >-
+            ${{ env.ECR_REGISTRY }}/scanipy-detector@${{ needs.build-images.outputs.detector_digest }}
+          environment-variables: |
+            SCANIPY_ENV_DIGEST=${{ needs.build-images.outputs.detector_digest }}
 
-          aws ecs update-service \
-            --cluster scanipy-prod \
-            --service detector-worker \
-            --task-definition "${NEW_ARN}" \
-            --region "$AWS_REGION" > /dev/null
-
-          aws ecs wait services-stable \
-            --cluster scanipy-prod \
-            --services detector-worker \
-            --region "$AWS_REGION"
-          echo "Detector worker deployed and stable."
+      - name: Deploy detector worker to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-detector.outputs.task-definition }}
+          service: detector-worker
+          cluster: scanipy-prod
+          wait-for-service-stability: true
