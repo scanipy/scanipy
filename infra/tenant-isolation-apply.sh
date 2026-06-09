@@ -93,11 +93,22 @@ print(json.dumps({
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "KMSProvision",
+      "Sid": "KMSProvisionCreate",
       "Effect": "Allow",
       "Action": ["kms:CreateKey","kms:CreateAlias","kms:DescribeKey","kms:ListAliases",
-                 "kms:EnableKeyRotation","kms:TagResource","kms:PutKeyPolicy"],
+                 "kms:EnableKeyRotation"],
       "Resource": "*"
+    },
+    {
+      "Sid": "KMSProvisionOwnedKeysOnly",
+      "Effect": "Allow",
+      "Action": ["kms:PutKeyPolicy","kms:TagResource"],
+      "Resource": "*",
+      "Condition": {
+        "ForAnyValue:StringLike": {
+          "kms:ResourceAliases": ["alias/scanipy-tenant-*"]
+        }
+      }
     },
     {
       "Sid": "CloudWatchLogs",
@@ -154,13 +165,33 @@ print(json.dumps({
     {
       "Sid": "S3PerTenantAllow",
       "Effect": "Allow",
-      "Action": ["s3:GetObject","s3:PutObject","s3:DeleteObject","s3:ListBucket"],
+      "Action": ["s3:GetObject","s3:PutObject","s3:DeleteObject"],
       "Resource": [
         f"arn:aws:s3:::scanipy-${ENV}-snapshot/orgs/\${TEMPLATE_ORG_ID}/*",
         f"arn:aws:s3:::scanipy-${ENV}-witness/orgs/\${TEMPLATE_ORG_ID}/*",
         f"arn:aws:s3:::scanipy-${ENV}-sarif/orgs/\${TEMPLATE_ORG_ID}/*",
-        f"arn:aws:s3:::scanipy-${ENV}-snapshot/_platform/*",
       ]
+    },
+    {
+      "Sid": "S3PlatformReadOnly",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject"],
+      "Resource": [f"arn:aws:s3:::scanipy-${ENV}-snapshot/_platform/*"]
+    },
+    {
+      "Sid": "S3PerTenantListBucket",
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": [
+        f"arn:aws:s3:::scanipy-${ENV}-snapshot",
+        f"arn:aws:s3:::scanipy-${ENV}-witness",
+        f"arn:aws:s3:::scanipy-${ENV}-sarif",
+      ],
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": [f"orgs/\${TEMPLATE_ORG_ID}/*", "_platform/*"]
+        }
+      }
     },
     {
       "Sid": "S3OtherOrgsDeny",
@@ -171,6 +202,9 @@ print(json.dumps({
         f"arn:aws:s3:::scanipy-${ENV}-witness/orgs/\${TEMPLATE_ORG_ID}/*",
         f"arn:aws:s3:::scanipy-${ENV}-sarif/orgs/\${TEMPLATE_ORG_ID}/*",
         f"arn:aws:s3:::scanipy-${ENV}-snapshot/_platform/*",
+        f"arn:aws:s3:::scanipy-${ENV}-snapshot",
+        f"arn:aws:s3:::scanipy-${ENV}-witness",
+        f"arn:aws:s3:::scanipy-${ENV}-sarif",
       ]
     },
     {
