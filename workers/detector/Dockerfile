@@ -10,7 +10,7 @@
 # the pins are non-empty.
 
 # ----- Stage 1: tool fetcher (pinned by digest) -----
-FROM debian:12-slim@sha256:0000000000000000000000000000000000000000000000000000000000000000 AS tools
+FROM debian:12-slim@sha256:0104b334637a5f19aa9c983a91b54c89887c0984081f2068983107a6f6c21eeb AS tools
 ARG JOERN_VERSION
 ARG JOERN_SHA256
 ARG CODEQL_VERSION
@@ -27,6 +27,7 @@ RUN curl -fsSL -o /tmp/joern.zip \
         "https://github.com/joernio/joern/releases/download/${JOERN_VERSION}/joern-cli.zip" && \
     echo "${JOERN_SHA256}  /tmp/joern.zip" | sha256sum -c - && \
     unzip /tmp/joern.zip -d /opt && \
+    mv /opt/joern-cli /opt/joern && \
     rm /tmp/joern.zip
 
 # codeql — pinned by published release SHA256.
@@ -42,7 +43,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 # ----- Stage 2: runtime -----
-FROM python:3.11-slim-bookworm@sha256:0000000000000000000000000000000000000000000000000000000000000000
+FROM python:3.11-slim-bookworm@sha256:8dca233de9f3d9bb410665f00a4da6dd06f331083137e0e98ccf227236fcc438
 LABEL org.opencontainers.image.title="scanipy-detector-worker"
 LABEL org.opencontainers.image.source="https://github.com/scanipy/scanipy-v3.2"
 
@@ -65,7 +66,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Non-root user; image hardening (no shell access from the running task).
-RUN useradd --system --uid 10001 --shell /usr/sbin/nologin scanipy
+RUN /usr/sbin/useradd --system --uid 10001 --shell /usr/sbin/nologin scanipy
 USER 10001:10001
 WORKDIR /app
 

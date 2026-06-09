@@ -24,24 +24,24 @@ Create/designate the deployment account; create the OIDC-federated deploy role; 
 ### 2. ECR repositories + first real image build
 Create ECR repos for `workers/snapshot` + `workers/detector`; run the first real `docker buildx`
 build of both Dockerfiles; push; record content-addressable image digests.
-> **Status:** _____ · **Owner:** _____ · **Date:** _____
-> **Evidence:** snapshot image digest `sha256:_____` · detector image digest `sha256:_____`
+> **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-09
+> **Evidence:** snapshot `sha256:f3d51cf67de7b3a5f7acd72dd385ce1c6b1e44ecd3677ba0bb6fb58cd270d09f` · detector `sha256:a2a25f8e40dc7ca68ea833a5991191fb290ffe04b62f1d044eeee221d11cde47`
 
 ### 3. Real tool digests → `workers/pins.json` *(replaces the all-zero placeholders)*
 From the built images, capture pinned digests for: debian base, python, joern, codeql, git. Open a
 PR replacing the placeholder zeros; `workers/build/verify_pins.py` (already green) gates completeness.
 **Unblocks:** TST-AC-DEPLOY-02a flip *(eng)* · SNAP-05's real-digest half.
-> **Status:** _____ · **Owner:** _____ · **Date:** _____ · **Evidence:** pins.json PR `#_____`
+> **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-09 · **Evidence:** pins.json PR `#300`
 
 ### 4. Cosign keyless signing *(Sigstore, per the §8 stack table)*
 Sign both images; verify `cosign verify` passes in the pipeline.
-> **Status:** _____ · **Owner:** _____ · **Date:** _____ · **Evidence:** verify output / run URL `_____`
+> **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-09 · **Evidence:** `cosign verify` passed on both digests — claims validated, transparency log verified, CA-trusted certificate
 
 ### 5. Register the signed digest as the authoritative production `env_digest`
 This is the CLAR-CP-06-02 bootstrap: the first pinned `Env` that CP-06 fidelity verdicts and all
 INV-2 stamps reference. Coordinate with engineering for where it is registered.
 **Unblocks:** TST-AC-DEPLOY-02b flip *(eng)* · CP-06 bootstrap · real INV-2 end-to-end.
-> **Status:** _____ · **Owner:** _____ · **Date:** _____ · **Evidence:** registered digest `sha256:_____`
+> **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-09 · **Evidence:** nominated digest `sha256:f3d51cf67de7b3a5f7acd72dd385ce1c6b1e44ecd3677ba0bb6fb58cd270d09f` (scanipy-snapshot:v0.1.0, Cosign-signed, Sigstore transparency log)
 
 ### 6. DEPLOY-04 — pipeline end-to-end on a real version tag
 Run `deploy.yml` on a `vX.Y.Z` tag with 1–5 in place: OIDC login → build → pin-check → sign → push →
