@@ -9,6 +9,7 @@ permissions:
   contents: read
   id-token: write   # OIDC for AWS credential exchange
   checks: read      # pre-deploy gate verification via Checks API
+  actions: write    # workflow_dispatch for Gate 3 (Attestor) on workflow-only tags
 
 env:
   AWS_REGION: us-east-1
@@ -66,6 +67,19 @@ jobs:
               elapsed=$((elapsed + 30))
             done
           }
+
+          # Gate 3 (Attestor) only auto-triggers when detectors/analysis/workers
+          # paths change. For workflow-only tag commits it must be dispatched.
+          # Dispatch it now if it has no check run on this SHA yet.
+          GATE3_PRESENT=$(gh api "repos/${REPO}/commits/${SHA}/check-runs" \
+            --jq '.check_runs[] | select(.name == "Gate 3 — Attestor core pipeline (AC-CP-05a/c)") | .name' \
+            2>/dev/null | head -1)
+          if [ -z "${GATE3_PRESENT}" ]; then
+            echo "Gate 3 not found on ${SHA} — dispatching attestor workflow on ${{ github.ref_name }}..."
+            gh workflow run "Gate 3 — Attestor core (every detector/engine/Env change)" \
+              --ref "${{ github.ref_name }}" 2>&1 || true
+            sleep 15
+          fi
 
           failed=0
           check_gate "Gate 1 — DSL proofs (AC-DET-01a)"                                     1200 || failed=1
