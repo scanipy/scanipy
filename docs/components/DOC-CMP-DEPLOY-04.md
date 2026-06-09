@@ -62,7 +62,11 @@ This component **defines** `deploy.yml` and **depends on** the four gate workflo
 
 The existing `.github/workflows/deploy.yml` is the implementation surface. Its three jobs:
 
-1. **`pre-deploy-checks`** — verifies that Gates 1–3 have green check-runs on the tagged SHA. Uses `gh api repos/.../commits/{sha}/check-runs` and asserts each gate's `conclusion == "success"`. Gate 4 (e-process martingale) is verified at customer-enablement deploy, not at every release tag, per `.claude/commands/sre-agent.md` § "CI/CD pipeline enforcement".
+1. **`pre-deploy-checks`** — verifies that all four CI gates have green check-runs on the tagged SHA. Uses `gh api repos/.../commits/{sha}/check-runs` (requires `checks: read` permission) and asserts each gate's `conclusion == "success"`.
+
+   **Gate 3 auto-dispatch (workflow-only tag commits):** `attestor.yml` is path-filtered — it only auto-triggers on changes under `detectors/**`, `analysis/**`, `workers/**`, `services/scan/**`, or `services/snapshot/**`. A tag commit that touches only workflow files (e.g. a CI fix) would have no Gate 3 check-run on its SHA, causing the poll loop to time out after 20 minutes. To handle this, `pre-deploy-checks` first queries the Checks API for Gate 3's presence on the tagged SHA; if absent, it dispatches `attestor.yml` via `gh workflow run --ref <tag>` (requires `actions: write` permission) and waits 15 seconds for the run to register before entering the poll loop. The dispatch failure path emits a `::warning::` annotation so operators can distinguish a slow Attestor run from a dispatch error.
+
+   **Workflow permissions required:** `contents: read` · `id-token: write` (OIDC) · `checks: read` (Checks API) · `actions: write` (Gate 3 `workflow_dispatch`).
 2. **`build-images`** — uses GHA OIDC to assume `AWS_DEPLOY_ROLE_ARN`; logs in to ECR; runs `workers/build/verify_pins.py` (re-asserting `AC-DEPLOY-02c`); builds + pushes the snapshot and detector images; signs with `cosign sign --yes`; generates the SLSA-3 attestation and attaches it via `cosign attest`.
 3. **`deploy-ecs`** — updates the ECS service for snapshot-worker and detector-worker via `aws ecs update-service --force-new-deployment`, then waits for `services-stable`. The new task definition references the new image digest; the running ECS task reads the digest from task metadata and surfaces it as `SCANIPY_ENV_DIGEST`.
 

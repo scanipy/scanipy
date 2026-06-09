@@ -77,7 +77,8 @@ jobs:
           if [ -z "${GATE3_PRESENT}" ]; then
             echo "Gate 3 not found on ${SHA} — dispatching attestor workflow on ${{ github.ref_name }}..."
             gh workflow run "Gate 3 — Attestor core (every detector/engine/Env change)" \
-              --ref "${{ github.ref_name }}" 2>&1 || true
+              --ref "${{ github.ref_name }}" 2>&1 || \
+              echo "::warning::Gate 3 dispatch failed — gate will time-out if attestor.yml has no run on this SHA"
             sleep 15
           fi
 
