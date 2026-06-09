@@ -47,7 +47,7 @@ INV-2 stamps reference. Coordinate with engineering for where it is registered.
 Run `deploy.yml` on a `vX.Y.Z` tag with 1–5 in place: OIDC login → build → pin-check → sign → push →
 deploy to ECS Fargate. Then *(eng)*: AC-DEPLOY-04a digest-drift rejection, AC-DEPLOY-04b
 gates-fail-hard proof, AC-DEPLOY-04c SLSA-3 attestation predicate.
-> **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-09 · **Evidence:** green run [#27191387683](https://github.com/scanipy/scanipy-v3.2/actions/runs/27191387683) — pre-deploy gates ✓, build+sign ✓, ECS deploy ✓
+> **Status:** _____ · **Owner:** _____ · **Date:** _____ · **Evidence:** green run URL `_____`
 
 ### 7. DEPLOY-03 — observability surfaces *(CLAR-DEPLOY-07)*
 OTel exporters → CloudWatch Logs + X-Ray; provision the six named alarms (snapshot-fail,
