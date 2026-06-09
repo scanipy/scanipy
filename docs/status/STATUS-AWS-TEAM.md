@@ -54,7 +54,9 @@ OTel exporters → CloudWatch Logs + X-Ray; provision the six named alarms (snap
 detector-fail, callback-HMAC-reject, **attestor-core-diff: any non-zero = hard incident**,
 CW-DETECT-disagreement, DLQ-depth). The trace-correlation AC *(eng)* needs the end-to-end scan
 pipeline (Waves 4–5) — provision the surfaces now, the AC flips later.
-> **Status:** _____ · **Owner:** _____ · **Date:** _____ · **Evidence:** alarm ARNs / dashboard `_____`
+> **Status:** IN-PROGRESS · **Owner:** @papadoxie · **Date:** 2026-06-10
+> **IaC:** Terraform module `infra/modules/observability/` + provisioning script `infra/observability-apply.sh` (SNS topic, 5 log groups, X-Ray group, 8 alarms, CloudWatch dashboard, OTel collector task def)
+> **Evidence:** alarm ARNs / dashboard `_____` ← fill after running `infra/observability-apply.sh`
 
 ### 8. DEPLOY-05 — tenant-isolation backstop (below the app layer)
 Terraform the IAM session policies (`infra/modules/compute/session_policy.tf`) + per-tenant KMS CMK

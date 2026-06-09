@@ -1,0 +1,44 @@
+{
+  "family": "scanipy-otel-collector",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/scanipy-ecs-execution",
+  "taskRoleArn":      "arn:aws:iam::<ACCOUNT_ID>:role/scanipy-otel-collector",
+  "containerDefinitions": [
+    {
+      "name": "otel-collector",
+      "image": "public.ecr.aws/aws-observability/aws-otel-collector:v0.40.0",
+      "essential": true,
+      "portMappings": [
+        { "containerPort": 4317, "protocol": "tcp", "name": "otlp-grpc" },
+        { "containerPort": 4318, "protocol": "tcp", "name": "otlp-http" }
+      ],
+      "command": ["--config=/etc/ecs/ecs-cloudwatch-xray.yaml"],
+      "environment": [
+        { "name": "AWS_REGION",    "value": "<REGION>" },
+        { "name": "AOT_CONFIG_CONTENT", "value": "" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group":         "/scanipy/<ENV>/otel-collector",
+          "awslogs-region":        "<REGION>",
+          "awslogs-stream-prefix": "otel"
+        }
+      },
+      "healthCheck": {
+        "command":     ["CMD", "/healthcheck"],
+        "interval":    10,
+        "timeout":     5,
+        "retries":     3,
+        "startPeriod": 10
+      }
+    }
+  ],
+  "tags": [
+    { "key": "Component", "value": "CMP-DEPLOY-03" },
+    { "key": "Env",       "value": "prod" }
+  ]
+}
