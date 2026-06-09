@@ -12,6 +12,7 @@ Environment variables (injected by Terraform):
   ACCOUNT_ID           — AWS account ID
   WORKER_TASK_ROLE_ARN — IAM role ARN the per-tenant CMK policy will grant
 """
+
 import json
 import logging
 import os
@@ -36,33 +37,31 @@ def _cmk_key_policy(org_id: str) -> str:
       session name matches 'scan-*' (set by CMP-ORCH-03 per §6.1 step 4).
     - CMK provisioning Lambda role: DescribeKey, CreateAlias, EnableKeyRotation.
     """
-    return json.dumps({
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "RootAdmin",
-                "Effect": "Allow",
-                "Principal": {"AWS": f"arn:aws:iam::{ACCOUNT_ID}:root"},
-                "Action": "kms:*",
-                "Resource": "*",
-            },
-            {
-                "Sid": "WorkerDecrypt",
-                "Effect": "Allow",
-                "Principal": {"AWS": WORKER_TASK_ROLE_ARN},
-                "Action": ["kms:Decrypt", "kms:GenerateDataKey", "kms:DescribeKey"],
-                "Resource": "*",
-                "Condition": {
-                    "StringLike": {
-                        "aws:RoleSessionName": "scan-*"
-                    },
-                    "StringEquals": {
-                        "kms:EncryptionContext:org_id": org_id
+    return json.dumps(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "RootAdmin",
+                    "Effect": "Allow",
+                    "Principal": {"AWS": f"arn:aws:iam::{ACCOUNT_ID}:root"},
+                    "Action": "kms:*",
+                    "Resource": "*",
+                },
+                {
+                    "Sid": "WorkerDecrypt",
+                    "Effect": "Allow",
+                    "Principal": {"AWS": WORKER_TASK_ROLE_ARN},
+                    "Action": ["kms:Decrypt", "kms:GenerateDataKey", "kms:DescribeKey"],
+                    "Resource": "*",
+                    "Condition": {
+                        "StringLike": {"aws:RoleSessionName": "scan-*"},
+                        "StringEquals": {"kms:EncryptionContext:org_id": org_id},
                     },
                 },
-            },
-        ],
-    })
+            ],
+        }
+    )
 
 
 def provision_tenant_cmk(org_id: str) -> str:
@@ -93,7 +92,7 @@ def provision_tenant_cmk(org_id: str) -> str:
         KeySpec="SYMMETRIC_DEFAULT",
         Policy=_cmk_key_policy(org_id),
         Tags=[
-            {"TagKey": "org_id",    "TagValue": org_id},
+            {"TagKey": "org_id", "TagValue": org_id},
             {"TagKey": "Component", "TagValue": "CMP-DEPLOY-05"},
             {"TagKey": "ManagedBy", "TagValue": "tenant-cmk-provisioner"},
         ],

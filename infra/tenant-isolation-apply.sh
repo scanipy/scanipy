@@ -36,25 +36,24 @@ for BUCKET in "scanipy-${ENV}-snapshot" "scanipy-${ENV}-witness" "scanipy-${ENV}
     continue
   fi
 
-  # Bucket policy: deny any GetObject/PutObject that is NOT under orgs/* or _platform/*
+  # Bucket policy: deny GetObject/PutObject/DeleteObject on any object NOT under orgs/* or _platform/*.
+  # Use NotResource (not a Condition on s3:prefix) — s3:prefix is only populated for
+  # s3:ListBucket requests; on object actions the key is absent and StringNotLike would
+  # evaluate to true unconditionally, blocking all object access.
   POLICY=$(python3 - <<PY
 import json
 print(json.dumps({
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "DenyNonTenantPathReads",
+      "Sid": "DenyNonTenantObjectPaths",
       "Effect": "Deny",
       "Principal": "*",
       "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-      "Resource": [
-        "arn:aws:s3:::${BUCKET}/*"
-      ],
-      "Condition": {
-        "StringNotLike": {
-          "s3:prefix": ["orgs/*/", "_platform/"]
-        }
-      }
+      "NotResource": [
+        "arn:aws:s3:::${BUCKET}/orgs/*",
+        "arn:aws:s3:::${BUCKET}/_platform/*"
+      ]
     }
   ]
 }))

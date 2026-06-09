@@ -57,7 +57,8 @@ resource "aws_iam_role_policy" "tenant_cmk_lambda" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "KMSProvision"
+        # kms:CreateKey / kms:CreateAlias must stay on Resource="*" — no key ID exists at creation time.
+        Sid    = "KMSProvisionCreate"
         Effect = "Allow"
         Action = [
           "kms:CreateKey",
@@ -65,10 +66,22 @@ resource "aws_iam_role_policy" "tenant_cmk_lambda" {
           "kms:DescribeKey",
           "kms:ListAliases",
           "kms:EnableKeyRotation",
-          "kms:TagResource",
-          "kms:PutKeyPolicy",
         ]
         Resource = "*"
+      },
+      {
+        # kms:PutKeyPolicy can grant kms:Decrypt to arbitrary principals if left on Resource="*".
+        # Restrict to keys the Lambda owns via kms:ResourceAliases so a compromised Lambda
+        # cannot modify other tenants' CMKs.
+        Sid    = "KMSProvisionOwnedKeysOnly"
+        Effect = "Allow"
+        Action = ["kms:PutKeyPolicy", "kms:TagResource"]
+        Resource = "*"
+        Condition = {
+          "ForAnyValue:StringLike" = {
+            "kms:ResourceAliases" = ["alias/scanipy-tenant-*"]
+          }
+        }
       },
       {
         Sid    = "CloudWatchLogs"

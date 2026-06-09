@@ -75,7 +75,7 @@ data "aws_iam_policy_document" "worker_session_policy_template" {
     sid     = "KMSPerTenantOnly"
     effect  = "Allow"
     actions = ["kms:Decrypt", "kms:GenerateDataKey"]
-    resources = ["arn:aws:kms:us-east-1:${ACCOUNT_ID}:key/${TEMPLATE_TENANT_CMK_ID}"]
+    resources = ["${TEMPLATE_TENANT_CMK_ARN}"]
   }
 
   # Explicit deny on any other tenant's prefix (defence-in-depth against IAM policy ordering bugs).
@@ -230,7 +230,7 @@ A cross-tenant access attempt must be blocked by **at least one** of the three l
    tenant_cmk_arn = lookup_cmk(org_id)  # from orgs table column 'kms_cmk_arn'
 
 3. Orchestrator constructs the session policy from the template at §3.1
-   with TEMPLATE_ORG_ID = org_id, TEMPLATE_TENANT_CMK_ID = tenant_cmk_arn.
+   with TEMPLATE_ORG_ID = org_id, TEMPLATE_TENANT_CMK_ARN = tenant_cmk_arn.
 
 4. Orchestrator calls sts:AssumeRole with:
    - RoleArn = worker_task_role_arn

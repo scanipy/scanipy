@@ -38,7 +38,9 @@ locals {
 # The rendered JSON is passed as the Policy parameter to sts:AssumeRole.
 # ---------------------------------------------------------------------------
 data "aws_iam_policy_document" "worker_session_policy_template" {
-  # S3 Layer 1a: allow only the authenticated tenant's prefix.
+  # S3 Layer 1a: object-level allow for this tenant's prefix (GetObject/PutObject/DeleteObject).
+  # s3:ListBucket is a bucket-level action and must live in its own statement with an
+  # s3:prefix condition — adding it here on object-level ARNs would have no effect.
   statement {
     sid    = "S3PerTenantAllow"
     effect = "Allow"
@@ -46,19 +48,44 @@ data "aws_iam_policy_document" "worker_session_policy_template" {
       "s3:GetObject",
       "s3:PutObject",
       "s3:DeleteObject",
-      "s3:ListBucket",
     ]
     resources = [
       "arn:aws:s3:::${local.snapshot_bucket}/orgs/$${TEMPLATE_ORG_ID}/*",
       "arn:aws:s3:::${local.witness_bucket}/orgs/$${TEMPLATE_ORG_ID}/*",
       "arn:aws:s3:::${local.sarif_bucket}/orgs/$${TEMPLATE_ORG_ID}/*",
-      # Platform-level read (canary corpus, CPG fidelity fixtures) — no write.
-      "arn:aws:s3:::${local.snapshot_bucket}/_platform/*",
     ]
   }
 
-  # S3 Layer 1b: explicit Deny on every other org prefix (defence-in-depth
-  # against IAM policy ordering surprises).
+  # S3 Layer 1b: platform read-only (canary corpus, CPG fidelity fixtures — no write).
+  statement {
+    sid     = "S3PlatformReadOnly"
+    effect  = "Allow"
+    actions = ["s3:GetObject"]
+    resources = ["arn:aws:s3:::${local.snapshot_bucket}/_platform/*"]
+  }
+
+  # S3 Layer 1c: ListBucket restricted to this tenant's prefix via s3:prefix condition.
+  # s3:ListBucket targets bucket-level ARNs; AWS ignores path suffixes on this action.
+  # The s3:prefix condition limits the listing to the tenant's prefix + _platform.
+  statement {
+    sid     = "S3PerTenantListBucket"
+    effect  = "Allow"
+    actions = ["s3:ListBucket"]
+    resources = [
+      "arn:aws:s3:::${local.snapshot_bucket}",
+      "arn:aws:s3:::${local.witness_bucket}",
+      "arn:aws:s3:::${local.sarif_bucket}",
+    ]
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values   = ["orgs/$${TEMPLATE_ORG_ID}/*", "_platform/*"]
+    }
+  }
+
+  # S3 Layer 1d: explicit Deny on every other org prefix (defence-in-depth
+  # against IAM policy ordering surprises). Includes bucket-level ARNs to
+  # cover the s3:ListBucket action alongside object-level ARNs.
   statement {
     sid    = "S3OtherOrgsDeny"
     effect = "Deny"
@@ -68,6 +95,9 @@ data "aws_iam_policy_document" "worker_session_policy_template" {
       "arn:aws:s3:::${local.witness_bucket}/orgs/$${TEMPLATE_ORG_ID}/*",
       "arn:aws:s3:::${local.sarif_bucket}/orgs/$${TEMPLATE_ORG_ID}/*",
       "arn:aws:s3:::${local.snapshot_bucket}/_platform/*",
+      "arn:aws:s3:::${local.snapshot_bucket}",
+      "arn:aws:s3:::${local.witness_bucket}",
+      "arn:aws:s3:::${local.sarif_bucket}",
     ]
   }
 
@@ -91,12 +121,9 @@ data "aws_iam_policy_document" "worker_session_policy_template" {
   }
 }
 
-# Render the policy to a local file so CMP-ORCH-03 can read the template
-# from the container image (the file is copied in via the worker Dockerfile).
-resource "local_file" "session_policy_template" {
-  filename = "${path.module}/session_policy_template.json"
-  content  = data.aws_iam_policy_document.worker_session_policy_template.json
-}
+# The authoritative runtime source is Secrets Manager (scanipy/{env}/worker-session-policy-template),
+# stored by infra/tenant-isolation-apply.sh and read by CMP-ORCH-03 at scan launch.
+# No local_file resource — a static file copy would diverge from Secrets Manager over time.
 
 output "session_policy_template_json" {
   description = "Per-scan IAM session policy template (TEMPLATE_ORG_ID and TEMPLATE_TENANT_CMK_ARN are substituted at runtime by CMP-ORCH-03)"
