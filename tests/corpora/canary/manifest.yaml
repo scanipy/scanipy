@@ -1,0 +1,27 @@
+corpus_id: CORP-CANARY-01
+corpus_version: "0.1.0"
+status: UNBUILT
+description: >
+  100-repo determinism canary mirrored to GitHub, GitLab, Bitbucket, and Azure DevOps.
+  Used by TST-AC-CORE-01a (determinism) and TST-AC-SCM-03c (cross-provider commit resolution).
+  Status UNBUILT until all 100 repos are mirrored and corpus.lock is generated.
+
+providers:
+  github:
+    org: scanipy-canary
+    base_url: "https://github.com/scanipy-canary"
+    credentials_secret: "scanipy/prod/canary/github"
+  gitlab:
+    group: scanipy-canary
+    base_url: "https://gitlab.com/scanipy-canary"
+    credentials_secret: "scanipy/prod/canary/gitlab"
+  bitbucket:
+    workspace: scanipy-canary
+    base_url: "https://bitbucket.org/scanipy-canary"
+    credentials_secret: "scanipy/prod/canary/bitbucket"
+  azure_devops:
+    org: scanipy-canary
+    base_url: "https://dev.azure.com/scanipy-canary"
+    credentials_secret: "scanipy/prod/canary/azure-devops"
+
+repos: []
