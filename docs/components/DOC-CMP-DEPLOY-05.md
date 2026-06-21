@@ -55,14 +55,16 @@ This document is the **implementation contract** for `CMP-DEPLOY-05`. It enforce
 When a worker dequeues an SQS message for `org_id = X`, the orchestrator calls `sts:AssumeRole` with a **session policy** that restricts S3 access to `orgs/X/*` and KMS access to the `org-X` CMK. The worker's task role grants broad S3 permissions, but the session policy intersects them.
 
 ```hcl
-# infra/modules/compute/session_policy.tf — template; the {org_id} is substituted at runtime by CMP-ORCH-03.
+# infra/modules/compute/session_policy.tf — template; TEMPLATE_ORG_ID and
+# TEMPLATE_TENANT_CMK_ARN are substituted at runtime by CMP-ORCH-03.
 
 data "aws_iam_policy_document" "worker_session_policy_template" {
-  # S3: only objects under orgs/{org_id}/...
+  # S3 Layer 1a: object-level allow for this tenant's prefix.
+  # s3:ListBucket is a bucket-level action and lives in its own statement below.
   statement {
-    sid     = "S3PerTenantOnly"
+    sid     = "S3PerTenantAllow"
     effect  = "Allow"
-    actions = ["s3:GetObject", "s3:PutObject", "s3:ListBucket"]
+    actions = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
     resources = [
       "arn:aws:s3:::scanipy-prod-snapshot/orgs/${TEMPLATE_ORG_ID}/*",
       "arn:aws:s3:::scanipy-prod-witness/orgs/${TEMPLATE_ORG_ID}/*",
@@ -70,25 +72,62 @@ data "aws_iam_policy_document" "worker_session_policy_template" {
     ]
   }
 
-  # KMS: only the per-tenant CMK for this org_id.
+  # S3 Layer 1b: platform read-only (canary corpus, CPG fidelity fixtures — no write).
   statement {
-    sid     = "KMSPerTenantOnly"
+    sid     = "S3PlatformReadOnly"
     effect  = "Allow"
-    actions = ["kms:Decrypt", "kms:GenerateDataKey"]
-    resources = ["arn:aws:kms:us-east-1:${ACCOUNT_ID}:key/${TEMPLATE_TENANT_CMK_ID}"]
+    actions = ["s3:GetObject"]
+    resources = ["arn:aws:s3:::scanipy-prod-snapshot/_platform/*"]
   }
 
-  # Explicit deny on any other tenant's prefix (defence-in-depth against IAM policy ordering bugs).
+  # S3 Layer 1c: ListBucket restricted to this tenant's prefix via s3:prefix condition.
+  # Targets bucket-level ARNs (AWS ignores path suffixes on s3:ListBucket).
   statement {
-    sid       = "DenyOtherOrgPrefixes"
+    sid     = "S3PerTenantListBucket"
+    effect  = "Allow"
+    actions = ["s3:ListBucket"]
+    resources = [
+      "arn:aws:s3:::scanipy-prod-snapshot",
+      "arn:aws:s3:::scanipy-prod-witness",
+      "arn:aws:s3:::scanipy-prod-sarif",
+    ]
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values   = ["orgs/${TEMPLATE_ORG_ID}/*", "_platform/*"]
+    }
+  }
+
+  # S3 Layer 1d: deny every other org prefix (defence-in-depth).
+  # not_resources includes bucket-level ARNs to cover s3:ListBucket.
+  statement {
+    sid       = "S3OtherOrgsDeny"
     effect    = "Deny"
     actions   = ["s3:*"]
     not_resources = [
       "arn:aws:s3:::scanipy-prod-snapshot/orgs/${TEMPLATE_ORG_ID}/*",
       "arn:aws:s3:::scanipy-prod-witness/orgs/${TEMPLATE_ORG_ID}/*",
       "arn:aws:s3:::scanipy-prod-sarif/orgs/${TEMPLATE_ORG_ID}/*",
-      "arn:aws:s3:::scanipy-prod-snapshot/_platform/*",  # platform-level objects, not per-tenant
+      "arn:aws:s3:::scanipy-prod-snapshot/_platform/*",
+      "arn:aws:s3:::scanipy-prod-snapshot",
+      "arn:aws:s3:::scanipy-prod-witness",
+      "arn:aws:s3:::scanipy-prod-sarif",
     ]
+  }
+
+  # KMS Layer 3: only the per-tenant CMK ARN for this org_id.
+  statement {
+    sid     = "KMSPerTenantAllow"
+    effect  = "Allow"
+    actions = ["kms:Decrypt", "kms:GenerateDataKey", "kms:DescribeKey"]
+    resources = ["${TEMPLATE_TENANT_CMK_ARN}"]
+  }
+
+  statement {
+    sid     = "KMSOtherCMKsDeny"
+    effect  = "Deny"
+    actions = ["kms:Decrypt", "kms:GenerateDataKey"]
+    not_resources = ["${TEMPLATE_TENANT_CMK_ARN}"]
   }
 }
 ```
@@ -230,7 +269,7 @@ A cross-tenant access attempt must be blocked by **at least one** of the three l
    tenant_cmk_arn = lookup_cmk(org_id)  # from orgs table column 'kms_cmk_arn'
 
 3. Orchestrator constructs the session policy from the template at §3.1
-   with TEMPLATE_ORG_ID = org_id, TEMPLATE_TENANT_CMK_ID = tenant_cmk_arn.
+   with TEMPLATE_ORG_ID = org_id, TEMPLATE_TENANT_CMK_ARN = tenant_cmk_arn.
 
 4. Orchestrator calls sts:AssumeRole with:
    - RoleArn = worker_task_role_arn
