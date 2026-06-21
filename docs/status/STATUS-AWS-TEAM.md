@@ -70,7 +70,7 @@ runs after ORCH-01 exists (Wave 5).
 > **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-10
 > **IaC:** `infra/modules/compute/session_policy.tf` (Layer 1 IAM template) · `infra/modules/kms/` (Layer 3 CMK Lambda) · `infra/tenant-isolation-apply.sh` (apply script). Layer 2 (RLS) already applied via PR #265. **RULE-9:** Security Analyst sign-off granted (PR #305 comment).
 > **Evidence:**
-> - Layer 1 (session policy template): `scanipy/prod/worker-session-policy-template` in Secrets Manager · S3 bucket policies applied (buckets provisioned by CMP-DEPLOY-01 when ready)
+> - Layer 1 (session policy template): `scanipy/prod/worker-session-policy-template` in Secrets Manager · S3 bucket prefix-deny policies pending — to be applied when CMP-DEPLOY-01 provisions the buckets
 > - Layer 2 (RLS): already applied via PR #265
 > - Layer 3 (CMK Lambda): `arn:aws:lambda:us-east-1:<ACCOUNT_ID>:function:scanipy-prod-tenant-cmk-provisioner`
 > - Lambda execution role: `arn:aws:iam::<ACCOUNT_ID>:role/scanipy-prod-tenant-cmk-provisioner`
