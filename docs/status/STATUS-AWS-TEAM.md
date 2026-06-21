@@ -54,18 +54,26 @@ OTel exporters → CloudWatch Logs + X-Ray; provision the six named alarms (snap
 detector-fail, callback-HMAC-reject, **attestor-core-diff: any non-zero = hard incident**,
 CW-DETECT-disagreement, DLQ-depth). The trace-correlation AC *(eng)* needs the end-to-end scan
 pipeline (Waves 4–5) — provision the surfaces now, the AC flips later.
-> **Status:** IN-PROGRESS · **Owner:** @papadoxie · **Date:** 2026-06-10
+> **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-10
 > **IaC:** Terraform module `infra/modules/observability/` + provisioning script `infra/observability-apply.sh` (SNS topic, 5 log groups, X-Ray group, 8 alarms, CloudWatch dashboard, OTel collector task def)
-> **Evidence:** alarm ARNs / dashboard `_____` ← fill after running `infra/observability-apply.sh`
+> **Evidence:**
+> - SNS alarm topic: `arn:aws:sns:us-east-1:<ACCOUNT_ID>:scanipy-prod-alarms`
+> - Dashboard: `https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards/dashboard/scanipy-prod`
+> - OTel task def: `arn:aws:ecs:us-east-1:<ACCOUNT_ID>:task-definition/scanipy-otel-collector:1`
+> - Alarms: `arn:aws:cloudwatch:us-east-1:<ACCOUNT_ID>:alarm:scanipy-prod-snapshot-worker-failure-rate` · `…:scanipy-prod-detector-worker-failure-rate` · `…:scanipy-prod-callback-hmac-reject` · `…:scanipy-prod-attestor-core-diff` · `…:scanipy-prod-cw-detect-oracle-disagreement` · `…:scanipy-prod-eprocess-martingale-test-failure` · `…:scanipy-prod-dlq-snapshot-messages` · `…:scanipy-prod-dlq-detector-messages`
 
 ### 8. DEPLOY-05 — tenant-isolation backstop (below the app layer)
 Terraform the IAM session policies (`infra/modules/compute/session_policy.tf`) + per-tenant KMS CMK
 path + S3 `orgs/{org_id}/` prefix denies. RDS RLS is already merged (CP-03, PR #265); the app-layer
 `app.org_id` seam is landing in engineering Wave 3. Live cross-org negative test (AC-DEPLOY-05a/b)
 runs after ORCH-01 exists (Wave 5).
-> **Status:** IN-PROGRESS (IaC merged PR #305; apply pending) · **Owner:** @papadoxie · **Date:** 2026-06-10
+> **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-10
 > **IaC:** `infra/modules/compute/session_policy.tf` (Layer 1 IAM template) · `infra/modules/kms/` (Layer 3 CMK Lambda) · `infra/tenant-isolation-apply.sh` (apply script). Layer 2 (RLS) already applied via PR #265. **RULE-9:** Security Analyst sign-off granted (PR #305 comment).
-> **Evidence:** Lambda ARN + Secrets Manager session-policy secret `_____` ← fill after running `infra/tenant-isolation-apply.sh` against the account
+> **Evidence:**
+> - Layer 1 (session policy template): `scanipy/prod/worker-session-policy-template` in Secrets Manager · S3 bucket policies applied (buckets provisioned by CMP-DEPLOY-01 when ready)
+> - Layer 2 (RLS): already applied via PR #265
+> - Layer 3 (CMK Lambda): `arn:aws:lambda:us-east-1:<ACCOUNT_ID>:function:scanipy-prod-tenant-cmk-provisioner`
+> - Lambda execution role: `arn:aws:iam::<ACCOUNT_ID>:role/scanipy-prod-tenant-cmk-provisioner`
 
 ### 9. Canary SCM orgs + credentials *(for the corpus team — CANARY-01)*
 Create `scanipy-canary` orgs/projects on GitHub, GitLab, Bitbucket, Azure DevOps; store push
