@@ -224,7 +224,7 @@ The source documents do not pin a cloud vendor, region strategy, queue technolog
 - AC-DEPLOY-04b: The CI gates in `CMP-CI-01` are enforced as hard pipeline failures, not advisory checks.
 - AC-DEPLOY-04c: Image provenance (build commit, build inputs, tool digests) is signed and published with the artifact.
 
-#### CMP-DEPLOY-05 — Tenant data isolation
+#### CMP-DEPLOY-05 — Tenant data isolation `IN-PROGRESS`
 **Depends-On:** CMP-DEPLOY-01, CMP-CP-01, CMP-CP-03 · **Staging:** cross-cutting
 **Purpose:** Enforce that no worker, query path, or object-store access can cross an org boundary. Backstop for `AC-CP-01a` at the runtime layer rather than only in application code.
 **Acceptance criteria:**
