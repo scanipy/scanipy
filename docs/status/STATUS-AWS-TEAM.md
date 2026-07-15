@@ -54,7 +54,7 @@ OTel exporters → CloudWatch Logs + X-Ray; provision the six named alarms (snap
 detector-fail, callback-HMAC-reject, **attestor-core-diff: any non-zero = hard incident**,
 CW-DETECT-disagreement, DLQ-depth). The trace-correlation AC *(eng)* needs the end-to-end scan
 pipeline (Waves 4–5) — provision the surfaces now, the AC flips later.
-> **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-10
+> **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-21 (apply date corrected 2026-07-14 audit)
 > **IaC:** Terraform module `infra/modules/observability/` + provisioning script `infra/observability-apply.sh` (SNS topic, 5 log groups, X-Ray group, 8 alarms, CloudWatch dashboard, OTel collector task def)
 > **Evidence:**
 > - SNS alarm topic: `arn:aws:sns:us-east-1:<ACCOUNT_ID>:scanipy-prod-alarms`
@@ -67,7 +67,7 @@ Terraform the IAM session policies (`infra/modules/compute/session_policy.tf`) +
 path + S3 `orgs/{org_id}/` prefix denies. RDS RLS is already merged (CP-03, PR #265); the app-layer
 `app.org_id` seam is landing in engineering Wave 3. Live cross-org negative test (AC-DEPLOY-05a/b)
 runs after ORCH-01 exists (Wave 5).
-> **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-10
+> **Status:** IaC MERGED + applied (Layers 1,3); S3 prefix-deny layer PENDING (#281) · **Owner:** @papadoxie · **Date:** 2026-06-21 (apply date corrected 2026-07-14 audit)
 > **IaC:** `infra/modules/compute/session_policy.tf` (Layer 1 IAM template) · `infra/modules/kms/` (Layer 3 CMK Lambda) · `infra/tenant-isolation-apply.sh` (apply script). Layer 2 (RLS) already applied via PR #265. **RULE-9:** Security Analyst sign-off granted (PR #305 comment).
 > **Evidence:**
 > - Layer 1 (session policy template): `scanipy/prod/worker-session-policy-template` in Secrets Manager · S3 bucket prefix-deny policies pending — to be applied when CMP-DEPLOY-01 provisions the buckets
@@ -85,7 +85,7 @@ credentials in Secrets Manager; grant the corpus pipeline access.
 Several env-gated ACs (DEPLOY-05a/b, parts of 02a) could become CI-runnable against LocalStack/moto
 instead of waiting for live-account windows. Engineering will wire the harness if you provision/approve
 the approach. *(Optional — reduces live-account coupling; not on the §21 critical path.)*
-> **Decision:** _____ · **Owner:** _____ · **Date:** _____
+> **Decision:** **moto adopted** (CLAR-DEPLOY-21) — in-process pip dev-dep `moto[s3,sqs,kms,secretsmanager,sts]>=5.1,<6.0` for the honestly-emulatable slice only (boto3 adapter conformance, SQS redrive/DLQ-after-3, KMS envelope mechanics, session-policy render + 2048-char limit); policy-enforcement negatives (AC-DEPLOY-05a denies) are NOT emulatable and stay live-account behind the `aws_live` marker; LocalStack CE/Pro rejected; greening 02a/b against moto ECR forbidden. Record: `docs/cross-cutting/DOC-DEPLOY-DECISIONS.md § CLAR-DEPLOY-21` · **Owner:** CTO Agent · **Date:** 2026-07-14
 
 ---
 
