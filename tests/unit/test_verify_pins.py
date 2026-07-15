@@ -162,3 +162,26 @@ def test_committed_pins_file_passes_gate() -> None:
     committed = json.loads(pins_path.read_text(encoding="utf-8"))
     assert check_pins(committed) == []
     assert main([str(pins_path)]) == 0
+
+
+@pytest.mark.unit
+def test_http_stack_pinned_versions() -> None:
+    """The installed HTTP stack matches the CLAR-DEPLOY-19 exact pins.
+
+    CLAR-DEPLOY-19 (RESOLVED 2026-07-14) pins the security-relevant HTTP
+    parsing layer exactly (pyproject `http` extra; httpx2 in `dev`). fastapi's
+    starlette bound is uncapped, so only this tripwire catches a resolver
+    drifting the stack a CVE-relevant patch away from what was reviewed.
+    """
+    from importlib import metadata
+
+    pins = {
+        "fastapi": "0.138.2",
+        "starlette": "1.3.1",
+        "pydantic": "2.13.4",
+        "uvicorn": "0.51.0",
+        # dev-extra pin: the warning-clean TestClient backend (filterwarnings=error).
+        "httpx2": "2.6.0",
+    }
+    installed = {name: metadata.version(name) for name in pins}
+    assert installed == pins
