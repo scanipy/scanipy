@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "comment": "Canonical env_digest registry (CLAR-DEPLOY-22). Append-only: rows are never deleted; a rollover flips the previous active row to superseded and appends the new active row. At most one status=active per image (zero only in the pre-bootstrap record-and-warn window, CLAR-CP-06-02). Written only via env_digest-rollover PRs (deploy.yml register-env-digest job). Consumed by CP-06 (services/control_plane/fidelity.py) and TST-AC-DEPLOY-02b. status=void is permitted only for digests no persisted snapshot/finding carries.",
+  "entries": [
+    {
+      "image": "scanipy-snapshot",
+      "env_digest": "sha256:f3d51cf67de7b3a5f7acd72dd385ce1c6b1e44ecd3677ba0bb6fb58cd270d09f",
+      "tag": "v0.1.0",
+      "git_sha": "0000000000000000000000000000000000000000",
+      "signed_at": "2026-06-08T00:00:00Z",
+      "status": "void",
+      "note": "Nominated as authoritative in prose only (STATUS-AWS-TEAM.md row 5, 2026-06-09); never machine-registered, never deployed, no artifact stamped. Built and pushed manually outside deploy.yml: no org.opencontainers.image.revision label exists on the image and no deploy.yml run exists for v0.1.0, so the build commit is unrecoverable — git_sha is the explicit all-zero UNKNOWN sentinel, not a real commit. signed_at is date-precision, recovered from ECR imagePushedAt 2026-06-08 (exact signing time unrecorded; do not read seconds precision into it)."
+    },
+    {
+      "image": "scanipy-detector",
+      "env_digest": "sha256:a2a25f8e40dc7ca68ea833a5991191fb290ffe04b62f1d044eeee221d11cde47",
+      "tag": "v0.1.0",
+      "git_sha": "0000000000000000000000000000000000000000",
+      "signed_at": "2026-06-08T00:00:00Z",
+      "status": "void",
+      "note": "v0.1.0 build; never nominated, never deployed, no artifact stamped. Same manual out-of-pipeline build as snapshot v0.1.0: build commit unrecoverable (all-zero UNKNOWN sentinel). signed_at is date-precision from ECR imagePushedAt 2026-06-08."
+    },
+    {
+      "image": "scanipy-snapshot",
+      "env_digest": "sha256:65d2edd6a6eb5775ac0f0b107b1de0ba5a9e877b82ffacb30a7a01ebb4d1bd1e",
+      "tag": "v0.1.1",
+      "git_sha": "d948e6ba58bdab2033d6cab28f34502b56944361",
+      "signed_at": "2026-06-09T00:00:00Z",
+      "status": "void",
+      "note": "Deployed to ECS task-def scanipy-snapshot-worker:2 but built from direct-push commit d948e6b (bypassed PR review, RULE-10 — tainted provenance; reverted by PR #302). desiredCount=0 throughout and no RDS/S3 data plane existed; no snapshot/finding carries this digest. signed_at is date-precision from ECR imagePushedAt 2026-06-09."
+    },
+    {
+      "image": "scanipy-detector",
+      "env_digest": "sha256:234d467a50af210065ab11c3191c92de8f13f5d76f894f73a8bce5d495d2b78d",
+      "tag": "v0.1.1",
+      "git_sha": "d948e6ba58bdab2033d6cab28f34502b56944361",
+      "signed_at": "2026-06-09T00:00:00Z",
+      "status": "void",
+      "note": "Same taint as snapshot v0.1.1 (task-def scanipy-detector-worker:2, desiredCount=0; nothing stamped). signed_at is date-precision from ECR imagePushedAt 2026-06-09."
+    }
+  ]
+}
