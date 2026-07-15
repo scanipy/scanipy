@@ -120,14 +120,21 @@ done_ "Object Lock GOVERNANCE 7y: ${SARIF_BUCKET}"
 log "Layer 1 — S3 prefix deny policies..."
 
 for BUCKET in "${SNAPSHOT_BUCKET}" "${WITNESS_BUCKET}" "${SARIF_BUCKET}"; do
-  # Bucket policy: deny GetObject/PutObject/DeleteObject on any object NOT under orgs/* or _platform/*.
+  # Bucket policy: deny GetObject/PutObject/DeleteObject on any object NOT under orgs/*
+  # (plus _platform/*, snapshot bucket only — see below).
   # Use NotResource (not a Condition on s3:prefix) — s3:prefix is only populated for
   # s3:ListBucket requests; on object actions the key is absent and StringNotLike would
   # evaluate to true unconditionally, blocking all object access.
   #
+  # The _platform/* exemption is scoped to the snapshot bucket only: the session
+  # policy's S3PlatformReadOnly statement (services/substrate/session_policy.py)
+  # grants read access to `${SNAPSHOT_BUCKET}/_platform/*` exclusively — witness
+  # and sarif never serve _platform/* content, so carrying the exemption there
+  # would be an unnecessary defence-in-depth gap.
+  #
   # HONEST GAP (recorded 2026-07-15): this bucket policy enforces the
-  # NAMESPACE (nothing outside orgs/* or _platform/*), not the per-org
-  # boundary. Matching the object key's org_id against the caller's org at
+  # NAMESPACE (nothing outside orgs/* or, snapshot-only, _platform/*), not the
+  # per-org boundary. Matching the object key's org_id against the caller's org at
   # the bucket-policy layer would need an org-scoped principal context (e.g.
   # aws:PrincipalTag/org_id via sts:TagSession), which the current
   # AssumeRole flow (inline session Policy + scan-* session name, DOC §6.1)
@@ -136,11 +143,14 @@ for BUCKET in "${SNAPSHOT_BUCKET}" "${WITNESS_BUCKET}" "${SARIF_BUCKET}"; do
   # by the per-scan IAM session policy (Layer 1, session_policy.tf) and the
   # per-tenant CMK encryption context (Layer 3). Moving org-matching into
   # bucket policies = session-tagging design change → RULE-9 review first.
-  POLICY=$(python3 - "${BUCKET}" <<'PY'
+  POLICY=$(python3 - "${BUCKET}" "${SNAPSHOT_BUCKET}" <<'PY'
 import json
 import sys
 
-bucket = sys.argv[1]
+bucket, snapshot_bucket = sys.argv[1], sys.argv[2]
+not_resource = [f"arn:aws:s3:::{bucket}/orgs/*"]
+if bucket == snapshot_bucket:
+    not_resource.append(f"arn:aws:s3:::{bucket}/_platform/*")
 print(json.dumps({
   "Version": "2012-10-17",
   "Statement": [
@@ -149,10 +159,7 @@ print(json.dumps({
       "Effect": "Deny",
       "Principal": "*",
       "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-      "NotResource": [
-        f"arn:aws:s3:::{bucket}/orgs/*",
-        f"arn:aws:s3:::{bucket}/_platform/*",
-      ],
+      "NotResource": not_resource,
     }
   ],
 }))
@@ -194,7 +201,7 @@ print(json.dumps({
     {
       "Sid": "KMSProvisionCreate",
       "Effect": "Allow",
-      "Action": ["kms:CreateKey","kms:CreateAlias","kms:DescribeKey","kms:ListAliases",
+      "Action": ["kms:CreateKey","kms:CreateAlias","kms:DescribeKey",
                  "kms:EnableKeyRotation"],
       "Resource": "*"
     },
@@ -279,8 +286,12 @@ fi
 # Policy hard limit, CLAR-DEPLOY-21).
 # ---------------------------------------------------------------------------
 log "Rendering session policy template..."
+# ENV is passed as sys.argv[1], never interpolated into the -c string — a
+# value containing a closing quote + arbitrary Python would otherwise be
+# executed (shell/code-injection surface flagged in claude-review on PR #312).
 SESSION_POLICY_TEMPLATE=$(PYTHONPATH="${REPO_ROOT}" python3 -c \
-  "from services.substrate.session_policy import render_session_policy_template as r; print(r('${ENV}'))")
+  "import sys; from services.substrate.session_policy import render_session_policy_template as r; print(r(sys.argv[1]))" \
+  "${ENV}")
 
 # Store to Secrets Manager so CMP-ORCH-03 can read it at runtime.
 SECRET_NAME="scanipy/${ENV}/worker-session-policy-template"

@@ -77,7 +77,6 @@ resource "aws_iam_role_policy" "tenant_cmk_lambda" {
           "kms:CreateKey",
           "kms:CreateAlias",
           "kms:DescribeKey",
-          "kms:ListAliases",
           "kms:EnableKeyRotation",
         ]
         Resource = "*"

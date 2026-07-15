@@ -219,10 +219,17 @@ resource "aws_s3_bucket_object_lock_configuration" "sarif" {
 
 # ---------------------------------------------------------------------------
 # Bucket policy — Layer 1 prefix-namespace backstop (CLAR-DEPLOY-16).
-# Deny object actions outside orgs/* and _platform/* for EVERY principal.
-# NotResource (not an s3:prefix Condition) because s3:prefix is only
-# populated on s3:ListBucket requests; on object actions the condition key is
-# absent and StringNotLike would deny unconditionally.
+# Deny object actions outside orgs/* (and, snapshot-bucket-only, _platform/*)
+# for EVERY principal. NotResource (not an s3:prefix Condition) because
+# s3:prefix is only populated on s3:ListBucket requests; on object actions
+# the condition key is absent and StringNotLike would deny unconditionally.
+#
+# The _platform/* exemption is scoped to the snapshot bucket only: the
+# session policy's S3PlatformReadOnly statement
+# (services/substrate/session_policy.py) grants read access to
+# `${snapshot}/_platform/*` exclusively — witness and sarif never serve
+# _platform/* content, so carrying the exemption there would be an
+# unnecessary defence-in-depth gap.
 # ---------------------------------------------------------------------------
 
 resource "aws_s3_bucket_policy" "prefix_deny" {
@@ -242,10 +249,10 @@ resource "aws_s3_bucket_policy" "prefix_deny" {
         Effect    = "Deny"
         Principal = "*"
         Action    = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
-        NotResource = [
-          "arn:aws:s3:::${each.value}/orgs/*",
-          "arn:aws:s3:::${each.value}/_platform/*",
-        ]
+        NotResource = concat(
+          ["arn:aws:s3:::${each.value}/orgs/*"],
+          each.key == "snapshot" ? ["arn:aws:s3:::${each.value}/_platform/*"] : []
+        )
       }
     ]
   })
