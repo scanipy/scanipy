@@ -31,7 +31,8 @@ output "dashboard_name" {
   value = aws_cloudwatch_dashboard.scanipy.dashboard_name
 }
 
-# All eight alarm ARNs — consumed by TST-AC-DEPLOY-03c
+# All alarm ARNs — consumed by TST-AC-DEPLOY-03c. The two absence alarms are
+# null until enable_absence_alarms is flipped (T-STAGE-A-01 / CLAR-DEPLOY-20).
 output "alarm_arns" {
   value = {
     snapshot_worker_failure_rate    = aws_cloudwatch_metric_alarm.snapshot_worker_failure_rate.arn
@@ -42,5 +43,9 @@ output "alarm_arns" {
     eprocess_martingale_test_failure = aws_cloudwatch_metric_alarm.eprocess_martingale_test_failure.arn
     dlq_snapshot_messages           = aws_cloudwatch_metric_alarm.dlq_snapshot_messages.arn
     dlq_detector_messages           = aws_cloudwatch_metric_alarm.dlq_detector_messages.arn
+    snapshot_queue_oldest_age       = aws_cloudwatch_metric_alarm.snapshot_queue_oldest_age.arn
+    detector_queue_oldest_age       = aws_cloudwatch_metric_alarm.detector_queue_oldest_age.arn
+    attestor_run_absent             = one(aws_cloudwatch_metric_alarm.attestor_run_absent[*].arn)
+    eprocess_gate_absent            = one(aws_cloudwatch_metric_alarm.eprocess_gate_absent[*].arn)
   }
 }
