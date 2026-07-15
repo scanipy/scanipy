@@ -67,7 +67,7 @@ Terraform the IAM session policies (`infra/modules/compute/session_policy.tf`) +
 path + S3 `orgs/{org_id}/` prefix denies. RDS RLS is already merged (CP-03, PR #265); the app-layer
 `app.org_id` seam is landing in engineering Wave 3. Live cross-org negative test (AC-DEPLOY-05a/b)
 runs after ORCH-01 exists (Wave 5).
-> **Status:** DONE — IaC + live apply complete (Layers 1, 2, 3); S3 prefix-deny APPLIED 2026-07-15 · **Owner:** @papadoxie · **Date:** 2026-06-10 (updated 2026-07-15)
+> **Status:** DONE — IaC + live apply complete (Layers 0, 1, 2, 3); S3 prefix-deny APPLIED 2026-07-15 · **Owner:** @papadoxie (initial Layer-1/3 IaC, 2026-06-10) → completed by orchestrating agent 2026-07-15 (Layer-0 data-plane buckets, S3 prefix-deny apply, CMK Lambda hardening + redeploy, Lambda invoke restriction — per project-owner directive to complete the AWS track directly) · **Date:** 2026-06-10 (updated 2026-07-15)
 > **IaC:** `infra/modules/dataplane/main.tf` (Layer 0 data-plane buckets) · `infra/modules/compute/session_policy.tf` (Layer 1 IAM template) · `services/substrate/session_policy.py` (canonical renderer, single source of truth for the template) · `infra/modules/kms/` (Layer 3 CMK Lambda) · `infra/tenant-isolation-apply.sh` (apply script, idempotent). Layer 2 (RLS) already applied via PR #265. **RULE-9:** Security Analyst sign-off granted (PR #305 comment).
 > **Evidence:**
 > - Layer 0 (buckets, live 2026-07-15, us-east-1, account `<ACCOUNT_ID>`): `scanipy-prod-snapshot` (versioning + BPA(4/4) + SSE-AES256 + 90d lifecycle) · `scanipy-prod-witness` (same + 365d lifecycle) · `scanipy-prod-sarif` (same, no lifecycle, Object Lock ENABLED GOVERNANCE mode 7y)
