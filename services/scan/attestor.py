@@ -85,6 +85,8 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 from uuid import UUID
 
+from tools.observability.metrics import record_counter
+
 if TYPE_CHECKING:
     from analysis.sarif.canonical_emit import SARIFLog
 
@@ -388,6 +390,14 @@ def _attest_core(
     else:
         result = "fail"
         diff_summary = _diff_summary(blob_1, blob_2)
+
+    # CMP-DEPLOY-03 §3.4 metric 8 — CLAR-DEPLOY-20 AMENDED semantics: emitted on
+    # EVERY core attestation run with value = this run's core-partition byte-diff
+    # count (this pipeline compares one blob pair, so 0 or 1). ``add(0)`` on a
+    # clean pass is a REAL datapoint — it lets the ``SampleCount < 1`` absence
+    # alarm distinguish "attestor never ran" from "ran clean", so the incident
+    # metric is never fail-open. No attributes (no-dims metric); no-op sans OTel.
+    record_counter("attestor.core_diff_count", value=0 if result == "pass" else 1)
 
     attestor_hash = bytes.fromhex(log_1.runs[0].sarif_hash)
     signed_chain_id = _maybe_append(

@@ -45,6 +45,7 @@ from services.scan.provenance import (
     SignedProvenanceRecord,
     append_repartition_event,
 )
+from tools.observability.metrics import record_counter
 
 # Engines whose findings are in the deterministic-core partition (INV-1 / the
 # .claude/rules/05-determinism.md partition rule). Only these are ever at risk
@@ -197,6 +198,7 @@ def record_oracle_run(
     reflection_sites: tuple[OracleReflectionSite, ...] = (),
     reason: str | None = None,
     run_id: uuid.UUID | None = None,
+    language: str = "unknown",
 ) -> OracleRunRecord:
     """Persist one ``snap_oracle_runs`` row (agreement OR disagreement) (DOC §6.1 step 5).
 
@@ -205,6 +207,12 @@ def record_oracle_run(
     empty on a ``closed-world`` verdict (DOC §3.2). The verdict is **injected**
     (pre-supplied by the caller / the deferred AC-SNAP-04a scanner); this module
     does not compute it from ``CW-DETECT`` or any reflection scan.
+
+    ``language`` feeds ONLY the DOC-CMP-DEPLOY-03 §3.4 metric-9 dimension on a
+    disagreement (``cw_detect.oracle_disagreement_count{language}``); it is NOT
+    persisted — ``snap_oracle_runs`` (DOC-CMP-SNAP-04 §3.2) carries no language
+    column, so the metric attribute defaults to ``"unknown"`` until the deferred
+    AC-SNAP-04a scanner (which knows the snapshot language) supplies it.
     """
     agreed = oracle_verdict == "closed-world"
     if agreed and reflection_sites:
@@ -222,6 +230,16 @@ def record_oracle_run(
         reason=reason,
     )
     oracle_run_store.append(record)
+    if not agreed:
+        # CMP-DEPLOY-03 §3.4 metric 9 — one increment per CW-DETECT ↔ oracle
+        # disagreement run (this row is the disagreement event of record; the
+        # per-finding re-partition fan-out is deliberately NOT counted). An
+        # agreement / safe-default row emits nothing: metric absence is healthy
+        # for event counters (CLAR-DEPLOY-20 treat_missing_data=notBreaching).
+        record_counter(
+            "cw_detect.oracle_disagreement_count",
+            attributes={"language": language},
+        )
     return record
 
 

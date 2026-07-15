@@ -102,3 +102,45 @@ jobs:
         with:
           name: nightly-coverage
           path: coverage.xml
+
+  # ---------------------------------------------------------------------------
+  # Gate-4 daily heartbeat — eprocess.martingale_test_status datapoint
+  # (CMP-DEPLOY-03 §3.4 metric 10, CLAR-DEPLOY-20 cadence: once daily via this
+  # cron so the SampleCount<1 absence alarm — enabled at Stage-A go-live — is
+  # never fail-open. The publish is non-gating; the job verdict is the pytest
+  # exit code. The direct-CloudWatch lane stays dormant until
+  # SCANIPY_METRICS_CW_DIRECT=1 + AWS OIDC credentials are wired into this
+  # workflow (live-ops follow-up); until then the publisher is a hermetic
+  # no-op that logs the would-be datapoint.
+  # NOTE (metric 8, attestor.core_diff_count): its emitter lives inside
+  # attest_scan (services/scan/attestor.py) and its daily live datapoint needs
+  # the deployed attestor run — the nightly-regression job above already
+  # exercises attest_scan hermetically; the live heartbeat lands with the
+  # substrate track.
+  # ---------------------------------------------------------------------------
+  gate4-heartbeat:
+    name: "Gate-4 heartbeat — martingale status daily datapoint (CLAR-DEPLOY-20)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Run Gate-4 martingale tests and publish the daily status datapoint
+        run: |
+          if pytest tests/falsifier/eprocess/ -q --tb=short; then
+            gate4_status=1
+          else
+            gate4_status=0
+          fi
+          python scripts/publish_gate4_status.py --status "$gate4_status" \
+            || echo "Gate-4 status publish failed (non-gating)"
+          [ "$gate4_status" = "1" ] || exit 1
+        env:
+          SCANIPY_ENV: test
