@@ -30,6 +30,19 @@ variable "worker_task_role_arn" {
   description = "ARN of the ECS worker task role that will be allowed to use tenant CMKs"
   type        = string
 }
+variable "control_plane_invoker_arns" {
+  description = <<-EOT
+    IAM principals allowed to invoke the tenant-CMK provisioning Lambda.
+    Deny-by-default posture: Lambda resource policies are additive Allow-only,
+    so the effective invoker set is (a) these explicit grants plus (b) any
+    same-account IAM identity whose own policy grants lambda:InvokeFunction —
+    the account root always qualifies. Default: the GitHub-Actions OIDC deploy
+    role only. Add the CMP-CP-02 runtime role here when it exists (it is the
+    real production caller at tenant onboarding).
+  EOT
+  type        = list(string)
+  default     = []
+}
 
 # ---------------------------------------------------------------------------
 # Lambda execution role — minimal permissions to create/describe KMS keys
@@ -121,6 +134,44 @@ resource "aws_lambda_function" "tenant_cmk" {
   }
 
   tags = { Component = "CMP-DEPLOY-05"; Env = var.env }
+}
+
+# ---------------------------------------------------------------------------
+# Invocation restriction (applied live 2026-07-15 via `aws lambda
+# add-permission`, statement id `scanipy-control-plane-invoke` — the CLI/
+# apply-script grant used the plain id since it only ever adds one default
+# invoker; a `terraform apply` of the resource below would independently
+# grant the same principal under a per-ARN-hashed id
+# (`scanipy-control-plane-invoke-<8 hex>`, to stay collision-free across
+# multiple invokers in `control_plane_invoker_arns`). Both forms are
+# functionally identical Allow grants for the same principal — Terraform
+# does not currently own this resource live (see the dataplane module's
+# terraform-import-backlog note; the same CLI-authoritative posture applies
+# here), so no drift/duplicate-grant risk exists today.
+#
+# This Lambda mints per-tenant CMKs — its invoker set IS the tenant-onboarding
+# control plane. Lambda resource policies are Allow-only (no Deny statements
+# via add-permission), so "deny-by-default" here means: grant explicitly only
+# the control-plane principals below; every other principal must come through
+# its own IAM identity policy, which no scanipy worker/task role carries
+# (worker roles get S3/KMS data-plane actions only, never lambda:*). The
+# account root retains invocation via IAM as always.
+#
+# Default grant: role/scanipy-github-deploy (the OIDC deploy role). The
+# CMP-CP-02 runtime role must be appended to var.control_plane_invoker_arns
+# when it exists.
+# ---------------------------------------------------------------------------
+resource "aws_lambda_permission" "control_plane_invoke" {
+  for_each = toset(
+    length(var.control_plane_invoker_arns) > 0
+    ? var.control_plane_invoker_arns
+    : ["arn:aws:iam::${var.account_id}:role/scanipy-github-deploy"]
+  )
+
+  statement_id  = "scanipy-control-plane-invoke-${substr(sha256(each.value), 0, 8)}"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.tenant_cmk.function_name
+  principal     = each.value
 }
 
 # ---------------------------------------------------------------------------
