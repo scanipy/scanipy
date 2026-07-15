@@ -95,25 +95,32 @@ resource "aws_cloudwatch_dashboard" "scanipy" {
       },
 
       # --- Alarm summary ---
+      # Alarm ARNs are taken from the alarm resources directly (an earlier
+      # revision built them by string interpolation and rendered the
+      # `${data.aws_caller_identity...}` fragment literally into the JSON).
       {
         type   = "alarm"
         x      = 0; y = 19; width = 24; height = 4
         properties = {
           title = "All Scanipy alarms"
-          alarms = [
-            "arn:aws:cloudwatch:${var.region}:${"$"}{data.aws_caller_identity.current.account_id}:alarm:scanipy-${var.env}-snapshot-worker-failure-rate",
-            "arn:aws:cloudwatch:${var.region}:${"$"}{data.aws_caller_identity.current.account_id}:alarm:scanipy-${var.env}-detector-worker-failure-rate",
-            "arn:aws:cloudwatch:${var.region}:${"$"}{data.aws_caller_identity.current.account_id}:alarm:scanipy-${var.env}-callback-hmac-reject",
-            "arn:aws:cloudwatch:${var.region}:${"$"}{data.aws_caller_identity.current.account_id}:alarm:scanipy-${var.env}-attestor-core-diff",
-            "arn:aws:cloudwatch:${var.region}:${"$"}{data.aws_caller_identity.current.account_id}:alarm:scanipy-${var.env}-cw-detect-oracle-disagreement",
-            "arn:aws:cloudwatch:${var.region}:${"$"}{data.aws_caller_identity.current.account_id}:alarm:scanipy-${var.env}-eprocess-martingale-test-failure",
-            "arn:aws:cloudwatch:${var.region}:${"$"}{data.aws_caller_identity.current.account_id}:alarm:scanipy-${var.env}-dlq-snapshot-messages",
-            "arn:aws:cloudwatch:${var.region}:${"$"}{data.aws_caller_identity.current.account_id}:alarm:scanipy-${var.env}-dlq-detector-messages"
-          ]
+          alarms = concat(
+            [
+              aws_cloudwatch_metric_alarm.snapshot_worker_failure_rate.arn,
+              aws_cloudwatch_metric_alarm.detector_worker_failure_rate.arn,
+              aws_cloudwatch_metric_alarm.callback_hmac_reject.arn,
+              aws_cloudwatch_metric_alarm.attestor_core_diff.arn,
+              aws_cloudwatch_metric_alarm.cw_detect_oracle_disagreement.arn,
+              aws_cloudwatch_metric_alarm.eprocess_martingale_test_failure.arn,
+              aws_cloudwatch_metric_alarm.dlq_snapshot_messages.arn,
+              aws_cloudwatch_metric_alarm.dlq_detector_messages.arn,
+              aws_cloudwatch_metric_alarm.snapshot_queue_oldest_age.arn,
+              aws_cloudwatch_metric_alarm.detector_queue_oldest_age.arn,
+            ],
+            aws_cloudwatch_metric_alarm.attestor_run_absent[*].arn,
+            aws_cloudwatch_metric_alarm.eprocess_gate_absent[*].arn,
+          )
         }
       }
     ]
   })
 }
-
-data "aws_caller_identity" "current" {}
