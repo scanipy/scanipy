@@ -52,11 +52,11 @@ XRAY_ARN=$(aws xray create-group \
   --group-name "scanipy-${ENV}" \
   --filter-expression "annotation.env = \"${ENV}\"" \
   --region "${REGION}" \
-  --query GroupSummary.GroupARN --output text 2>/dev/null \
+  --query Group.GroupARN --output text 2>/dev/null \
   || aws xray get-group \
     --group-name "scanipy-${ENV}" \
     --region "${REGION}" \
-    --query GroupSummary.GroupARN --output text)
+    --query Group.GroupARN --output text)
 done_ "X-Ray group: ${XRAY_ARN}"
 
 # ---------------------------------------------------------------------------
