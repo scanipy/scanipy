@@ -12,8 +12,8 @@
       "image": "public.ecr.aws/aws-observability/aws-otel-collector@sha256:cdd2092033efbad8f4289eb53c2d729fdc2167b5395d71c175628f7eb1eb78aa",
       "essential": true,
       "portMappings": [
-        { "containerPort": 4317, "protocol": "tcp", "name": "otlp-grpc" },
-        { "containerPort": 4318, "protocol": "tcp", "name": "otlp-http" }
+        { "containerPort": 4317, "protocol": "tcp" },
+        { "containerPort": 4318, "protocol": "tcp" }
       ],
       "environment": [
         { "name": "AWS_REGION", "value": "<REGION>" },
