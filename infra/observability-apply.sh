@@ -6,6 +6,16 @@
 # docs/status/STATUS-AWS-TEAM.md row 7 fields.
 #
 # Usage:  ./infra/observability-apply.sh [--env prod] [--region us-east-1]
+#
+# TODO(CMP-DEPLOY-01 follow-up): ECR repository hardening
+# (imageTagMutability=IMMUTABLE, scanOnPush=true) for scanipy-snapshot and
+# scanipy-detector is currently applied ad hoc via the AWS CLI and is not
+# codified in IaC. It is intentionally NOT added here — the ECR repositories
+# are provisioned by CMP-DEPLOY-01's `infra/modules/registry` module
+# (docs/components/DOC-CMP-DEPLOY-01.md), not by CMP-DEPLOY-03, so the fix
+# belongs in that module (or its own apply script), not in this
+# observability script. File a tracked follow-up against CMP-DEPLOY-01
+# rather than folding registry-owned config into this script.
 set -euo pipefail
 
 ENV="${ENV:-prod}"
@@ -28,6 +38,34 @@ SNS_ARN=$(aws sns create-topic \
   --tags Key=Component,Value=CMP-DEPLOY-03 Key=Env,Value="${ENV}" \
   --query TopicArn --output text)
 done_ "SNS topic: ${SNS_ARN}"
+
+# ---------------------------------------------------------------------------
+# SNS subscription (optional, idempotent)
+# ---------------------------------------------------------------------------
+# Set ALARM_EMAIL to subscribe an address to the alarm topic on every apply
+# without creating duplicate subscriptions. The subscription lands in
+# PendingConfirmation until the recipient clicks the confirmation link SNS
+# emails them — that confirmation step cannot be automated from here.
+if [[ -n "${ALARM_EMAIL:-}" ]]; then
+  log "Checking SNS subscription for ${ALARM_EMAIL}..."
+  EXISTING_SUB=$(aws sns list-subscriptions-by-topic \
+    --topic-arn "${SNS_ARN}" \
+    --region "${REGION}" \
+    --query "Subscriptions[?Protocol=='email' && Endpoint=='${ALARM_EMAIL}'].SubscriptionArn" \
+    --output text)
+  if [[ -z "${EXISTING_SUB}" ]]; then
+    aws sns subscribe \
+      --topic-arn "${SNS_ARN}" \
+      --protocol email \
+      --notification-endpoint "${ALARM_EMAIL}" \
+      --region "${REGION}" >/dev/null
+    done_ "SNS subscription created for ${ALARM_EMAIL} (PendingConfirmation — recipient must confirm)"
+  else
+    done_ "SNS subscription already present for ${ALARM_EMAIL} (${EXISTING_SUB})"
+  fi
+else
+  log "ALARM_EMAIL not set — skipping SNS subscription step (subscribe manually or re-run with ALARM_EMAIL=<addr>)"
+fi
 
 # ---------------------------------------------------------------------------
 # CloudWatch Log Groups
