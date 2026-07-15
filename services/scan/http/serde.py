@@ -38,10 +38,22 @@ _JOB_STATUSES = ("running", "done", "failed")
 
 
 def _load_json_object(body_bytes: bytes, *, what: str) -> dict[str, object]:
-    """Decode ``body_bytes`` as a JSON object; anything else is a 400."""
+    """Decode ``body_bytes`` as a JSON object; anything else is a 400.
+
+    Security-review fix: a pathologically deep JSON document (e.g. tens of
+    thousands of nested arrays/objects) blows the interpreter's recursion
+    limit inside ``json.loads``'s recursive-descent parser, raising
+    ``RecursionError`` — a plain ``Exception`` subclass, NOT a ``ValueError``.
+    Left uncaught, that violates this module's own documented contract ("ANY
+    malformation ... raises InvalidInputError -> 400 invalid_input"): the
+    request instead falls through to the app's generic-exception handler and
+    returns 500 internal_error on trivially attacker-suppliable input, and
+    logs a large recursion traceback. Caught here alongside the existing
+    parse failures so it maps to the same fail-closed 400.
+    """
     try:
         decoded = json.loads(body_bytes)
-    except (ValueError, UnicodeDecodeError) as exc:
+    except (ValueError, UnicodeDecodeError, RecursionError) as exc:
         raise InvalidInputError(f"{what} body is not valid JSON") from exc
     if not isinstance(decoded, dict):
         raise InvalidInputError(f"{what} body must be a JSON object")

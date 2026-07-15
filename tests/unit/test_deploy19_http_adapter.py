@@ -22,6 +22,7 @@ from __future__ import annotations
 import hashlib
 import hmac as hmac_module
 import json
+import sys
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
@@ -192,13 +193,22 @@ def _build_app(
     now: Callable[[], int] = lambda: 1_000_000,
     hmac_key_issuer: FakeHmacKeyIssuer | None = None,
     registry: DetectorRegistry | None = None,
+    max_body_bytes: int | None = None,
 ) -> tuple[TestClient, DetectorRegistry, OrgScopedScanStore, StandardQueue, FakeHmacKeyIssuer]:
     """Build a hermetic MVP-1 app: every port is an in-memory double, injected
-    through ``create_app``'s DI seam — never the fail-closed prod path."""
+    through ``create_app``'s DI seam — never the fail-closed prod path.
+
+    ``max_body_bytes`` overrides ``MaxBodySizeMiddleware``'s ceiling (default
+    ``None`` uses ``create_app``'s own default) — injectable so the 413 tests
+    can probe the boundary without constructing multi-megabyte payloads.
+    """
     reg = registry if registry is not None else _registry()
     store = OrgScopedScanStore()
     queue = StandardQueue(name="scan-jobs")
     issuer = hmac_key_issuer if hmac_key_issuer is not None else FakeHmacKeyIssuer()
+    kwargs: dict[str, object] = {}
+    if max_body_bytes is not None:
+        kwargs["max_body_bytes"] = max_body_bytes
     app = create_app(
         guard=CPGuard(),
         registry=reg,
@@ -211,6 +221,7 @@ def _build_app(
         snapshot_port=FakeSnapshotPort(),
         connection_factory=connection_factory,
         now=now,
+        **kwargs,  # type: ignore[arg-type]
     )
     client = TestClient(app)
     return client, reg, store, queue, issuer
@@ -417,6 +428,118 @@ def test_c1c_tampered_body_after_signing_401_and_store_never_reached() -> None:
     assert resp.status_code == 401  # type: ignore[attr-defined]
     assert resp.json()["error_code"] == "invalid_hmac"  # type: ignore[attr-defined]
     assert spy.calls == [], "a tampered callback must never reach the JobStateStore"
+
+
+# ---------------------------------------------------------------------------
+# Security-review fixes (post-merge, CLAR-DEPLOY-19 lane): MaxBodySizeMiddleware
+# end-to-end wiring + the RecursionError→400 serde fix. Unit-level coverage of
+# MaxBodySizeMiddleware itself (ASGI-level, no HTTP) lives in
+# tests/unit/test_scan_http_body_size_limit.py.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_oversized_callback_body_413_before_any_auth_no_store_write() -> None:
+    """A callback body over the ceiling is rejected 413 — even with a garbage
+    ``Authorization`` header carrying no valid credentials at all — because
+    ``MaxBodySizeMiddleware`` runs BEFORE the route's own body read, ahead of
+    the HMAC gate inside ``post_job_status`` (DOC-API §2.5: this route has no
+    CP-01 tenancy/auth check ahead of the body read either). The JobStateStore
+    is never reached, exactly like a tampered/forged callback (C-1c/C-2c)."""
+    verifier = FakeJWTVerifier()
+    issuer = FakeHmacKeyIssuer()
+    spy = SpyJobStateStore()
+    client, *_ = _build_app(
+        verifier=verifier,
+        job_state_store=spy,
+        hmac_key_issuer=issuer,
+        now=lambda: 1000,
+        max_body_bytes=64,
+    )
+
+    job_id = uuid4()
+    oversized_body = json.dumps({"padding": "x" * 500}).encode("utf-8")
+    assert len(oversized_body) > 64
+
+    resp = _post_callback(
+        client, job_id, oversized_body, "Bearer not-even-hmac-shaped", timestamp=1000
+    )
+    assert resp.status_code == 413  # type: ignore[attr-defined]
+    assert resp.json()["error_code"] == "payload_too_large"  # type: ignore[attr-defined]
+    assert spy.calls == [], "an oversized callback must never reach the JobStateStore"
+
+
+@pytest.mark.unit
+def test_oversized_authenticated_scan_submission_413() -> None:
+    """An AUTHENTICATED, AUTHORIZED ``POST /api/v1/scans`` body over the
+    ceiling is still rejected 413 — the cap protects authenticated callers
+    too, not just the pre-auth worker-callback route."""
+    verifier = FakeJWTVerifier()
+    verifier.register("token-a", claims_for(ORG_A))
+    client, reg, *_ = _build_app(verifier=verifier, max_body_bytes=64)
+    ids = _shipped_ids(reg)
+    headers = {
+        **headers_for(ORG_A),
+        "Authorization": "Bearer token-a",
+        "Idempotency-Key": str(uuid4()),
+    }
+    oversized_body = _scan_body_bytes(ids * 20)  # padded well past the 64-byte cap
+    assert len(oversized_body) > 64
+
+    resp = client.post("/api/v1/scans", content=oversized_body, headers=headers)
+    assert resp.status_code == 413
+    assert resp.json()["error_code"] == "payload_too_large"
+
+
+@pytest.mark.unit
+def test_body_within_ceiling_unaffected() -> None:
+    """A body comfortably under the ceiling is unaffected — the cap does not
+    false-positive on legitimate small traffic."""
+    verifier = FakeJWTVerifier()
+    issuer = FakeHmacKeyIssuer()
+    client, *_ = _build_app(
+        verifier=verifier, hmac_key_issuer=issuer, now=lambda: 1000, max_body_bytes=512
+    )
+    job_id, scan_id = uuid4(), uuid4()
+    key_id, secret = issuer.issue(job_id=job_id, scan_id=scan_id)
+    body = done_report(job_id, scan_id)
+    header, body_bytes = sign_callback(
+        job_id=job_id, worker_id="worker-1", timestamp=1000, body=body, key_id=key_id, secret=secret
+    )
+    assert len(body_bytes) <= 512, "test premise: this report fits under the injected cap"
+
+    resp = _post_callback(client, job_id, body_bytes, header, timestamp=1000)
+    assert resp.status_code == 204  # type: ignore[attr-defined]
+
+
+@pytest.mark.unit
+def test_deeply_nested_json_callback_body_400_not_500() -> None:
+    """A pathologically deep JSON body (blows the interpreter's recursion
+    limit inside ``json.loads``) must map to 400 invalid_input — the
+    ``_load_json_object`` contract ("ANY malformation -> 400") — not fall
+    through to the generic-exception 500 handler. Runs with NO valid
+    credentials to also confirm parsing (and its failure mode) happens
+    before/independent of the HMAC gate, per the route's own read order."""
+    verifier = FakeJWTVerifier()
+    issuer = FakeHmacKeyIssuer()
+    spy = SpyJobStateStore()
+    client, *_ = _build_app(
+        verifier=verifier,
+        job_state_store=spy,
+        hmac_key_issuer=issuer,
+        now=lambda: 1000,
+        # a deep-nesting attack payload is tiny in bytes; keep the size cap at
+        # its default so only the recursion-depth path is under test here.
+    )
+
+    job_id = uuid4()
+    depth = sys.getrecursionlimit() + 500
+    deeply_nested = (b"[" * depth) + (b"]" * depth)
+
+    resp = _post_callback(client, job_id, deeply_nested, "Bearer garbage", timestamp=1000)
+    assert resp.status_code == 400, resp.text  # type: ignore[attr-defined]
+    assert resp.json()["error_code"] == "invalid_input"  # type: ignore[attr-defined]
+    assert spy.calls == [], "a malformed callback must never reach the JobStateStore"
 
 
 # ---------------------------------------------------------------------------
