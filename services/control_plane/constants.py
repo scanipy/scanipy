@@ -40,6 +40,11 @@ ERROR_INVARIANT_INV2_VIOLATION = "invariant_inv2_violation"
 # CP-02 KMSKeyMissingError). The ThrottlingException/503 limb is SRE-owned and
 # deliberately not represented here (RULE-4).
 ERROR_KMS_KEY_MISSING = "kms_key_missing"
+# Worker callback status conflicts with the recorded terminal job state
+# (DOC-API §4.5 "409 conflicting status transition"; reserved in §6.1 by
+# CLAR-DEPLOY-19 — the C-2 replay-idempotency co-sign condition). Distinct from
+# `idempotency_conflict` (§3.4 Idempotency-Key body mismatch on POST /scans).
+ERROR_CONFLICTING_STATUS_TRANSITION = "conflicting_status_transition"
 
 # Maps each reserved code to its HTTP status (DOC-API §6.1).
 ERROR_HTTP_STATUS: dict[str, int] = {
@@ -52,6 +57,7 @@ ERROR_HTTP_STATUS: dict[str, int] = {
     ERROR_LLM_QUOTA_EXCEEDED: 429,
     ERROR_INVARIANT_INV2_VIOLATION: 422,
     ERROR_KMS_KEY_MISSING: 500,
+    ERROR_CONFLICTING_STATUS_TRANSITION: 409,
 }
 
 # --- Resources and actions exposed to the RBAC gate ---------------------------
@@ -94,6 +100,7 @@ RBAC: dict[Role, dict[Resource, frozenset[Action]]] = {
 }
 
 __all__ = [
+    "ERROR_CONFLICTING_STATUS_TRANSITION",
     "ERROR_HTTP_STATUS",
     "ERROR_INVARIANT_INV2_VIOLATION",
     "ERROR_KMS_KEY_MISSING",
