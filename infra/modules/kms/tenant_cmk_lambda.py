@@ -188,7 +188,9 @@ def provision_tenant_cmk(org_id: str, kms_client: KmsClient | None = None) -> st
         # boto3 client construction — every services/* Protocol is designed
         # to avoid that need, see credential_encryption.KMSClient); the
         # runtime object satisfies the KmsClient Protocol structurally.
-        import boto3  # type: ignore[import-untyped]
+        # No local `# type: ignore` needed: pyproject.toml's `[[tool.mypy.overrides]]`
+        # for `boto3.*` (CLAR-DEPLOY-21, added by PR #313) already covers this import.
+        import boto3
 
         kms = boto3.client("kms", region_name=_require_env("REGION"))
 
