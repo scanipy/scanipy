@@ -49,6 +49,10 @@ from __future__ import annotations
 import os
 import re
 import sys
+from typing import TYPE_CHECKING, Literal
+
+from tools.observability.logging import get_logger
+from tools.observability.metrics import record_job_completion
 
 # Re-export the argv-allowlist surface so the worker's single import point is
 # this module (DOC §3.3 — every secure_run call site lives behind the worker).
@@ -57,6 +61,9 @@ from tools.worker.secure_subprocess import (
     UnknownTool,
     secure_run,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 # INV-2: env_digest is the worker container image digest. Same format CHECK as
 # the shipped ``snapshots.env_digest_chk`` DDL constraint and the SNAP-01 service
@@ -129,6 +136,50 @@ def boot(environ: dict[str, str] | None = None) -> str:
     return resolve_env_digest(environ)
 
 
+def record_snapshot_job_completion(
+    outcome: Literal["success", "failure"],
+    duration_ms: float,
+    *,
+    env_digest: str,
+    precondition_status: str,
+    environ: Mapping[str, str] | None = None,
+) -> None:
+    """Emit the CMP-SNAP-05 job-completion metrics (DOC-CMP-DEPLOY-03 §3.4 1-3).
+
+    The CLAR-DEPLOY-20 emission seam the DOC §6.2 execute loop calls **exactly
+    once per dequeued SQS message**:
+
+    * ``outcome="failure"`` — the message terminated in
+      ``report_status(state='failed')`` (any DOC-CMP-SNAP-05 §7 terminal
+      failure path) → ``snapshot_worker.failure_count``.
+    * ``outcome="success"`` — the ``report_status(state='ready')`` POST
+      returned 2xx → ``snapshot_worker.success_count``.
+
+    Either way ``snapshot_worker.duration_ms`` records ``duration_ms``, the
+    dequeue→report wall time measured on the **monotonic clock**
+    (``time.monotonic``), never wall-clock arithmetic. Counter attributes are
+    ``{region, env_digest}`` (region from ``AWS_REGION``, default
+    ``us-east-1``); the duration attribute is ``{precondition_status}`` (the
+    CW-DETECT verdict for the job). Retries count per-attempt, intentionally
+    (CLAR-DEPLOY-20): the failure-rate alarm denominator is completions.
+
+    Hermetic: a plain function of its inputs plus an injectable ``environ``
+    (defaults to :data:`os.environ`), and a no-op without OTel installed — it
+    can never take down the job loop.
+    """
+    env = os.environ if environ is None else environ
+    record_job_completion(
+        "snapshot_worker",
+        outcome,
+        duration_ms,
+        counter_attributes={
+            "region": env.get("AWS_REGION", "us-east-1"),
+            "env_digest": env_digest,
+        },
+        duration_attributes={"precondition_status": precondition_status},
+    )
+
+
 def run_execute_loop(env_digest: str) -> None:
     """The per-job SQS execute loop (DOC §6.2) — env-gated on the AWS substrate.
 
@@ -140,6 +191,12 @@ def run_execute_loop(env_digest: str) -> None:
     pipeline, this raises a typed refusal naming the unbuilt deps — the boot gate
     (:func:`boot`) and the argv allowlist (:func:`secure_run`) are the parts that
     are real and tested today.
+
+    OBSERVABILITY CONTRACT (CMP-DEPLOY-03 / CLAR-DEPLOY-20): when this loop
+    lands it MUST call :func:`record_snapshot_job_completion` exactly once per
+    dequeued message, on the ``report_status`` outcome (``success`` on a 2xx
+    ``state='ready'`` POST, ``failure`` on any terminal ``state='failed'``
+    path), with the dequeue→report duration from the monotonic clock.
 
     Args:
         env_digest: the bound authoritative ``env_digest`` (INV-2) that every
@@ -169,8 +226,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         env_digest = boot()
     except EnvDigestMissing as exc:
+        # Fail-closed boot refusals stay on plain stderr: the AC-DEPLOY-03b
+        # structured envelope requires a non-empty env_digest, which is exactly
+        # what is missing here (the process never serves traffic).
         print(f"FATAL (INV-2 fail-closed): {exc}", file=sys.stderr)
         return 1
+    # AC-DEPLOY-03b: every log line from this entrypoint rides the structured
+    # JSON envelope (service, build_commit, env_digest) via ScanipyJsonFormatter.
+    get_logger("snapshot-worker").info("snapshot worker boot: env_digest bound")
     run_execute_loop(env_digest)
     return 0  # pragma: no cover — unreachable until the substrate track lands.
 
@@ -182,6 +245,7 @@ __all__ = [
     "UnknownTool",
     "boot",
     "main",
+    "record_snapshot_job_completion",
     "resolve_env_digest",
     "run_execute_loop",
     "secure_run",
