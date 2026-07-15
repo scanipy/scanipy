@@ -24,6 +24,14 @@ get wrong. ``tests/unit/test_deploy19_http_adapter.py`` pins the form.
 RULE-6 note: ORCH-01 emits jobs, not findings — the four finding-level
 provenance fields are stamped downstream (CMP-ORCH-03 / CMP-FND-01..03); this
 surface threads ``S_version`` + ``env_digest`` through the core it wraps.
+
+SECURITY-REVIEW FIX (post-merge): ``create_app`` installs
+``services.scan.http.limits.MaxBodySizeMiddleware`` BEFORE any route or auth
+code runs, so an unauthenticated oversized POST to the worker-callback route
+(which has no auth gate ahead of its own ``await request.body()``) is
+rejected with 413 instead of being fully buffered and parsed first — see
+``services/scan/http/limits.py`` for the propagation argument that this does
+not add a second body read on the C-1 structural path.
 """
 
 from __future__ import annotations
@@ -53,6 +61,11 @@ from services.scan.api import (
     get_scan_findings,
     post_job_status,
     post_scans,
+)
+from services.scan.http.limits import (
+    DEFAULT_MAX_BODY_BYTES,
+    MaxBodySizeMiddleware,
+    PayloadTooLargeError,
 )
 from services.scan.http.serde import (
     parse_job_status_report,
@@ -112,6 +125,7 @@ def create_app(
     snapshot_port: SnapshotPort | None = None,
     connection_factory: Callable[[], AbstractContextManager[Connection]] | None = None,
     now: Callable[[], int] = lambda: int(time.time()),
+    max_body_bytes: int = DEFAULT_MAX_BODY_BYTES,
 ) -> FastAPI:
     """Build the MVP-1 scan-API app with every collaborator injected (DI).
 
@@ -119,9 +133,16 @@ def create_app(
     THIS seam, never by patching the prod path. ``connection_factory=None`` is
     the MVP-1 mode (no RDS; ``OrgScopedScanStore`` is the isolation layer and
     ``bound_request`` yields ``None``); ``now`` is injected so the HMAC skew
-    window is deterministic in tests.
+    window is deterministic in tests. ``max_body_bytes`` is the
+    ``MaxBodySizeMiddleware`` ceiling (security-review fix; see
+    ``services/scan/http/limits.py``) — injectable so tests can probe the 413
+    path without constructing multi-megabyte payloads.
     """
     app = FastAPI(title="Scanipy v3.2 scan API", version="3.2.0")
+    # Installed first (outermost, ahead of auth/routing) so an oversized body
+    # is rejected before a single route — including the worker-callback route,
+    # which has no auth gate ahead of its own body read — observes a byte.
+    app.add_middleware(MaxBodySizeMiddleware, max_bytes=max_body_bytes)
 
     # -- request-lifecycle helpers (CP-01 adapter composition) -----------------
 
@@ -313,10 +334,23 @@ def create_app(
             "internal_error", "unhandled server error", request_trace_id(request), status=500
         )
 
+    def _payload_too_large_handler(request: Request, exc: Exception) -> JSONResponse:
+        # Security-review fix: MaxBodySizeMiddleware raised this from inside
+        # the in-flight body read (Content-Length precheck or running byte
+        # counter) — map to the DOC-API §6 413 envelope, never a 500.
+        assert isinstance(exc, PayloadTooLargeError)  # registered for this type
+        return _error_json(
+            "payload_too_large",
+            f"request body exceeds the {exc.max_bytes}-byte ceiling",
+            request_trace_id(request),
+            status=413,
+        )
+
     app.add_exception_handler(AuthorizationError, _authorization_error_handler)
     app.add_exception_handler(ScanApiError, _scan_api_error_handler)
     app.add_exception_handler(TenantIsolationError, _tenant_isolation_handler)
     app.add_exception_handler(RequestValidationError, _validation_error_handler)
+    app.add_exception_handler(PayloadTooLargeError, _payload_too_large_handler)
     app.add_exception_handler(Exception, _internal_error_handler)
 
     return app
