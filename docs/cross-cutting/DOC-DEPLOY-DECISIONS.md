@@ -324,4 +324,10 @@ Legal hold: a tenant can request a per-codebase legal hold that pins all artifac
 
 ---
 
+## env_digest history (CLAR-DEPLOY-22 pointer)
+
+`DOC-CMP-DEPLOY-02.md §6.1` step 6 says the image digest is "written to the substrate decision record under 'env_digest history'"; `DOC-CMP-DEPLOY-04.md §6.2` step 7 says this file is **not** mechanically updated for tool-version bumps. `CLAR-DEPLOY-22` (full record: `WBS.md §17`) reconciles the two by making this a **pointer, not a ledger**: the canonical, machine-readable, append-only `env_digest` registry is the committed file `workers/env_digest_history.json` (schema + validation in `workers/build/env_digest_registry.py`; CI-checked by `scripts/check_env_digest_registry.py` and the rollover-ceremony lint `scripts/check_rollover_ceremony.py`). It is written only via a human-reviewed `env_digest rollover` PR auto-opened by the `register-env-digest` job in `.github/workflows/deploy.yml` (never a direct push — `enforce-pr-only-merges.yml` + RULE-10); registration is effective on merge. `CMP-CP-06` consumes the registry's active `scanipy-snapshot` entry via `services/control_plane/fidelity.py::production_env_digest` / `enforce_production_env` (`CLAR-CP-06-02`). This section is not itself updated per rollover — see the registry file's own git history for the authoritative timeline.
+
+---
+
 *End of substrate decision record. Updates to any of these decisions require CTO Agent approval and a new entry here. Referenced by WBS.md §17, CLAUDE.md §8.*
