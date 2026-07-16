@@ -697,6 +697,78 @@ def test_c2d_repeated_running_204_twice_single_recorded_state() -> None:
     assert [c["outcome"] for c in spy.calls] == ["applied", "duplicate"]
 
 
+@pytest.mark.unit
+def test_hmac_reject_counter_and_job_state_store_compose_independently(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Regression for the lane4 (CLAR-DEPLOY-20 emitter lane) rebase: main's
+    ``callback.hmac_reject_count`` emitter (wraps ``verify_worker_callback_hmac``
+    in a try/except) and this lane's C-2 ``JobStateStore`` fence now share the
+    same ``post_job_status`` body. Proves the two compose without cross-talk,
+    driven through the real ``create_app`` wiring (not a direct unit call):
+
+      * a validly-signed callback — whether freshly ``applied`` or a byte-
+        identical ``duplicate`` replay (204 both times) — never touches the
+        HMAC-reject counter (it is a rejection-only signal);
+      * an invalid-HMAC callback increments the counter exactly once and never
+        reaches the store (ordering: verification gates both the counter path
+        and the state-store path independently).
+    """
+    import services.scan.api as scan_api
+    from services.scan.api import _CALLBACK_PATH_TEMPLATE
+
+    counter_calls: list[tuple[str, dict[str, str] | None]] = []
+    monkeypatch.setattr(
+        scan_api,
+        "record_counter",
+        lambda name, value=1, *, attributes=None: counter_calls.append(
+            (name, dict(attributes) if attributes else None)
+        ),
+    )
+
+    verifier = FakeJWTVerifier()
+    issuer = FakeHmacKeyIssuer()
+    spy = SpyJobStateStore()
+    client, *_ = _build_app(
+        verifier=verifier, job_state_store=spy, hmac_key_issuer=issuer, now=lambda: 1000
+    )
+
+    job_id, scan_id = uuid4(), uuid4()
+    key_id, secret = issuer.issue(job_id=job_id, scan_id=scan_id)
+    body = done_report(job_id, scan_id)
+    header, body_bytes = sign_callback(
+        job_id=job_id, worker_id="worker-1", timestamp=1000, body=body, key_id=key_id, secret=secret
+    )
+
+    # Valid HMAC, fresh — "applied", zero counter calls.
+    r1 = _post_callback(client, job_id, body_bytes, header, timestamp=1000)
+    assert r1.status_code == 204  # type: ignore[attr-defined]
+    # Valid HMAC, byte-identical replay — "duplicate" (still 204), still zero
+    # counter calls.
+    r2 = _post_callback(client, job_id, body_bytes, header, timestamp=1000)
+    assert r2.status_code == 204  # type: ignore[attr-defined]
+    assert [c["outcome"] for c in spy.calls] == ["applied", "duplicate"]
+    assert counter_calls == [], "a validly-signed callback must never touch the HMAC-reject counter"
+
+    # A DIFFERENT job_id, forged digest — counter fires exactly once, and the
+    # store is never reached for this rejected callback (no new spy calls).
+    other_job_id, other_scan_id = uuid4(), uuid4()
+    other_body = done_report(other_job_id, other_scan_id)
+    _unused_header, other_body_bytes = sign_callback(
+        job_id=other_job_id,
+        worker_id="worker-1",
+        timestamp=1000,
+        body=other_body,
+        key_id=key_id,
+        secret=secret,
+    )
+    forged_header = f"HMAC {key_id}:" + "0" * 64  # syntactically valid, wrong digest
+    r3 = _post_callback(client, other_job_id, other_body_bytes, forged_header, timestamp=1000)
+    assert r3.status_code == 401  # type: ignore[attr-defined]
+    assert counter_calls == [("callback.hmac_reject_count", {"endpoint": _CALLBACK_PATH_TEMPLATE})]
+    assert len(spy.calls) == 2, "the rejected callback must not add a third store call"
+
+
 # ---------------------------------------------------------------------------
 # Stack tests — MVP-1 routes end to end
 # ---------------------------------------------------------------------------
