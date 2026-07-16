@@ -264,6 +264,51 @@ secure_run(
 )
 ```
 
+### 6.4 CPG-ingest sub-scope (`analysis/cpg_ingest/`; CLAR-SNAP-03/05, both RESOLVED 2026-07-16)
+
+**Ownership.** `CMP-SNAP-05` owns "parse source into `analysis.ordering.CPG`" as a sub-scope, not a
+separate component (CLAR-SNAP-03) — this code executes entirely inside the worker's own execute
+loop (§6.2), invoked immediately after `CMP-SNAP-03 CW-DETECT` clears the precondition. It is never
+independently scheduled or deployed.
+
+**Handshake contract** (the interface `§6.2`'s execute loop calls against):
+
+```python
+def parse_source(
+    src_root: Path, language: str, *, env: Mapping[str, str], workdir: Path
+) -> analysis.ordering.CPG: ...
+```
+
+Implemented by `analysis.cpg_ingest.joern_frontend.parse_source`, a two-phase `secure_run`
+orchestration:
+
+1. **Parse phase** — exactly the `§6.3` invocation above, producing a binary `cpg.bin`.
+2. **Export phase (CLAR-SNAP-05)** — `secure_run("joern", argv=["--script", "/opt/joern/scripts/export_cpg.sc"], env={..., "SCANIPY_CPG_BIN_PATH": ..., "SCANIPY_EXPORT_JSON_PATH": ...}, ...)`.
+   `JOERN_ARGV_ALLOWLIST` has no `joern-export`/`--param` pair (verified,
+   `tools/worker/secure_subprocess.py:42-50`), so the export script is a **fixed, in-image CPGQL
+   script** (`workers/snapshot/joern-scripts/export_cpg.sc`) parameterized via the `env` dict
+   `secure_run` already threads — no allowlist widening. The script dumps a flat JSON node/edge
+   array which `analysis.cpg_ingest.mapper.map_export` maps onto `analysis.ordering.CPG`.
+
+**Determinism obligation (INV-5).** The mapper computes its **own** deterministic node-emission
+order, `structural_path`, and `enclosing_decl_fqn` — it never trusts Joern's raw export array order,
+since that order is not guaranteed stable across runs (threaded/overlay parser passes) and directly
+feeds Algorithm 5's (`analysis/ordering.py`) canonical-order seed label and tie-breaks. Proven by an
+anti-vacuity control: `map_export(fixture) == map_export(shuffled_export(fixture))`
+(`tests/unit/test_cpg_ingest.py`).
+
+**Property → `CPGNode` mapping table and the `CPGEdge.kind` vocabulary** (`AST`/`CFG` direct
+passthrough; `CDG`+`REACHING_DEF` collapsed to `PDG`; any other raw kind is fail-closed,
+`UnknownEdgeKindError`) are single-sourced in `analysis/cpg_ingest/mapper.py`'s module docstring —
+not duplicated here to avoid drift.
+
+**Status:** the `.sc` export script is **unverified against a real Joern install** (no `joern`
+binary available in the dev sandbox that built it) — every API assumption is documented in the
+script's own header pending a Wave-4 real-Joern diff. `graph_views.py` (the `GraphView` builder for
+`CMP-SNAP-02`'s incremental path) and `decl_reparser.py` are honest, typed `NotImplementedError`
+stubs — `CMP-SNAP-02`/`compute_incremental_cpg` is bypassed entirely for a first-ever (no-parent)
+snapshot per CLAR-SNAP-04; this sub-scope only needs to satisfy the bootstrap path today.
+
 ---
 
 ## 7. Failure modes and error contracts
