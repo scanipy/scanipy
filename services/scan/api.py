@@ -98,6 +98,7 @@ from services.control_plane.guard import (
     TenantIsolationError,
 )
 from services.scan.worker import WorkerJob
+from tools.observability.metrics import record_counter
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -903,15 +904,27 @@ def post_job_status(
         raise InvalidHmacError("path job_id does not match body job_id")
 
     # Authenticate BEFORE touching any state (no mutation on a rejected callback).
-    verify_worker_callback_hmac(
-        hmac_header=hmac_header,
-        worker_id=worker_id_header,
-        timestamp=timestamp_header,
-        job_id=job_id,
-        body_bytes=body_bytes,
-        key_issuer=key_issuer,
-        now=now,
-    )
+    try:
+        verify_worker_callback_hmac(
+            hmac_header=hmac_header,
+            worker_id=worker_id_header,
+            timestamp=timestamp_header,
+            job_id=job_id,
+            body_bytes=body_bytes,
+            key_issuer=key_issuer,
+            now=now,
+        )
+    except InvalidHmacError:
+        # CMP-DEPLOY-03 §3.4 metric 7 (``callback.hmac_reject_count``) — the
+        # verify-seam counter and the ONLY metrics call in this module
+        # (CLAR-DEPLOY-20 emitter lane). The ``endpoint`` attribute is the
+        # stable path TEMPLATE, never the job-substituted path (dimension
+        # cardinality). No-op without OTel; the 401 raise is unchanged.
+        record_counter(
+            "callback.hmac_reject_count",
+            attributes={"endpoint": _CALLBACK_PATH_TEMPLATE},
+        )
+        raise
     # INV-2 fence on the callback body (DOC §6 step b): both required.
     if not body.S_version or not _ENV_DIGEST_RE.match(body.env_digest):
         raise InvalidInputError("worker callback must carry S_version + sha256 env_digest (INV-2)")
