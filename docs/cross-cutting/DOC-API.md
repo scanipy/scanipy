@@ -485,6 +485,7 @@ The `trace_id` maps to AWS X-Ray (per CLAR-DEPLOY-07). The customer support port
 | `invariant_inv2_violation` | 422 | A request that would emit a finding without `S_version` / `env_digest` |
 | `invariant_inv3_violation` | 422 | A request that would delete or LLM-mutate a `deterministic-core` finding |
 | `idempotency_conflict` | 409 | Same `Idempotency-Key` with a different body |
+| `conflicting_status_transition` | 409 | Worker callback status conflicts with the recorded terminal job state (§4.5) |
 | `rate_limited` | 429 | Per-tenant quota exceeded |
 | `llm_quota_exceeded` | 429 | Per-tenant LLM-bearing endpoint quota exceeded |
 | `not_found` | 404 | Resource does not exist or is not in caller's tenant |

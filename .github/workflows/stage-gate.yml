@@ -42,7 +42,12 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -e ".[dev]"
+        # dev,http: this job's pytest invocation below scopes to `tests/`
+        # unscoped, so collection imports every module under tests/unit/ —
+        # including the CLAR-DEPLOY-19 HTTP adapter suite — before the -k
+        # filter applies. Without the http extra, collection fails with
+        # ModuleNotFoundError: fastapi before a single test runs.
+        run: pip install -e ".[dev,http]"
 
       - name: Verify corpus readiness
         run: |
