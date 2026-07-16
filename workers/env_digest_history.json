@@ -9,7 +9,7 @@
       "git_sha": "0000000000000000000000000000000000000000",
       "signed_at": "2026-06-08T00:00:00Z",
       "status": "void",
-      "note": "Nominated as authoritative in prose only (STATUS-AWS-TEAM.md row 5, 2026-06-09); never machine-registered, never deployed, no artifact stamped. Built and pushed manually outside deploy.yml: no org.opencontainers.image.revision label exists on the image and no deploy.yml run exists for v0.1.0, so the build commit is unrecoverable — git_sha is the explicit all-zero UNKNOWN sentinel, not a real commit. signed_at is date-precision, recovered from ECR imagePushedAt 2026-06-08 (exact signing time unrecorded; do not read seconds precision into it)."
+      "note": "Nominated as authoritative in prose only (STATUS-AWS-TEAM.md row 5, 2026-06-09); never machine-registered, never deployed, no artifact stamped. Built and pushed manually outside deploy.yml: no org.opencontainers.image.revision label exists on the image and no deploy.yml run exists for v0.1.0, so the build commit is unrecoverable \u2014 git_sha is the explicit all-zero UNKNOWN sentinel, not a real commit. signed_at is date-precision, recovered from ECR imagePushedAt 2026-06-08 (exact signing time unrecorded; do not read seconds precision into it)."
     },
     {
       "image": "scanipy-detector",
@@ -27,7 +27,7 @@
       "git_sha": "d948e6ba58bdab2033d6cab28f34502b56944361",
       "signed_at": "2026-06-09T00:00:00Z",
       "status": "void",
-      "note": "Deployed to ECS task-def scanipy-snapshot-worker:2 but built from direct-push commit d948e6b (bypassed PR review, RULE-10 — tainted provenance; reverted by PR #302). desiredCount=0 throughout and no RDS/S3 data plane existed; no snapshot/finding carries this digest. signed_at is date-precision from ECR imagePushedAt 2026-06-09."
+      "note": "Deployed to ECS task-def scanipy-snapshot-worker:2 but built from direct-push commit d948e6b (bypassed PR review, RULE-10 \u2014 tainted provenance; reverted by PR #302). desiredCount=0 throughout and no RDS/S3 data plane existed; no snapshot/finding carries this digest. signed_at is date-precision from ECR imagePushedAt 2026-06-09."
     },
     {
       "image": "scanipy-detector",
@@ -37,6 +37,24 @@
       "signed_at": "2026-06-09T00:00:00Z",
       "status": "void",
       "note": "Same taint as snapshot v0.1.1 (task-def scanipy-detector-worker:2, desiredCount=0; nothing stamped). signed_at is date-precision from ECR imagePushedAt 2026-06-09."
+    },
+    {
+      "image": "scanipy-snapshot",
+      "env_digest": "sha256:7733e34a58f5411981b9868be3f49400ef662c42e9d91728bbe34e52832a63f4",
+      "tag": "v0.1.2",
+      "git_sha": "37a51c04fbe905fa61a5ab05635fc02ccbaeb0d9",
+      "signed_at": "2026-07-16T08:03:41Z",
+      "status": "active",
+      "note": ""
+    },
+    {
+      "image": "scanipy-detector",
+      "env_digest": "sha256:d0906451b30c7bc9b2c8e6c576190ae279a2a2f592a14e646a2ac9cb48b0033a",
+      "tag": "v0.1.2",
+      "git_sha": "37a51c04fbe905fa61a5ab05635fc02ccbaeb0d9",
+      "signed_at": "2026-07-16T08:03:41Z",
+      "status": "active",
+      "note": ""
     }
   ]
 }
