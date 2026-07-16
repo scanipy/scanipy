@@ -31,6 +31,7 @@ from services.scan.detector_worker import (
     CPGDeserializationError,
     DetectorJobResult,
     DetectorNotFoundError,
+    EnvDigestMismatchError,
     EnvDigestMissing,
     MalformedJobMessageError,
     boot,
@@ -450,3 +451,71 @@ def test_boot_fails_closed_on_missing_or_malformed_env_digest() -> None:
         resolve_env_digest({ENV_DIGEST_VAR: "not-a-digest"})
     with pytest.raises(EnvDigestMissing):
         resolve_env_digest({ENV_DIGEST_VAR: "sha256:" + "zz" * 32})  # non-hex
+
+
+# ---------------------------------------------------------------------------
+# Regression coverage for the claude-review findings on PR #320.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+@pytest.mark.invariant
+def test_run_detector_job_refuses_a_stale_env_digest_mismatch() -> None:
+    """A dequeued job claiming a different env_digest than this worker's own
+    boot-time SCANIPY_ENV_DIGEST must be refused fail-closed (INV-2) — never
+    silently threaded into provenance. Positive control: the matching-digest
+    case (already covered by every other run_detector_job test, which omits
+    boot_env_digest or passes the same value) still succeeds."""
+    job = good_job()  # env_digest == _GOOD_ENV_DIGEST
+    store = InMemoryObjectStore()
+    _seed_cpg_artifact(store, job, org_id=_ORG_ID)
+
+    with pytest.raises(EnvDigestMismatchError):
+        run_detector_job(
+            job,
+            org_id=_ORG_ID,
+            scm_provider=_SCM_PROVIDER,
+            object_store=store,
+            findings_session=_RecordingFindingsSession(),
+            signer=SoftwareKMSSigner(),
+            kms_key_arn=_KMS_KEY_ARN,
+            registry=_real_registry(),
+            boot_env_digest="sha256:" + "f" * 64,  # deliberately != job.env_digest
+        )
+
+    # boot_env_digest=None (the default) and a matching value must both
+    # still succeed — the guard is opt-in, not a regression for existing
+    # callers that construct a WorkerJob directly without a real boot.
+    result = run_detector_job(
+        job,
+        org_id=_ORG_ID,
+        scm_provider=_SCM_PROVIDER,
+        object_store=store,
+        findings_session=_RecordingFindingsSession(),
+        signer=SoftwareKMSSigner(),
+        kms_key_arn=_KMS_KEY_ARN,
+        registry=_real_registry(),
+        boot_env_digest=job.env_digest,
+    )
+    assert isinstance(result, DetectorJobResult)
+
+
+@pytest.mark.unit
+@pytest.mark.invariant
+def test_serialize_cpg_tarball_is_byte_identical_across_repeated_calls() -> None:
+    """The gzip WRAPPER header (not just the tar member) must be pinned —
+    tarfile's 'w:gz' mode delegates to gzip.GzipFile's default
+    mtime=time.time(), which would make two calls on identical input produce
+    different bytes despite the tar member's own info.mtime=0 (the exact bug
+    claude-review caught on PR #320: 'deterministic archive bytes across
+    re-runs' was claimed but not achieved). This is the CP-05
+    byte-identical-SARIF guarantee's first line of defense for this
+    artifact."""
+    cpg = injection_taint_cpg()
+    first = serialize_cpg_tarball(cpg)
+    second = serialize_cpg_tarball(cpg)
+    assert first == second, "serialize_cpg_tarball is not byte-deterministic"
+    # anti-vacuity: prove this isn't trivially true because gzip wraps
+    # zero-length/constant content — the two calls really did run the
+    # compressor twice, and content still round-trips correctly.
+    assert deserialize_cpg_tarball(first).nodes == cpg.nodes

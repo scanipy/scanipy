@@ -105,6 +105,7 @@ collaborators together and persists their output.
 
 from __future__ import annotations
 
+import gzip
 import hashlib
 import io
 import json
@@ -245,11 +246,18 @@ def serialize_cpg_tarball(cpg: CPG) -> bytes:
     }
     raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     buf = io.BytesIO()
-    with tarfile.open(fileobj=buf, mode="w:gz") as tar:
-        info = tarfile.TarInfo(name=CPG_TARBALL_MEMBER_NAME)
-        info.size = len(raw)
-        info.mtime = 0  # deterministic archive bytes across re-runs
-        tar.addfile(info, io.BytesIO(raw))
+    # tarfile's "w:gz" mode delegates to gzip.GzipFile with its default
+    # mtime=time.time() — pinning only the TAR member's info.mtime (below)
+    # leaves the *gzip wrapper header* embedding wall-clock time, so two
+    # calls on identical input still produce different bytes. Open the
+    # gzip layer explicitly with mtime=0 so the whole archive is
+    # byte-deterministic across re-runs (caught by claude-review on PR #320).
+    with gzip.GzipFile(fileobj=buf, mode="wb", mtime=0) as gz:
+        with tarfile.open(fileobj=gz, mode="w|") as tar:
+            info = tarfile.TarInfo(name=CPG_TARBALL_MEMBER_NAME)
+            info.size = len(raw)
+            info.mtime = 0  # deterministic archive bytes across re-runs
+            tar.addfile(info, io.BytesIO(raw))
     return buf.getvalue()
 
 
@@ -546,6 +554,13 @@ class DetectorNotFoundError(Exception):
     """
 
 
+class EnvDigestMismatchError(Exception):
+    """``job.env_digest`` (the SQS message's claim) does not match this
+    worker's boot-time ``SCANIPY_ENV_DIGEST`` (INV-2 authoritative value) —
+    a stale or replayed message. Fail-closed rather than thread a wrong
+    ``env_digest`` into provenance."""
+
+
 def _claim_label_for(origin: str) -> ClaimLabel:
     """Derive ``claim_label`` from ``origin`` alone (KNOWN GAP 4 — does not
     consult the CMP-CP-06 stage-gate verdict, so this never produces
@@ -572,6 +587,7 @@ def run_detector_job(
     kms_key_arn: str,
     registry: DetectorRegistry,
     provenance_store: ProvenanceStore | None = None,
+    boot_env_digest: str | None = None,
 ) -> DetectorJobResult:
     """The per-job pipeline: S3 fetch -> deserialize -> registry lookup ->
     ``run_detector`` (real, UNMODIFIED signature) -> ORM insert ->
@@ -582,7 +598,22 @@ def run_detector_job(
     hermetic core: every I/O boundary (``object_store``, ``findings_session``,
     ``signer``) is an injectable fake while ``run_detector`` and the
     CMP-DET-02 registry run FOR REAL end to end.
+
+    ``boot_env_digest``, when supplied (the container's own pinned
+    ``SCANIPY_ENV_DIGEST`` from :func:`boot`), is cross-checked against
+    ``job.env_digest`` (the SQS message's claim) before any work starts. A
+    stale or replayed message carrying a mismatched ``env_digest`` is
+    refused fail-closed rather than silently threading a wrong INV-2 value
+    into provenance (caught by claude-review on PR #320). ``None`` skips the
+    check — the existing 14 hermetic tests that construct a ``WorkerJob``
+    directly, independent of a real boot sequence, are unaffected.
     """
+    if boot_env_digest is not None and job.env_digest != boot_env_digest:
+        raise EnvDigestMismatchError(
+            f"job.env_digest {job.env_digest!r} does not match this worker's "
+            f"boot-time env_digest {boot_env_digest!r} (INV-2) — refusing to "
+            "thread a stale or mismatched env_digest into provenance"
+        )
     try:
         detector = registry.by_id(job.detector_id)
     except KeyError as exc:
@@ -603,9 +634,32 @@ def run_detector_job(
     snapshot_digest = "sha256:" + hashlib.sha256(cpg_bytes).hexdigest()
 
     findings = run_detector(as_detector_like(detector), cpg, job)
+    # run_detector returns set[Finding] (DOC-CMP-ORCH-03 §3.1's eq=False/
+    # identity-hash design) — Python set iteration order is not guaranteed
+    # stable across interpreter invocations (hash randomization). Normally
+    # CMP-FND-01's normalize() re-keys by the canonical sort tuple downstream,
+    # but this track's direct-insert path (KNOWN GAP 2) bypasses FND-01
+    # entirely, so an unsorted iteration here becomes the literal, unstable
+    # DB insertion order and breaks the CP-05 byte-identical-SARIF guarantee.
+    # Caught by claude-review on PR #320.
+    sorted_findings = sorted(findings, key=lambda f: (f.rule_id, f.uri, f.start_line, f.start_col))
 
     signed_records: list[SignedProvenanceRecord] = []
-    for f in findings:
+    for f in sorted_findings:
+        # INV-5 fail-closed guard: bytes.fromhex("") == b"" with no error, so
+        # an unset/malformed cpg_order_hash or slice_fingerprint would
+        # otherwise silently persist a 0-byte value instead of surfacing the
+        # upstream threading bug. Caught by claude-review on PR #320.
+        if len(f.cpg_order_hash) != 64:
+            raise ValueError(
+                f"cpg_order_hash must be 64 hex chars (INV-5); got {f.cpg_order_hash!r} "
+                f"for rule {f.rule_id!r} at {f.uri}:{f.start_line}"
+            )
+        if len(f.slice_fingerprint) != 64:
+            raise ValueError(
+                f"slice_fingerprint must be 64 hex chars (CMP-CORE-02); got "
+                f"{f.slice_fingerprint!r} for rule {f.rule_id!r} at {f.uri}:{f.start_line}"
+            )
         finding_id = uuid.uuid4()
         row = FindingRow(
             id=finding_id,
@@ -698,6 +752,7 @@ def handle_queue_message(
     kms_key_arn: str,
     registry: DetectorRegistry,
     provenance_store: ProvenanceStore | None = None,
+    boot_env_digest: str | None = None,
 ) -> DetectorJobResult | None:
     """Parse + run one dequeued message, then ack/fail it.
 
@@ -721,14 +776,33 @@ def handle_queue_message(
             kms_key_arn=kms_key_arn,
             registry=registry,
             provenance_store=provenance_store,
+            boot_env_digest=boot_env_digest,
         )
     except Exception:
         get_logger("detector-worker").exception(
             "detector job failed; failing message back to the queue",
         )
-        queue.fail(received.receipt_handle)
+        # queue.fail() can itself raise (e.g. StandardQueue.UnknownReceiptError
+        # if SQS already reclaimed the message after a visibility timeout) —
+        # that secondary exception must not crash the worker process out from
+        # under an otherwise-recoverable failure. Caught by claude-review on
+        # PR #320.
+        try:
+            queue.fail(received.receipt_handle)
+        except Exception:
+            get_logger("detector-worker").exception(
+                "queue.fail() raised while handling a prior failure; "
+                "message may redeliver on its own via the queue's visibility timeout",
+            )
         return None
-    queue.ack(received.receipt_handle)
+    try:
+        queue.ack(received.receipt_handle)
+    except Exception:
+        get_logger("detector-worker").exception(
+            "queue.ack() raised after a successful detector job; "
+            "the job's own side effects (findings insert, provenance sign) "
+            "already committed, so a duplicate redelivery is the only risk",
+        )
     return result
 
 
@@ -753,10 +827,14 @@ def run_execute_loop(
     # run_detector_job are the directly-tested units (tests/unit/test_detector_worker_specs.py)
     """The per-job SQS execute loop (mirrors ``services/snapshot/worker.py::
     run_execute_loop``'s shape). ``env_digest`` is the bound boot-time digest
-    (INV-2 ORIGIN); it is NOT re-threaded onto findings here — ``run_detector``
+    (INV-2 ORIGIN); it is NOT re-threaded onto findings — ``run_detector``
     already threads ``job.env_digest`` (from the job itself) onto every
     finding, so re-deriving it here would risk a second, divergent source of
-    truth.
+    truth. It IS, however, cross-checked against every dequeued job's own
+    ``env_digest`` claim (via ``run_detector_job(..., boot_env_digest=...)``)
+    so a stale or replayed message is refused fail-closed before any work
+    starts, rather than silently threading a mismatched INV-2 value into
+    provenance (caught by claude-review on PR #320).
 
     Every port defaults to its fail-closed production seam (CLAR-PROC-01):
     with no injected collaborators this raises ``NotImplementedError`` naming
@@ -766,7 +844,6 @@ def run_execute_loop(
     future production wiring layer, once Tracks 1D/1E land) injects real
     collaborators.
     """
-    _ = env_digest
     queue = queue if queue is not None else fail_closed_queue()
     object_store = object_store if object_store is not None else fail_closed_object_store()
     findings_session = (
@@ -789,6 +866,7 @@ def run_execute_loop(
             kms_key_arn=kms_key_arn,
             registry=registry,
             provenance_store=provenance_store,
+            boot_env_digest=env_digest,
         )
 
 
