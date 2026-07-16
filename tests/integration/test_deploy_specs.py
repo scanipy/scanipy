@@ -17,6 +17,7 @@ DOC-DEPLOY-DECISIONS.md (16 RESOLVED CLAR-DEPLOY-*); CLAUDE.md §15 (four CI gat
 When the owning CMP-DEPLOY-* is DONE, replace xfail + skips with real assertions.
 """
 
+import json
 import os
 import re
 import subprocess
@@ -24,6 +25,8 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+
+from tools.observability.logging import MANDATORY_FIELDS, get_logger
 
 # Repo root = three levels up from tests/integration/test_deploy_specs.py.
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -407,28 +410,72 @@ def test_deploy_03a_scan_id_resolves_to_end_to_end_trace() -> None:
 
 
 @pytest.mark.integration
-@pytest.mark.xfail(
-    reason="CMP-DEPLOY-03 (observability) not yet implemented",
-    strict=False,
-)
-def test_deploy_03b_log_lines_carry_service_commit_env_digest() -> None:
+def test_deploy_03b_log_lines_carry_service_commit_env_digest(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     """Every emitted log line carries service name, build commit, and env_digest.
 
     Test id: TST-AC-DEPLOY-03b
     Maps to AC: AC-DEPLOY-03b — Every emitted log line carries a service name,
         build commit, and `env_digest`.
     Kind tag: [INTEGRATION]
-    Inputs: a sampled corpus of structured JSON log lines from a completed scan
-        (CloudWatch Logs, CLAR-DEPLOY-07).
+    Inputs: a sampled corpus of structured JSON log lines drawn from every named
+        AC-DEPLOY-03a lifecycle stage of one completed scan (webhook ingest,
+        snapshot worker, detector worker, normalizer, attestor verdict, callback
+        delivery), driven hermetically through the shared
+        `tools.observability.logging.get_logger` surface every component uses
+        (real CloudWatch retrieval is CLAR-DEPLOY-07 live-ops, out of scope for
+        this repo-only slice — see `tests/unit/test_logger_factory.py`).
     Outputs: presence of `service`, `build_commit`, `env_digest` per line.
     Pass criteria: every sampled log line carries a non-empty service name, build
-        commit, and `env_digest` (INV-2; .claude/rules/02-provenance.md).
+        commit, and `env_digest` (INV-2; .claude/rules/02-provenance.md), and the
+        `env_digest` / `build_commit` values match the pinned scan-run env
+        contract across every stage (single `Env`, INV-2).
     Frequency: every CI run.
     Hard gate?: yes.
     """
-    # TODO: collect structured log lines from a scan run; assert each carries
-    #       service name + build commit + env_digest when CMP-DEPLOY-03 is DONE.
-    pytest.skip("CMP-DEPLOY-03 not implemented yet")
+    build_commit = "c0ffee1234567890" * 4  # 64 hex chars — a realistic commit-ish token
+    env_digest = "sha256:" + "b" * 64
+    monkeypatch.setenv("SCANIPY_WORKER_VERSION", build_commit)
+    monkeypatch.setenv("SCANIPY_ENV_DIGEST", env_digest)
+
+    # The AC-DEPLOY-03a named lifecycle stages for one scan (kept in lockstep
+    # with that spec's own span list so a future flip of 03a reuses this corpus
+    # shape). Each stage emits >=1 structured line via the one shared formatter.
+    stages = (
+        "webhook-ingest",
+        "snapshot-worker",
+        "detector-worker",
+        "normalizer",
+        "attestor",
+        "callback-delivery",
+    )
+    for stage in stages:
+        monkeypatch.setenv("OTEL_SERVICE_NAME", stage)
+        logger = get_logger(f"scanipy.deploy03b.{stage}")
+        logger.propagate = False
+        logger.info("%s stage complete for scan %s", stage, "deploy-03b-smoke-scan")
+
+    err = capsys.readouterr().err.strip()
+    lines = [line for line in err.splitlines() if line]
+    assert len(lines) == len(stages), (
+        f"expected exactly one sampled log line per lifecycle stage, got {len(lines)}"
+    )
+
+    seen_services: set[str] = set()
+    for line in lines:
+        payload = json.loads(line)
+        for field in MANDATORY_FIELDS:
+            assert field in payload, f"log line missing mandatory field {field!r}: {payload}"
+            assert payload[field], f"mandatory field {field!r} must be non-empty: {payload}"
+        # INV-2: every line in the sampled corpus reflects the SAME pinned Env —
+        # a per-stage-drifted env_digest would silently break cross-component
+        # provenance correlation for this scan.
+        assert payload["env_digest"] == env_digest
+        assert payload["build_commit"] == build_commit
+        seen_services.add(str(payload["service"]))
+
+    assert seen_services == set(stages), "expected one distinct service name per lifecycle stage"
 
 
 @pytest.mark.integration
