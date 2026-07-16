@@ -41,7 +41,9 @@ jobs:
           cache: pip
 
       - name: Install Python dev dependencies
-        run: pip install -e ".[dev]"
+        # dev,http: the CLAR-DEPLOY-19 pinned HTTP stack (fastapi/starlette/
+        # pydantic/uvicorn) is typechecked + unit-tested every run.
+        run: pip install -e ".[dev,http]"
 
       - name: Ruff lint
         run: ruff check .
@@ -117,7 +119,9 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -e ".[dev]"
+        # dev,http: the CLAR-DEPLOY-19 pinned HTTP stack — the DEPLOY-19 adapter
+        # unit suite (tests/unit/test_deploy19_http_adapter.py) needs it.
+        run: pip install -e ".[dev,http]"
 
       - name: Run unit tests
         # Selector is `unit or invariant`: the no-DB `TST-INV-*` / invariant

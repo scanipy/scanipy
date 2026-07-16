@@ -90,6 +90,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 from uuid import UUID, uuid4
 
+from services.control_plane.constants import ERROR_CONFLICTING_STATUS_TRANSITION
 from services.control_plane.guard import (
     CPGuard,
     ErrorEnvelope,
@@ -122,6 +123,12 @@ _SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$")
 HMAC_SKEW_WINDOW_SECONDS = 300
 
 JobStatus = Literal["running", "done", "failed"]
+
+# The C-2 (CLAR-DEPLOY-19) job-state transition outcome: ``applied`` = the store
+# recorded a new state; ``duplicate`` = a replay of the recorded state (DOC-API
+# §4.5 "a second `done` for the same job_id is a no-op" → 204); ``conflict`` = a
+# transition the §4.5 state machine forbids (→ 409 conflicting_status_transition).
+TransitionOutcome = Literal["applied", "duplicate", "conflict"]
 
 
 @dataclass(frozen=True)
@@ -314,6 +321,24 @@ class IdempotencyConflictError(ScanApiError):
         )
 
 
+class JobStatusConflictError(ScanApiError):
+    """Worker callback status conflicts with the recorded terminal state (§4.5).
+
+    The C-2 (CLAR-DEPLOY-19) replay-idempotency limb: a validly-signed callback
+    whose transition the DOC-API §4.5 state machine forbids (e.g. ``done`` →
+    ``failed`` for the same ``job_id``) is a ``409`` with the §6.1-reserved code
+    ``conflicting_status_transition`` — never a silent overwrite of a terminal
+    state, and never a 204 that masks a duplicated/replayed worker identity.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            error_code=ERROR_CONFLICTING_STATUS_TRANSITION,
+            http_status=409,
+            message="job status conflicts with the recorded terminal job state",
+        )
+
+
 class AuthorizationError(ScanApiError):
     """The CP-01 guard denied the request (org_mismatch / role_denied / etc.).
 
@@ -395,6 +420,29 @@ class ScanStore(Protocol):
     def get(self, scan_id: UUID, *, org_id: str) -> ScanRecord | None: ...
 
     def find_by_idempotency(self, *, org_id: str, idempotency_key: UUID) -> ScanRecord | None: ...
+
+
+@runtime_checkable
+class JobStateStore(Protocol):
+    """Record worker-callback job-state transitions idempotently (C-2 seam).
+
+    The CLAR-DEPLOY-19 security co-sign condition C-2: a durable job-state
+    transition MUST NOT land without replay idempotency. This port implements
+    DOC-API §4.5's normative state machine; :func:`post_job_status` invokes it
+    ONLY after the HMAC verification + INV-2 fence pass, so nothing durable can
+    mutate on an unauthenticated or malformed callback.
+
+    ``body_sha256`` is the hex digest of the exact HMAC-verified wire bytes —
+    the C-1 tie between the recorded transition and the signed request. The
+    durable Postgres compare-and-set implementation (jobs table, ``UPDATE …
+    WHERE status IN (allowed priors)``) is the DEPLOY-19 wave-2 follow-up and is
+    REQUIRED before the API service runs more than one replica; the in-memory
+    implementation below is single-process only.
+    """
+
+    def transition(
+        self, *, job_id: UUID, status: JobStatus, body_sha256: str
+    ) -> TransitionOutcome: ...
 
 
 # ---------------------------------------------------------------------------
@@ -872,6 +920,7 @@ def post_job_status(
     timestamp_header: int,
     key_issuer: HmacKeyIssuer,
     scan_store: ScanStore,
+    job_state_store: JobStateStore | None = None,
     now: Callable[[], int] = lambda: int(time.time()),
 ) -> None:
     """Worker callback (DOC §3.1 / §6, AC-ORCH-01b) — HMAC-only, fail-closed.
@@ -893,11 +942,19 @@ def post_job_status(
     the worker signed (not a re-serialised parse). ``now`` is injected for a
     deterministic skew test.
 
-    On success (returns ``None`` / 204): the durable status transition + the
-    ``status=done`` → CMP-FND-01 normalisation + CMP-CP-05 attestation trigger are
-    the CLAR-DEPLOY-19 follow-up (they need the persisted ``jobs`` table + the
-    downstream queues); this hermetic core is the security-relevant verification
-    boundary. The ``job_id`` path param MUST match the body's ``job_id``.
+    JOB-STATE TRANSITION (security co-sign C-2, CLAR-DEPLOY-19): when a
+    ``job_state_store`` is supplied, the DOC-API §4.5 state machine is applied
+    ONLY after HMAC verification + the INV-2 fence pass — a replayed terminal
+    report is a 204 no-op (``duplicate``), a forbidden transition raises
+    :class:`JobStatusConflictError` (``409 conflicting_status_transition``).
+    ``job_state_store=None`` preserves the verify-only build-ahead behaviour:
+    nothing durable mutates, so C-2 vacuously holds (the pre-DEPLOY-19 state).
+
+    On success (returns ``None`` / 204): the ``status=done`` → CMP-FND-01
+    normalisation + CMP-CP-05 attestation triggers stay the wave-2 follow-up
+    (they need the persisted ``jobs`` table + the downstream queues); this core
+    is the security-relevant verification + idempotency boundary. The ``job_id``
+    path param MUST match the body's ``job_id``.
     """
     if body.job_id != job_id:
         # The signed path binds job_id; a body/path mismatch is a forged request.
@@ -928,9 +985,66 @@ def post_job_status(
     # INV-2 fence on the callback body (DOC §6 step b): both required.
     if not body.S_version or not _ENV_DIGEST_RE.match(body.env_digest):
         raise InvalidInputError("worker callback must carry S_version + sha256 env_digest (INV-2)")
-    # State transition (durable jobs/scans update + done-triggers) is gated to the
-    # CLAR-DEPLOY-19 HTTP-surface follow-up; the verification boundary above is the
-    # AC-ORCH-01b security contract this PR makes real.
+
+    # C-2: the job-state transition lands ONLY here — after the HMAC verification
+    # + INV-2 fence above — so no durable state can move on a forged, replay-
+    # window-expired, or malformed callback. With no store injected the handler
+    # stays verify-only (nothing durable mutates; the pre-DEPLOY-19 behaviour).
+    if job_state_store is None:
+        return
+    outcome = job_state_store.transition(
+        job_id=job_id,
+        status=body.status,
+        # The digest of the EXACT verified wire bytes (C-1 tie): the recorded
+        # transition is bound to the same bytes the HMAC covered.
+        body_sha256=hashlib.sha256(body_bytes).hexdigest(),
+    )
+    if outcome == "conflict":
+        raise JobStatusConflictError()
+    # "duplicate" → 204 no-op (DOC-API §4.5); "applied" → 204 (the done-triggers
+    # onto CMP-FND-01 / CMP-CP-05 stay the wave-2 follow-up).
+
+
+# ---------------------------------------------------------------------------
+# In-memory JobStateStore (C-2, DOC-API §4.5 state machine)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class InMemoryJobStateStore:
+    """Single-process :class:`JobStateStore` over ``dict[UUID, (status, sha)]``.
+
+    Implements DOC-API §4.5's normative state machine (CLAR-DEPLOY-19 C-2):
+
+      * no prior state                                  → ``applied``
+      * prior == reported status (byte-replay or retry) → ``duplicate`` (204 no-op)
+      * ``running`` → ``done`` / ``failed``             → ``applied``
+      * prior terminal, different status                → ``conflict`` (409)
+
+    NON-DURABLE, SINGLE-PROCESS ONLY: replay idempotency does not survive an
+    API-service restart or horizontal scaling. The Postgres compare-and-set
+    implementation is REQUIRED before the API ECS service runs more than one
+    task (DEPLOY-19 wave-2 scale-out precondition).
+    """
+
+    _states: dict[UUID, tuple[JobStatus, str]] = field(default_factory=dict)
+
+    def transition(self, *, job_id: UUID, status: JobStatus, body_sha256: str) -> TransitionOutcome:
+        prior = self._states.get(job_id)
+        if prior is None:
+            self._states[job_id] = (status, body_sha256)
+            return "applied"
+        prior_status, _prior_sha = prior
+        if prior_status == status:
+            # DOC-API §4.5: a second `done` (or any same-status retry) for the
+            # same job_id is a no-op — the recorded state is NOT overwritten.
+            return "duplicate"
+        if prior_status == "running" and status in ("done", "failed"):
+            self._states[job_id] = (status, body_sha256)
+            return "applied"
+        # Terminal → different status (done→failed, failed→done, terminal→running):
+        # forbidden by the §4.5 state machine — fail loudly, never overwrite.
+        return "conflict"
 
 
 # ---------------------------------------------------------------------------
@@ -978,9 +1092,12 @@ __all__ = [
     "DetectorUnknownError",
     "HmacKeyIssuer",
     "IdempotencyConflictError",
+    "InMemoryJobStateStore",
     "InvalidHmacError",
     "InvalidInputError",
     "InvariantInv2Error",
+    "JobStateStore",
+    "JobStatusConflictError",
     "JobStatusReport",
     "OrgScopedScanStore",
     "ScanApiError",
@@ -993,6 +1110,7 @@ __all__ = [
     "SnapshotResolution",
     "SpecRegistryPort",
     "TenantIsolationError",
+    "TransitionOutcome",
     "canonical_request",
     "fail_closed_hmac_key_issuer",
     "fail_closed_snapshot_port",
