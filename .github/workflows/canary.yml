@@ -133,14 +133,25 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: Run Gate-4 martingale tests and publish the daily status datapoint
+        # Mirrors the ci.yml eprocess-unit scaffold-phase guard (CMP-TRI-02 not
+        # yet implemented: tests/falsifier/eprocess/ has only __init__.py, so
+        # a bare `pytest tests/falsifier/eprocess/` exits 5 "no tests
+        # collected" and would fail this heartbeat every night with no
+        # TST-AC-TRI-02b tests to run). Skip cleanly with a visible message
+        # until the first test_*.py lands; the guard then auto-flips and the
+        # daily heartbeat starts enforcing.
         run: |
-          if pytest tests/falsifier/eprocess/ -q --tb=short; then
-            gate4_status=1
+          if find tests/falsifier/eprocess/ -name 'test_*.py' 2>/dev/null | grep -q .; then
+            if pytest tests/falsifier/eprocess/ -q --tb=short; then
+              gate4_status=1
+            else
+              gate4_status=0
+            fi
+            python scripts/publish_gate4_status.py --status "$gate4_status" \
+              || echo "Gate-4 status publish failed (non-gating)"
+            [ "$gate4_status" = "1" ] || exit 1
           else
-            gate4_status=0
+            echo "Scaffold phase — no TST-AC-TRI-02b tests in tests/falsifier/eprocess/ yet (CMP-TRI-02 not implemented). Gate-4 heartbeat will enforce once tests land."
           fi
-          python scripts/publish_gate4_status.py --status "$gate4_status" \
-            || echo "Gate-4 status publish failed (non-gating)"
-          [ "$gate4_status" = "1" ] || exit 1
         env:
           SCANIPY_ENV: test
