@@ -84,7 +84,12 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -e ".[dev]" pytest-cov
+        # dev,http: this job's pytest invocation scopes to `tests/` unscoped,
+        # so collection imports every module under tests/unit/ — including
+        # the CLAR-DEPLOY-19 HTTP adapter suite — before any -m filter
+        # applies. Without the http extra, collection fails with
+        # ModuleNotFoundError: fastapi before a single test runs.
+        run: pip install -e ".[dev,http]" pytest-cov
 
       - name: Run nightly tests
         run: |
