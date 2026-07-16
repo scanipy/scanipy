@@ -54,7 +54,7 @@ from services.substrate.object_store import (
     ObjectStore,
     SnapshotKeyBuilder,
 )
-from services.substrate.queue import StandardQueue
+from services.substrate.queue import Queue, StandardQueue
 
 # INV-2: the env_digest is the worker container image digest. Same format CHECK
 # as the shipped ``snapshots.env_digest_chk`` DDL constraint.
@@ -162,13 +162,15 @@ class SnapshotService:
 
     DI-Protocol pattern: every collaborator is injected so the four ACs run with
     no DB and no AWS. Construct with all defaults for a fully in-memory,
-    hermetic instance; production wires the S3-backed :class:`ObjectStore`, the
-    SQS-backed :class:`StandardQueue`, the SQL-backed :class:`SnapshotStore`, and
-    :func:`env_var_env_digest_provider`.
+    hermetic instance; production wires the S3-backed :class:`ObjectStore`
+    (:class:`services.substrate.object_store.S3ObjectStore`), the SQS-backed
+    :class:`Queue` (:class:`services.substrate.queue.SQSQueue`), the SQL-backed
+    :class:`SnapshotStore`, and :func:`env_var_env_digest_provider`. The
+    :class:`StandardQueue` default below is the hermetic in-memory test double.
     """
 
     object_store: ObjectStore = field(default_factory=InMemoryObjectStore)
-    queue: StandardQueue = field(default_factory=lambda: StandardQueue(name="snapshot-jobs"))
+    queue: Queue = field(default_factory=lambda: StandardQueue(name="snapshot-jobs"))
     snapshot_store: SnapshotStore = field(default_factory=InMemorySnapshotStore)
     env_digest_provider: EnvDigestProvider = field(
         default_factory=lambda: env_var_env_digest_provider
