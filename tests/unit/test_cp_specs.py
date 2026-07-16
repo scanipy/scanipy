@@ -21,6 +21,7 @@ invariant, nightly, pre_release}. The WBS "Kind tag" lives in the docstring only
 from __future__ import annotations
 
 import json
+import logging
 from decimal import Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -811,3 +812,152 @@ def test_cp06_in_repo_v010_scaffolds_are_not_gate_passing() -> None:
         assert verdict.overall == "ungated"
         assert verdict.gate_passed is False
         assert verdict.corpus_version == "0.1.0"
+
+
+# ---------------------------------------------------------------------------
+# CLAR-CP-06-02 / CLAR-DEPLOY-22 — production env_digest enforcement
+# (production_env_digest / enforce_production_env / GATE_IMAGE)
+# ---------------------------------------------------------------------------
+#
+# CLAR-CP-06-02 (RESOLVED, WBS §17): CMP-CP-06 hard-enforces that the gate's
+# env_digest matches the registered production env_digest, with a
+# record-and-warn bootstrap window until the first active entry is
+# registered (CLAR-DEPLOY-22's workers/env_digest_history.json). These tests
+# are fully hermetic — no docker, no ECR — driven from tmp_path registry
+# fixtures.
+
+_REG_DIGEST = "sha256:" + "a" * 64
+_OTHER_DIGEST = "sha256:" + "b" * 64
+
+
+def _registry_doc(*, image: str = "scanipy-snapshot", digest: str = _REG_DIGEST) -> dict:
+    return {
+        "schema_version": 1,
+        "entries": [
+            {
+                "image": image,
+                "env_digest": digest,
+                "tag": "v0.1.2",
+                "git_sha": "c" * 40,
+                "signed_at": "2026-07-15T00:00:00Z",
+                "status": "active",
+                "note": "",
+            }
+        ],
+    }
+
+
+@pytest.mark.unit
+def test_gate_image_is_pinned_to_the_snapshot_worker() -> None:
+    """DOC-CMP-CP-06 §4.1: 'the gate harness must re-use the same worker image
+    that production scans use' — that is the SNAP-05 snapshot worker, never
+    scanipy-detector (comparing against the detector image would poison the
+    gate — CLAR-DEPLOY-22 risk note)."""
+    from services.control_plane import GATE_IMAGE
+
+    assert GATE_IMAGE == "scanipy-snapshot"
+
+
+@pytest.mark.unit
+def test_production_env_digest_none_when_registry_file_absent(tmp_path: Path) -> None:
+    """Pre-bootstrap record-and-warn: no registry file at all."""
+    from services.control_plane import production_env_digest
+
+    assert production_env_digest(tmp_path / "nope.json") is None
+
+
+@pytest.mark.unit
+def test_production_env_digest_none_when_no_active_entry(tmp_path: Path) -> None:
+    """Pre-bootstrap record-and-warn: registry exists but every row is void."""
+    from services.control_plane import production_env_digest
+
+    path = tmp_path / "registry.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "entries": [
+                    {
+                        "image": "scanipy-snapshot",
+                        "env_digest": _REG_DIGEST,
+                        "tag": "v0.1.0",
+                        "git_sha": "c" * 40,
+                        "signed_at": "2026-07-15T00:00:00Z",
+                        "status": "void",
+                        "note": "never deployed",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert production_env_digest(path) is None
+
+
+@pytest.mark.unit
+def test_production_env_digest_returns_the_active_digest(tmp_path: Path) -> None:
+    from services.control_plane import production_env_digest
+
+    path = tmp_path / "registry.json"
+    path.write_text(json.dumps(_registry_doc()), encoding="utf-8")
+    assert production_env_digest(path) == _REG_DIGEST
+
+
+@pytest.mark.unit
+def test_production_env_digest_raises_on_malformed_registry(tmp_path: Path) -> None:
+    from services.control_plane import production_env_digest
+    from workers.build.env_digest_registry import EnvDigestRegistryError
+
+    path = tmp_path / "registry.json"
+    path.write_text("{not json", encoding="utf-8")
+    with pytest.raises(EnvDigestRegistryError):
+        production_env_digest(path)
+
+
+@pytest.mark.unit
+def test_enforce_production_env_warns_and_passes_when_registry_absent(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    from services.control_plane import enforce_production_env
+
+    with caplog.at_level(logging.WARNING):
+        enforce_production_env(_REG_DIGEST, tmp_path / "nope.json")
+    assert any("record-and-warn" in r.message for r in caplog.records)
+
+
+@pytest.mark.unit
+def test_enforce_production_env_passes_when_digest_matches(tmp_path: Path) -> None:
+    from services.control_plane import enforce_production_env
+
+    path = tmp_path / "registry.json"
+    path.write_text(json.dumps(_registry_doc()), encoding="utf-8")
+    enforce_production_env(_REG_DIGEST, path)  # must not raise
+
+
+@pytest.mark.unit
+def test_enforce_production_env_raises_on_mismatch(tmp_path: Path) -> None:
+    from services.control_plane import ProductionEnvMismatch, enforce_production_env
+
+    path = tmp_path / "registry.json"
+    path.write_text(json.dumps(_registry_doc()), encoding="utf-8")
+    with pytest.raises(ProductionEnvMismatch, match=f"{_OTHER_DIGEST} != {_REG_DIGEST}"):
+        enforce_production_env(_OTHER_DIGEST, path)
+
+
+@pytest.mark.unit
+def test_enforce_production_env_compares_against_gate_image_not_other_images(
+    tmp_path: Path,
+) -> None:
+    """A registry with only a scanipy-detector active entry must still
+    record-and-warn (not silently pass) for the scanipy-snapshot gate image —
+    proves the two images are never conflated (CLAR-DEPLOY-22 poison-gate risk)."""
+    from services.control_plane import enforce_production_env
+
+    path = tmp_path / "registry.json"
+    path.write_text(
+        json.dumps(_registry_doc(image="scanipy-detector", digest=_OTHER_DIGEST)),
+        encoding="utf-8",
+    )
+    # No active scanipy-snapshot entry exists, so this is still the
+    # pre-bootstrap window for the gate image and must not raise.
+    enforce_production_env(_REG_DIGEST, path)
