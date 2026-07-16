@@ -11,6 +11,28 @@
 # RULE-9: this module is INV-3-adjacent (per-tenant CMK scope is the substrate
 # guarantee that tenant S_customer cannot leak across tenants). Security Analyst
 # sign-off required before any change ships.
+#
+# --- Input-format + size contract (2026-07-15, CLAR-DEPLOY-21) -------------
+#
+# TEMPLATE_ORG_ID format: canonical lowercase UUID ONLY
+#   (^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ — the DB
+#   orgs.id column is `uuid`, db/migrations 20260524_0001). CMP-ORCH-03 MUST
+#   validate org_id against this pattern BEFORE substituting it into this
+#   template: an unvalidated value such as `*` or `../` would widen the Allow
+#   ARNs / narrow the Deny ARNs. The canonical validator + renderer is
+#   services/substrate/session_policy.py (render_worker_session_policy) —
+#   substitute through it, never with ad-hoc string replace.
+#
+# TEMPLATE_TENANT_CMK_ARN format: arn:aws:kms:<region>:<account>:key/<uuid>
+#   (validated by the same module).
+#
+# Size ceiling: the rendered JSON is passed as the inline Policy parameter of
+#   sts:AssumeRole, which AWS hard-caps at 2048 characters. Current rendered
+#   size is ~1752 chars (36-char UUID + full CMK ARN) — ~296 chars headroom.
+#   CI guard: tests/unit/test_session_policy_template.py fails the build if a
+#   template change would cross the limit (and cross-checks this file's sids
+#   and bucket names against the renderer). If the guard trips, compact the
+#   template — that is a RULE-9 Security-Analyst-reviewed change.
 
 variable "region" {
   type    = string
@@ -24,7 +46,10 @@ variable "env" {
 
 # ---------------------------------------------------------------------------
 # S3 bucket names (per CLAR-DEPLOY-02 — orgs/{org_id}/... prefix scheme)
-# These buckets are provisioned by CMP-DEPLOY-01; referenced here by name only.
+# Provisioned 2026-07-15 (live, us-east-1) and mirrored as IaC in
+# infra/modules/dataplane/main.tf; referenced here by name only. Names are
+# cross-checked against services/substrate/session_policy.py by
+# tests/unit/test_session_policy_template.py.
 # ---------------------------------------------------------------------------
 locals {
   snapshot_bucket = "scanipy-${var.env}-snapshot"
