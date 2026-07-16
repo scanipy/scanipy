@@ -58,8 +58,22 @@ COPY workers/detector/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir --require-hashes -r /tmp/requirements.txt
 
 # Worker code. SCANIPY_ENV_DIGEST is filled at runtime by ECS task metadata.
-COPY services/scan /app/services/scan
-COPY tools/worker  /app/tools/worker
+#
+# CMP-ORCH-03 entrypoint gap fix (Track 1C, services/scan/detector_worker.py):
+# the previous COPY set below only brought in services/scan + tools/worker, but
+# services/scan/worker.py (already-shipped CMP-ORCH-03) imports analysis.*,
+# services/scan/detector_worker.py additionally imports detectors.registry
+# (CMP-DET-02) + services.substrate.object_store/queue (CMP-DEPLOY-01), and
+# services/scan/worker.py imports tools.observability.metrics — none of which
+# were on the image (verified by direct import-graph inspection). Without this,
+# `python -m services.scan.detector_worker` fails at import time with
+# ModuleNotFoundError even though the module itself is correct.
+COPY services/scan        /app/services/scan
+COPY services/substrate   /app/services/substrate
+COPY analysis             /app/analysis
+COPY detectors            /app/detectors
+COPY tools/worker         /app/tools/worker
+COPY tools/observability  /app/tools/observability
 
 ENV PATH=/opt/joern/bin:/opt/codeql:/usr/bin:/usr/local/bin
 ENV PYTHONUNBUFFERED=1
