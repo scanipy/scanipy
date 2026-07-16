@@ -147,6 +147,15 @@ ignore_missing_imports = true
 module = ["boto3.*", "botocore.*", "moto.*"]
 ignore_missing_imports = true
 
+# CMP-ORCH-01 Track 1D (services/scan/sql_adapters.py): psycopg2-binary is a
+# `dev`-extra dep (no bundled type stubs) and is imported lazily inside
+# psycopg2_connection_factory (only on the real-DB path), mirroring the
+# boto3/opentelemetry overrides above — hermetic unit runs need no psycopg2
+# install.
+[[tool.mypy.overrides]]
+module = ["psycopg2.*"]
+ignore_missing_imports = true
+
 # ---------------------------------------------------------------------------
 # Pytest
 # ---------------------------------------------------------------------------
