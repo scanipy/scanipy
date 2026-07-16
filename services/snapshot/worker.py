@@ -25,18 +25,36 @@ verified hermetically here:
    re-exported here, which rejects any non-sanctioned flag fail-closed before a
    subprocess is spawned (``shell=False`` always).
 
-BUILD-AHEAD (sanctioned, DOC §1 Depends-On ``CMP-SNAP-01``, ``CMP-DEPLOY-02``):
-the *real-image* half of CMP-SNAP-05 — the live SQS dequeue → ``CMP-SCM-*`` clone
-→ ``CMP-SNAP-03`` CW-DETECT → ``CMP-SNAP-02`` incremental CPG → S3 upload →
-HMAC ``report_status`` execute loop (DOC §6.2) — is **env-gated on the AWS
-substrate track** (the worker container build, ``workers/pins.json`` digests are
-all-zero placeholders the AWS team fills). That loop is intentionally NOT wired
-here: it would require unbuilt collaborators and real digests. What ships and is
-green hermetically is the worker *bootstrap logic*: the env-digest binding +
-fail-closed gate (the INV-2 ORIGIN) and the argv-allowlist call path. The
-:func:`main` bootstrap performs exactly the fail-closed boot gate; the per-job
-execute loop raises a typed ``NotImplementedError`` naming its unbuilt deps, so
-the gating is honest rather than faked.
+BOOTSTRAP EXECUTE LOOP (CLAR-SNAP-04 — first-real-scan plan, worktree wf-2):
+:func:`run_execute_loop` now runs the real DOC §6.2 sequence for a **first-ever
+(no-parent) snapshot only**: SQS dequeue → real ``git`` clone via
+:func:`tools.worker.secure_subprocess.secure_run` (argv-allowlisted) → real
+``CMP-SNAP-03`` :func:`services.snapshot.cw_detect.detect` → a bootstrap
+``source -> analysis.ordering.CPG`` full parse → upload the four bootstrap-mode
+artifacts to S3 (``CMP-DEPLOY-01`` :class:`services.substrate.object_store.ObjectStore`)
+→ an HMAC-bearer ``report_status`` callback. ``CMP-SNAP-02``
+(``compute_incremental_cpg`` / the ``GraphView`` reverse-symbol-index + dynamic
+call-graph builder) is **bypassed entirely** for this path (CLAR-SNAP-04): a
+job whose ``parent_snapshot_id`` is non-empty is refused fail-closed
+(:class:`IncrementalSnapshotNotSupportedError`) rather than silently mis-handled —
+CMP-SNAP-02 is Wave-2+ scope and only engages from the second commit onward.
+
+Three collaborators remain genuinely unbuilt and are injected as typed,
+fail-closed-by-default ports (CLAR-PROC-01 condition (2), same discipline as
+``services/scan/worker.py``): :data:`ParseSourceFn` (CMP-SNAP-05's
+``source -> CPG`` front end is CLAR-SNAP-03 scope, built on a parallel track —
+:func:`_fail_closed_parse_source` names it), :class:`ReportStatusPort` (the
+worker->API status-report wire contract is unresolved — DOC §3.2 names a route
+that does not exist and CLAR-SNAP-02's resolution explicitly carved the
+``report_status`` callback shape out as "a separate downstream decision" — see
+this module's ``ReportStatusPort`` docstring), and :class:`SnapshotQueuePort`
+(``services/substrate/queue.py`` ships only the in-memory ``StandardQueue``
+substrate primitive; no boto3-backed SQS binding exists yet, a parallel
+build-ahead track). A hermetic test injects deterministic fakes for all three;
+production calls (:func:`main`) get the fail-closed defaults until each lands.
+S3 upload is **not** gated: :class:`services.substrate.object_store.S3ObjectStore`
+is real (lazy boto3 import), so the production default actually constructs one
+from the ``S3_BUCKET`` env var.
 
 This module writes NO provenance fields to a ``Finding``; it threads
 ``env_digest`` (INV-2) into the snapshot pipeline via the SNAP-01 callback
@@ -46,11 +64,26 @@ This module writes NO provenance fields to a ``Finding``; it threads
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import re
 import sys
-from typing import TYPE_CHECKING, Literal
+import tarfile
+import tempfile
+import time
+from dataclasses import asdict, dataclass
+from io import BytesIO
+from pathlib import Path
+from typing import TYPE_CHECKING, Final, Literal, Protocol, runtime_checkable
 
+from services.scan.provenance import InvariantViolation
+from services.snapshot import cw_detect
+from services.substrate.object_store import (
+    SNAPSHOT_ARTIFACT_TYPES,
+    S3ObjectStore,
+    SnapshotKeyBuilder,
+)
 from tools.observability.logging import get_logger
 from tools.observability.metrics import record_job_completion
 
@@ -64,6 +97,10 @@ from tools.worker.secure_subprocess import (
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+
+    from analysis.ordering import CPG
+    from services.substrate.object_store import ObjectStore
+    from services.substrate.queue import ReceivedMessage
 
 # INV-2: env_digest is the worker container image digest. Same format CHECK as
 # the shipped ``snapshots.env_digest_chk`` DDL constraint and the SNAP-01 service
@@ -180,47 +217,667 @@ def record_snapshot_job_completion(
     )
 
 
-def run_execute_loop(env_digest: str) -> None:
-    """The per-job SQS execute loop (DOC §6.2) — env-gated on the AWS substrate.
+_GIT_CLONE_TIMEOUT_S: Final[int] = 300
+_GIT_CHECKOUT_TIMEOUT_S: Final[int] = 60
 
-    BUILD-AHEAD honesty: the live dequeue → ``CMP-SCM-*`` clone → ``CMP-SNAP-03``
-    CW-DETECT → ``CMP-SNAP-02`` incremental CPG → S3 upload → HMAC
-    ``report_status`` loop requires unbuilt collaborators (``CMP-SNAP-01/02``
-    seams, ``CMP-SCM-*``) and a real worker image with non-placeholder
-    ``workers/pins.json`` digests (``CMP-DEPLOY-02``). Rather than fake that
-    pipeline, this raises a typed refusal naming the unbuilt deps — the boot gate
-    (:func:`boot`) and the argv allowlist (:func:`secure_run`) are the parts that
-    are real and tested today.
+# Required SnapshotJob message-body keys (see :class:`SnapshotJob` docstring for
+# the ``clone_url`` gap note).
+_REQUIRED_JOB_FIELDS: Final[tuple[str, ...]] = (
+    "snapshot_id",
+    "org_id",
+    "codebase_id",
+    "commit_sha",
+    "env_digest",
+    "clone_url",
+)
 
-    OBSERVABILITY CONTRACT (CMP-DEPLOY-03 / CLAR-DEPLOY-20): when this loop
-    lands it MUST call :func:`record_snapshot_job_completion` exactly once per
-    dequeued message, on the ``report_status`` outcome (``success`` on a 2xx
-    ``state='ready'`` POST, ``failure`` on any terminal ``state='failed'``
-    path), with the dequeue→report duration from the monotonic clock.
+# Bootstrap-loop language detection: a small, LOCAL extension map (deliberately
+# NOT importing ``services.snapshot.cw_detect``'s private ``_EXT_TO_LANG`` —
+# that module's language classification is scoped to the INV-4 reflection
+# precondition, a different concern from "which parser does ``parse_source``
+# invoke"). Kept minimal: Stage A is java+python; the rest are listed so a
+# multi-language repo still yields an honest ``language_mix`` for CW-DETECT.
+_SOURCE_EXTENSIONS: Final[dict[str, str]] = {
+    ".py": "python",
+    ".pyi": "python",
+    ".java": "java",
+    ".js": "js",
+    ".jsx": "js",
+    ".mjs": "js",
+    ".cjs": "js",
+    ".ts": "ts",
+    ".tsx": "ts",
+    ".rb": "ruby",
+    ".php": "php",
+    ".phtml": "php",
+    ".go": "go",
+}
 
-    Args:
-        env_digest: the bound authoritative ``env_digest`` (INV-2) that every
-            ``report_status`` callback in the real loop will thread (DOC §8).
+
+class MalformedSnapshotJobError(Exception):
+    """The dequeued SQS message body is missing a required ``SnapshotJob`` field.
+
+    Notably ``clone_url``: the shipped ``CMP-SNAP-01`` enqueue body
+    (``SnapshotService.create_snapshot``'s ``queue.send(body={...})``) carries
+    only ``snapshot_id/org_id/codebase_id/commit_sha/env_digest/parent_snapshot_id``
+    — no repo clone URL. See the ``SnapshotJob`` docstring; flagged as a new-CLAR
+    candidate in this PR rather than guessed at (RULE-4).
     """
-    raise NotImplementedError(
-        "CMP-SNAP-05 execute loop is gated on CMP-DEPLOY-02 (worker image build; "
-        f"workers/pins.json digests are all-zero placeholders) and CMP-SNAP-01/02 "
-        f"seams; env_digest={env_digest!r} is bound and ready to thread once the "
-        "AWS substrate track lands. See DOC-CMP-SNAP-05 §6.2."
+
+
+class IncrementalSnapshotNotSupportedError(Exception):
+    """A ``SnapshotJob`` carries a non-empty ``parent_snapshot_id`` (CLAR-SNAP-04).
+
+    ``CMP-SNAP-02`` (``compute_incremental_cpg`` / the ``GraphView`` builder) is
+    Wave-2+ scope and is not wired into this loop. Refusing fail-closed here is
+    deliberate: silently treating an incremental job as a fresh bootstrap parse
+    would drop the CW-DETECT parent reflection-site carry-forward (DOC-CMP-SNAP-03
+    §4.1 property 3, INV-4) and would not compute a real ΔG. CLAR-SNAP-04 records
+    this as the intended interim behaviour, not a bug.
+    """
+
+
+class NoSourceFilesFoundError(Exception):
+    """No file under the cloned tree matched a recognised source-language extension."""
+
+
+@dataclass(frozen=True)
+class SnapshotJob:
+    """A dequeued, parsed ``SnapshotJob`` (DOC-CMP-SNAP-05 §4.1 input shape).
+
+    ``clone_url`` is REQUIRED here even though the shipped CMP-SNAP-01
+    ``SnapshotService.create_snapshot`` enqueue body does not currently carry
+    one (see :class:`MalformedSnapshotJobError`) — this loop cannot clone without it.
+    Forward-compatible: once CMP-SNAP-01 (or a ``CodebasePort``-shaped lookup)
+    supplies it, no change is needed here.
+
+    ``parent_snapshot_id`` is ``None`` for a first-ever (bootstrap) snapshot —
+    the only path this loop implements (CLAR-SNAP-04).
+    """
+
+    snapshot_id: str
+    org_id: str
+    codebase_id: str
+    commit_sha: str
+    env_digest: str
+    clone_url: str
+    parent_snapshot_id: str | None = None
+
+
+def _parse_snapshot_job(body: Mapping[str, str]) -> SnapshotJob:
+    """Parse+validate a raw queue-message body into a typed :class:`SnapshotJob`.
+
+    Fail-closed: any missing required field raises :class:`MalformedSnapshotJobError`
+    naming every missing key (not just the first) so a redelivered poison
+    message's diagnostic is immediately actionable.
+    """
+    missing = [field_name for field_name in _REQUIRED_JOB_FIELDS if not body.get(field_name)]
+    if missing:
+        raise MalformedSnapshotJobError(
+            f"SnapshotJob message body is missing required field(s) {missing!r}"
+        )
+    parent = body.get("parent_snapshot_id") or None
+    return SnapshotJob(
+        snapshot_id=body["snapshot_id"],
+        org_id=body["org_id"],
+        codebase_id=body["codebase_id"],
+        commit_sha=body["commit_sha"],
+        env_digest=body["env_digest"],
+        clone_url=body["clone_url"],
+        parent_snapshot_id=parent,
     )
 
 
+# ---------------------------------------------------------------------------
+# Typed ports (build-ahead seams, CLAR-PROC-01 condition (2) — same discipline
+# as ``services/scan/worker.py``'s ``OracleAdapter`` / ``SliceFingerprinter``).
+# ---------------------------------------------------------------------------
+
+
+class ParseSourceFn(Protocol):
+    """``source -> analysis.ordering.CPG`` front end (CLAR-SNAP-03 scope).
+
+    Exact agreed signature (the 1A/1B handshake): ``parse_source(src_root,
+    language, *, env, workdir) -> CPG``. CMP-SNAP-05's own Joern orchestration
+    (``analysis.cpg_ingest.joern_frontend.parse_source``) is built on a parallel
+    track and has not landed in this worktree; the production default
+    (:func:`_fail_closed_parse_source`) fails closed until it does, at which
+    point wiring it in is a one-line import change (this Protocol's shape does
+    not need to change).
+    """
+
+    def __call__(
+        self, src_root: Path, language: str, *, env: Mapping[str, str], workdir: Path
+    ) -> CPG: ...
+
+
+def _fail_closed_parse_source(
+    src_root: Path, language: str, *, env: Mapping[str, str], workdir: Path
+) -> CPG:
+    """Production ``ParseSourceFn`` default: fails closed until CLAR-SNAP-03 lands."""
+    del env, workdir  # unused in the fail-closed stub; part of the real signature
+    raise NotImplementedError(
+        f"parse_source({src_root!s}, {language!r}) is not wired: CMP-SNAP-05's "
+        "source->CPG front end (CLAR-SNAP-03, analysis.cpg_ingest.joern_frontend."
+        "parse_source) is built on a parallel track and has not landed. Inject a "
+        "ParseSourceFn matching this exact signature via "
+        "run_execute_loop(..., parse_source=...) in a hermetic test."
+    )
+
+
+SnapshotStatusState = Literal["ready", "failed"]
+
+
+@dataclass(frozen=True)
+class SnapshotStatusReport:
+    """The worker->API status report (DOC-CMP-SNAP-05 §3.2 field shape).
+
+    ``precondition_status`` / ``snapshot_digest`` are ``None`` until ``state ==
+    "ready"`` (DOC §3.2 — "null until 'ready'"). This loop never emits the
+    ``"snapshotting"`` DOC state: it runs clone->CW-DETECT->parse->upload
+    synchronously and reports exactly once, terminal (``ready`` or ``failed``).
+    """
+
+    snapshot_id: str
+    state: SnapshotStatusState
+    env_digest: str
+    precondition_status: str | None = None
+    snapshot_digest: str | None = None
+    error: str | None = None
+
+
+@runtime_checkable
+class ReportStatusPort(Protocol):
+    """HMAC-bearer ``report_status`` callback seam (DOC-CMP-SNAP-05 §3.2).
+
+    NO REAL PRODUCTION IMPLEMENTATION SHIPS IN THIS PR (RULE-4 — the wire
+    contract is not ratified, so none is invented). Two real, unreconciled
+    candidate contracts exist in the codebase today:
+
+    1. DOC-CMP-SNAP-05 §3.2 names ``POST /snapshots/{snapshot_id}/status``
+       with an ``Authorization: HMAC-SHA256 <signed-bytes>=<base64(hmac)>``
+       header shape — but no such route is implemented anywhere in
+       ``services/scan`` (verified by grep), and CLAR-SNAP-02's resolution
+       explicitly carved this out: *"The SNAP-05 report_status callback (state
+       machine + snapshot_digest persistence) is a separate downstream
+       decision (off-row tracking vs a deliberate CP-03 amendment), not this
+       conflict."* — i.e. still open.
+    2. ``services/scan/api.py`` ships a REAL, tested ``POST
+       /api/v1/jobs/{job_id}/status`` (``post_job_status`` / ``JobStatusReport``
+       / ``verify_worker_callback_hmac``) — but it is shaped for CMP-ORCH-03
+       DETECTOR-job completions: it requires a non-empty ``S_version`` (INV-2
+       fence, 400 otherwise), a ``scan_id``, and a per-``job_id`` HMAC secret
+       pre-issued by ``HmacKeyIssuer.issue(job_id=..., scan_id=...)`` inside
+       ``post_scans``. ``SnapshotService.create_snapshot`` mints only a
+       ``snapshot_id`` and never calls that issuer, so no key would ever exist
+       for a snapshot callback — every call would 401. This route is NOT a fit
+       for a snapshot-stage callback without a CLAR ratifying "treat
+       snapshot_id as job_id and thread a synthetic S_version," which nothing
+       in PLAN.md/SDD.md specifies (RULE-4: not guessed at here).
+
+    The production default (:func:`_fail_closed_report_status_port`) fails
+    closed naming both candidates; a hermetic test injects a deterministic
+    fake. Swapping in the real client is a follow-up PR once the CLAR is
+    ratified — this Protocol's shape (``report(SnapshotStatusReport) -> None``)
+    is written to survive either resolution.
+    """
+
+    def report(self, status: SnapshotStatusReport) -> None: ...
+
+
+class _FailClosedReportStatusPort:
+    """Production ``ReportStatusPort`` default: fails closed (see the Protocol docstring)."""
+
+    def report(self, status: SnapshotStatusReport) -> None:
+        raise NotImplementedError(
+            f"report_status(snapshot_id={status.snapshot_id!r}, state={status.state!r}) "
+            "has no wired HTTP+HMAC client: the DOC-CMP-SNAP-05 §3.2 callback route "
+            "does not exist and CLAR-SNAP-02 left the SNAP-05 report_status contract "
+            "as 'a separate downstream decision'; services/scan/api.py's real "
+            "POST /api/v1/jobs/{job_id}/status is shaped for detector-job "
+            "completions (S_version + scan_id + a pre-issued per-job HMAC key), not "
+            "a snapshot callback. Inject a ReportStatusPort via "
+            "run_execute_loop(..., report_status=...) in a hermetic test."
+        )
+
+
+def _fail_closed_report_status_port() -> ReportStatusPort:
+    return _FailClosedReportStatusPort()
+
+
+@runtime_checkable
+class SnapshotQueuePort(Protocol):
+    """Structural seam over the dequeue surface (``StandardQueue``-compatible).
+
+    ``services/substrate/queue.py`` ships only the in-memory ``StandardQueue``
+    substrate primitive (its own docstring: "No boto3 / AWS is called"); no
+    boto3-backed SQS adapter exists in this worktree yet (a parallel
+    build-ahead track). A hermetic / local-rehearsal test injects a
+    ``StandardQueue`` instance directly (already structurally compatible).
+    """
+
+    def receive(self) -> ReceivedMessage | None: ...
+
+    def ack(self, receipt_handle: int) -> None: ...
+
+    def fail(self, receipt_handle: int) -> None: ...
+
+
+class _FailClosedSnapshotQueue:
+    """Production ``SnapshotQueuePort`` default: fails closed until a real SQS adapter lands."""
+
+    def receive(self) -> ReceivedMessage | None:
+        raise NotImplementedError(
+            "no boto3-backed SQS queue adapter is wired yet (services/substrate/"
+            "queue.py ships only the in-memory StandardQueue substrate primitive); "
+            "inject a SnapshotQueuePort via run_execute_loop(..., queue=...)."
+        )
+
+    def ack(self, receipt_handle: int) -> None:
+        raise NotImplementedError("no snapshot queue adapter wired; see receive()")
+
+    def fail(self, receipt_handle: int) -> None:
+        raise NotImplementedError("no snapshot queue adapter wired; see receive()")
+
+
+def _fail_closed_snapshot_queue() -> SnapshotQueuePort:
+    return _FailClosedSnapshotQueue()
+
+
+def _default_object_store(environ: Mapping[str, str]) -> ObjectStore:
+    """Production ``ObjectStore`` default: a REAL ``S3ObjectStore`` (lazy boto3).
+
+    Unlike ``queue``/``report_status``/``parse_source``, S3 upload is not
+    env-gated (task brief: "the ALREADY-REAL services/substrate/object_store.py
+    S3ObjectStore") — ``S3ObjectStore.__init__`` lazily imports boto3 only when
+    ``client=None`` is passed, so this stays import-clean without boto3 present.
+    ``S3_BUCKET`` (DOC-CMP-SNAP-05 §3.1 storage env-var contract) must be set;
+    a missing value fails closed rather than defaulting to a guessed bucket name.
+    """
+    bucket = environ.get("S3_BUCKET")
+    if not bucket:
+        raise InvariantViolation(
+            "S3_BUCKET must be set (DOC-CMP-SNAP-05 §3.1); refusing to construct "
+            "an unbucketed S3ObjectStore",
+            code="missing_s3_bucket",
+        )
+    return S3ObjectStore(bucket)
+
+
+def _detect_language_mix(src_root: Path) -> tuple[tuple[str, ...], str]:
+    """Return ``(language_mix, primary_language)`` for the cloned source tree.
+
+    ``language_mix`` feeds ``CwDetectRequest`` (every recognised language present,
+    sorted for determinism); ``primary_language`` is a ``parse_source`` hint (the
+    most common recognised extension; ties broken deterministically, not a
+    staging/priority ordering — CMP-CP-06 governs Algorithm-2 eligibility, not
+    ingestion). Raises :class:`NoSourceFilesFoundError` when nothing recognisable is
+    present (a job-level failure, not a silent no-op scan).
+    """
+    counts: dict[str, int] = {}
+    for path in src_root.rglob("*"):
+        if not path.is_file():
+            continue
+        lang = _SOURCE_EXTENSIONS.get(path.suffix.lower())
+        if lang is not None:
+            counts[lang] = counts.get(lang, 0) + 1
+    if not counts:
+        raise NoSourceFilesFoundError(f"no recognised source files found under {src_root}")
+    language_mix = tuple(sorted(counts))
+    primary_language = max(counts.items(), key=lambda kv: (kv[1], kv[0]))[0]
+    return language_mix, primary_language
+
+
+def _git_env(home: Path) -> dict[str, str]:
+    """Minimal explicit env for the ``git`` child (the host env is NOT inherited).
+
+    ``GIT_TERMINAL_PROMPT=0`` prevents a hang on a credential prompt (this
+    bootstrap loop clones a PUBLIC repo, no PAT); ``HOME`` is scoped to the
+    ephemeral workdir so no host ``~/.gitconfig`` leaks into the clone.
+    """
+    return {"PATH": "/usr/bin:/bin", "GIT_TERMINAL_PROMPT": "0", "HOME": str(home)}
+
+
+def _default_parse_env() -> dict[str, str]:
+    """Minimal explicit env threaded into ``parse_source`` (DOC §6.3 example shape)."""
+    return {"PATH": "/opt/joern/bin:/opt/codeql:/usr/bin", "JAVA_HOME": "/opt/jdk"}
+
+
+def _build_cpg_tarball(cpg: CPG) -> bytes:
+    """Serialise ``cpg`` to the bootstrap ``cpg_tarball`` artifact body.
+
+    Format (S3 key suffix ``cpg.tar.zst`` per ``SNAPSHOT_ARTIFACT_SUFFIXES`` —
+    NOTE the bytes here are gzip, not zstd: ``zstandard`` is not a pinned
+    dependency in this repo, see the handoff note / new-CLAR candidate raised
+    alongside this PR): a ``tar`` archive (gzip-compressed, stdlib ``tarfile``,
+    no extra dependency) containing exactly two members:
+
+    * ``nodes.json`` — a JSON array of ``{node_id, kind, operator_or_literal,
+      resolved_fqn, enclosing_decl_fqn, structural_path}`` objects, one per
+      ``CPGNode``, in ``cpg.nodes`` order.
+    * ``edges.json`` — a JSON array of ``{src, dst, kind}`` objects, one per
+      ``CPGEdge``, in ``cpg.edges`` order.
+
+    A consumer (CMP-ORCH-03 / track 1C) reconstructs the ``CPG`` by re-calling
+    ``CPG.add_node`` / ``add_edge`` in file order (node insertion order is
+    preserved by the JSON array order, matching ``NodeId`` assignment).
+    """
+    nodes_payload = [
+        {
+            "node_id": int(node.node_id),
+            "kind": node.kind,
+            "operator_or_literal": node.operator_or_literal,
+            "resolved_fqn": node.resolved_fqn,
+            "enclosing_decl_fqn": node.enclosing_decl_fqn,
+            "structural_path": node.structural_path,
+        }
+        for node in cpg.nodes
+    ]
+    edges_payload = [
+        {"src": int(edge.src), "dst": int(edge.dst), "kind": edge.kind} for edge in cpg.edges
+    ]
+    nodes_bytes = json.dumps(nodes_payload).encode("utf-8")
+    edges_bytes = json.dumps(edges_payload).encode("utf-8")
+
+    buffer = BytesIO()
+    with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
+        for name, payload in (("nodes.json", nodes_bytes), ("edges.json", edges_bytes)):
+            info = tarfile.TarInfo(name=name)
+            info.size = len(payload)
+            tar.addfile(info, BytesIO(payload))
+    return buffer.getvalue()
+
+
+def _build_reverse_symbol_index(cpg: CPG) -> bytes:
+    """Bootstrap-mode ``reverse_symbol_index`` artifact: ``{resolved_fqn: [node_id, ...]}``.
+
+    Computed directly from the CPG we just built (real, not a placeholder) —
+    this is the trivial single-snapshot index; the full incremental
+    reverse-symbol-closure machinery is ``CMP-SNAP-02``/``GraphView`` scope
+    (CLAR-SNAP-04, Wave-2+), not needed for a first-ever snapshot.
+    """
+    index: dict[str, list[int]] = {}
+    for node in cpg.nodes:
+        if node.resolved_fqn:
+            index.setdefault(node.resolved_fqn, []).append(int(node.node_id))
+    return json.dumps(index, sort_keys=True).encode("utf-8")
+
+
+def _build_dynamic_call_graph_stub() -> bytes:
+    """Bootstrap-mode ``dynamic_call_graph`` artifact: honestly empty, not fabricated.
+
+    ``CMP-SNAP-02``'s ``GraphView`` builds the real interprocedural call graph
+    (CLAR-SNAP-04, Wave-2+ scope); a bootstrap snapshot legitimately has none
+    computed yet. The ``bootstrap_mode`` flag lets a downstream reader
+    distinguish "no edges because bootstrap" from "no edges because empty repo".
+    """
+    payload = {
+        "edges": [],
+        "bootstrap_mode": True,
+        "note": (
+            "CMP-SNAP-02 GraphView (dynamic call-graph construction) is Wave-2+ "
+            "scope per CLAR-SNAP-04; this bootstrap snapshot has no computed "
+            "call-graph edges."
+        ),
+    }
+    return json.dumps(payload).encode("utf-8")
+
+
+def _build_precondition_status_record(verdict: cw_detect.CwDetectVerdict) -> bytes:
+    """Serialise the real ``CW-DETECT`` verdict to the ``precondition_status.json`` body."""
+    return json.dumps(asdict(verdict)).encode("utf-8")
+
+
+def run_execute_loop(
+    env_digest: str,
+    *,
+    queue: SnapshotQueuePort | None = None,
+    object_store: ObjectStore | None = None,
+    parse_source: ParseSourceFn | None = None,
+    report_status: ReportStatusPort | None = None,
+    environ: Mapping[str, str] | None = None,
+) -> None:
+    """The per-job SQS execute loop (DOC §6.2), bootstrap (no-parent) path only.
+
+    One call processes AT MOST one dequeued message — mirroring the DOC §6.1
+    lifecycle ("Execute -> Shutdown: Task exits after ACKing the SQS message";
+    one ECS Fargate task = one job attempt). Steps, matching DOC §6.2 verbatim
+    order (with CLAR-SNAP-04's CMP-SNAP-02 bypass):
+
+    1. ``queue.receive()``. Empty queue -> log + return (no completion metric:
+       "exactly once per DEQUEUED message").
+    2. Parse + validate the message body (:func:`_parse_snapshot_job`).
+    3. INV-2 guard: ``job.env_digest`` must equal this worker's bound digest.
+    4. CLAR-SNAP-04 guard: a non-empty ``parent_snapshot_id`` is refused
+       (:class:`IncrementalSnapshotNotSupportedError`) — bootstrap-only in this loop.
+    5. ``git clone`` + ``git checkout <commit_sha>`` via the REAL argv-allowlisted
+       :func:`secure_run` (``tools/worker/secure_subprocess.py``).
+    6. Real ``CMP-SNAP-03`` :func:`services.snapshot.cw_detect.detect` (no
+       parent snapshot — bootstrap has none to carry forward).
+    7. ``parse_source(src_root, primary_language, env=..., workdir=...) -> CPG``
+       (the injected/fail-closed :data:`ParseSourceFn` seam).
+    8. Build the four bootstrap-mode artifacts and upload each to
+       ``object_store`` at the deterministic :class:`SnapshotKeyBuilder` key
+       (``delta_graph`` is skipped: a bootstrap snapshot has no parent, hence no
+       delta — the one artifact the schema itself allows to be absent).
+    9. ``report_status.report(state="ready", ...)``, then ``queue.ack(...)``.
+
+    On ANY exception from steps 2-9: best-effort ``report_status.report(
+    state="failed", error=...)`` (swallowed if the port itself raises — a
+    secondary failure must never crash the loop), ``queue.fail(...)`` (DOC §7:
+    SQS redelivery / max-receive -> DLQ), and the loop RETURNS NORMALLY rather
+    than propagating — matching ``IdempotentConsumer.poll_once``'s own
+    swallow-and-fail-the-message discipline (``services/substrate/queue.py``).
+
+    OBSERVABILITY CONTRACT (CMP-DEPLOY-03 / CLAR-DEPLOY-20): calls
+    :func:`record_snapshot_job_completion` exactly once per dequeued message
+    (never on an empty-queue no-op), with the dequeue->report duration from the
+    monotonic clock and the best-known ``precondition_status`` (``"unknown"``
+    if the failure happened before CW-DETECT ran).
+
+    BOUNDARY DISCIPLINE (DOC §8 / module docstring): this function never reads
+    or writes ``origin`` / ``cpg_order_hash`` / ``slice_fingerprint`` — those
+    are set downstream (CMP-ORCH-03 / CMP-CORE-02/03) once a detector job runs
+    against the uploaded CPG tarball.
+
+    Args:
+        env_digest: the bound authoritative ``env_digest`` (INV-2, from
+            :func:`boot`) every ``report_status`` callback threads (DOC §8).
+        queue: the SQS-shaped dequeue port; fails closed by default (no real
+            boto3-SQS adapter is wired yet — inject a ``StandardQueue`` in tests).
+        object_store: the S3-shaped upload port; defaults to a REAL
+            ``S3ObjectStore`` built from ``S3_BUCKET`` (already-real substrate).
+        parse_source: the ``source -> CPG`` front end; fails closed by default
+            (CLAR-SNAP-03, built on a parallel track) — inject a fake matching
+            the exact :data:`ParseSourceFn` signature in tests.
+        report_status: the worker->API callback port; fails closed by default
+            (the wire contract is unresolved — see :class:`ReportStatusPort`).
+        environ: env mapping override for hermetic tests (defaults to
+            :data:`os.environ`), read for ``S3_BUCKET`` / ``AWS_REGION``.
+    """
+    env = os.environ if environ is None else environ
+    active_queue: SnapshotQueuePort = queue if queue is not None else _fail_closed_snapshot_queue()
+    logger = get_logger("snapshot-worker")
+
+    received = active_queue.receive()
+    if received is None:
+        logger.info("snapshot execute loop: no job available")
+        return
+
+    # Deferred until AFTER we know there is a job to process: an idle poll (the
+    # common case) must never pay for / fail on resolving these collaborators.
+    # ``report_status`` and ``parse_source`` construction is a pure reference
+    # assignment (never raises); it stays OUTSIDE the try so the except block
+    # below can always reach ``active_report_status`` to file a failure report
+    # — including when the one collaborator that CAN raise at construction,
+    # ``_default_object_store`` (missing ``S3_BUCKET``), is what failed.
+    active_parse_source: ParseSourceFn = (
+        parse_source if parse_source is not None else _fail_closed_parse_source
+    )
+    active_report_status: ReportStatusPort = (
+        report_status if report_status is not None else _fail_closed_report_status_port()
+    )
+
+    started = time.monotonic()
+    job: SnapshotJob | None = None
+    cw_verdict: cw_detect.CwDetectVerdict | None = None
+
+    try:
+        job = _parse_snapshot_job(received.message.body)
+
+        if job.env_digest != env_digest:
+            raise InvariantViolation(
+                f"SnapshotJob.env_digest {job.env_digest!r} does not match this "
+                f"worker's bound env_digest {env_digest!r} (INV-2)",
+                code="invariant_inv2_violation",
+            )
+        if job.parent_snapshot_id:
+            raise IncrementalSnapshotNotSupportedError(
+                f"snapshot_id={job.snapshot_id!r} carries parent_snapshot_id="
+                f"{job.parent_snapshot_id!r}; CMP-SNAP-02 is not wired (CLAR-SNAP-04)"
+            )
+
+        # Inside the try (unlike report_status/parse_source above): this is the
+        # one collaborator whose default construction can itself raise (a
+        # missing S3_BUCKET), and by this point active_report_status already
+        # exists to carry that failure back to the caller.
+        active_object_store: ObjectStore = (
+            object_store if object_store is not None else _default_object_store(env)
+        )
+
+        with tempfile.TemporaryDirectory(prefix="scanipy-snap-") as raw_tmp:
+            tmp_root = Path(raw_tmp)
+            src_root = tmp_root / "src"
+            workdir = tmp_root / "work"
+            workdir.mkdir()
+            git_env = _git_env(tmp_root)
+
+            secure_run(
+                "git",
+                ["clone", "--quiet", job.clone_url, str(src_root)],
+                timeout_s=_GIT_CLONE_TIMEOUT_S,
+                env=git_env,
+                cwd=str(tmp_root),
+            )
+            secure_run(
+                "git",
+                ["checkout", "--quiet", job.commit_sha],
+                timeout_s=_GIT_CHECKOUT_TIMEOUT_S,
+                env=git_env,
+                cwd=str(src_root),
+            )
+
+            language_mix, primary_language = _detect_language_mix(src_root)
+
+            cw_verdict = cw_detect.detect(
+                cw_detect.CwDetectRequest(
+                    source_tree_root=str(src_root),
+                    language_mix=language_mix,
+                    parent_snapshot=None,  # bootstrap: no parent to carry forward
+                )
+            )
+
+            cpg = active_parse_source(
+                src_root, primary_language, env=_default_parse_env(), workdir=workdir
+            )
+
+            artifact_bodies: dict[str, bytes] = {
+                "cpg_tarball": _build_cpg_tarball(cpg),
+                "reverse_symbol_index": _build_reverse_symbol_index(cpg),
+                "dynamic_call_graph": _build_dynamic_call_graph_stub(),
+                "precondition_status": _build_precondition_status_record(cw_verdict),
+            }
+
+            key_builder = SnapshotKeyBuilder(
+                org_id=job.org_id,
+                codebase_id=job.codebase_id,
+                commit_sha=job.commit_sha,
+                env_digest=env_digest,
+            )
+            for artifact_type in SNAPSHOT_ARTIFACT_TYPES:
+                if artifact_type == "delta_graph":
+                    continue  # bootstrap has no parent -> no delta (schema-nullable)
+                active_object_store.put(
+                    job.org_id,
+                    key_builder.artifact_key(artifact_type),  # type: ignore[arg-type]
+                    artifact_bodies[artifact_type],
+                )
+
+            digest_input = b"".join(
+                f"{artifact_type}:".encode() + artifact_bodies[artifact_type]
+                for artifact_type in SNAPSHOT_ARTIFACT_TYPES
+                if artifact_type in artifact_bodies
+            )
+            snapshot_digest = "sha256:" + hashlib.sha256(digest_input).hexdigest()
+
+        active_report_status.report(
+            SnapshotStatusReport(
+                snapshot_id=job.snapshot_id,
+                state="ready",
+                env_digest=env_digest,
+                precondition_status=cw_verdict.verdict,
+                snapshot_digest=snapshot_digest,
+                error=None,
+            )
+        )
+        active_queue.ack(received.receipt_handle)
+    except Exception as exc:
+        duration_ms = (time.monotonic() - started) * 1000
+        outcome_precondition = cw_verdict.verdict if cw_verdict is not None else "unknown"
+        if job is not None:
+            try:
+                active_report_status.report(
+                    SnapshotStatusReport(
+                        snapshot_id=job.snapshot_id,
+                        state="failed",
+                        env_digest=env_digest,
+                        precondition_status=None,
+                        snapshot_digest=None,
+                        error=str(exc),
+                    )
+                )
+            except Exception:
+                logger.error("snapshot execute loop: secondary report_status failure")
+        active_queue.fail(received.receipt_handle)
+        record_snapshot_job_completion(
+            "failure",
+            duration_ms,
+            env_digest=env_digest,
+            precondition_status=outcome_precondition,
+            environ=env,
+        )
+        logger.error(f"snapshot execute loop: job failed: {exc}")
+        return
+
+    # Reached only via the non-exception path: both were assigned unconditionally
+    # as the first / near-first statements inside the try block above.
+    assert job is not None  # flow-narrowing for mypy strict, not a runtime guard
+    assert cw_verdict is not None
+
+    duration_ms = (time.monotonic() - started) * 1000
+    record_snapshot_job_completion(
+        "success",
+        duration_ms,
+        env_digest=env_digest,
+        precondition_status=cw_verdict.verdict,
+        environ=env,
+    )
+    logger.info(f"snapshot execute loop: job {job.snapshot_id!r} completed")
+
+
 def main(argv: list[str] | None = None) -> int:
-    """Container entrypoint: fail-closed boot gate, then the (gated) execute loop.
+    """Container entrypoint: fail-closed boot gate, then the execute loop.
 
     Wired by ``ENTRYPOINT ["python", "-m", "services.snapshot.worker"]``. Step 1
     is the INV-2 ORIGIN gate: bind ``env_digest`` or refuse to start
     (exit non-zero) — exactly the DOC §7 contract ("Refuse to start; ECS task
-    exits non-zero"). Step 2 hands off to :func:`run_execute_loop`, which is
-    env-gated on the AWS substrate track (see its docstring).
+    exits non-zero"). Step 2 hands off to :func:`run_execute_loop`, using its
+    production (env-var-derived / fail-closed-by-default) collaborators.
 
-    Returns the process exit code: ``0`` is unreachable while the execute loop is
-    substrate-gated; a failed boot gate returns ``1`` (fail-closed).
+    Returns the process exit code: ``0`` on a completed boot (whether or not a
+    job was available / succeeded / failed — :func:`run_execute_loop` never
+    propagates a job-level failure, per its own docstring, DOC §7); a failed
+    boot gate returns ``1`` (fail-closed).
     """
     _ = argv  # the worker takes no CLI args; ECS injects config via env vars.
     try:
@@ -235,13 +892,21 @@ def main(argv: list[str] | None = None) -> int:
     # JSON envelope (service, build_commit, env_digest) via ScanipyJsonFormatter.
     get_logger("snapshot-worker").info("snapshot worker boot: env_digest bound")
     run_execute_loop(env_digest)
-    return 0  # pragma: no cover — unreachable until the substrate track lands.
+    return 0
 
 
 __all__ = [
     "ENV_DIGEST_VAR",
     "ArgvAllowlistViolation",
     "EnvDigestMissing",
+    "IncrementalSnapshotNotSupportedError",
+    "MalformedSnapshotJobError",
+    "NoSourceFilesFoundError",
+    "ParseSourceFn",
+    "ReportStatusPort",
+    "SnapshotJob",
+    "SnapshotQueuePort",
+    "SnapshotStatusReport",
     "UnknownTool",
     "boot",
     "main",
