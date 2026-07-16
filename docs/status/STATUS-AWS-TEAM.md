@@ -105,6 +105,23 @@ the approach. *(Optional — reduces live-account coupling; not on the §21 crit
 > **Decision:** **moto adopted** (CLAR-DEPLOY-21) — in-process pip dev-dep `moto[s3,sqs,kms,secretsmanager,sts]>=5.1,<6.0` for the honestly-emulatable slice only (boto3 adapter conformance, SQS redrive/DLQ-after-3, KMS envelope mechanics, session-policy render + 2048-char limit); policy-enforcement negatives (AC-DEPLOY-05a denies) are NOT emulatable and stay live-account behind the `aws_live` marker; LocalStack CE/Pro rejected; greening 02a/b against moto ECR forbidden. Record: `docs/cross-cutting/DOC-DEPLOY-DECISIONS.md § CLAR-DEPLOY-21` · **Owner:** CTO Agent · **Date:** 2026-07-14
 > **Status (2026-07-16):** harness **BUILT and merged** (PR #313) — the decision is fully executed, not just recorded. The `aws_live`-marked live-enforcement counterparts exist (`tests/integration/test_tenant_isolation_live.py`) but have not yet been run in the live window (needs a `workflow_dispatch` job exporting `SCANIPY_AWS_LIVE_TESTS=1` under the OIDC role — not yet created).
 
+### 11. DEPLOY-01/CLAR-DEPLOY-23 — private-subnet network remediation
+Fix the live deviation from the ratified CLAR-DEPLOY-09 network model: both worker ECS services were
+running in the default VPC's default PUBLIC subnet with `assignPublicIp=ENABLED`. Move both to a new
+private tier, add a NAT gateway + S3 gateway endpoint, tighten the worker security group. Scoped as a
+Wave-3 prerequisite for the first live external-repo scan (needs outbound internet for `git clone`).
+> **Status:** DONE — remediated + live-verified 2026-07-16 · **Owner:** orchestrating agent (VPC-remediation track)
+> **IaC:** Terraform module `infra/modules/network/` (design record + full cost/CIDR rationale) + provisioning script `infra/network-remediation-apply.sh` (idempotent, what actually ran)
+> **Evidence:**
+> - New subnets (default VPC `vpc-03d1e840c04bc94f1`, `172.31.0.0/16`, reused — not a new VPC): private tier `scanipy-prod-private-a` (`172.31.96.0/20`, us-east-1a, `subnet-0e1da791dfbd033e1`) + `scanipy-prod-private-b` (`172.31.112.0/20`, us-east-1b, `subnet-0a14f6cbd6580a347`); isolated tier (reserved for the future RDS track) `scanipy-prod-isolated-a` (`172.31.128.0/20`, `subnet-0f35c15cda025ebbc`) + `scanipy-prod-isolated-b` (`172.31.144.0/20`, `subnet-0544b5f413d60706c`)
+> - Route tables: `rtb-03858ed05cfa4a011` (private, `0.0.0.0/0` → NAT) · `rtb-034c37e711aa2d4fd` (isolated, no default route — local-VPC only)
+> - NAT gateway: `nat-03b0d54e2489406ed` (single, MVP scope), EIP `eipalloc-0328a0fa236ce42bc`, in the reused default public subnet `subnet-01594ae384ee13769` (us-east-1a)
+> - S3 Gateway VPC endpoint (free): `vpce-0832aad349edec174`, attached to both new route tables
+> - Security group `sg-0690e02ba20cf57a8` (`scanipy-workers`, pre-existing but previously untracked by any IaC — now brought under IaC) tightened in place: all-protocol egress → tcp/443 (0.0.0.0/0) + tcp+udp/53 (VPC CIDR only); no ingress rules
+> - Both `snapshot-worker` and `detector-worker` ECS services moved via `aws ecs update-service --force-new-deployment`: live-verified `assignPublicIp=DISABLED`, subnets `[subnet-0a14f6cbd6580a347, subnet-0e1da791dfbd033e1]`
+> - Real-task launch proof (one-shot `run-task`, immediately self-stopped, nothing left running): task ENI `eni-051cd3e6c194c403a` reached `RUNNING`, private IP `172.31.127.90` (inside the new private-b CIDR), `Association.PublicIp = null` — confirms no public IP and that the ECR image pull succeeded end-to-end through the new NAT+S3-endpoint path
+> - Honest gap (recorded, not a defect): interface VPC endpoints for ECR-api/ECR-dkr/Logs/Secrets-Manager/KMS/SQS are coded in the module (`var.enable_interface_endpoints`, default `false`) but not applied live — full detail + cost math in `WBS.md` § CLAR-DEPLOY-23
+
 ---
 
 ## What this unblocks (§21 mapping)
