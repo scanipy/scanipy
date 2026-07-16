@@ -27,6 +27,12 @@ from pathlib import Path
 import pytest
 
 
+# CLAR-DEPLOY-21 (binding): AC-DEPLOY-02a and AC-DEPLOY-02b are DOCKER-BUILD-
+# gated, not AWS-emulation-addressable — they assert tool digests inside a
+# BUILT image and digest change on tool mutation. A fake registry's digests are
+# meaningless, so these two tests MUST NOT be greened against moto ECR (that
+# would be a fake-green). They keep their xfail+skip until a `docker buildx`
+# CI harness exists (separate, non-AWS-emulation follow-up).
 @pytest.mark.unit
 @pytest.mark.xfail(
     reason="CMP-DEPLOY-02 (worker container baseline) not yet implemented",
@@ -53,6 +59,8 @@ def test_deploy_02a_pinned_tools_present_at_pinned_digests() -> None:
     pytest.skip("CMP-DEPLOY-02 not implemented yet")
 
 
+# CLAR-DEPLOY-21: docker-build-gated like 02a above — MUST NOT be greened
+# against moto ECR (fake digests = fake-green).
 @pytest.mark.unit
 @pytest.mark.xfail(
     reason="CMP-DEPLOY-02 (worker container baseline) not yet implemented",

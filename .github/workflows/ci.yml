@@ -41,7 +41,9 @@ jobs:
           cache: pip
 
       - name: Install Python dev dependencies
-        run: pip install -e ".[dev]"
+        # dev,http: the CLAR-DEPLOY-19 pinned HTTP stack (fastapi/starlette/
+        # pydantic/uvicorn) is typechecked + unit-tested every run.
+        run: pip install -e ".[dev,http]"
 
       - name: Ruff lint
         run: ruff check .
@@ -132,7 +134,9 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -e ".[dev]"
+        # dev,http: the CLAR-DEPLOY-19 pinned HTTP stack — the DEPLOY-19 adapter
+        # unit suite (tests/unit/test_deploy19_http_adapter.py) needs it.
+        run: pip install -e ".[dev,http]"
 
       - name: Run unit tests
         # Selector is `unit or invariant`: the no-DB `TST-INV-*` / invariant
@@ -222,9 +226,23 @@ jobs:
         # collected") which CI counts as a failure. Skip cleanly with
         # a visible message until the first test_*.py lands here; at
         # that point the guard auto-flips and Gate 4 becomes enforced.
+        #
+        # CMP-DEPLOY-03 §3.4 metric 10 (CLAR-DEPLOY-20): every Gate-4 run
+        # publishes the eprocess.martingale_test_status gauge (1 green /
+        # 0 failing) via scripts/publish_gate4_status.py. Publishing is
+        # NON-GATING (|| echo): the gate verdict is the pytest exit code,
+        # re-asserted after the publish. The publisher is a hermetic no-op
+        # here unless SCANIPY_METRICS_CW_DIRECT=1 + AWS creds are wired.
         run: |
           if find tests/falsifier/eprocess/ -name 'test_*.py' 2>/dev/null | grep -q .; then
-            pytest tests/falsifier/eprocess/ -q --tb=short -v
+            if pytest tests/falsifier/eprocess/ -q --tb=short -v; then
+              gate4_status=1
+            else
+              gate4_status=0
+            fi
+            python scripts/publish_gate4_status.py --status "$gate4_status" \
+              || echo "Gate-4 status publish failed (non-gating)"
+            [ "$gate4_status" = "1" ] || exit 1
           else
             echo "Scaffold phase — no TST-AC-TRI-02b tests in tests/falsifier/eprocess/ yet (CMP-TRI-02 not implemented). Gate 4 will enforce once tests land."
           fi

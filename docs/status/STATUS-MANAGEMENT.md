@@ -102,8 +102,16 @@ on every PR), or ratify nightly+release as satisfying "continuously enforced" (a
 | CLAR | Question | Decision | Owner | Date |
 |---|---|---|---|---|
 | DET-04 | Source/sink inventories for ssrf (java+py) + deserialization/python are absent from every DOC — supply the curated inventories, or descope those (class,language) pairs from Stage A | _____ | _____ | _____ |
-| DEPLOY-19 | Pin `fastapi` (version) + schedule the CP-01 request-lifecycle adapter follow-up (the framework-agnostic seam is merged, #286) — RULE-8: CTO approval needed before the dependent ORCH-01 integration | _____ | _____ | _____ |
+| DEPLOY-19 | Pin `fastapi` (version) + schedule the CP-01 request-lifecycle adapter follow-up (the framework-agnostic seam is merged, #286) — RULE-8: CTO approval needed before the dependent ORCH-01 integration | RESOLVED — pin fastapi==0.138.2 / starlette==1.3.1 / pydantic==2.13.4 / uvicorn==0.51.0 (pyproject extra `http`; httpx2==2.6.0 in `dev`); CP-01 adapter `services/control_plane/http/adapter.py` + ORCH-01 surface `services/scan/http/`; security co-sign C-1 (exact-verified-bytes parse) and C-2 (JobStateStore replay idempotency, 409 `conflicting_status_transition`) discharged structurally. Record: `docs/cross-cutting/DOC-DEPLOY-DECISIONS.md § CLAR-DEPLOY-19` / WBS §17 | CTO Agent | 2026-07-14 |
 | PROC-01 | *(RESOLVED 2026-06-04 — recorded for visibility)* Build-ahead regime ratified by the project owner: hermetic-subset prep PRs sanctioned project-wide; component DONE stays RULE-2+RULE-3 gated | RESOLVED | Project owner | 2026-06-04 |
+
+> **Note (2026-07-14):** also RESOLVED — **CLAR-DEPLOY-20** (failure-rate denominator = completions:
+> new `success_count` counters, FILL/IF rate math, SQS oldest-age backstops), **CLAR-DEPLOY-21**
+> (CI-side AWS emulation: moto adopted for the honestly-emulatable slice only; policy-enforcement
+> negatives stay live-account behind the `aws_live` marker — management counter-signature per issue
+> #283), and **CLAR-DEPLOY-22** (authoritative production env_digest registry
+> `workers/env_digest_history.json`; v0.1.0/v0.1.1 digests void). Full records:
+> `docs/cross-cutting/DOC-DEPLOY-DECISIONS.md` §§ CLAR-DEPLOY-20/-21/-22; one-line summaries in WBS §17.
 
 *(CLAR-PARAM-02 π₀ is Phase-8 customer-enablement, not an MVP blocker — listed for completeness only.)*
 

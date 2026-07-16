@@ -9,6 +9,9 @@ contract (at-least-once, DLQ-after-3, idempotent consumer).
 
 from __future__ import annotations
 
+import io
+from typing import Any
+
 import pytest
 
 from services.substrate.object_store import (
@@ -19,6 +22,7 @@ from services.substrate.object_store import (
     ObjectStore,
     ObjectStoreError,
     PathTraversalError,
+    S3ObjectStore,
     SnapshotKeyBuilder,
 )
 from services.substrate.queue import (
@@ -153,6 +157,77 @@ def test_store_validates_org_id_component() -> None:
     store = InMemoryObjectStore()
     with pytest.raises(PathTraversalError):
         store.put("bad/org", "orgs/bad/org/k", b"x")
+
+
+# --------------------------------------------------------------------------- #
+# S3ObjectStore — boto3 adapter behind the same CLAR-DEPLOY-16 guard
+# (hermetic: a boto3-S3-shaped fake client is injected; no boto3/moto import.
+#  Real-botocore conformance lives in tests/integration/
+#  test_substrate_aws_conformance.py per CLAR-DEPLOY-21.)
+# --------------------------------------------------------------------------- #
+
+
+class _FakeS3Exceptions:
+    class NoSuchKey(Exception):  # noqa: N818 — mirrors the boto3 exception name
+        pass
+
+
+class _FakeBoto3S3Client:
+    """Minimal boto3-S3-shaped fake: put_object/get_object + .exceptions."""
+
+    exceptions = _FakeS3Exceptions
+
+    def __init__(self) -> None:
+        self.objects: dict[tuple[str, str], bytes] = {}
+        self.calls: list[str] = []
+
+    def put_object(self, *, Bucket: str, Key: str, Body: bytes) -> None:  # noqa: N803
+        self.calls.append("put_object")
+        self.objects[(Bucket, Key)] = Body
+
+    def get_object(self, *, Bucket: str, Key: str) -> dict[str, Any]:  # noqa: N803
+        self.calls.append("get_object")
+        if (Bucket, Key) not in self.objects:
+            raise self.exceptions.NoSuchKey()
+        return {"Body": io.BytesIO(self.objects[(Bucket, Key)])}
+
+
+def test_s3_store_is_structural_objectstore() -> None:
+    assert isinstance(S3ObjectStore("bkt", client=_FakeBoto3S3Client()), ObjectStore)
+
+
+def test_s3_store_round_trip_with_injected_client() -> None:
+    client = _FakeBoto3S3Client()
+    store = S3ObjectStore("bkt", client=client)
+    assert store.bucket == "bkt"
+    key = SnapshotKeyBuilder(**_KW).artifact_key("cpg_tarball")
+    store.put(_KW["org_id"], key, b"payload")
+    assert client.objects == {("bkt", key): b"payload"}
+    assert store.get(_KW["org_id"], key) == b"payload"
+
+
+def test_s3_store_get_missing_object_raises_objectstoreerror() -> None:
+    store = S3ObjectStore("bkt", client=_FakeBoto3S3Client())
+    key = SnapshotKeyBuilder(**_KW).artifact_key("delta_graph")
+    with pytest.raises(ObjectStoreError):
+        store.get(_KW["org_id"], key)
+
+
+def test_s3_store_guard_rejects_before_any_client_call() -> None:
+    """The CLAR-DEPLOY-16 guard fires BEFORE the adapter touches the client."""
+    client = _FakeBoto3S3Client()
+    store = S3ObjectStore("bkt", client=client)
+    with pytest.raises(PathTraversalError):
+        store.put(_KW["org_id"], f"orgs/{_KW['org_id']}/../escape", b"x")
+    with pytest.raises(PathTraversalError):
+        store.get(_KW["org_id"], f"orgs/{_KW['org_id']}/%2e%2e/k")
+    foreign = "orgs/org-other/codebases/cb/snapshots/x/y/cpg.tar.zst"
+    with pytest.raises(CrossTenantAccessError):
+        store.put(_KW["org_id"], foreign, b"x")
+    with pytest.raises(CrossTenantAccessError):
+        store.get(_KW["org_id"], foreign)
+    assert client.calls == []  # no boto3-shaped call ever happened
+    assert client.objects == {}
 
 
 # --------------------------------------------------------------------------- #
