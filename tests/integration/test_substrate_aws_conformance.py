@@ -47,6 +47,12 @@ from services.substrate.object_store import (
     S3ObjectStore,
     SnapshotKeyBuilder,
 )
+from services.substrate.queue import (
+    Queue,
+    SQSQueue,
+    StandardQueue,
+    UnknownReceiptError,
+)
 
 pytestmark = pytest.mark.integration
 
@@ -89,6 +95,11 @@ def s3_client(moto_env: None) -> Any:
     client = boto3.client("s3", region_name=_REGION)
     client.create_bucket(Bucket=_BUCKET)
     return client
+
+
+@pytest.fixture()
+def sqs_client(moto_env: None) -> Any:
+    return boto3.client("sqs", region_name=_REGION)
 
 
 def _bucket_keys(s3_client: Any) -> list[str]:
@@ -280,6 +291,145 @@ def test_sqs_redrive_policy_dlq_after_3_receives(moto_env: None) -> None:
     dlq_messages = _receive(dlq_url)
     assert len(dlq_messages) == 1, "poison message did not land in the DLQ after 3 receives"
     assert json.loads(dlq_messages[0]["Body"]) == {"snapshot_id": "poison"}
+
+
+# --------------------------------------------------------------------------- #
+# SQSQueue — the CMP-DEPLOY-01 production Queue adapter, on real botocore SQS
+# semantics (Track 1E: services/substrate/queue.py real-SQS binding)
+# --------------------------------------------------------------------------- #
+
+
+def test_sqs_queue_send_receive_ack_round_trip_on_real_botocore(sqs_client: Any) -> None:
+    """Positive control: SQSQueue send/receive/ack round-trips on real botocore.
+
+    Real SQS ``MessageBody``/``MessageAttributes`` encoding (which the hermetic
+    fake-client unit test in tests/unit/test_substrate.py cannot exercise) — the
+    dict body JSON-round-trips byte-identically and the ``dedup_key`` rides as a
+    String message attribute, verifiable both through :class:`SQSQueue` and by
+    reading the raw queue with a second boto3 client.
+    """
+    queue_url = sqs_client.create_queue(QueueName="scanipy-test-detector-jobs")["QueueUrl"]
+    queue = SQSQueue(queue_url, client=sqs_client)
+    assert isinstance(queue, Queue)  # structural Protocol conformance
+    assert queue.queue_url == queue_url
+
+    queue.send({"job_id": "j1", "detector_id": "java-py-injection"}, dedup_key="j1")
+
+    rcv = queue.receive()
+    assert rcv is not None
+    assert rcv.message.body == {"job_id": "j1", "detector_id": "java-py-injection"}
+    assert rcv.message.dedup_key == "j1"
+    assert rcv.message.receive_count == 1
+
+    queue.ack(rcv.receipt_handle)
+    assert queue.receive() is None  # deleted, never redelivered
+
+    # Positive control: nothing was ever left un-deleted on the raw queue.
+    raw = sqs_client.receive_message(
+        QueueUrl=queue_url, MaxNumberOfMessages=10, VisibilityTimeout=0
+    )
+    assert raw.get("Messages", []) == []
+
+
+def test_sqs_queue_ack_unknown_receipt_rejected_before_any_boto3_call(sqs_client: Any) -> None:
+    """The client-side guard fires BEFORE the adapter touches boto3 at all.
+
+    Mirrors ``S3ObjectStore``'s ``_ExplodingClient`` proof: an unknown/foreign
+    ``receipt_handle`` (e.g. from a different :class:`SQSQueue` instance, or a
+    stale handle after a worker restart) is rejected client-side — never
+    forwarded to SQS as a malformed ``ReceiptHandle`` call.
+    """
+    exploding_queue = SQSQueue(
+        "https://sqs.example/000000000000/nonexistent", client=_ExplodingClient()
+    )
+    with pytest.raises(UnknownReceiptError):
+        exploding_queue.ack(999)
+    with pytest.raises(UnknownReceiptError):
+        exploding_queue.fail(999)
+
+    # A receipt genuinely issued by ONE SQSQueue instance is unknown to another.
+    queue_url = sqs_client.create_queue(QueueName="scanipy-test-cross-instance")["QueueUrl"]
+    issuer = SQSQueue(queue_url, client=sqs_client)
+    issuer.send({"job_id": "j1"}, dedup_key="j1")
+    rcv = issuer.receive()
+    assert rcv is not None
+    other_instance = SQSQueue(queue_url, client=sqs_client)
+    with pytest.raises(UnknownReceiptError):
+        other_instance.ack(rcv.receipt_handle)
+    # Positive control: the issuing instance itself still settles it fine.
+    issuer.ack(rcv.receipt_handle)
+
+
+def test_sqs_queue_fail_redrives_to_dlq_after_3_receives(sqs_client: Any) -> None:
+    """Driving :meth:`SQSQueue.fail` 3x redrives a poison message to the DLQ.
+
+    Upgrades the raw-boto3 ``test_sqs_redrive_policy_dlq_after_3_receives``
+    proof above to go through :class:`SQSQueue` itself on both ends: the main
+    queue is drained via ``SQSQueue.receive``/``fail`` (never raw boto3), and
+    the redriven message is read back through a SECOND ``SQSQueue`` bound to
+    the DLQ URL — proving ``fail``'s visibility-reset (not a client-side "move
+    to DLQ" call, which does not exist) is sufficient to trigger the real
+    server-side ``RedrivePolicy`` (CLAR-DEPLOY-06, max-receive 3).
+    """
+    dlq_url = sqs_client.create_queue(QueueName="scanipy-test-detector-jobs-dlq")["QueueUrl"]
+    dlq_arn = sqs_client.get_queue_attributes(QueueUrl=dlq_url, AttributeNames=["QueueArn"])[
+        "Attributes"
+    ]["QueueArn"]
+    main_url = sqs_client.create_queue(
+        QueueName="scanipy-test-detector-jobs",
+        Attributes={
+            "RedrivePolicy": json.dumps({"deadLetterTargetArn": dlq_arn, "maxReceiveCount": "3"}),
+            "VisibilityTimeout": "0",
+        },
+    )["QueueUrl"]
+    main_queue = SQSQueue(main_url, client=sqs_client)
+    dlq = SQSQueue(dlq_url, client=sqs_client)
+
+    # Positive control: a healthy message is received once, acked, and never
+    # redrives — so the poison assertions below cannot pass vacuously.
+    main_queue.send({"job_id": "healthy"}, dedup_key="healthy")
+    healthy = main_queue.receive()
+    assert healthy is not None
+    main_queue.ack(healthy.receipt_handle)
+    assert main_queue.receive() is None
+    assert dlq.receive() is None
+
+    # Poison message: fail 3 times through SQSQueue itself.
+    main_queue.send({"job_id": "poison"}, dedup_key="poison")
+    for attempt in range(1, 4):
+        rcv = main_queue.receive()
+        assert rcv is not None, f"receive {attempt} should redeliver the poison message"
+        assert rcv.message.dedup_key == "poison"
+        main_queue.fail(rcv.receipt_handle)
+    # The main queue is now empty: SQS redrove the message to the DLQ once its
+    # receive count exceeded maxReceiveCount=3.
+    assert main_queue.receive() is None
+    redriven = dlq.receive()
+    assert redriven is not None, "poison message did not land in the DLQ after 3 receives"
+    assert redriven.message.body == {"job_id": "poison"}
+    assert redriven.message.dedup_key == "poison"
+
+
+def test_sqs_queue_matches_standard_queue_contract(sqs_client: Any) -> None:
+    """SQSQueue and StandardQueue agree on the Queue Protocol round trip.
+
+    Guards against the fake and the production adapter drifting apart, same as
+    ``test_s3_object_store_matches_in_memory_fake_contract`` does for the
+    object store.
+    """
+    queue_url = sqs_client.create_queue(QueueName="scanipy-test-parity")["QueueUrl"]
+    real: Queue = SQSQueue(queue_url, client=sqs_client)
+    fake: Queue = StandardQueue(name="parity")
+    for impl in (real, fake):
+        impl.send({"snapshot_id": "p1"}, dedup_key="p1")
+        rcv = impl.receive()
+        assert rcv is not None
+        assert rcv.message.body == {"snapshot_id": "p1"}
+        assert rcv.message.dedup_key == "p1"
+        impl.ack(rcv.receipt_handle)
+        assert impl.receive() is None
+        with pytest.raises(UnknownReceiptError):
+            impl.ack(424242)
 
 
 # --------------------------------------------------------------------------- #

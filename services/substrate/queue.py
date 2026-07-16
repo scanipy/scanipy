@@ -20,7 +20,17 @@ the three SQS behaviours the AC exercises:
      message's ``dedup_key`` (the ``snapshot_id`` / ``scan_id``), so a redelivered
      message produces no duplicate side effect.
 
-No boto3 / AWS is called; production binds the same surface to a boto3 SQS client.
+:class:`StandardQueue` calls no boto3 / AWS — it is the offline model above.
+:class:`SQSQueue` (below) is the production adapter: same public surface,
+backed by a real boto3 SQS client, mirroring the boto3-lazy-import pattern
+``services/substrate/object_store.py``'s :class:`S3ObjectStore` already
+established (boto3 is imported lazily inside ``__init__`` only on the
+``client=None`` production path, so hermetic unit runs need no boto3 install).
+Both satisfy the structural :class:`Queue` Protocol, so callers program
+against ``Queue`` and swap the two freely (``services/scan/api.py``'s
+``post_scans``, ``services/snapshot/service.py``'s ``SnapshotService``,
+``services/scan/http/app.py``'s ``create_app``).
+
 The queue carries scan work, not findings, so the four provenance fields
 (INV-1/2/5) are threaded by the worker that *emits* findings (CMP-ORCH-03), not
 here — this module is the durable transport beneath that worker.
@@ -28,9 +38,10 @@ here — this module is the durable transport beneath that worker.
 
 from __future__ import annotations
 
+import json
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 # CLAR-DEPLOY-06: a message is routed to the DLQ after this many receives without
 # a successful ack. The third failed handler attempt is the one that DLQs it.
@@ -144,6 +155,142 @@ class StandardQueue:
 
 
 @runtime_checkable
+class Queue(Protocol):
+    """Structural queue surface CMP-ORCH-01 / CMP-SNAP-01 / ``IdempotentConsumer``
+    program against — the send/receive/ack/fail subset every collaborator
+    actually calls (mirrors :class:`services.substrate.object_store.ObjectStore`).
+
+    Production wires this to :class:`SQSQueue` (a real boto3 SQS client); tests
+    wire :class:`StandardQueue`. ``dlq_messages`` / ``ready_depth`` are
+    deliberately NOT part of the Protocol: they are :class:`StandardQueue`-only
+    introspection helpers no production caller reads (real SQS has no
+    equivalent client-side call — DLQ routing is server-side RedrivePolicy
+    state, and depth is only ever approximate on real SQS).
+    """
+
+    def send(self, body: dict[str, str], dedup_key: str) -> None: ...
+
+    def receive(self) -> ReceivedMessage | None: ...
+
+    def ack(self, receipt_handle: int) -> None: ...
+
+    def fail(self, receipt_handle: int) -> None: ...
+
+
+class SQSQueue:
+    """boto3-backed :class:`Queue` — the production CMP-DEPLOY-01 SQS adapter.
+
+    Mirrors ``services/substrate/object_store.py``'s :class:`S3ObjectStore`
+    exactly: a thin adapter over a real boto3 SQS client (lazily imported so
+    hermetic unit runs need no boto3 install), with the client-side
+    receipt-handle bookkeeping needed to satisfy the same ``ack``/``fail``
+    surface :class:`StandardQueue` exposes. :class:`ReceivedMessage.receipt_handle`
+    stays an opaque local ``int`` (never a raw boto3 ``ReceiptHandle`` string
+    leaking through the port) — a ``receipt_handle`` an instance never handed
+    out (including one from a DIFFERENT :class:`SQSQueue` instance, e.g. after
+    a worker restart) is rejected as :class:`UnknownReceiptError` BEFORE any
+    boto3 call, exactly like the real-``StandardQueue`` contract.
+
+    DLQ routing (CLAR-DEPLOY-06, max-receive 3) is enforced server-side by the
+    target queue's ``RedrivePolicy`` (already applied to the provisioned
+    ``scanipy-{env}-{snapshot,detector}-jobs`` queues), evaluated by SQS on the
+    NEXT receive once ``ApproximateReceiveCount`` exceeds ``maxReceiveCount`` —
+    there is no client-side "move to DLQ" call, unlike :class:`StandardQueue`'s
+    in-memory model, which drives that decision itself. :meth:`fail` therefore
+    only resets the message's visibility so it becomes immediately
+    re-receivable (mirroring ``StandardQueue.fail``'s synchronous re-enqueue);
+    SQS decides DLQ routing from its own receive-count bookkeeping on the
+    subsequent receive.
+
+    ``client`` is any boto3-SQS-shaped object (production ``boto3.client("sqs")``,
+    moto-backed client in tests). boto3 is imported lazily on the ``None`` path
+    only, so hermetic unit runs need no boto3 install (``S3ObjectStore``
+    precedent).
+
+    This module carries scan work, not findings; the four provenance fields
+    (INV-1/2/5) are threaded by the worker that emits findings, not here (same
+    boundary :class:`StandardQueue`'s module docstring already states).
+    """
+
+    def __init__(self, queue_url: str, client: object | None = None) -> None:
+        if client is None:  # pragma: no cover — real-AWS path; tests always inject
+            import boto3
+
+            client = boto3.client("sqs")
+        self._queue_url = queue_url
+        self._client: Any = client
+        self._in_flight: dict[int, str] = {}
+        self._next_receipt = 0
+
+    @property
+    def queue_url(self) -> str:
+        """The SQS queue URL this adapter is bound to."""
+        return self._queue_url
+
+    def send(self, body: dict[str, str], dedup_key: str) -> None:
+        """Enqueue a new message (SQS ``SendMessage``).
+
+        ``dedup_key`` rides as a String message attribute — NOT the SQS FIFO
+        ``MessageDeduplicationId`` (CLAR-DEPLOY-06 chose STANDARD queues, whose
+        at-least-once delivery is exactly why :class:`IdempotentConsumer`
+        dedupes on this value itself, worker-side, rather than relying on
+        broker-side dedup).
+        """
+        self._client.send_message(
+            QueueUrl=self._queue_url,
+            MessageBody=json.dumps(body, sort_keys=True),
+            MessageAttributes={"dedup_key": {"DataType": "String", "StringValue": dedup_key}},
+        )
+
+    def receive(self) -> ReceivedMessage | None:
+        """Deliver one message, marking it in flight (SQS ``ReceiveMessage``).
+
+        Returns ``None`` when the queue has nothing currently visible to
+        deliver. ``receive_count`` is read from SQS's own
+        ``ApproximateReceiveCount`` message attribute (server-side truth,
+        unlike :class:`StandardQueue`'s self-maintained in-memory counter).
+        """
+        response = self._client.receive_message(
+            QueueUrl=self._queue_url,
+            MaxNumberOfMessages=1,
+            MessageAttributeNames=["dedup_key"],
+            AttributeNames=["ApproximateReceiveCount"],
+        )
+        raw_messages = response.get("Messages", [])
+        if not raw_messages:
+            return None
+        raw = raw_messages[0]
+        body = json.loads(raw["Body"])
+        dedup_key = raw["MessageAttributes"]["dedup_key"]["StringValue"]
+        receive_count = int(raw["Attributes"]["ApproximateReceiveCount"])
+        message = Message(body=body, dedup_key=dedup_key, receive_count=receive_count)
+        receipt_handle = self._next_receipt
+        self._next_receipt += 1
+        self._in_flight[receipt_handle] = raw["ReceiptHandle"]
+        return ReceivedMessage(receipt_handle=receipt_handle, message=message)
+
+    def ack(self, receipt_handle: int) -> None:
+        """Delete a successfully processed in-flight message (SQS ``DeleteMessage``)."""
+        if receipt_handle not in self._in_flight:  # MUST precede any boto3 call.
+            raise UnknownReceiptError(f"unknown / already-settled receipt {receipt_handle}")
+        real_handle = self._in_flight.pop(receipt_handle)
+        self._client.delete_message(QueueUrl=self._queue_url, ReceiptHandle=real_handle)
+
+    def fail(self, receipt_handle: int) -> None:
+        """Make a failed in-flight message immediately re-receivable.
+
+        Real-SQS DLQ routing is automatic (see class docstring) — this only
+        resets visibility; there is no client-side "move to DLQ" call to make.
+        """
+        if receipt_handle not in self._in_flight:  # MUST precede any boto3 call.
+            raise UnknownReceiptError(f"unknown / already-settled receipt {receipt_handle}")
+        real_handle = self._in_flight.pop(receipt_handle)
+        self._client.change_message_visibility(
+            QueueUrl=self._queue_url, ReceiptHandle=real_handle, VisibilityTimeout=0
+        )
+
+
+@runtime_checkable
 class Handler(Protocol):
     """Worker handler contract: returns normally on success, raises on failure.
 
@@ -155,7 +302,7 @@ class Handler(Protocol):
 
 @dataclass
 class IdempotentConsumer:
-    """Drives a :class:`StandardQueue` with an idempotent, at-least-once worker.
+    """Drives a :class:`Queue` with an idempotent, at-least-once worker.
 
     Dedupe is keyed on the message ``dedup_key`` (``snapshot_id`` / ``scan_id``,
     CLAR-DEPLOY-06): once a ``dedup_key`` has been processed successfully, a later
@@ -165,9 +312,12 @@ class IdempotentConsumer:
     A handler that raises is counted as a failed receive: the message is
     ``fail``-ed back to the queue (or DLQ'd at max-receive), and its ``dedup_key``
     is *not* recorded as processed (a poison message never marks itself done).
+
+    ``queue`` accepts either :class:`StandardQueue` (tests) or :class:`SQSQueue`
+    (production) — both satisfy the structural :class:`Queue` Protocol.
     """
 
-    queue: StandardQueue
+    queue: Queue
     handler: Handler
     _processed_keys: set[str] = field(default_factory=set)
     handler_invocations: int = 0
@@ -212,8 +362,10 @@ __all__ = [
     "Handler",
     "IdempotentConsumer",
     "Message",
+    "Queue",
     "QueueError",
     "ReceivedMessage",
+    "SQSQueue",
     "StandardQueue",
     "UnknownReceiptError",
 ]
