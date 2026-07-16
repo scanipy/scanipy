@@ -28,7 +28,9 @@ from services.substrate.object_store import (
 from services.substrate.queue import (
     DEFAULT_MAX_RECEIVE_COUNT,
     IdempotentConsumer,
+    Queue,
     QueueError,
+    SQSQueue,
     StandardQueue,
     UnknownReceiptError,
 )
@@ -272,6 +274,155 @@ def test_fail_redelivers_until_max_receive_then_dlq() -> None:
     assert q.receive() is None
     assert len(q.dlq_messages) == 1
     assert q.dlq_messages[0].dedup_key == "poison"
+
+
+# --------------------------------------------------------------------------- #
+# SQSQueue — boto3 adapter behind the same Queue Protocol
+# (hermetic: a boto3-SQS-shaped fake client is injected; no boto3/moto import.
+#  Real-botocore send/receive/delete conformance lives in tests/integration/
+#  test_substrate_aws_conformance.py per CLAR-DEPLOY-21.)
+# --------------------------------------------------------------------------- #
+
+
+class _FakeSqsMessage:
+    """One message sitting in a :class:`_FakeSqsClient` queue."""
+
+    def __init__(self, message_id: str, body: str, dedup_key: str) -> None:
+        self.message_id = message_id
+        self.body = body
+        self.dedup_key = dedup_key
+        self.receive_count = 0
+
+
+class _FakeSqsClient:
+    """Minimal boto3-SQS-shaped fake: send/receive/delete/change_visibility.
+
+    Models exactly the subset :class:`SQSQueue` calls — a FIFO ready list plus
+    an in-flight map, keyed by a fake string ``ReceiptHandle`` (deliberately a
+    string, never an int, so a test that leaked a raw boto3 handle through the
+    port would fail type-wise rather than accidentally working).
+    """
+
+    def __init__(self) -> None:
+        self.calls: list[str] = []
+        self._ready: list[_FakeSqsMessage] = []
+        self._in_flight: dict[str, _FakeSqsMessage] = {}
+        self._next_id = 0
+
+    def send_message(
+        self,
+        *,
+        QueueUrl: str,  # noqa: N803
+        MessageBody: str,  # noqa: N803
+        MessageAttributes: dict[str, Any],  # noqa: N803
+    ) -> dict[str, str]:
+        self.calls.append("send_message")
+        self._next_id += 1
+        message_id = f"msg-{self._next_id}"
+        dedup_key = MessageAttributes["dedup_key"]["StringValue"]
+        self._ready.append(_FakeSqsMessage(message_id, MessageBody, dedup_key))
+        return {"MessageId": message_id}
+
+    def receive_message(self, *, QueueUrl: str, **_kw: Any) -> dict[str, Any]:  # noqa: N803
+        self.calls.append("receive_message")
+        if not self._ready:
+            return {}
+        message = self._ready.pop(0)
+        message.receive_count += 1
+        receipt_handle = f"receipt-{message.message_id}-{message.receive_count}"
+        self._in_flight[receipt_handle] = message
+        return {
+            "Messages": [
+                {
+                    "MessageId": message.message_id,
+                    "ReceiptHandle": receipt_handle,
+                    "Body": message.body,
+                    "MessageAttributes": {
+                        "dedup_key": {"DataType": "String", "StringValue": message.dedup_key}
+                    },
+                    "Attributes": {"ApproximateReceiveCount": str(message.receive_count)},
+                }
+            ]
+        }
+
+    def delete_message(self, *, QueueUrl: str, ReceiptHandle: str) -> None:  # noqa: N803
+        self.calls.append("delete_message")
+        self._in_flight.pop(ReceiptHandle, None)
+
+    def change_message_visibility(
+        self,
+        *,
+        QueueUrl: str,  # noqa: N803
+        ReceiptHandle: str,  # noqa: N803
+        VisibilityTimeout: int,  # noqa: N803
+    ) -> None:
+        self.calls.append("change_message_visibility")
+        message = self._in_flight.pop(ReceiptHandle, None)
+        if message is not None:
+            self._ready.insert(0, message)  # immediately re-visible, FIFO head
+
+
+def test_sqs_queue_is_structural_queue() -> None:
+    assert isinstance(SQSQueue("https://sqs/q", client=_FakeSqsClient()), Queue)
+    assert isinstance(StandardQueue(name="q"), Queue)
+
+
+def test_sqs_queue_send_receive_ack_round_trip() -> None:
+    client = _FakeSqsClient()
+    q = SQSQueue("https://sqs/q", client=client)
+    assert q.queue_url == "https://sqs/q"
+    q.send({"snapshot_id": "s1"}, dedup_key="s1")
+    rcv = q.receive()
+    assert rcv is not None
+    assert rcv.message.body == {"snapshot_id": "s1"}
+    assert rcv.message.dedup_key == "s1"
+    assert rcv.message.receive_count == 1
+    q.ack(rcv.receipt_handle)
+    assert client.calls[-1] == "delete_message"
+    assert q.receive() is None  # deleted, not redelivered
+
+
+def test_sqs_queue_ack_and_fail_reject_unknown_receipt_before_any_client_call() -> None:
+    client = _FakeSqsClient()
+    q = SQSQueue("https://sqs/q", client=client)
+    with pytest.raises(UnknownReceiptError):
+        q.ack(999)
+    with pytest.raises(UnknownReceiptError):
+        q.fail(999)
+    assert client.calls == [], "guard must fire before any boto3-shaped call"
+
+
+def test_sqs_queue_fail_resets_visibility_for_redelivery() -> None:
+    client = _FakeSqsClient()
+    q = SQSQueue("https://sqs/q", client=client)
+    q.send({"snapshot_id": "poison"}, dedup_key="poison")
+    for expected_count in range(1, DEFAULT_MAX_RECEIVE_COUNT + 1):
+        rcv = q.receive()
+        assert rcv is not None
+        assert rcv.message.receive_count == expected_count
+        q.fail(rcv.receipt_handle)
+    assert client.calls.count("change_message_visibility") == DEFAULT_MAX_RECEIVE_COUNT
+    # Real-SQS DLQ-after-3 routing is server-side RedrivePolicy state with no
+    # client-side "move to DLQ" call (see SQSQueue.fail docstring) — asserted
+    # against real botocore/moto mechanics in
+    # test_substrate_aws_conformance.py, not reproducible on this fake, which
+    # models no queue-attribute/RedrivePolicy state.
+
+
+def test_sqs_queue_matches_standard_queue_contract() -> None:
+    """SQSQueue and StandardQueue agree on the Queue Protocol round trip."""
+    both: list[Queue] = [
+        StandardQueue(name="parity"),
+        SQSQueue("https://sqs/parity", client=_FakeSqsClient()),
+    ]
+    for q in both:
+        q.send({"snapshot_id": "p1"}, dedup_key="p1")
+        rcv = q.receive()
+        assert rcv is not None
+        assert rcv.message.body == {"snapshot_id": "p1"}
+        assert rcv.message.dedup_key == "p1"
+        q.ack(rcv.receipt_handle)
+        assert q.receive() is None
 
 
 # --------------------------------------------------------------------------- #

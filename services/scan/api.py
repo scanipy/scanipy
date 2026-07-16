@@ -56,10 +56,12 @@ BUILD-AHEAD SEAMS (CLAR-PROC-01 condition (2) — typed ports, fail-closed prod)
     rules §3.3, the ``issue()`` call moves to the scheduler — the port boundary is
     where that decision lands. The prod default fails closed either way.
 
-  The queue is the real shipped CMP-DEPLOY-01 :class:`StandardQueue` (an in-memory
-  SQS-equivalent that production binds to boto3); the CP-01 guard + RLS-binding
-  seam (``authorize_request_for_binding`` / ``OrgScopedStore``) are the real
-  merged CMP-CP-01 surfaces.
+  The queue is typed as the structural CMP-DEPLOY-01 :class:`Queue` Protocol
+  (``services/substrate/queue.py``): production binds the real boto3-backed
+  :class:`SQSQueue` (``scanipy-{env}-detector-jobs``), tests inject the
+  in-memory :class:`StandardQueue`. The CP-01 guard + RLS-binding seam
+  (``authorize_request_for_binding`` / ``OrgScopedStore``) are the real merged
+  CMP-CP-01 surfaces.
 
 INTERFACE RECONCILE (reported, not invented):
   * CLAR-ORCH-05 is DISCHARGED in this PR — ``WorkerJob.hmac_key_id`` +
@@ -105,7 +107,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from detectors.registry import DetectorRegistry
-    from services.substrate.queue import StandardQueue
+    from services.substrate.queue import Queue
 
 # ---------------------------------------------------------------------------
 # Shapes / constants
@@ -682,7 +684,7 @@ def post_scans(
     guard: CPGuard,
     registry: DetectorRegistry,
     scan_store: ScanStore,
-    queue: StandardQueue,
+    queue: Queue,
     spec_registry: SpecRegistryPort | None = None,
     snapshot_port: SnapshotPort | None = None,
     hmac_key_issuer: HmacKeyIssuer | None = None,
@@ -809,18 +811,22 @@ def post_scans(
 def _job_to_queue_body(job: WorkerJob) -> dict[str, str]:
     """Project a :class:`WorkerJob` onto the SQS message body (DOC §4.2.2).
 
-    String-typed to match the shipped :class:`StandardQueue` ``Message.body``
-    (``dict[str, str]``). The structured re-hydration into a typed ``WorkerJob``
-    on the consumer side is CMP-ORCH-03's responsibility; this is the transport
-    projection only.
+    String-typed to match the ``services.substrate.queue.Queue`` Protocol's
+    ``Message.body`` (``dict[str, str]``) — both :class:`StandardQueue` (tests)
+    and :class:`SQSQueue` (production; ``SQSQueue.send`` JSON-serialises this
+    dict as the SQS ``MessageBody`` verbatim). The structured re-hydration into
+    a typed ``WorkerJob`` on the consumer side is CMP-ORCH-03's responsibility;
+    this is the transport projection only.
 
-    INTERFACE-SHAPE DEVIATION (reported via ``clar_filed``): DOC §4.2.2's message
-    body includes a nested ``policy_overrides`` object. The shipped
-    ``StandardQueue.Message.body`` is ``dict[str, str]`` (flat), so a nested dict
-    cannot be carried without a JSON-string serialization. ``policy_overrides`` is
-    therefore OMITTED from the flat transport projection here (it remains on the
-    typed ``WorkerJob`` for the consumer); wiring its serialized form is the
-    CLAR-DEPLOY-19 real-SQS follow-up.
+    INTERFACE-SHAPE DEVIATION (reported via ``clar_filed``, still open): DOC
+    §4.2.2's message body includes a nested ``policy_overrides`` object. The
+    ``Queue`` Protocol's ``Message.body`` is ``dict[str, str]`` (flat), so a
+    nested dict cannot be carried without a JSON-string serialization.
+    ``policy_overrides`` is therefore still OMITTED from the flat transport
+    projection here (it remains on the typed ``WorkerJob`` for the consumer) —
+    this PR (CMP-ORCH-01's real-SQS binding track) lands the ``SQSQueue``
+    transport itself; threading ``policy_overrides`` through the wire shape is
+    left as the next follow-up rather than folded in here unannounced.
     """
     return {
         "job_id": str(job.job_id),
