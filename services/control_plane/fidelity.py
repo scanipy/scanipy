@@ -79,14 +79,19 @@ benchmark, does not modify any detector, and emits VERDICTS not findings. The
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Protocol, cast
 
+from workers.build.env_digest_registry import find_active_digest, load_registry
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+_logger = logging.getLogger(__name__)
 
 Language = Literal["java", "python", "js", "go", "ruby", "php"]
 MetricName = Literal[
@@ -655,3 +660,69 @@ def load_verdict(results_root: Path, language: Language) -> FidelityVerdict:
     path = verdict_path(results_root, language)
     data = json.loads(path.read_text(encoding="utf-8"))
     return FidelityVerdict.from_json_dict(data)
+
+
+# ---------------------------------------------------------------------------
+# Production env_digest consumption (CLAR-DEPLOY-22 registry -> CLAR-CP-06-02).
+# ---------------------------------------------------------------------------
+
+#: Repo-relative path of the canonical env_digest registry (CLAR-DEPLOY-22);
+#: resolved from the repo root by callers.
+ENV_DIGEST_HISTORY_RELPATH = Path("workers") / "env_digest_history.json"
+
+#: The image whose active registry entry IS the production env_digest the gate
+#: compares against. DOC-CMP-CP-06 §4.1: "the gate harness must re-use the same
+#: worker image that production scans use" — that is the SNAP-05 SNAPSHOT
+#: worker, never scanipy-detector (comparing against the detector image would
+#: poison the gate). Pinned by TST unit test; do not change without a CLAR.
+GATE_IMAGE = "scanipy-snapshot"
+
+
+class ProductionEnvMismatch(RuntimeError):  # noqa: N818 — name fixed verbatim by CLAR-DEPLOY-22
+    """CLAR-CP-06-02 hard-fail: the gate ran in an Env that is not the registered
+    production env_digest — its verdict cannot claim production fidelity."""
+
+
+def production_env_digest(history_path: Path, image: str = GATE_IMAGE) -> str | None:
+    """The active registered production ``env_digest`` for ``image``.
+
+    Returns ``None`` ONLY in the pre-bootstrap record-and-warn window
+    (CLAR-CP-06-02): the registry file does not exist yet, or it exists but
+    holds no ``active`` entry for ``image`` (the committed bootstrap registry
+    carries only ``void`` rows until the first rollover PR merges). A malformed
+    registry raises :class:`workers.build.env_digest_registry.EnvDigestRegistryError`
+    (fail-closed — malformed is an error, never a silent ``None``).
+    """
+    if not history_path.is_file():
+        return None
+    doc = load_registry(history_path)  # raises EnvDigestRegistryError on malformed
+    return find_active_digest(doc, image)
+
+
+def enforce_production_env(
+    gate_env_digest: str, history_path: Path, *, image: str = GATE_IMAGE
+) -> None:
+    """CLAR-CP-06-02 enforcement, called before :func:`persist_verdict` on any
+    gate-strength run (ungated verdicts skip it — they claim no production Env).
+
+    Raises :class:`ProductionEnvMismatch` when an active digest is registered
+    and differs from ``gate_env_digest``; logs a single warning and returns when
+    no active digest exists yet (record-and-warn). The warn -> hard-fail flip is
+    purely data-driven: it happens the moment a registration PR merges an
+    ``active`` entry — no code change.
+    """
+    want = production_env_digest(history_path, image)
+    if want is None:
+        _logger.warning(
+            "CLAR-CP-06-02 record-and-warn: no active env_digest registered for %r in %s; "
+            "gate ran with env_digest %s (pre-bootstrap — flips to hard-fail the moment an "
+            "active entry is registered)",
+            image,
+            history_path,
+            gate_env_digest,
+        )
+        return
+    if gate_env_digest != want:
+        raise ProductionEnvMismatch(
+            f"gate env_digest != production env_digest: {gate_env_digest} != {want}"
+        )

@@ -145,3 +145,78 @@ def test_deploy_02c_build_refuses_unspecified_pinned_digest() -> None:
     committed = json.loads((repo_root / "workers" / "pins.json").read_text(encoding="utf-8"))
     assert check_pins(committed) == []
     assert main([str(repo_root / "workers" / "pins.json")]) == 0
+
+
+@pytest.mark.unit
+def test_deploy_02b_registered_env_digest_history_is_authoritative() -> None:
+    """The registered `env_digest` history is the authoritative production surface.
+
+    Test id: TST-AC-DEPLOY-02b (hermetic half — CLAR-DEPLOY-22)
+    Maps to AC: AC-DEPLOY-02b's second clause — "that digest is the authoritative
+        `env_digest` exposed to the snapshot worker." The build-time half (image
+        digest changes when a tool changes) stays xfail above pending a real ECR
+        build; this half is always-on because the registration surface is a
+        committed, hermetically-checkable file: `workers/env_digest_history.json`.
+    Kind tag: [UNIT]
+    Inputs: the committed `workers/env_digest_history.json`.
+    Outputs: `check_registry` violation list; per-image active-entry count;
+        presence/status of the four known-void v0.1.0/v0.1.1 digests.
+    Pass criteria: zero schema/invariant violations; exactly one `active` entry
+        per worker image; every active digest is well-formed
+        (`^sha256:[0-9a-f]{64}$`) and not the all-zero placeholder; every
+        non-active row carries a non-empty `note`; the four v0.1.0/v0.1.1
+        digests are present with `status == "void"` (CLAR-DEPLOY-22 disposition
+        — prose-only nomination / tainted direct-push provenance, never
+        machine-registered as production `env_digest`).
+    Frequency: every CI run.
+    Hard gate?: yes — INV-2 producer; a malformed or under-specified registry
+        cannot back CP-06's production-`env_digest` enforcement.
+    """
+    from workers.build.env_digest_registry import (
+        PLACEHOLDER_DIGEST,
+        VALID_IMAGES,
+        check_registry,
+    )
+
+    repo_root = Path(__file__).resolve().parents[2]
+    registry_path = repo_root / "workers" / "env_digest_history.json"
+    doc = json.loads(registry_path.read_text(encoding="utf-8"))
+
+    assert check_registry(doc) == []
+
+    entries = doc["entries"]
+    active_by_image: dict[str, int] = {}
+    for entry in entries:
+        assert entry["env_digest"] != PLACEHOLDER_DIGEST
+        if entry["status"] == "active":
+            active_by_image[entry["image"]] = active_by_image.get(entry["image"], 0) + 1
+        else:
+            assert entry["note"].strip(), f"non-active entry missing note: {entry}"
+    for image in VALID_IMAGES:
+        # Zero active is the legal pre-bootstrap state (CLAR-CP-06-02
+        # record-and-warn); more than one is a hard schema violation already
+        # caught by check_registry above. This asserts we are at most 1.
+        assert active_by_image.get(image, 0) <= 1
+
+    known_void = {
+        (
+            "scanipy-snapshot",
+            "sha256:f3d51cf67de7b3a5f7acd72dd385ce1c6b1e44ecd3677ba0bb6fb58cd270d09f",
+        ),
+        (
+            "scanipy-detector",
+            "sha256:a2a25f8e40dc7ca68ea833a5991191fb290ffe04b62f1d044eeee221d11cde47",
+        ),
+        (
+            "scanipy-snapshot",
+            "sha256:65d2edd6a6eb5775ac0f0b107b1de0ba5a9e877b82ffacb30a7a01ebb4d1bd1e",
+        ),
+        (
+            "scanipy-detector",
+            "sha256:234d467a50af210065ab11c3191c92de8f13f5d76f894f73a8bce5d495d2b78d",
+        ),
+    }
+    present = {(e["image"], e["env_digest"]): e["status"] for e in entries}
+    for key in known_void:
+        assert key in present, f"missing known CLAR-DEPLOY-22 void digest: {key}"
+        assert present[key] == "void", f"{key} must be status=void (CLAR-DEPLOY-22 disposition)"

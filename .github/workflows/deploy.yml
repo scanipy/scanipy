@@ -5,11 +5,13 @@ on:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
 
+# Workflow-level default is the least-privilege floor. Each job below declares
+# its own `permissions:` block scoped to exactly what that job needs — a
+# job-level block REPLACES this default for that job, it does not add to it.
+# (Only `register-env-digest` needs contents:write/pull-requests:write; giving
+# that to every job in the workflow would be permission creep.)
 permissions:
   contents: read
-  id-token: write   # OIDC for AWS credential exchange
-  checks: read      # pre-deploy gate verification via Checks API
-  actions: write    # workflow_dispatch for Gate 3 (Attestor) on workflow-only tags
 
 env:
   AWS_REGION: us-east-1
@@ -25,8 +27,55 @@ jobs:
   pre-deploy-checks:
     name: Pre-deploy gate verification
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: read      # pre-deploy gate verification via Checks API
+      actions: write    # workflow_dispatch for Gate 3 (Attestor) on workflow-only tags
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history: needed for the reachable-from-main ancestry check below
+
+      - name: Verify tagged commit is reachable from origin/main and unflagged by the direct-push detector
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHA="${{ github.sha }}"
+          REPO="${{ github.repository }}"
+
+          git fetch origin main --depth=1000000
+
+          # (1) Reachable-from-main assertion. A release tag may only be cut on a
+          # commit that actually landed on main; a tag pushed on some other branch
+          # never ran the gate workflows in the first place (the poll loop below
+          # would simply time out, but this fails fast with an unambiguous cause).
+          if ! git merge-base --is-ancestor "${SHA}" origin/main; then
+            echo "ERROR: tagged commit ${SHA} is not reachable from origin/main."
+            echo "Release tags may only be cut on commits that landed on main via the PR flow."
+            exit 1
+          fi
+          echo "PASS: ${SHA} is reachable from origin/main."
+
+          # (2) Direct-push-detector assertion. enforce-pr-only-merges.yml posts a
+          # red 'Direct-push detector' check-run on any commit pushed to main
+          # outside the PR flow (RULE-10) — this is exactly the taint that voided
+          # the v0.1.1 env_digest registrations (CLAR-DEPLOY-22: built from
+          # direct-push commit d948e6b). A release must never be cut on a commit
+          # that check flagged, so it is enforced here as a hard pre-deploy gate,
+          # not left as an easy-to-miss red dot elsewhere in the commit's check list.
+          result=$(gh api --paginate "repos/${REPO}/commits/${SHA}/check-runs" \
+            --jq '.check_runs[] | select(.name == "Direct-push detector") | [.started_at, .conclusion] | @tsv' \
+            2>/dev/null | sort -r | head -1 | cut -f2)
+          if [ -z "${result}" ]; then
+            echo "NOTICE: no 'Direct-push detector' check-run found on ${SHA} —"
+            echo "treating as pass; the ancestry check above is the primary guard."
+          elif [ "${result}" != "success" ]; then
+            echo "ERROR: 'Direct-push detector' check-run conclusion='${result}' on ${SHA}."
+            echo "This commit bypassed the PR-only-merge flow (RULE-10) and must not be released."
+            exit 1
+          else
+            echo "PASS: 'Direct-push detector' is success on ${SHA}."
+          fi
 
       - name: Verify all required CI gates passed on this commit
         env:
@@ -37,7 +86,11 @@ jobs:
 
           # check_gate NAME MAX_WAIT_SECONDS
           # Polls until the named check-run posts a conclusion, then verifies it
-          # is "success".
+          # is "success". A commit can carry more than one check-run of the same
+          # name (re-runs); --paginate fetches every page of check-runs and the
+          # newest entry is selected deterministically by `started_at` (NOT by
+          # `tail -1`, whose order is an API implementation detail, not a
+          # recency guarantee).
           check_gate() {
             local check_name="$1"
             local max_wait="$2"
@@ -45,9 +98,9 @@ jobs:
             local result
 
             while true; do
-              result=$(gh api "repos/${REPO}/commits/${SHA}/check-runs" \
-                --jq ".check_runs[] | select(.name == \"${check_name}\") | .conclusion" \
-                2>/dev/null | tail -1)
+              result=$(gh api --paginate "repos/${REPO}/commits/${SHA}/check-runs" \
+                --jq ".check_runs[] | select(.name == \"${check_name}\") | [.started_at, .conclusion] | @tsv" \
+                2>/dev/null | sort -r | head -1 | cut -f2)
 
               if [ "${result}" = "success" ]; then
                 echo "GATE PASS: '${check_name}'"
@@ -71,9 +124,9 @@ jobs:
           # Gate 3 (Attestor) only auto-triggers when detectors/analysis/workers
           # paths change. For workflow-only tag commits it must be dispatched.
           # Dispatch it now if it has no check run on this SHA yet.
-          GATE3_PRESENT=$(gh api "repos/${REPO}/commits/${SHA}/check-runs" \
-            --jq '.check_runs[] | select(.name == "Gate 3 — Attestor core pipeline (AC-CP-05a/c)") | .name' \
-            2>/dev/null | head -1)
+          GATE3_PRESENT=$(gh api --paginate "repos/${REPO}/commits/${SHA}/check-runs" \
+            --jq '.check_runs[] | select(.name == "Gate 3 — Attestor core pipeline (AC-CP-05a/c)") | [.started_at, .name] | @tsv' \
+            2>/dev/null | sort -r | head -1 | cut -f2)
           if [ -z "${GATE3_PRESENT}" ]; then
             echo "Gate 3 not found on ${SHA} — dispatching attestor workflow on ${{ github.ref_name }}..."
             gh workflow run "Gate 3 — Attestor core (every detector/engine/Env change)" \
@@ -103,6 +156,9 @@ jobs:
     name: Build and sign worker images
     runs-on: ubuntu-latest
     needs: pre-deploy-checks
+    permissions:
+      contents: read
+      id-token: write   # OIDC for AWS credential exchange + Cosign keyless signing
     outputs:
       snapshot_digest: ${{ steps.push-snapshot.outputs.digest }}
       detector_digest: ${{ steps.push-detector.outputs.digest }}
@@ -206,6 +262,58 @@ jobs:
             --certificate-oidc-issuer https://token.actions.githubusercontent.com \
             ${{ env.ECR_REGISTRY }}/scanipy-detector@${{ steps.push-detector.outputs.digest }}
 
+      # --- SLSA-3 provenance attestation (AC-DEPLOY-04c / DOC-CMP-DEPLOY-04 §3.6) --
+      # Same predicate builder the hermetic TST-AC-DEPLOY-04c fixture test calls, so
+      # the workflow and the test can never silently drift apart on predicate shape.
+
+      - name: Build SLSA-3 provenance predicate — snapshot worker
+        run: |
+          python -m workers.build.slsa_predicate \
+            --image-digest "${{ steps.push-snapshot.outputs.digest }}" \
+            --build-commit "${{ github.sha }}" \
+            --source-ref "${{ github.ref }}" \
+            --repository "${{ github.repository }}" \
+            --builder-id "https://github.com/${{ github.repository }}/.github/workflows/deploy.yml@${{ github.ref }}" \
+            --pins workers/pins.json \
+            --dockerfile workers/snapshot/Dockerfile \
+            --requirements workers/snapshot/requirements.txt \
+            --out slsa-snapshot-predicate.json
+
+      - name: Build SLSA-3 provenance predicate — detector worker
+        run: |
+          python -m workers.build.slsa_predicate \
+            --image-digest "${{ steps.push-detector.outputs.digest }}" \
+            --build-commit "${{ github.sha }}" \
+            --source-ref "${{ github.ref }}" \
+            --repository "${{ github.repository }}" \
+            --builder-id "https://github.com/${{ github.repository }}/.github/workflows/deploy.yml@${{ github.ref }}" \
+            --pins workers/pins.json \
+            --dockerfile workers/detector/Dockerfile \
+            --requirements workers/detector/requirements.txt \
+            --out slsa-detector-predicate.json
+
+      - name: Attest SLSA-3 provenance (Cosign keyless)
+        run: |
+          cosign attest --yes --type slsaprovenance \
+            --predicate slsa-snapshot-predicate.json \
+            ${{ env.ECR_REGISTRY }}/scanipy-snapshot@${{ steps.push-snapshot.outputs.digest }}
+          cosign attest --yes --type slsaprovenance \
+            --predicate slsa-detector-predicate.json \
+            ${{ env.ECR_REGISTRY }}/scanipy-detector@${{ steps.push-detector.outputs.digest }}
+
+      - name: Verify SLSA-3 attestations (AC-DEPLOY-04c)
+        run: |
+          cosign verify-attestation --type slsaprovenance \
+            --certificate-identity-regexp \
+              "https://github.com/${{ github.repository }}/.github/workflows/deploy.yml@.*" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            ${{ env.ECR_REGISTRY }}/scanipy-snapshot@${{ steps.push-snapshot.outputs.digest }}
+          cosign verify-attestation --type slsaprovenance \
+            --certificate-identity-regexp \
+              "https://github.com/${{ github.repository }}/.github/workflows/deploy.yml@.*" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            ${{ env.ECR_REGISTRY }}/scanipy-detector@${{ steps.push-detector.outputs.digest }}
+
   # ---------------------------------------------------------------------------
   # Deploy to ECS Fargate — renders each task definition with the new image
   # digest (updating both the container image and SCANIPY_ENV_DIGEST env var),
@@ -216,6 +324,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-images
     environment: production
+    permissions:
+      contents: read
+      id-token: write   # OIDC for AWS credential exchange
     steps:
       - uses: actions/checkout@v4
 
@@ -282,3 +393,65 @@ jobs:
           service: detector-worker
           cluster: scanipy-prod
           wait-for-service-stability: true
+
+  # ---------------------------------------------------------------------------
+  # Register the freshly-deployed digests as the new active env_digest
+  # (CLAR-DEPLOY-22). Never pushes to main directly — opens a human-reviewed
+  # "env_digest rollover" PR (DOC-CMP-DEPLOY-02 §6.2 / DOC-CMP-DEPLOY-04 §6.2);
+  # the PR-only-merge shim + RULE-10 forbid anything else. Registration is
+  # effective on merge, not on this job running.
+  # ---------------------------------------------------------------------------
+  register-env-digest:
+    name: Register env_digest (rollover ceremony PR)
+    runs-on: ubuntu-latest
+    needs: [build-images, deploy-ecs]
+    permissions:
+      contents: write        # push the registration branch (never main — see above)
+      pull-requests: write   # open the rollover-ceremony PR
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Register digests and open the rollover ceremony PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SIGNED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          python -m workers.build.env_digest_registry register \
+            --path workers/env_digest_history.json \
+            --image scanipy-snapshot \
+            --digest "${{ needs.build-images.outputs.snapshot_digest }}" \
+            --tag "${{ github.ref_name }}" \
+            --git-sha "${{ github.sha }}" \
+            --signed-at "$SIGNED_AT"
+          python -m workers.build.env_digest_registry register \
+            --path workers/env_digest_history.json \
+            --image scanipy-detector \
+            --digest "${{ needs.build-images.outputs.detector_digest }}" \
+            --tag "${{ github.ref_name }}" \
+            --git-sha "${{ github.sha }}" \
+            --signed-at "$SIGNED_AT"
+
+          if git diff --quiet -- workers/env_digest_history.json; then
+            echo "Registry already reflects ${{ github.ref_name }} digests (idempotent register) — no rollover PR needed."
+            exit 0
+          fi
+
+          BRANCH="env-digest/${{ github.ref_name }}"
+          git config user.name "scanipy-deploy"
+          git config user.email "deploy@scanipy"
+          git checkout -b "$BRANCH"
+          git add workers/env_digest_history.json
+          git commit -m "chore(CMP-DEPLOY-04): env_digest rollover — register ${{ github.ref_name }} digests"
+          git push origin "$BRANCH"
+
+          # gh pr create exits non-zero on failure; the job's default `-e` shell
+          # then fails the job (red run == registry drift is loud, per CLAR-DEPLOY-22).
+          gh pr create \
+            --title "env_digest rollover: register ${{ github.ref_name }} digests" \
+            --body-file .github/PULL_REQUEST_TEMPLATE.md

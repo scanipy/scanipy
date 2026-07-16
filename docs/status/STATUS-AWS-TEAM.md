@@ -42,6 +42,7 @@ This is the CLAR-CP-06-02 bootstrap: the first pinned `Env` that CP-06 fidelity 
 INV-2 stamps reference. Coordinate with engineering for where it is registered.
 **Unblocks:** TST-AC-DEPLOY-02b flip *(eng)* · CP-06 bootstrap · real INV-2 end-to-end.
 > **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-09 · **Evidence:** nominated digest `sha256:f3d51cf67de7b3a5f7acd72dd385ce1c6b1e44ecd3677ba0bb6fb58cd270d09f` (scanipy-snapshot:v0.1.0, Cosign-signed, Sigstore transparency log)
+> **Superseded by CLAR-DEPLOY-22** (`WBS.md §17`) — the canonical registration surface is the machine-readable `workers/env_digest_history.json`, not this prose row. The v0.1.0 nomination above is recorded there as `status=void` (prose-only, never machine-registered, never deployed, no artifact stamped) alongside the equally-void v0.1.1 digests (tainted direct-push provenance, `d948e6b`). The first `active` entries are the v0.1.2 digests registered by `deploy.yml`'s `register-env-digest` job.
 
 ### 6. DEPLOY-04 — pipeline end-to-end on a real version tag
 Run `deploy.yml` on a `vX.Y.Z` tag with 1–5 in place: OIDC login → build → pin-check → sign → push →

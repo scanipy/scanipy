@@ -51,6 +51,21 @@ jobs:
       - name: Ruff format check
         run: ruff format --check .
 
+      - name: Fetch origin/main (env_digest registry base-ref comparisons)
+        if: github.event_name == 'pull_request'
+        run: git fetch origin main --depth=1
+
+      - name: env_digest registry validity (CLAR-DEPLOY-22)
+        run: >-
+          python scripts/check_env_digest_registry.py
+          ${{ github.event_name == 'pull_request' && '--base-ref origin/main' || '' }}
+
+      - name: env_digest rollover-ceremony lint (AC-DEPLOY-04a / DOC-CMP-DEPLOY-02 §6.2)
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: python scripts/check_rollover_ceremony.py --base-ref origin/main --title "${PR_TITLE}"
+
       - name: Mypy strict
         run: |
           # Type-check only the source dirs that actually contain .py files.

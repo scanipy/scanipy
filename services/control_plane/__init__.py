@@ -34,6 +34,8 @@ from services.control_plane.constants import (
     Role,
 )
 from services.control_plane.fidelity import (
+    ENV_DIGEST_HISTORY_RELPATH,
+    GATE_IMAGE,
     THRESHOLDS,
     BenchmarkEligibilityError,
     CorpusPort,
@@ -43,11 +45,14 @@ from services.control_plane.fidelity import (
     FidelityMetrics,
     FidelityVerdict,
     GroundTruthItem,
+    ProductionEnvMismatch,
     compute_metrics,
+    enforce_production_env,
     evaluate_fidelity,
     load_verdict,
     lockfile_corpus_port,
     persist_verdict,
+    production_env_digest,
     verdict_path,
 )
 from services.control_plane.guard import (
@@ -59,9 +64,11 @@ from services.control_plane.guard import (
 )
 
 __all__ = [
+    "ENV_DIGEST_HISTORY_RELPATH",
     "ERROR_ORG_MISMATCH",
     "ERROR_ROLE_DENIED",
     "ERROR_TENANT_ISOLATION_VIOLATION",
+    "GATE_IMAGE",
     "HEADER_ORG_ID",
     "HEADER_USER_ID",
     "RBAC",
@@ -82,13 +89,16 @@ __all__ = [
     "GroundTruthItem",
     "JWTClaims",
     "OrgScopedStore",
+    "ProductionEnvMismatch",
     "Resource",
     "Role",
     "TenantIsolationError",
     "compute_metrics",
+    "enforce_production_env",
     "evaluate_fidelity",
     "load_verdict",
     "lockfile_corpus_port",
     "persist_verdict",
+    "production_env_digest",
     "verdict_path",
 ]
