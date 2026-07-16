@@ -54,7 +54,7 @@ OTel exporters → CloudWatch Logs + X-Ray; provision the six named alarms (snap
 detector-fail, callback-HMAC-reject, **attestor-core-diff: any non-zero = hard incident**,
 CW-DETECT-disagreement, DLQ-depth). The trace-correlation AC *(eng)* needs the end-to-end scan
 pipeline (Waves 4–5) — provision the surfaces now, the AC flips later.
-> **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-10
+> **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-21 (apply date corrected 2026-07-14 audit)
 > **IaC:** Terraform module `infra/modules/observability/` + provisioning script `infra/observability-apply.sh` (SNS topic, 5 log groups, X-Ray group, 8 alarms, CloudWatch dashboard, OTel collector task def)
 > **Evidence:**
 > - SNS alarm topic: `arn:aws:sns:us-east-1:<ACCOUNT_ID>:scanipy-prod-alarms`
@@ -67,13 +67,15 @@ Terraform the IAM session policies (`infra/modules/compute/session_policy.tf`) +
 path + S3 `orgs/{org_id}/` prefix denies. RDS RLS is already merged (CP-03, PR #265); the app-layer
 `app.org_id` seam is landing in engineering Wave 3. Live cross-org negative test (AC-DEPLOY-05a/b)
 runs after ORCH-01 exists (Wave 5).
-> **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-10
-> **IaC:** `infra/modules/compute/session_policy.tf` (Layer 1 IAM template) · `infra/modules/kms/` (Layer 3 CMK Lambda) · `infra/tenant-isolation-apply.sh` (apply script). Layer 2 (RLS) already applied via PR #265. **RULE-9:** Security Analyst sign-off granted (PR #305 comment).
+> **Status:** DONE — IaC + live apply complete (Layers 0, 1, 2, 3); S3 prefix-deny APPLIED 2026-07-15, reconciled 2026-07-15 (least-privilege KMS + `_platform/*` scoping, PR #312 review round 2) · **Owner:** @papadoxie (initial Layer-1/3 IaC, 2026-06-10) → completed by orchestrating agent 2026-07-15 (Layer-0 data-plane buckets, S3 prefix-deny apply, CMK Lambda hardening + redeploy, Lambda invoke restriction — per project-owner directive to complete the AWS track directly) → reconciled by integration agent 2026-07-15 (claude-review findings: dropped `kms:ListAliases` from the Lambda role policy, scoped the `_platform/*` bucket-policy exemption to the snapshot bucket only) · **Date:** 2026-06-10 (updated 2026-07-15)
+> **IaC:** `infra/modules/dataplane/main.tf` (Layer 0 data-plane buckets) · `infra/modules/compute/session_policy.tf` (Layer 1 IAM template) · `services/substrate/session_policy.py` (canonical renderer, single source of truth for the template) · `infra/modules/kms/` (Layer 3 CMK Lambda) · `infra/tenant-isolation-apply.sh` (apply script, idempotent). Layer 2 (RLS) already applied via PR #265. **RULE-9:** Security Analyst sign-off granted (PR #305 comment).
 > **Evidence:**
-> - Layer 1 (session policy template): `scanipy/prod/worker-session-policy-template` in Secrets Manager · S3 bucket prefix-deny policies pending — to be applied when CMP-DEPLOY-01 provisions the buckets
+> - Layer 0 (buckets, live 2026-07-15, us-east-1, account `<ACCOUNT_ID>`): `scanipy-prod-snapshot` (versioning + BPA(4/4) + SSE-AES256 + 90d lifecycle) · `scanipy-prod-witness` (same + 365d lifecycle) · `scanipy-prod-sarif` (same, no lifecycle, Object Lock ENABLED GOVERNANCE mode 7y)
+> - Layer 1 (session policy template): `scanipy/prod/worker-session-policy-template` in Secrets Manager, re-stored 2026-07-15 from the canonical renderer (`services/substrate/session_policy.py`, CI-guarded < 2048 chars, CLAR-DEPLOY-21) · S3 bucket prefix-deny policies **APPLIED 2026-07-15, RECONCILED 2026-07-15** — `DenyNonTenantObjectPaths` (deny GetObject/PutObject/DeleteObject) `NotResource` `orgs/*` on all three buckets; the `_platform/*` carve-out is scoped to `scanipy-prod-snapshot` only (verified live: witness + sarif `NotResource` no longer carries `_platform/*`), matching the session policy's `S3PlatformReadOnly` statement which is snapshot-bucket-only
 > - Layer 2 (RLS): already applied via PR #265
-> - Layer 3 (CMK Lambda): `arn:aws:lambda:us-east-1:<ACCOUNT_ID>:function:scanipy-prod-tenant-cmk-provisioner`
+> - Layer 3 (CMK Lambda): `arn:aws:lambda:us-east-1:<ACCOUNT_ID>:function:scanipy-prod-tenant-cmk-provisioner` — hardened 2026-07-15 (strict canonical-UUID `org_id` validation pre-interpolation, rotation-retry-gap fix); redeployed from the committed, reviewed source after commit; invocation restricted to `role/scanipy-github-deploy` via `aws lambda add-permission` (statement id `scanipy-control-plane-invoke`) — deny-by-default (no other principal has an identity-policy grant on this function); execution role policy reconciled 2026-07-15 to drop unused `kms:ListAliases` (least privilege — the Lambda never calls `list_aliases`), verified live via `get-role-policy`
 > - Lambda execution role: `arn:aws:iam::<ACCOUNT_ID>:role/scanipy-prod-tenant-cmk-provisioner`
+> - Honest gap (recorded, not a defect): the bucket-policy layer enforces the `orgs/*` **namespace**, not the per-org boundary — matching *which* org owns a given `orgs/{org_id}/` prefix is enforced by the per-scan IAM session policy (Layer 1) and the per-tenant CMK encryption context (Layer 3), not by the bucket policy itself. See `infra/tenant-isolation-apply.sh` / `infra/modules/dataplane/main.tf` for the full rationale (`aws:PrincipalTag/org_id` is not carried by the current `sts:AssumeRole` flow).
 
 ### 9. Canary SCM orgs + credentials *(for the corpus team — CANARY-01)*
 Create `scanipy-canary` orgs/projects on GitHub, GitLab, Bitbucket, Azure DevOps; store push
@@ -85,7 +87,7 @@ credentials in Secrets Manager; grant the corpus pipeline access.
 Several env-gated ACs (DEPLOY-05a/b, parts of 02a) could become CI-runnable against LocalStack/moto
 instead of waiting for live-account windows. Engineering will wire the harness if you provision/approve
 the approach. *(Optional — reduces live-account coupling; not on the §21 critical path.)*
-> **Decision:** _____ · **Owner:** _____ · **Date:** _____
+> **Decision:** **moto adopted** (CLAR-DEPLOY-21) — in-process pip dev-dep `moto[s3,sqs,kms,secretsmanager,sts]>=5.1,<6.0` for the honestly-emulatable slice only (boto3 adapter conformance, SQS redrive/DLQ-after-3, KMS envelope mechanics, session-policy render + 2048-char limit); policy-enforcement negatives (AC-DEPLOY-05a denies) are NOT emulatable and stay live-account behind the `aws_live` marker; LocalStack CE/Pro rejected; greening 02a/b against moto ECR forbidden. Record: `docs/cross-cutting/DOC-DEPLOY-DECISIONS.md § CLAR-DEPLOY-21` · **Owner:** CTO Agent · **Date:** 2026-07-14
 
 ---
 

@@ -27,7 +27,7 @@ writes ``env_digest`` (DOC-CMP-DEPLOY-01 §8 — "physical anchors").
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, Protocol, runtime_checkable
+from typing import Any, Literal, Protocol, cast, runtime_checkable
 
 # The five persisted snapshot artifacts (DOC-CMP-SNAP-01 §4.2, from AC-SNAP-01a),
 # mapped to their deterministic ``{artifact_type}`` key suffix. Insertion order is
@@ -158,6 +158,32 @@ class SnapshotKeyBuilder:
         }
 
 
+def _guard_key(org_id: str, key: str) -> str:
+    """CLAR-DEPLOY-16 layer-1 client-side guard, shared by every store impl.
+
+    The key may legitimately contain ``/`` segment separators, so it is not run
+    through :func:`_validate_component`; instead the traversal tokens are
+    checked across the whole (case-folded) key and the requesting org's
+    ``orgs/{org_id}/`` prefix is enforced. Fail-closed: raises
+    :class:`PathTraversalError` / :class:`CrossTenantAccessError` and must run
+    BEFORE any storage I/O — this is the key-resolution arm of AC-DEPLOY-05b.
+    The live enforcement arm (IAM session policy / bucket policy denies) is
+    verified only in the ``aws_live`` window (CLAR-DEPLOY-21).
+    """
+    _validate_component("org_id", org_id)
+    folded = key.casefold()
+    for token in ("..", "%2e", "%5c", "\\", "\x00"):
+        if token in folded:
+            raise PathTraversalError(f"key {key!r} contains forbidden traversal sequence {token!r}")
+    expected_prefix = f"orgs/{org_id}/"
+    if not key.startswith(expected_prefix):
+        raise CrossTenantAccessError(
+            f"key {key!r} does not resolve under the requesting org prefix "
+            f"{expected_prefix!r} (CLAR-DEPLOY-16)"
+        )
+    return key
+
+
 @runtime_checkable
 class ObjectStore(Protocol):
     """Structural subset of the S3 surface the snapshot persistence layer uses.
@@ -186,33 +212,62 @@ class InMemoryObjectStore:
     def __init__(self) -> None:
         self._objects = {}
 
-    def _guard(self, org_id: str, key: str) -> str:
-        _validate_component("org_id", org_id)
-        # The key may legitimately contain ``/`` segment separators, so it is not
-        # run through _validate_component; instead each segment is checked for the
-        # traversal tokens and the org prefix is enforced.
-        folded = key.casefold()
-        for token in ("..", "%2e", "%5c", "\\", "\x00"):
-            if token in folded:
-                raise PathTraversalError(
-                    f"key {key!r} contains forbidden traversal sequence {token!r}"
-                )
-        expected_prefix = f"orgs/{org_id}/"
-        if not key.startswith(expected_prefix):
-            raise CrossTenantAccessError(
-                f"key {key!r} does not resolve under the requesting org prefix "
-                f"{expected_prefix!r} (CLAR-DEPLOY-16)"
-            )
-        return key
-
     def put(self, org_id: str, key: str, body: bytes) -> None:
-        self._objects[self._guard(org_id, key)] = body
+        self._objects[_guard_key(org_id, key)] = body
 
     def get(self, org_id: str, key: str) -> bytes:
-        resolved = self._guard(org_id, key)
+        resolved = _guard_key(org_id, key)
         if resolved not in self._objects:
             raise ObjectStoreError(f"no object at key {resolved!r}")
         return self._objects[resolved]
+
+
+class S3ObjectStore:
+    """boto3-backed :class:`ObjectStore` with the CLAR-DEPLOY-16 guard in front.
+
+    Production adapter for the Amazon S3 substrate (CLAR-DEPLOY-02). Every
+    ``put`` / ``get`` runs :func:`_guard_key` — the same fail-closed checks as
+    :class:`InMemoryObjectStore` — BEFORE any boto3 call, so a traversal or
+    cross-tenant key is rejected client-side without ever reaching S3 (the
+    key-resolution arm of AC-DEPLOY-05b, CI-verified against moto per
+    CLAR-DEPLOY-21). The client-side guard is defence-in-depth only: the
+    enforced isolation layer is the per-scan IAM session policy + bucket
+    prefix-deny (CLAR-DEPLOY-16), whose deny behaviour is observable only in
+    the live-account window (``aws_live`` tests) — moto does not evaluate
+    IAM/bucket/key policies.
+
+    ``client`` is any boto3-S3-shaped object (production ``boto3.client("s3")``,
+    moto-backed client in tests). boto3 is imported lazily on the ``None``
+    path only, so hermetic unit runs need no boto3 install (OTel precedent).
+
+    This module emits no findings; the four provenance fields (INV-1/2/5) are
+    threaded by the callers that persist into these key paths (CMP-SNAP-01).
+    """
+
+    def __init__(self, bucket: str, client: object | None = None) -> None:
+        if client is None:  # pragma: no cover — real-AWS path; tests always inject
+            import boto3
+
+            client = boto3.client("s3")
+        self._bucket = bucket
+        self._client: Any = client
+
+    @property
+    def bucket(self) -> str:
+        """The S3 bucket this store is scoped to."""
+        return self._bucket
+
+    def put(self, org_id: str, key: str, body: bytes) -> None:
+        resolved = _guard_key(org_id, key)  # MUST precede any boto3 call.
+        self._client.put_object(Bucket=self._bucket, Key=resolved, Body=body)
+
+    def get(self, org_id: str, key: str) -> bytes:
+        resolved = _guard_key(org_id, key)  # MUST precede any boto3 call.
+        try:
+            response = self._client.get_object(Bucket=self._bucket, Key=resolved)
+        except self._client.exceptions.NoSuchKey as exc:
+            raise ObjectStoreError(f"no object at key {resolved!r}") from exc
+        return cast(bytes, response["Body"].read())
 
 
 __all__ = [
@@ -224,5 +279,6 @@ __all__ = [
     "ObjectStore",
     "ObjectStoreError",
     "PathTraversalError",
+    "S3ObjectStore",
     "SnapshotKeyBuilder",
 ]
