@@ -68,9 +68,13 @@ def _meter() -> Any | None:  # noqa: ANN401 — Meter is an optional, lazily-imp
 def _instrument(name: str, kind: _InstrumentKind, unit: str) -> Any | None:  # noqa: ANN401 — OTel
     """Return the cached instrument ``name``, creating it once if needed.
 
-    Returns ``None`` (caller no-ops) when OTel is absent, or — for gauges —
-    when the installed ``opentelemetry-api`` predates the sync Gauge
-    (``Meter.create_gauge``).
+    Returns ``None`` (caller no-ops) when OTel is absent, when the installed
+    ``opentelemetry-api`` predates the sync Gauge (``Meter.create_gauge``,
+    < 1.23) for gauges, or when instrument creation itself raises (a
+    misconfigured/broken OTel SDK) — this module's hermetic no-op contract
+    covers a bad install, not just a missing one, so a caller sitting inside
+    an ``except ...: record_...(); raise`` block never has its real exception
+    replaced by an OTel one.
     """
     inst = _instruments.get(name)
     if inst is not None:
@@ -78,15 +82,18 @@ def _instrument(name: str, kind: _InstrumentKind, unit: str) -> Any | None:  # n
     meter = _meter()
     if meter is None:
         return None
-    if kind == "counter":
-        inst = meter.create_counter(name, unit=unit)
-    elif kind == "histogram":
-        inst = meter.create_histogram(name, unit=unit)
-    else:
-        create_gauge = getattr(meter, "create_gauge", None)
-        if create_gauge is None:  # opentelemetry-api < 1.23: no sync Gauge
-            return None
-        inst = create_gauge(name, unit=unit)
+    try:
+        if kind == "counter":
+            inst = meter.create_counter(name, unit=unit)
+        elif kind == "histogram":
+            inst = meter.create_histogram(name, unit=unit)
+        else:
+            create_gauge = getattr(meter, "create_gauge", None)
+            if create_gauge is None:  # opentelemetry-api < 1.23: no sync Gauge
+                return None
+            inst = create_gauge(name, unit=unit)
+    except Exception:  # a broken OTel SDK must never take down a caller
+        return None
     _instruments[name] = inst
     return inst
 
