@@ -90,7 +90,7 @@ if TYPE_CHECKING:
         SnapshotPort,
         SpecRegistryPort,
     )
-    from services.substrate.queue import StandardQueue
+    from services.substrate.queue import Queue
 
 
 def _error_json(error_code: str, message: str, trace_id: str, *, status: int) -> JSONResponse:
@@ -117,7 +117,7 @@ def create_app(
     guard: CPGuard,
     registry: DetectorRegistry,
     scan_store: ScanStore,
-    queue: StandardQueue,
+    queue: Queue,
     jwt_verifier: JWTVerifierPort,
     key_issuer: HmacKeyIssuer,
     job_state_store: JobStateStore,

@@ -63,6 +63,20 @@ RUN pip install --no-cache-dir --require-hashes -r /tmp/requirements.txt
 COPY services/snapshot /app/services/snapshot
 COPY tools/worker      /app/tools/worker
 
+# CLAR-SNAP-03: analysis.cpg_ingest (this worker's CPG-ingest sub-scope) and its
+# analysis.ordering dependency. joern_frontend.py imports both at module load —
+# omitting this COPY makes the package invisible in-container (ModuleNotFoundError
+# at the first parse_source() call), caught by claude-review on PR #319.
+COPY analysis /app/analysis
+
+# CLAR-SNAP-05: fixed in-image CPGQL export script, parameterized at runtime
+# via env vars (SCANIPY_CPG_BIN_PATH / SCANIPY_EXPORT_JSON_PATH — see
+# analysis/cpg_ingest/joern_frontend.py's EXPORT_SCRIPT_PATH constant, which
+# MUST match this destination path). Never src_root-relative — a trusted,
+# versioned, in-image artifact invoked via the sanctioned `--script` flag
+# (JOERN_ARGV_ALLOWLIST), not tenant-controlled.
+COPY workers/snapshot/joern-scripts/export_cpg.sc /opt/joern/scripts/export_cpg.sc
+
 ENV PATH=/opt/joern/bin:/opt/codeql:/usr/bin:/usr/local/bin
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
