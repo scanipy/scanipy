@@ -17,6 +17,7 @@ DOC-DEPLOY-DECISIONS.md (16 RESOLVED CLAR-DEPLOY-*); CLAUDE.md §15 (four CI gat
 When the owning CMP-DEPLOY-* is DONE, replace xfail + skips with real assertions.
 """
 
+import json
 import os
 import re
 import subprocess
@@ -24,6 +25,8 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+
+from tools.observability.logging import MANDATORY_FIELDS, get_logger
 
 # Repo root = three levels up from tests/integration/test_deploy_specs.py.
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -407,28 +410,72 @@ def test_deploy_03a_scan_id_resolves_to_end_to_end_trace() -> None:
 
 
 @pytest.mark.integration
-@pytest.mark.xfail(
-    reason="CMP-DEPLOY-03 (observability) not yet implemented",
-    strict=False,
-)
-def test_deploy_03b_log_lines_carry_service_commit_env_digest() -> None:
+def test_deploy_03b_log_lines_carry_service_commit_env_digest(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     """Every emitted log line carries service name, build commit, and env_digest.
 
     Test id: TST-AC-DEPLOY-03b
     Maps to AC: AC-DEPLOY-03b — Every emitted log line carries a service name,
         build commit, and `env_digest`.
     Kind tag: [INTEGRATION]
-    Inputs: a sampled corpus of structured JSON log lines from a completed scan
-        (CloudWatch Logs, CLAR-DEPLOY-07).
+    Inputs: a sampled corpus of structured JSON log lines drawn from every named
+        AC-DEPLOY-03a lifecycle stage of one completed scan (webhook ingest,
+        snapshot worker, detector worker, normalizer, attestor verdict, callback
+        delivery), driven hermetically through the shared
+        `tools.observability.logging.get_logger` surface every component uses
+        (real CloudWatch retrieval is CLAR-DEPLOY-07 live-ops, out of scope for
+        this repo-only slice — see `tests/unit/test_logger_factory.py`).
     Outputs: presence of `service`, `build_commit`, `env_digest` per line.
     Pass criteria: every sampled log line carries a non-empty service name, build
-        commit, and `env_digest` (INV-2; .claude/rules/02-provenance.md).
+        commit, and `env_digest` (INV-2; .claude/rules/02-provenance.md), and the
+        `env_digest` / `build_commit` values match the pinned scan-run env
+        contract across every stage (single `Env`, INV-2).
     Frequency: every CI run.
     Hard gate?: yes.
     """
-    # TODO: collect structured log lines from a scan run; assert each carries
-    #       service name + build commit + env_digest when CMP-DEPLOY-03 is DONE.
-    pytest.skip("CMP-DEPLOY-03 not implemented yet")
+    build_commit = "c0ffee1234567890" * 4  # 64 hex chars — a realistic commit-ish token
+    env_digest = "sha256:" + "b" * 64
+    monkeypatch.setenv("SCANIPY_WORKER_VERSION", build_commit)
+    monkeypatch.setenv("SCANIPY_ENV_DIGEST", env_digest)
+
+    # The AC-DEPLOY-03a named lifecycle stages for one scan (kept in lockstep
+    # with that spec's own span list so a future flip of 03a reuses this corpus
+    # shape). Each stage emits >=1 structured line via the one shared formatter.
+    stages = (
+        "webhook-ingest",
+        "snapshot-worker",
+        "detector-worker",
+        "normalizer",
+        "attestor",
+        "callback-delivery",
+    )
+    for stage in stages:
+        monkeypatch.setenv("OTEL_SERVICE_NAME", stage)
+        logger = get_logger(f"scanipy.deploy03b.{stage}")
+        logger.propagate = False
+        logger.info("%s stage complete for scan %s", stage, "deploy-03b-smoke-scan")
+
+    err = capsys.readouterr().err.strip()
+    lines = [line for line in err.splitlines() if line]
+    assert len(lines) == len(stages), (
+        f"expected exactly one sampled log line per lifecycle stage, got {len(lines)}"
+    )
+
+    seen_services: set[str] = set()
+    for line in lines:
+        payload = json.loads(line)
+        for field in MANDATORY_FIELDS:
+            assert field in payload, f"log line missing mandatory field {field!r}: {payload}"
+            assert payload[field], f"mandatory field {field!r} must be non-empty: {payload}"
+        # INV-2: every line in the sampled corpus reflects the SAME pinned Env —
+        # a per-stage-drifted env_digest would silently break cross-component
+        # provenance correlation for this scan.
+        assert payload["env_digest"] == env_digest
+        assert payload["build_commit"] == build_commit
+        seen_services.add(str(payload["service"]))
+
+    assert seen_services == set(stages), "expected one distinct service name per lifecycle stage"
 
 
 @pytest.mark.integration
@@ -557,7 +604,10 @@ def test_deploy_04c_image_provenance_signed_and_published() -> None:
 
 @pytest.mark.integration
 @pytest.mark.xfail(
-    reason="CMP-DEPLOY-05 (tenant isolation) not yet implemented",
+    reason=(
+        "AC-DEPLOY-05a app-surface arm blocked on CLAR-DEPLOY-19 (HTTP adapter); "
+        "enforcement arm lives in tests/integration/test_tenant_isolation_live.py (aws_live)"
+    ),
     strict=False,
 )
 def test_deploy_05a_cross_org_access_denied_at_every_surface() -> None:
@@ -577,35 +627,112 @@ def test_deploy_05a_cross_org_access_denied_at_every_surface() -> None:
         S3 prefix, RDS RLS, per-tenant CMK — CLAR-DEPLOY-16.)
     Frequency: every CI run.
     Hard gate?: yes.
+
+    Arm split (CLAR-DEPLOY-21): this stub is the app-surface 4xx+audit arm and
+    is gated on the CLAR-DEPLOY-19 HTTP adapter, NOT on AWS emulation — moto
+    cannot observe policy denies, so no moto flip is possible here. The
+    substrate enforcement arm (real S3/KMS AccessDenied under a rendered
+    session policy) is covered by the aws_live twins.
     """
     # TODO: parameterise org-A principal across all API surfaces + worker callbacks
     #       targeting org-B resources; assert 4xx + audit log on each when
     #       CMP-DEPLOY-05 is DONE.
-    pytest.skip("CMP-DEPLOY-05 not implemented yet")
+    pytest.skip(
+        "app-surface arm blocked on CLAR-DEPLOY-19; enforcement arm lives in "
+        "tests/integration/test_tenant_isolation_live.py (aws_live)"
+    )
 
 
 @pytest.mark.integration
-@pytest.mark.xfail(
-    reason="CMP-DEPLOY-05 (tenant isolation) not yet implemented",
-    strict=False,
-)
 def test_deploy_05b_blob_paths_namespaced_no_cross_org_traversal() -> None:
     """Blob-store paths are org-namespaced; a path traversal cannot cross orgs.
 
-    Test id: TST-AC-DEPLOY-05b
+    Test id: TST-AC-DEPLOY-05b (key-resolution arm — CI-runnable per CLAR-DEPLOY-21)
     Maps to AC: AC-DEPLOY-05b — Blob-store paths are namespaced by org id; a path
         traversal in a request parameter cannot resolve to another org's artifact.
     Kind tag: [NEGATIVE]
-    Inputs: a request from org A carrying a traversal payload (e.g. `../`,
-        encoded variants) in a path/artifact parameter aimed at org B's prefix.
-    Outputs: resolved S3 key + access result.
-    Pass criteria: the resolved key stays within the requesting org's
-        `orgs/{org_id}/...` prefix (CLAR-DEPLOY-02/16); the traversal cannot
-        resolve to another org's artifact and is denied.
+    Inputs: org-A S3ObjectStore requests carrying traversal payloads (`../`,
+        encoded variants — the tests/unit/test_substrate.py corpus) in key
+        components and access keys aimed at org B's prefix, against a moto S3
+        backend seeded with an org-B artifact.
+    Outputs: resolved S3 key + access result per payload.
+    Pass criteria: every traversal payload is rejected client-side BEFORE any
+        S3 call (PathTraversalError / CrossTenantAccessError); no minted key
+        ever escapes `orgs/{org_id}/...` (CLAR-DEPLOY-02/16); org B's artifact
+        is never read or written; the positive control (same operation on the
+        owning org's key) succeeds.
     Frequency: every CI run.
     Hard gate?: yes.
+
+    Arm split (CLAR-DEPLOY-21): moto does not evaluate IAM/bucket/key policies,
+    so this arm asserts key-resolution mechanics only — the enforcement (deny)
+    arm lives in the aws_live twin
+    (tests/integration/test_tenant_isolation_live.py::
+    test_deploy_05b_live_bucket_policy_prefix_deny).
     """
-    # TODO: issue org-A requests with traversal payloads aimed at org-B keys; assert
-    #       the resolved key never escapes the org-A prefix and access is denied
-    #       when CMP-DEPLOY-05 is DONE.
-    pytest.skip("CMP-DEPLOY-05 not implemented yet")
+    import boto3
+    from moto import mock_aws
+
+    from services.substrate.object_store import (
+        CrossTenantAccessError,
+        PathTraversalError,
+        S3ObjectStore,
+        SnapshotKeyBuilder,
+    )
+
+    org_a = "11111111-1111-1111-1111-111111111111"
+    org_b = "99999999-9999-9999-9999-999999999999"
+    builder_kw = {
+        "codebase_id": "22222222-2222-2222-2222-222222222222",
+        "commit_sha": "0123456789abcdef0123456789abcdef01234567",  # pragma: allowlist secret
+        "env_digest": "sha256:" + "a" * 64,
+    }
+    bucket = "scanipy-test-snapshot"
+
+    with mock_aws():
+        s3 = boto3.client("s3", region_name="us-east-1")
+        s3.create_bucket(Bucket=bucket)
+        store = S3ObjectStore(bucket, client=s3)
+
+        # Seed the victim: an org-B artifact at its legitimate key.
+        victim_key = SnapshotKeyBuilder(org_id=org_b, **builder_kw).artifact_key("cpg_tarball")
+        store.put(org_b, victim_key, b"org-b-secret-artifact")
+
+        # (1) Traversal payloads in a key COMPONENT never mint a key at all
+        # (tests/unit/test_substrate.py component corpus).
+        for payload in ["../escape", "a/b", "a\\b", "%2e%2e", "%2fetc", "%5c", "x\x00y", ""]:
+            with pytest.raises(PathTraversalError):
+                SnapshotKeyBuilder(org_id=payload, **builder_kw)
+        # Every key a valid org-A builder CAN mint stays inside org A's prefix.
+        minted = SnapshotKeyBuilder(org_id=org_a, **builder_kw).all_artifact_keys()
+        assert all(key.startswith(f"orgs/{org_a}/") for key in minted.values())
+
+        # (2) Traversal payloads in an ACCESS key aimed at org B's prefix are
+        # rejected client-side, before any S3 call (guard-level corpus).
+        for traversal_key in [
+            f"orgs/{org_a}/../{victim_key}",
+            f"orgs/{org_a}/%2e%2e/{victim_key}",
+            f"orgs/{org_a}/%5c../{victim_key}",
+            f"orgs/{org_a}/a\\../{victim_key}",
+        ]:
+            with pytest.raises(PathTraversalError):
+                store.get(org_a, traversal_key)
+            with pytest.raises(PathTraversalError):
+                store.put(org_a, traversal_key, b"overwrite-attempt")
+        # A forged well-formed org-B key from an org-A request is denied
+        # client-side too (CrossTenantAccessError — guard, not AWS policy).
+        with pytest.raises(CrossTenantAccessError):
+            store.get(org_a, victim_key)
+        with pytest.raises(CrossTenantAccessError):
+            store.put(org_a, victim_key, b"overwrite-attempt")
+
+        # Org B's artifact was neither read nor written by any attempt above.
+        assert store.get(org_b, victim_key) == b"org-b-secret-artifact"
+        listed = s3.list_objects_v2(Bucket=bucket)
+        assert [obj["Key"] for obj in listed.get("Contents", [])] == [victim_key]
+
+        # (3) Positive control: the same operations succeed for the owning org,
+        # so the rejections above cannot be empty-because-absent greens.
+        own_key = minted["cpg_tarball"]
+        store.put(org_a, own_key, b"org-a-artifact")
+        assert store.get(org_a, own_key) == b"org-a-artifact"

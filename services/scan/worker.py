@@ -84,6 +84,7 @@ lands).
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 from uuid import UUID
@@ -95,6 +96,7 @@ from analysis.ordering import (
     canonical_order,
 )
 from analysis.sarif.canonical_emit import SARIFLog, WorkerFinding, normalize
+from tools.observability.metrics import record_job_completion
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -610,6 +612,75 @@ def run_detector(
 
     The oracle adapter and slice fingerprinter default to fail-closed production
     seams (CLAR-PROC-01); a hermetic test injects deterministic fakes.
+
+    OBSERVABILITY (CMP-DEPLOY-03 §3.4 metrics 4-6, CLAR-DEPLOY-20): each call
+    emits exactly one completion metric — ``detector_worker.success_count`` on
+    return, ``detector_worker.failure_count`` when an exception propagates —
+    plus the ``detector_worker.duration_ms`` histogram (monotonic clock).
+    Emission is purely additive telemetry: the detection/threading behaviour
+    above, including every raised exception, is byte-identical to the unmetered
+    body (:func:`_run_detector_unmetered`), and the emitters are hermetic
+    no-ops when OTel is not installed.
+    """
+    started = time.monotonic()
+    try:
+        findings = _run_detector_unmetered(
+            detector,
+            cpg,
+            job,
+            solver=solver,
+            oracle_adapter=oracle_adapter,
+            slice_fingerprinter=slice_fingerprinter,
+        )
+    except Exception:
+        _record_detector_completion(detector, job, outcome="failure", started=started)
+        raise
+    _record_detector_completion(detector, job, outcome="success", started=started)
+    return findings
+
+
+def _record_detector_completion(
+    detector: DetectorLike,
+    job: WorkerJob,
+    *,
+    outcome: Literal["success", "failure"],
+    started: float,
+) -> None:
+    """Emit the CMP-ORCH-03 job-completion metrics (DOC-CMP-DEPLOY-03 §3.4 4-6).
+
+    Counter ``detector_worker.{success,failure}_count`` with the CLAR-DEPLOY-20
+    counter attributes ``{detector_id, engine, env_digest}`` and histogram
+    ``detector_worker.duration_ms`` with ``{detector_id, engine}``. Exactly one
+    completion metric per detector job; retries count per-attempt
+    (intentionally — the failure-rate alarm denominator is completions).
+    """
+    record_job_completion(
+        "detector_worker",
+        outcome,
+        (time.monotonic() - started) * 1000.0,
+        counter_attributes={
+            "detector_id": detector.id,
+            "engine": detector.engine,
+            "env_digest": job.env_digest,
+        },
+        duration_attributes={"detector_id": detector.id, "engine": detector.engine},
+    )
+
+
+def _run_detector_unmetered(
+    detector: DetectorLike,
+    cpg: CPG,
+    job: WorkerJob,
+    *,
+    solver: CoreSolver | None = None,
+    oracle_adapter: OracleAdapter | None = None,
+    slice_fingerprinter: SliceFingerprinter | None = None,
+) -> set[Finding]:
+    """The unmetered :func:`run_detector` body — behaviour source of truth.
+
+    Byte-for-byte the pre-CLAR-DEPLOY-20 ``run_detector`` (detection content,
+    provenance threading, and every fail-closed raise are unchanged); the public
+    wrapper only adds completion-metric emission around it.
     """
     _require_versioned_params(job)
 

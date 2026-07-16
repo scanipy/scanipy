@@ -50,7 +50,14 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -e ".[dev]"
+        # dev,http: this job's pytest invocation below scopes to `tests/`
+        # (unscoped, -k/-m filtered post-collection), so pytest still IMPORTS
+        # every module under tests/unit/ — including the CLAR-DEPLOY-19 HTTP
+        # adapter suite — before the -k filter deselects most of it. Without
+        # the http extra, collection fails with ModuleNotFoundError: fastapi
+        # before a single test runs (see the ci.yml lint/unit-tests jobs for
+        # the same reasoning).
+        run: pip install -e ".[dev,http]"
 
       - name: Check canary corpus exists
         run: |
@@ -144,7 +151,11 @@ jobs:
 
       - name: Install dependencies
         if: steps.corpus_check.outputs.has_corpus == 'true'
-        run: pip install -e ".[dev]"
+        # dev,http: same reasoning as the attestor-core job above — this
+        # job's pytest invocation also scopes to `tests/` unscoped, so
+        # collection needs fastapi importable even though the -k filter
+        # deselects the HTTP adapter tests themselves.
+        run: pip install -e ".[dev,http]"
 
       - name: Run determinism canary suite
         if: steps.corpus_check.outputs.has_corpus == 'true'
