@@ -1,0 +1,50 @@
+# CMP-DEPLOY-03 — ADOT collector configuration (CLAR-DEPLOY-20).
+#
+# This file is the single point of control that makes the emitter lane and the
+# alarm lane compose:
+#   * `namespace: Scanipy/v3.2` — applied by the collector, not by emitters.
+#   * `dimension_rollup_option: ZeroAndSingleDimensionRollup` — emitters attach
+#     dimensions as OTel data-point attributes; the CloudWatch alarms query
+#     dimensions = {} and therefore consume ONLY the zero-dimension rollup
+#     series this option produces. If this pin drifts (NoDimensionRollup, or a
+#     revert to the built-in /etc/ecs config with its own namespace), both
+#     failure-rate alarms silently go permanently INSUFFICIENT_DATA.
+#
+# No `metric_declarations` block: default behaviour (all-attribute dimension
+# sets + rollups) is intended per CLAR-DEPLOY-20.
+#
+# Threaded into the task definition via the AOT_CONFIG_CONTENT environment
+# variable by infra/observability-apply.sh (<ENV>/<REGION> substituted there).
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 10s
+
+exporters:
+  awsemf:
+    region: "<REGION>"
+    namespace: "Scanipy/v3.2"
+    dimension_rollup_option: "ZeroAndSingleDimensionRollup"
+    log_group_name: "/scanipy/<ENV>/otel-collector"
+    log_stream_name: "emf-metrics"
+  awsxray:
+    region: "<REGION>"
+    index_all_attributes: true
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [awsemf]
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [awsxray]
