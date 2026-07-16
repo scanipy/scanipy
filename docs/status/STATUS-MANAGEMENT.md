@@ -1,7 +1,8 @@
 # STATUS — Management / CTO
 
 **Owner:** CTO (+ Architect for the marked items) · **Updated by:** management, via PR · **Engineering contact:** orchestrating agent
-**Baseline:** WBS §21 v3.2 DoD. **Audited 2026-06-04: 3 of 12 lines MET.** Target: 12/12.
+**Baseline:** WBS §21 v3.2 DoD. **Audited 2026-06-04: 3 of 12 lines MET.** Re-audited 2026-07-16
+post-MVP-1-rollout push. Target: 12/12.
 
 ---
 
@@ -37,6 +38,24 @@ mutation-tested, including the first zero-fakes end-to-end run of the assembled 
 CP-05 core attestation, PR #297). What remains red is **not engineering**: corpus campaigns
 (STATUS-CORPUS-TEAM.md), the AWS runbook (#273/#274→#283), and the §3 signature backlog.
 
+**Re-score 2026-07-16 (MVP-1 rollout push, PRs #308/#310–#316):** the L8 AWS/deploy track moved from
+partial-with-real-gaps to substantially complete and live-verified. Nine PRs merged in one session:
+`#310` ratified CLAR-DEPLOY-19/20/21/22; `#311` remediated observability (real 5%/15min alarm math,
+fixed DLQ dimensions, OTel launch-proven live, SNS alerting subscribed, ECR hardened); `#312`
+completed the tenant data-plane (3 S3 buckets with correct retention tiers + Object Lock, prefix-deny
+policies applied live, CMK Lambda hardened — org_id validation, rotation-retry fix, invoke-restricted
+— through 2 claude-review rounds catching a real shell-injection finding); `#313` added an honest
+moto-based CI emulation harness (IAM/S3-policy denials never faked); `#314` wired the CLAR-DEPLOY-20
+metric emitters across SNAP-05/ORCH-03/ORCH-01/CP-05/SNAP-04/TRI-02; `#315` shipped the CLAR-DEPLOY-19
+HTTP adapter (C-1/C-2 discharged, plus a real unauthenticated-DoS finding caught by an adversarial
+security review and fixed with a body-size cap before merge — see CLAR-SLA-03); `#316` built the
+`workers/env_digest_history.json` registry + rollover ceremony + SLSA-3 attestation + a hardened
+pre-deploy Direct-push-detector gate (closing the exact hole that voided v0.1.1); `#308` (re-review)
+caught and reverted an unrelated, out-of-scope `.claude/settings.json` change that had silently
+stripped the repo's push/merge/publish confirmation fence — restored before merge. **Tag `v0.1.2`
+cut from this fully-reviewed history and run through `deploy.yml` end-to-end 2026-07-16** — see L8
+row below for the run link and registered digests once the run completes.
+
 | # | §21 line | Verdict 2026-06-04 | What flips it | Owner track | Status (fill) |
 |---|---|---|---|---|---|
 | L1 | Phase 0 — every CMP has DOC-CMP-* | **MET** | — | — | MET |
@@ -46,9 +65,9 @@ CP-05 core attestation, PR #297). What remains red is **not engineering**: corpu
 | L5 | SNAP-04 — re-partition on seeded CW-DETECT FN; SLA published | UNMET (mechanism merged; **detection scanner unbuilt**) | CLAR-FE-03 decision → scanner build + adversarial corpus + falsifier-cw PR trigger | CTO (fund) + Engineering | UNMET — unchanged; awaiting CLAR-FE-03 signature (§3-A) |
 | L6 | TRI-02 — adversarial + martingale tests | **MET** | — | — | MET |
 | L7 | CI-01 — four gates as hard pipeline failures | PARTIAL (Gates 1+4 real; Gate 2 never runs on PR; Gate 3 vacuous) | Gate 2: REFL corpus + PR-trigger decision (§3-D). Gate 3: CP-05 + CANARY-01 | Engineering + Corpus + CTO | PARTIAL — Gates 1+3+4 now real (Gate 3 de-vacuized #293/#296/#297); Gate 2 corpus-gated + §3-D trigger decision |
-| L8 | DEPLOY-01..05 — substrate, signed image, observability, isolation | PARTIAL (decisions recorded; **execution not started**) | `STATUS-AWS-TEAM.md` runbook, items 1–9 | AWS/SRE | PARTIAL — handed to AWS track (#273; critical chain #274→#278 = first real env_digest) |
+| L8 | DEPLOY-01..05 — substrate, signed image, observability, isolation | PARTIAL (decisions recorded; **execution not started**) | `STATUS-AWS-TEAM.md` runbook, items 1–9 | AWS/SRE | **PARTIAL → substantially complete, live-verified 2026-07-16.** Substrate: DONE. Signed image: DONE + now provably built from reviewed history (`v0.1.2`, pre-deploy Direct-push-detector gate, SLSA-3 attested — closes the exact gap that voided `v0.1.1`). Observability: live-verified operational (real alarm math, OTel launch-proven, SNS subscribed, ECR hardened — #311). Isolation: live-verified (3 buckets + Object Lock + prefix-deny + hardened CMK Lambda — #312); app-surface enforcement (AC-DEPLOY-05a/b) still needs the manually-dispatched `aws_live` window (harness ready per #313, not yet run) and remains honestly `xfail`/`skip`. Remaining red: AC-DEPLOY-03a (trace correlation, needs live traffic — services are `desiredCount=0`, no execute loop yet), AC-DEPLOY-04b (seeded gates-fail-hard live proof), the `aws_live` enforcement window. CMP-DEPLOY-02/03/04/05 (issues #4–#7) correctly remain `IN-PROGRESS` under RULE-3 — real progress, not yet all-green. |
 | L9 | Staging table AC-driven (not prose) | UNMET | CP-06 harness (Wave 6) + corpora verdicts + table publisher | Engineering + Corpus | MECHANISM MET (#295 CP-06 + #296 publisher; table is AC-driven and honestly all-ungated); real passes need corpora + CLAR-CI-02 verdict-home signature |
-| L10 | CLAR register — all RESOLVED or explicitly deferred | UNMET (19 OPEN) | §3 decisions below | CTO/Architect | UNMET — 31 OPEN / 55 RESOLVED / 3 DEFERRED (Waves 3–6 filed honest deviations rather than inventing scope; 13 need a §3 signature) |
+| L10 | CLAR register — all RESOLVED or explicitly deferred | UNMET (19 OPEN) | §3 decisions below | CTO/Architect | UNMET — 31 OPEN / 59 RESOLVED / 3 DEFERRED (93 total, 2026-07-16 census). CLAR-DEPLOY-19/20/21/22 flipped/added RESOLVED this push; **CLAR-SLA-03** (new, OPEN) filed by the HTTP-adapter lane's security review — a durable per-route request-body-size-ceiling policy is needed once Auth0 JWKS verification lands (an interim uniform 5MiB cap ships in #315; RULE-4-clean, mirrors the CLAR-SLA-02 precedent). |
 | L11 | OOS register — no drift | **MET** | — | — | MET |
 | L12 | Risks R-1..R-5 — DONE or LIVE-AS-POLICY | UNMET (R-3 done, R-5 policy; R-1/R-4 need SNAP-04+CP-05; R-2 needs CP-06) | Same dependencies as L4/L5 + CP-06 | All three tracks | UNMET — unchanged deps (R-1/R-4: CLAR-FE-03 + CANARY-01; R-2: CP-06 corpora verdicts) |
 

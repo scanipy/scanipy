@@ -43,12 +43,14 @@ INV-2 stamps reference. Coordinate with engineering for where it is registered.
 **Unblocks:** TST-AC-DEPLOY-02b flip *(eng)* · CP-06 bootstrap · real INV-2 end-to-end.
 > **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-09 · **Evidence:** nominated digest `sha256:f3d51cf67de7b3a5f7acd72dd385ce1c6b1e44ecd3677ba0bb6fb58cd270d09f` (scanipy-snapshot:v0.1.0, Cosign-signed, Sigstore transparency log)
 > **Superseded by CLAR-DEPLOY-22** (`WBS.md §17`) — the canonical registration surface is the machine-readable `workers/env_digest_history.json`, not this prose row. The v0.1.0 nomination above is recorded there as `status=void` (prose-only, never machine-registered, never deployed, no artifact stamped) alongside the equally-void v0.1.1 digests (tainted direct-push provenance, `d948e6b`). The first `active` entries are the v0.1.2 digests registered by `deploy.yml`'s `register-env-digest` job.
+> **Effective 2026-07-16:** the rollover PR (#317) is merged — `scanipy-snapshot@sha256:7733e34a…` and `scanipy-detector@sha256:d0906451…` (tag `v0.1.2`, built from reviewed commit `37a51c0`) are now the `active` entries on `main`, live-verified matching the deployed ECS task-def revisions (`scanipy-{snapshot,detector}-worker:3`). This is the real INV-2/CP-06 bootstrap the row-5 prose above never achieved.
 
 ### 6. DEPLOY-04 — pipeline end-to-end on a real version tag
 Run `deploy.yml` on a `vX.Y.Z` tag with 1–5 in place: OIDC login → build → pin-check → sign → push →
 deploy to ECS Fargate. Then *(eng)*: AC-DEPLOY-04a digest-drift rejection, AC-DEPLOY-04b
 gates-fail-hard proof, AC-DEPLOY-04c SLSA-3 attestation predicate.
-> **Status:** DONE · **Owner:** @papadoxie · **Date:** 2026-06-09 · **Evidence:** green run [#27191387683](https://github.com/scanipy/scanipy-v3.2/actions/runs/27191387683) — pre-deploy gates ✓, build+sign ✓, ECS deploy ✓
+> **Status:** DONE — superseded by a clean re-run · **Owner:** @papadoxie · **Date:** 2026-06-09 · **Evidence:** green run [#27191387683](https://github.com/scanipy/scanipy-v3.2/actions/runs/27191387683) — pre-deploy gates ✓, build+sign ✓, ECS deploy ✓
+> **Superseded 2026-07-16:** run #27191387683 deployed tag `v0.1.1`, which was built from direct-push commit `d948e6b` (the `enforce-pr-only-merges` check concluded `failure` on that SHA) — the images and Rekor records trace to unreviewed history, and CLAR-DEPLOY-22 recorded both `v0.1.1` digests `void` for exactly that reason. Tag **`v0.1.2`** was cut from `main` at `37a51c0` (9 PRs merged through `claude-review`, 2026-07-14→16) and run through `deploy.yml` end-to-end: [run #29481555413](https://github.com/scanipy/scanipy-v3.2/actions/runs/29481555413) — pre-deploy gates ✓ (now including the new Direct-push-detector assertion, which independently confirmed `37a51c0` is clean), build+sign+SLSA-3-attest ✓, ECS deploy ✓ (task-def revisions `scanipy-{snapshot,detector}-worker:3`, live-verified pinning digests `sha256:7733e34a…`/`sha256:d0906451…`). Both services remain `desiredCount=0` by design — `CMP-SNAP-05`'s real per-job execute loop is still an intentional `NotImplementedError` pending `CMP-SNAP-01/02`, so scaling up would only crash-loop; the deploy proves the pipeline and artifact, not sustained traffic-serving yet. The `register-env-digest` job registered both digests as `active` and pushed the rollover branch, but its `gh pr create` call failed on a repo-level Actions permission gap (unrelated to the workflow's own scoped `permissions:` — `GitHub Actions is not permitted to create or approve pull requests`); the PR was opened manually from the already-pushed branch: #317.
 
 ### 7. DEPLOY-03 — observability surfaces *(CLAR-DEPLOY-07)*
 OTel exporters → CloudWatch Logs + X-Ray; provision the six named alarms (snapshot-fail,
@@ -84,7 +86,7 @@ runs after ORCH-01 exists (Wave 5).
 Create `scanipy-canary` orgs/projects on GitHub, GitLab, Bitbucket, Azure DevOps; store push
 credentials in Secrets Manager; grant the corpus pipeline access.
 **Unblocks:** `STATUS-CORPUS-TEAM.md` §4 → Gate-3's corpus.
-> **Status:** IN-PROGRESS · **Owner:** @papadoxie · **Date:** 2026-06-10
+> **Status:** IN-PROGRESS — secret stubs + IAM read policy provisioned (PR #308, merged 2026-07-16); **real SCM org creation not started** · **Owner:** @papadoxie · **Date:** 2026-06-10 (PR #308 merged 2026-07-16 after a re-review caught and required reverting an unrelated `.claude/settings.json` permission-posture regression bundled into the same PR — see WBS §17 note / memory)
 > **AWS side (DONE):**
 > - Secrets Manager stubs created (placeholder values — fill after org + PAT creation):
 >   `scanipy/prod/canary/github` · `scanipy/prod/canary/gitlab` · `scanipy/prod/canary/bitbucket` · `scanipy/prod/canary/azure-devops`
@@ -101,6 +103,7 @@ Several env-gated ACs (DEPLOY-05a/b, parts of 02a) could become CI-runnable agai
 instead of waiting for live-account windows. Engineering will wire the harness if you provision/approve
 the approach. *(Optional — reduces live-account coupling; not on the §21 critical path.)*
 > **Decision:** **moto adopted** (CLAR-DEPLOY-21) — in-process pip dev-dep `moto[s3,sqs,kms,secretsmanager,sts]>=5.1,<6.0` for the honestly-emulatable slice only (boto3 adapter conformance, SQS redrive/DLQ-after-3, KMS envelope mechanics, session-policy render + 2048-char limit); policy-enforcement negatives (AC-DEPLOY-05a denies) are NOT emulatable and stay live-account behind the `aws_live` marker; LocalStack CE/Pro rejected; greening 02a/b against moto ECR forbidden. Record: `docs/cross-cutting/DOC-DEPLOY-DECISIONS.md § CLAR-DEPLOY-21` · **Owner:** CTO Agent · **Date:** 2026-07-14
+> **Status (2026-07-16):** harness **BUILT and merged** (PR #313) — the decision is fully executed, not just recorded. The `aws_live`-marked live-enforcement counterparts exist (`tests/integration/test_tenant_isolation_live.py`) but have not yet been run in the live window (needs a `workflow_dispatch` job exporting `SCANIPY_AWS_LIVE_TESTS=1` under the OIDC role — not yet created).
 
 ---
 
