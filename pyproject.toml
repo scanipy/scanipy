@@ -29,6 +29,12 @@ dev = [
     "alembic>=1.13",
     "sqlalchemy>=2.0",
     "pre-commit>=3.7",
+    # CLAR-DEPLOY-21: CI-side AWS emulation — moto is an in-process pip dep (no
+    # docker service). It emulates API mechanics ONLY; it does NOT evaluate IAM
+    # session policies, S3 bucket policies, or KMS key policies, so every
+    # policy-enforcement negative stays behind the `aws_live` marker.
+    "boto3>=1.34",
+    "moto[s3,sqs,kms,secretsmanager,sts]>=5.1,<6.0",
     # starlette 1.x's TestClient emits a StarletteDeprecationWarning under plain
     # httpx, which the repo's pytest `filterwarnings=["error"]` turns fatal;
     # httpx2 (named by starlette's `full` extra) makes the import warning-clean.
@@ -133,6 +139,14 @@ ignore_missing_imports = true
 module = ["opentelemetry.*"]
 ignore_missing_imports = true
 
+# CLAR-DEPLOY-21: boto3/botocore/moto are dev-extra deps for the AWS-emulation
+# test slice; boto3 is lazily imported inside S3ObjectStore.__init__ (only on
+# the client=None production path), so hermetic runs need no boto3 install.
+# No stubs are shipped; ignore like the opentelemetry.* override above.
+[[tool.mypy.overrides]]
+module = ["boto3.*", "botocore.*", "moto.*"]
+ignore_missing_imports = true
+
 # ---------------------------------------------------------------------------
 # Pytest
 # ---------------------------------------------------------------------------
@@ -160,6 +174,7 @@ markers = [
     "invariant: invariant verification tests (TST-INV-*)",
     "nightly: run only in nightly CI",
     "pre_release: run only before release tags",
+    "aws_live: policy-enforcement negatives against the live AWS account; opt-in via SCANIPY_AWS_LIVE_TESTS=1 (never runs on PR CI)",
 ]
 filterwarnings = [
     "error",
