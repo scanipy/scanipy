@@ -39,6 +39,7 @@ here — this module is the durable transport beneath that worker.
 from __future__ import annotations
 
 import json
+import os
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
@@ -205,7 +206,14 @@ class SQSQueue:
     ``client`` is any boto3-SQS-shaped object (production ``boto3.client("sqs")``,
     moto-backed client in tests). boto3 is imported lazily on the ``None`` path
     only, so hermetic unit runs need no boto3 install (``S3ObjectStore``
-    precedent).
+    precedent). The real client is constructed with an explicit ``region_name``
+    (``AWS_REGION``, default ``"us-east-1"`` — same env var + default already
+    used by ``services/snapshot/worker.py``/``tools/observability/init.py``)
+    rather than relying on boto3's ambient region-resolution chain, which is
+    unset in some environments (e.g. GitHub Actions runners have no
+    ``~/.aws/config`` — ``boto3.client("sqs")`` with no region raises
+    ``botocore.exceptions.NoRegionError`` there even though the identical call
+    resolves fine wherever a default region happens to be configured).
 
     This module carries scan work, not findings; the four provenance fields
     (INV-1/2/5) are threaded by the worker that emits findings, not here (same
@@ -213,10 +221,10 @@ class SQSQueue:
     """
 
     def __init__(self, queue_url: str, client: object | None = None) -> None:
-        if client is None:  # pragma: no cover — real-AWS path; tests always inject
+        if client is None:
             import boto3
 
-            client = boto3.client("sqs")
+            client = boto3.client("sqs", region_name=os.environ.get("AWS_REGION", "us-east-1"))
         self._queue_url = queue_url
         self._client: Any = client
         self._in_flight: dict[int, str] = {}

@@ -39,22 +39,20 @@ job whose ``parent_snapshot_id`` is non-empty is refused fail-closed
 (:class:`IncrementalSnapshotNotSupportedError`) rather than silently mis-handled —
 CMP-SNAP-02 is Wave-2+ scope and only engages from the second commit onward.
 
-Three collaborators remain genuinely unbuilt and are injected as typed,
-fail-closed-by-default ports (CLAR-PROC-01 condition (2), same discipline as
-``services/scan/worker.py``): :data:`ParseSourceFn` (CMP-SNAP-05's
-``source -> CPG`` front end is CLAR-SNAP-03 scope, built on a parallel track —
-:func:`_fail_closed_parse_source` names it), :class:`ReportStatusPort` (the
-worker->API status-report wire contract is unresolved — DOC §3.2 names a route
-that does not exist and CLAR-SNAP-02's resolution explicitly carved the
-``report_status`` callback shape out as "a separate downstream decision" — see
-this module's ``ReportStatusPort`` docstring), and :class:`SnapshotQueuePort`
-(``services/substrate/queue.py`` ships only the in-memory ``StandardQueue``
-substrate primitive; no boto3-backed SQS binding exists yet, a parallel
-build-ahead track). A hermetic test injects deterministic fakes for all three;
-production calls (:func:`main`) get the fail-closed defaults until each lands.
-S3 upload is **not** gated: :class:`services.substrate.object_store.S3ObjectStore`
-is real (lazy boto3 import), so the production default actually constructs one
-from the ``S3_BUCKET`` env var.
+One collaborator remains genuinely unbuilt and is injected as a typed,
+fail-closed-by-default port (CLAR-PROC-01 condition (2), same discipline as
+``services/scan/worker.py``): :class:`ReportStatusPort` (the worker->API
+status-report wire contract is unresolved — DOC §3.2 names a route that does
+not exist and CLAR-SNAP-02's resolution explicitly carved the
+``report_status`` callback shape out as "a separate downstream decision",
+tracked as CLAR-SNAP-07 — see this module's ``ReportStatusPort`` docstring).
+The other two production seams are now real: :data:`ParseSourceFn` defaults
+to ``analysis.cpg_ingest.joern_frontend.parse_source`` (CLAR-SNAP-03/05,
+ratified and landed) and :class:`SnapshotQueuePort` defaults to a real
+``SQSQueue`` reading ``SNAPSHOT_QUEUE_URL`` (see :func:`_default_snapshot_queue`).
+A hermetic test injects deterministic fakes for all collaborators regardless.
+S3 upload is likewise real: :class:`services.substrate.object_store.S3ObjectStore`
+(lazy boto3 import) constructed from the ``S3_BUCKET`` env var.
 
 This module writes NO provenance fields to a ``Finding``; it threads
 ``env_digest`` (INV-2) into the snapshot pipeline via the SNAP-01 callback
@@ -69,21 +67,22 @@ import json
 import os
 import re
 import sys
-import tarfile
 import tempfile
 import time
 from dataclasses import asdict, dataclass
-from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, Literal, Protocol, runtime_checkable
 
+from analysis.cpg_ingest.joern_frontend import parse_source as _real_parse_source
 from services.scan.provenance import InvariantViolation
 from services.snapshot import cw_detect
+from services.substrate.cpg_tarball import serialize_cpg_tarball
 from services.substrate.object_store import (
     SNAPSHOT_ARTIFACT_TYPES,
     S3ObjectStore,
     SnapshotKeyBuilder,
 )
+from services.substrate.queue import SQSQueue
 from tools.observability.logging import get_logger
 from tools.observability.metrics import record_job_completion
 
@@ -338,31 +337,16 @@ class ParseSourceFn(Protocol):
     """``source -> analysis.ordering.CPG`` front end (CLAR-SNAP-03 scope).
 
     Exact agreed signature (the 1A/1B handshake): ``parse_source(src_root,
-    language, *, env, workdir) -> CPG``. CMP-SNAP-05's own Joern orchestration
-    (``analysis.cpg_ingest.joern_frontend.parse_source``) is built on a parallel
-    track and has not landed in this worktree; the production default
-    (:func:`_fail_closed_parse_source`) fails closed until it does, at which
-    point wiring it in is a one-line import change (this Protocol's shape does
-    not need to change).
+    language, *, env, workdir) -> CPG``. The production default is the real
+    ``analysis.cpg_ingest.joern_frontend.parse_source`` (CLAR-SNAP-03/05,
+    ratified and landed) — see :func:`_real_parse_source`, imported at module
+    load as ``_real_parse_source``. Tests inject a fake matching this exact
+    signature via ``run_execute_loop(..., parse_source=...)``.
     """
 
     def __call__(
         self, src_root: Path, language: str, *, env: Mapping[str, str], workdir: Path
     ) -> CPG: ...
-
-
-def _fail_closed_parse_source(
-    src_root: Path, language: str, *, env: Mapping[str, str], workdir: Path
-) -> CPG:
-    """Production ``ParseSourceFn`` default: fails closed until CLAR-SNAP-03 lands."""
-    del env, workdir  # unused in the fail-closed stub; part of the real signature
-    raise NotImplementedError(
-        f"parse_source({src_root!s}, {language!r}) is not wired: CMP-SNAP-05's "
-        "source->CPG front end (CLAR-SNAP-03, analysis.cpg_ingest.joern_frontend."
-        "parse_source) is built on a parallel track and has not landed. Inject a "
-        "ParseSourceFn matching this exact signature via "
-        "run_execute_loop(..., parse_source=...) in a hermetic test."
-    )
 
 
 SnapshotStatusState = Literal["ready", "failed"]
@@ -449,11 +433,9 @@ def _fail_closed_report_status_port() -> ReportStatusPort:
 class SnapshotQueuePort(Protocol):
     """Structural seam over the dequeue surface (``StandardQueue``-compatible).
 
-    ``services/substrate/queue.py`` ships only the in-memory ``StandardQueue``
-    substrate primitive (its own docstring: "No boto3 / AWS is called"); no
-    boto3-backed SQS adapter exists in this worktree yet (a parallel
-    build-ahead track). A hermetic / local-rehearsal test injects a
-    ``StandardQueue`` instance directly (already structurally compatible).
+    Both ``services/substrate/queue.py`` primitives satisfy this shape:
+    ``StandardQueue`` (in-memory, hermetic tests) and ``SQSQueue`` (real
+    boto3-backed adapter, production default — see :func:`_default_snapshot_queue`).
     """
 
     def receive(self) -> ReceivedMessage | None: ...
@@ -463,25 +445,22 @@ class SnapshotQueuePort(Protocol):
     def fail(self, receipt_handle: int) -> None: ...
 
 
-class _FailClosedSnapshotQueue:
-    """Production ``SnapshotQueuePort`` default: fails closed until a real SQS adapter lands."""
+def _default_snapshot_queue(environ: Mapping[str, str]) -> SnapshotQueuePort:
+    """Production ``SnapshotQueuePort`` default: a REAL ``SQSQueue`` (lazy boto3).
 
-    def receive(self) -> ReceivedMessage | None:
-        raise NotImplementedError(
-            "no boto3-backed SQS queue adapter is wired yet (services/substrate/"
-            "queue.py ships only the in-memory StandardQueue substrate primitive); "
-            "inject a SnapshotQueuePort via run_execute_loop(..., queue=...)."
+    Mirrors :func:`_default_object_store`'s pattern exactly: ``SQSQueue.__init__``
+    lazily imports boto3 only when ``client=None`` is passed, so this stays
+    import-clean without boto3 present. ``SNAPSHOT_QUEUE_URL`` (already
+    provisioned on the live ECS task definition, ``scanipy-prod-snapshot-jobs``)
+    must be set; a missing value fails closed rather than guessing a queue URL.
+    """
+    queue_url = environ.get("SNAPSHOT_QUEUE_URL")
+    if not queue_url:
+        raise InvariantViolation(
+            "SNAPSHOT_QUEUE_URL must be set; refusing to construct an unbound SQSQueue",
+            code="missing_snapshot_queue_url",
         )
-
-    def ack(self, receipt_handle: int) -> None:
-        raise NotImplementedError("no snapshot queue adapter wired; see receive()")
-
-    def fail(self, receipt_handle: int) -> None:
-        raise NotImplementedError("no snapshot queue adapter wired; see receive()")
-
-
-def _fail_closed_snapshot_queue() -> SnapshotQueuePort:
-    return _FailClosedSnapshotQueue()
+    return SQSQueue(queue_url)
 
 
 def _default_object_store(environ: Mapping[str, str]) -> ObjectStore:
@@ -541,51 +520,6 @@ def _git_env(home: Path) -> dict[str, str]:
 def _default_parse_env() -> dict[str, str]:
     """Minimal explicit env threaded into ``parse_source`` (DOC §6.3 example shape)."""
     return {"PATH": "/opt/joern/bin:/opt/codeql:/usr/bin", "JAVA_HOME": "/opt/jdk"}
-
-
-def _build_cpg_tarball(cpg: CPG) -> bytes:
-    """Serialise ``cpg`` to the bootstrap ``cpg_tarball`` artifact body.
-
-    Format (S3 key suffix ``cpg.tar.zst`` per ``SNAPSHOT_ARTIFACT_SUFFIXES`` —
-    NOTE the bytes here are gzip, not zstd: ``zstandard`` is not a pinned
-    dependency in this repo, see the handoff note / new-CLAR candidate raised
-    alongside this PR): a ``tar`` archive (gzip-compressed, stdlib ``tarfile``,
-    no extra dependency) containing exactly two members:
-
-    * ``nodes.json`` — a JSON array of ``{node_id, kind, operator_or_literal,
-      resolved_fqn, enclosing_decl_fqn, structural_path}`` objects, one per
-      ``CPGNode``, in ``cpg.nodes`` order.
-    * ``edges.json`` — a JSON array of ``{src, dst, kind}`` objects, one per
-      ``CPGEdge``, in ``cpg.edges`` order.
-
-    A consumer (CMP-ORCH-03 / track 1C) reconstructs the ``CPG`` by re-calling
-    ``CPG.add_node`` / ``add_edge`` in file order (node insertion order is
-    preserved by the JSON array order, matching ``NodeId`` assignment).
-    """
-    nodes_payload = [
-        {
-            "node_id": int(node.node_id),
-            "kind": node.kind,
-            "operator_or_literal": node.operator_or_literal,
-            "resolved_fqn": node.resolved_fqn,
-            "enclosing_decl_fqn": node.enclosing_decl_fqn,
-            "structural_path": node.structural_path,
-        }
-        for node in cpg.nodes
-    ]
-    edges_payload = [
-        {"src": int(edge.src), "dst": int(edge.dst), "kind": edge.kind} for edge in cpg.edges
-    ]
-    nodes_bytes = json.dumps(nodes_payload).encode("utf-8")
-    edges_bytes = json.dumps(edges_payload).encode("utf-8")
-
-    buffer = BytesIO()
-    with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
-        for name, payload in (("nodes.json", nodes_bytes), ("edges.json", edges_bytes)):
-            info = tarfile.TarInfo(name=name)
-            info.size = len(payload)
-            tar.addfile(info, BytesIO(payload))
-    return buffer.getvalue()
 
 
 def _build_reverse_symbol_index(cpg: CPG) -> bytes:
@@ -687,16 +621,18 @@ def run_execute_loop(
             boto3-SQS adapter is wired yet — inject a ``StandardQueue`` in tests).
         object_store: the S3-shaped upload port; defaults to a REAL
             ``S3ObjectStore`` built from ``S3_BUCKET`` (already-real substrate).
-        parse_source: the ``source -> CPG`` front end; fails closed by default
-            (CLAR-SNAP-03, built on a parallel track) — inject a fake matching
-            the exact :data:`ParseSourceFn` signature in tests.
+        parse_source: the ``source -> CPG`` front end; defaults to the real
+            ``analysis.cpg_ingest.joern_frontend.parse_source`` (CLAR-SNAP-03/05)
+            — inject a fake matching the exact :data:`ParseSourceFn` signature
+            in tests.
         report_status: the worker->API callback port; fails closed by default
             (the wire contract is unresolved — see :class:`ReportStatusPort`).
         environ: env mapping override for hermetic tests (defaults to
-            :data:`os.environ`), read for ``S3_BUCKET`` / ``AWS_REGION``.
+            :data:`os.environ`), read for ``S3_BUCKET`` / ``SNAPSHOT_QUEUE_URL``
+            / ``AWS_REGION``.
     """
     env = os.environ if environ is None else environ
-    active_queue: SnapshotQueuePort = queue if queue is not None else _fail_closed_snapshot_queue()
+    active_queue: SnapshotQueuePort = queue if queue is not None else _default_snapshot_queue(env)
     logger = get_logger("snapshot-worker")
 
     received = active_queue.receive()
@@ -712,7 +648,7 @@ def run_execute_loop(
     # — including when the one collaborator that CAN raise at construction,
     # ``_default_object_store`` (missing ``S3_BUCKET``), is what failed.
     active_parse_source: ParseSourceFn = (
-        parse_source if parse_source is not None else _fail_closed_parse_source
+        parse_source if parse_source is not None else _real_parse_source
     )
     active_report_status: ReportStatusPort = (
         report_status if report_status is not None else _fail_closed_report_status_port()
@@ -782,7 +718,7 @@ def run_execute_loop(
             )
 
             artifact_bodies: dict[str, bytes] = {
-                "cpg_tarball": _build_cpg_tarball(cpg),
+                "cpg_tarball": serialize_cpg_tarball(cpg),
                 "reverse_symbol_index": _build_reverse_symbol_index(cpg),
                 "dynamic_call_graph": _build_dynamic_call_graph_stub(),
                 "precondition_status": _build_precondition_status_record(cw_verdict),

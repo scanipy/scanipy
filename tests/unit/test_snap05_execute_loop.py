@@ -6,13 +6,13 @@ dequeue -> real ``git`` clone (via the REAL argv-allowlisted ``secure_run``,
 with only the underlying ``subprocess.run`` spawn faked, exactly like
 ``tests/unit/test_snap_specs.py::test_snap_05a_argv_allowlist_rejects_non_sanctioned_flag``'s
 positive control) -> real ``CMP-SNAP-03`` ``cw_detect.detect`` -> an injected
-fake ``parse_source`` (CLAR-SNAP-03 / track 1A has not landed; the injected
-fake satisfies the exact agreed signature so swapping in the real
-``analysis.cpg_ingest.joern_frontend.parse_source`` is a one-line change) ->
-upload to an ``ObjectStore`` (``InMemoryObjectStore`` for the hermetic unit
-specs; a REAL moto-backed ``S3ObjectStore`` for the one integration spec) ->
-an injected fake ``ReportStatusPort`` (the real HTTP+HMAC client is
-unbuilt — see ``ReportStatusPort``'s docstring).
+fake ``parse_source`` (satisfies the exact agreed signature the production
+default, ``analysis.cpg_ingest.joern_frontend.parse_source``, also
+implements — CLAR-SNAP-03/05 landed) -> upload to an ``ObjectStore``
+(``InMemoryObjectStore`` for the hermetic unit specs; a REAL moto-backed
+``S3ObjectStore`` for the one integration spec) -> an injected fake
+``ReportStatusPort`` (the real HTTP+HMAC client is unbuilt — see
+``ReportStatusPort``'s docstring).
 
 No boto3/AWS import happens at collection time for the ``unit``-marked tests
 (``moto`` is imported lazily inside the single ``integration``-marked test).
@@ -34,6 +34,7 @@ from services.snapshot.worker import (
     SnapshotStatusReport,
     run_execute_loop,
 )
+from services.substrate.cpg_tarball import deserialize_cpg_tarball
 from services.substrate.object_store import (
     InMemoryObjectStore,
     ObjectStoreError,
@@ -227,20 +228,17 @@ def test_bootstrap_success_sequence_and_report_status(monkeypatch: pytest.Monkey
     with pytest.raises(ObjectStoreError):
         object_store.get(_ORG_ID, keys["delta_graph"])
 
-    # cpg_tarball is a real gzip tar with nodes.json/edges.json members that
-    # round-trip the fake CPG's two nodes / one edge.
+    # cpg_tarball is the shared services.substrate.cpg_tarball format (single
+    # cpg.json member) — round-trips the fake CPG's two nodes / one edge
+    # through the REAL consumer (CMP-ORCH-03 / detector_worker.py imports the
+    # same deserialize_cpg_tarball, CLAR-ORCH-10/CLAR-SNAP-08).
     tarball = object_store.get(_ORG_ID, keys["cpg_tarball"])
     with tarfile.open(fileobj=io.BytesIO(tarball), mode="r:gz") as tar:
         names = sorted(member.name for member in tar.getmembers())
-        assert names == ["edges.json", "nodes.json"]
-        nodes_member = tar.extractfile("nodes.json")
-        assert nodes_member is not None
-        nodes = json.loads(nodes_member.read())
-        assert len(nodes) == 2
-        edges_member = tar.extractfile("edges.json")
-        assert edges_member is not None
-        edges = json.loads(edges_member.read())
-        assert edges == [{"src": 0, "dst": 1, "kind": "AST"}]
+        assert names == ["cpg.json"]
+    restored = deserialize_cpg_tarball(tarball)
+    assert len(restored.nodes) == 2
+    assert [(int(e.src), int(e.dst), e.kind) for e in restored.edges] == [(0, 1, "AST")]
 
     # precondition_status.json carries the real CW-DETECT verdict shape.
     status_body = json.loads(object_store.get(_ORG_ID, keys["precondition_status"]))
@@ -465,7 +463,54 @@ def test_bootstrap_uploads_survive_a_real_moto_s3_round_trip(
         cpg_body = store.get(_ORG_ID, keys["cpg_tarball"])
         assert cpg_body
         with tarfile.open(fileobj=io.BytesIO(cpg_body), mode="r:gz") as tar:
-            assert sorted(m.name for m in tar.getmembers()) == ["edges.json", "nodes.json"]
+            assert sorted(m.name for m in tar.getmembers()) == ["cpg.json"]
+        deserialize_cpg_tarball(cpg_body)  # round-trips without raising
 
     assert queue.ready_depth == 0
     assert queue.dlq_messages == []
+
+
+# ---------------------------------------------------------------------------
+# Production-default wiring: the real parse_source / SQSQueue seams
+# (CLAR-SNAP-03/05 landing) — regression guards for the two collaborators
+# that were fail-closed stubs until this pass.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_production_parse_source_default_is_the_real_joern_frontend() -> None:
+    """``run_execute_loop``'s ``parse_source`` default is the real
+    ``analysis.cpg_ingest.joern_frontend.parse_source`` — not the retired
+    fail-closed stub — confirmed by identity, not by invoking it (invoking it
+    needs a real Joern install, out of scope for a hermetic unit test)."""
+    import services.snapshot.worker as worker_module
+    from analysis.cpg_ingest.joern_frontend import parse_source as real_parse_source
+
+    assert worker_module._real_parse_source is real_parse_source
+
+
+@pytest.mark.unit
+def test_production_queue_default_fails_closed_without_snapshot_queue_url() -> None:
+    """``_default_snapshot_queue`` refuses to construct an unbound ``SQSQueue``
+    when ``SNAPSHOT_QUEUE_URL`` is unset — mirrors ``_default_object_store``'s
+    ``S3_BUCKET`` fail-closed contract exactly."""
+    import services.snapshot.worker as worker_module
+    from services.scan.provenance import InvariantViolation
+
+    with pytest.raises(InvariantViolation, match="SNAPSHOT_QUEUE_URL"):
+        worker_module._default_snapshot_queue({})
+
+
+@pytest.mark.unit
+def test_production_queue_default_builds_a_real_sqs_queue_when_configured() -> None:
+    """``_default_snapshot_queue`` builds a real ``SQSQueue`` bound to the
+    configured URL when ``SNAPSHOT_QUEUE_URL`` is set (boto3 client injection
+    happens lazily inside ``SQSQueue`` itself, not exercised here)."""
+    import services.snapshot.worker as worker_module
+    from services.substrate.queue import SQSQueue
+
+    active = worker_module._default_snapshot_queue(
+        {"SNAPSHOT_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/000000000000/q"}
+    )
+    assert isinstance(active, SQSQueue)
+    assert active.queue_url == "https://sqs.us-east-1.amazonaws.com/000000000000/q"

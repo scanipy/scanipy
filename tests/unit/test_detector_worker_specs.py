@@ -42,10 +42,11 @@ from services.scan.detector_worker import (
     run_detector_job,
     serialize_cpg_tarball,
 )
-from services.scan.provenance import verify_chain
+from services.scan.provenance import InvariantViolation, verify_chain
+from services.scan.software_kms_signer import SoftwareKmsSignerProdRefusalError
 from services.scan.worker import WorkerJob
-from services.substrate.object_store import InMemoryObjectStore, SnapshotKeyBuilder
-from services.substrate.queue import StandardQueue
+from services.substrate.object_store import InMemoryObjectStore, S3ObjectStore, SnapshotKeyBuilder
+from services.substrate.queue import SQSQueue, StandardQueue
 from tests.fnd03_fakes import InMemoryProvenanceStore, SoftwareKMSSigner
 from tests.orch03_fakes import good_job, injection_taint_cpg
 
@@ -519,3 +520,128 @@ def test_serialize_cpg_tarball_is_byte_identical_across_repeated_calls() -> None
     # zero-length/constant content — the two calls really did run the
     # compressor twice, and content still round-trips correctly.
     assert deserialize_cpg_tarball(first).nodes == cpg.nodes
+
+
+# ---------------------------------------------------------------------------
+# Production-default wiring (CLAR-DEPLOY-24) — queue/object_store/
+# findings_session/signer now default to real collaborators instead of
+# fail-closed stubs. Mirrors the regression tests added for
+# services/snapshot/worker.py's analogous wiring.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_production_queue_default_fails_closed_without_detector_queue_url() -> None:
+    import services.scan.detector_worker as detector_worker_module
+
+    with pytest.raises(InvariantViolation, match="DETECTOR_QUEUE_URL"):
+        detector_worker_module._default_queue({})
+
+
+@pytest.mark.unit
+def test_production_queue_default_builds_a_real_sqs_queue_when_configured() -> None:
+    import services.scan.detector_worker as detector_worker_module
+
+    active = detector_worker_module._default_queue(
+        {"DETECTOR_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/000000000000/q"}
+    )
+    assert isinstance(active, SQSQueue)
+    assert active.queue_url == "https://sqs.us-east-1.amazonaws.com/000000000000/q"
+
+
+@pytest.mark.unit
+def test_production_object_store_default_fails_closed_without_s3_bucket() -> None:
+    import services.scan.detector_worker as detector_worker_module
+
+    with pytest.raises(InvariantViolation, match="S3_BUCKET"):
+        detector_worker_module._default_object_store({})
+
+
+@pytest.mark.unit
+def test_production_object_store_default_builds_a_real_s3_object_store_when_configured() -> None:
+    import services.scan.detector_worker as detector_worker_module
+
+    active = detector_worker_module._default_object_store({"S3_BUCKET": "scanipy-prod-artifacts"})
+    assert isinstance(active, S3ObjectStore)
+
+
+@pytest.mark.unit
+def test_production_findings_session_default_fails_closed_without_database_url() -> None:
+    import services.scan.detector_worker as detector_worker_module
+
+    with pytest.raises(InvariantViolation, match="SCANIPY_DATABASE_URL"):
+        detector_worker_module._default_findings_session({})
+
+
+@pytest.mark.unit
+def test_production_findings_session_rebinds_tenant_guc_around_commit_boundary() -> None:
+    """A fake SQLAlchemy-``Session``-shaped double records every ``execute``/
+    ``add``/``commit`` call in order, so this asserts the exact
+    ``acquire_for_request``-mirroring binding sequence: ``set_config`` calls
+    for org_id/user_id/role precede the ``add``, and a second ``add`` after a
+    ``commit`` re-binds (SET LOCAL is discarded at COMMIT — DOC-DB §3.2)."""
+    import services.scan.detector_worker as detector_worker_module
+
+    class _FakeInstance:
+        def __init__(self, org_id: str) -> None:
+            self.org_id = org_id
+
+    class _FakeSqlAlchemySession:
+        def __init__(self) -> None:
+            self.calls: list[tuple[str, object]] = []
+
+        def execute(self, stmt: object, params: object | None = None) -> None:
+            self.calls.append(("execute", params))
+
+        def add(self, instance: object) -> None:
+            self.calls.append(("add", instance))
+
+        def commit(self) -> None:
+            self.calls.append(("commit", None))
+
+    fake = _FakeSqlAlchemySession()
+    session = detector_worker_module._SqlAlchemyFindingsSession(fake)  # type: ignore[arg-type]
+
+    session.add(_FakeInstance("org-a"))
+    session.commit()
+    session.add(_FakeInstance("org-a"))  # same org, but post-commit -> must re-bind
+
+    kinds = [c[0] for c in fake.calls]
+    assert kinds == [
+        "execute",
+        "execute",
+        "execute",
+        "add",
+        "commit",
+        "execute",
+        "execute",
+        "execute",
+        "add",
+    ]
+    org_binds = [
+        c[1]["value"]  # type: ignore[index]
+        for c in fake.calls
+        if c[0] == "execute" and c[1]["name"] == "app.org_id"  # type: ignore[index]
+    ]
+    assert org_binds == ["org-a", "org-a"]
+
+
+@pytest.mark.unit
+def test_production_signer_default_refuses_when_env_is_prod() -> None:
+    import services.scan.detector_worker as detector_worker_module
+
+    with pytest.raises(SoftwareKmsSignerProdRefusalError):
+        detector_worker_module._default_signer({"SCANIPY_ENV": "prod"})
+
+
+@pytest.mark.unit
+def test_production_signer_default_builds_a_working_software_signer_when_not_prod() -> None:
+    import services.scan.detector_worker as detector_worker_module
+
+    signer = detector_worker_module._default_signer({})
+    resp = signer.sign(
+        KeyId="software-dev-signer",
+        Message=b"hello",
+        SigningAlgorithm="RSASSA_PSS_SHA_256",
+    )
+    assert isinstance(resp["Signature"], bytes)
