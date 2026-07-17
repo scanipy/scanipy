@@ -60,8 +60,24 @@ RUN pip install --no-cache-dir --require-hashes -r /tmp/requirements.txt
 
 # Worker code. SCANIPY_ENV_DIGEST is filled at runtime by ECS task metadata
 # (CMP-SNAP-05 reads it and refuses to start if empty).
-COPY services/snapshot /app/services/snapshot
-COPY tools/worker      /app/tools/worker
+COPY services/snapshot    /app/services/snapshot
+COPY tools/worker         /app/tools/worker
+
+# services.substrate (S3ObjectStore/SQSQueue), services.scan (worker.py imports
+# services.scan.provenance.InvariantViolation), and tools.observability
+# (get_logger/record_job_completion) — all three were missing from this
+# Dockerfile despite being module-load imports of worker.py; the container
+# would ModuleNotFoundError on `python -m services.snapshot.worker` before a
+# single job was ever processed. Same class of bug as the `analysis` COPY gap
+# below (caught by claude-review on PR #319), found via a full first-party
+# import-graph trace while wiring the real parse_source/SQSQueue defaults
+# (CLAR-SNAP-03/05 landing). `services/scan` is copied wholesale (not just the
+# `provenance`/`models` subpackages worker.py touches today) to match the
+# detector Dockerfile's own precedent and avoid re-discovering this class of
+# gap on the next transitive import.
+COPY services/substrate   /app/services/substrate
+COPY services/scan        /app/services/scan
+COPY tools/observability  /app/tools/observability
 
 # CLAR-SNAP-03: analysis.cpg_ingest (this worker's CPG-ingest sub-scope) and its
 # analysis.ordering dependency. joern_frontend.py imports both at module load —
