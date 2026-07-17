@@ -26,6 +26,7 @@ writes ``env_digest`` (DOC-CMP-DEPLOY-01 §8 — "physical anchors").
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol, cast, runtime_checkable
 
@@ -239,16 +240,21 @@ class S3ObjectStore:
     ``client`` is any boto3-S3-shaped object (production ``boto3.client("s3")``,
     moto-backed client in tests). boto3 is imported lazily on the ``None``
     path only, so hermetic unit runs need no boto3 install (OTel precedent).
+    The real client is constructed with an explicit ``region_name``
+    (``AWS_REGION``, default ``"us-east-1"``) rather than relying on boto3's
+    ambient region-resolution chain — see :class:`services.substrate.queue.
+    SQSQueue`'s docstring for why (``NoRegionError`` in environments with no
+    ``~/.aws/config``, e.g. GitHub Actions runners).
 
     This module emits no findings; the four provenance fields (INV-1/2/5) are
     threaded by the callers that persist into these key paths (CMP-SNAP-01).
     """
 
     def __init__(self, bucket: str, client: object | None = None) -> None:
-        if client is None:  # pragma: no cover — real-AWS path; tests always inject
+        if client is None:
             import boto3
 
-            client = boto3.client("s3")
+            client = boto3.client("s3", region_name=os.environ.get("AWS_REGION", "us-east-1"))
         self._bucket = bucket
         self._client: Any = client
 
