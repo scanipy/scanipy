@@ -47,6 +47,15 @@ FROM python:3.11-slim-bookworm@sha256:8dca233de9f3d9bb410665f00a4da6dd06f3310831
 LABEL org.opencontainers.image.title="scanipy-detector-worker"
 LABEL org.opencontainers.image.source="https://github.com/scanipy/scanipy-v3.2"
 
+# ca-certificates: same gap as workers/snapshot/Dockerfile (see that file's
+# comment for the full story — found live via a real one-shot ECS smoke
+# test, v0.1.4). This worker's own HTTPS calls (S3, SQS, Secrets Manager,
+# and Postgres with sslmode=require) all rely on the system trust store,
+# which the "slim" runtime base does not ship by default.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
 # Copy the pinned tooling from the fetcher stage.
 COPY --from=tools /opt/joern        /opt/joern
 COPY --from=tools /opt/codeql       /opt/codeql

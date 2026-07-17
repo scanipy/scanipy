@@ -18,6 +18,8 @@ ARG CODEQL_VERSION
 ARG CODEQL_SHA256
 ARG GIT_VERSION
 ARG GIT_SHA256
+ARG TEMURIN_JRE_VERSION
+ARG TEMURIN_JRE_SHA256
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates curl unzip && \
@@ -30,6 +32,23 @@ RUN curl -fsSL -o /tmp/joern.zip \
     unzip /tmp/joern.zip -d /opt && \
     mv /opt/joern-cli /opt/joern && \
     rm /tmp/joern.zip
+
+# Joern is JVM-based and requires JDK 21+ (joernio/joern README "Requirements";
+# not bundled in the joern-cli release archive, and NOT installable via apt on
+# this pinned Debian release — bookworm main ships only openjdk-17, and
+# bookworm-backports carries no openjdk package at all, verified against the
+# live Debian package index). Pinned Eclipse Temurin JRE tarball instead,
+# fetched/verified the same way as joern/codeql above. Discovered missing via
+# a real one-shot ECS smoke test (`joern: command not found`-class failure
+# would have followed the ca-certificates fix, v0.1.4 proof run) — a headless
+# JRE (not a full JDK) is sufficient since this worker only ever RUNS joern,
+# never compiles anything.
+RUN curl -fsSL -o /tmp/temurin-jre.tar.gz \
+        "https://github.com/adoptium/temurin21-binaries/releases/download/${TEMURIN_JRE_VERSION}/OpenJDK21U-jre_x64_linux_hotspot_21.0.11_10.tar.gz" && \
+    echo "${TEMURIN_JRE_SHA256}  /tmp/temurin-jre.tar.gz" | sha256sum -c - && \
+    mkdir -p /opt/temurin-jre && \
+    tar -xzf /tmp/temurin-jre.tar.gz -C /opt/temurin-jre --strip-components=1 && \
+    rm /tmp/temurin-jre.tar.gz
 
 # codeql — pinned by published release SHA256.
 RUN curl -fsSL -o /tmp/codeql.zip \
@@ -48,11 +67,30 @@ FROM python:3.11-slim-bookworm@sha256:8dca233de9f3d9bb410665f00a4da6dd06f3310831
 LABEL org.opencontainers.image.title="scanipy-snapshot-worker"
 LABEL org.opencontainers.image.source="https://github.com/scanipy/scanipy-v3.2"
 
+# ca-certificates: the "slim" runtime base does NOT ship a trusted CA bundle
+# by default, and the fetcher stage's own ca-certificates install (line ~23)
+# is a *different* apt layer that was never COPYed forward — only the git
+# binary itself was. Without this, `git clone https://...` (the real clone
+# this worker performs every job) fails TLS certificate verification with a
+# generic non-zero exit, discovered live via a real one-shot ECS smoke test
+# against a real GitHub HTTPS clone (first real-Joern proof run, v0.1.4).
+# Installed here (not copied from the fetcher stage) so the trust store
+# matches this stage's own OS packages, not a cross-stage/cross-base copy.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
 # Copy the pinned tooling from the fetcher stage.
 COPY --from=tools /opt/joern        /opt/joern
 COPY --from=tools /opt/codeql       /opt/codeql
+COPY --from=tools /opt/temurin-jre  /opt/temurin-jre
 COPY --from=tools /usr/bin/git      /usr/bin/git
 COPY --from=tools /usr/lib/git-core /usr/lib/git-core
+
+# Joern's own launcher script resolves `java` off PATH (and some JVM tooling
+# additionally checks JAVA_HOME) — both are set here rather than relying on
+# either alone.
+ENV JAVA_HOME=/opt/temurin-jre
 
 # Python deps pinned by hash in requirements.txt (lockfile sha256 in pins.json).
 COPY workers/snapshot/requirements.txt /tmp/requirements.txt
@@ -93,7 +131,7 @@ COPY analysis /app/analysis
 # (JOERN_ARGV_ALLOWLIST), not tenant-controlled.
 COPY workers/snapshot/joern-scripts/export_cpg.sc /opt/joern/scripts/export_cpg.sc
 
-ENV PATH=/opt/joern/bin:/opt/codeql:/usr/bin:/usr/local/bin
+ENV PATH=/opt/joern/bin:/opt/codeql:/opt/temurin-jre/bin:/usr/bin:/usr/local/bin
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
