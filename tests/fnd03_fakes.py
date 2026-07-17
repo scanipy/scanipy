@@ -1,10 +1,15 @@
 """Hermetic offline fakes + a record builder for CMP-FND-03 specs.
 
 Mirrors the ``FakeKMS`` pattern of ``tests/unit/test_credential_encryption.py``:
-no real AWS, no PostgreSQL. The signer is a software RSASSA-PSS implementation
-(``cryptography``) that faithfully models ``kms:Sign`` / ``kms:GetPublicKey``
-over a per-tenant RSA key, so a verifier validates a signature without signing
-(PSS is randomized — verify by public key, never re-sign-and-compare).
+no real AWS, no PostgreSQL. ``SoftwareKMSSigner`` (imported below, not
+duplicated) is a software RSASSA-PSS implementation (``cryptography``) that
+faithfully models ``kms:Sign`` / ``kms:GetPublicKey`` over a per-tenant RSA
+key, so a verifier validates a signature without signing (PSS is randomized —
+verify by public key, never re-sign-and-compare). It now lives in
+``services/scan/software_kms_signer.py`` (CLAR-DEPLOY-24) — the same
+implementation this test module used to define inline is also the
+shortcut-path production default for the detector worker's KMS signer port,
+so both share one implementation rather than drifting.
 
 The store is an append-only ``dict`` keyed by record ``id`` (no UPDATE/DELETE
 method — modelling the no-UPDATE/DELETE grants on ``provenance_records``).
@@ -18,60 +23,19 @@ from __future__ import annotations
 import hashlib
 import uuid
 
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
-
 from analysis.ordering import CPG_ORDER_HASH_ANNOTATION
 from services.scan.provenance import (
     ProvenanceRecord,
     SignedProvenanceRecord,
 )
+from services.scan.software_kms_signer import SoftwareKMSSigner
 
-
-class SoftwareKMSSigner:
-    """Offline RSASSA-PSS signer modelling KMS sign / get_public_key.
-
-    A single 2048-bit RSA key stands in for one per-tenant CMK. ``sign`` returns
-    the boto3-shaped ``{"Signature", "KeyId"}`` dict; ``get_public_key`` returns
-    the DER ``SubjectPublicKeyInfo`` bytes under ``"PublicKey"`` for the pinned
-    ``(KeyId, KeyVersion)``. An unknown key version yields no ``PublicKey`` so
-    the verifier returns ``KEY_NOT_FOUND``.
-    """
-
-    def __init__(self, *, version: str = "v1") -> None:
-        self._private = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-        self._version = version
-
-    def sign(
-        self,
-        *,
-        KeyId: str,  # noqa: N803
-        Message: bytes,  # noqa: N803
-        SigningAlgorithm: str,  # noqa: N803
-    ) -> dict[str, object]:
-        digest = hashes.SHA384() if SigningAlgorithm == "RSASSA_PSS_SHA_384" else hashes.SHA256()
-        signature = self._private.sign(
-            Message,
-            padding.PSS(mgf=padding.MGF1(digest), salt_length=padding.PSS.DIGEST_LENGTH),
-            digest,
-        )
-        # boto3 returns the version-qualified key id under "KeyId".
-        return {"Signature": signature, "KeyId": f"{KeyId}:{self._version}"}
-
-    def get_public_key(
-        self,
-        *,
-        KeyId: str,  # noqa: N803
-        KeyVersion: str,  # noqa: N803
-    ) -> dict[str, object]:
-        if KeyVersion != self._version:
-            # Unknown version -> KMS would not resolve a public key.
-            return {}
-        der = self._private.public_key().public_bytes(
-            Encoding.DER, PublicFormat.SubjectPublicKeyInfo
-        )
-        return {"PublicKey": der}
+__all__ = [
+    "InMemoryArtifactStore",
+    "InMemoryProvenanceStore",
+    "SoftwareKMSSigner",
+    "make_chain_record",
+]
 
 
 class InMemoryProvenanceStore:

@@ -29,16 +29,23 @@ Pipeline (task-specified, this track's exact deliverable):
     (``services.scan.models.findings.Finding``) -> ``sign_provenance`` ->
     ack the SQS message.
 
-The genuinely-unbuilt collaborators (a real boto3-backed SQS queue — Track
-1E; a live S3 bucket / KMS CMK / Postgres session — Track 1D) are typed ports
-with **fail-closed production defaults**, exactly mirroring the established
-``CLAR-PROC-01`` build-ahead pattern already used by
-``services.scan.worker`` (``fail_closed_oracle_adapter``,
-``fail_closed_slice_fingerprinter``): the production seam raises a typed
-``NotImplementedError`` naming the gated dependency; a hermetic test injects a
-deterministic fake. :func:`run_detector_job` — the per-job pipeline body — is
-therefore fully real and directly unit-testable against fakes for every I/O
-boundary while ``run_detector`` and the CMP-DET-02 registry run FOR REAL.
+Every port (queue, object store, findings session, KMS signer) now has a REAL
+production default, wired for the first-real-scan shortcut path: a real
+boto3-backed ``SQSQueue`` (``DETECTOR_QUEUE_URL``), a real ``S3ObjectStore``
+(``S3_BUCKET``), a real SQLAlchemy ``Session`` against Postgres
+(``SCANIPY_DATABASE_URL``, with per-job RLS tenant binding — see
+:class:`_SqlAlchemyFindingsSession`), and — pending a real per-tenant AWS KMS
+CMK, which does not exist yet (CLAR-DEPLOY-24) — an explicitly-flagged
+software RSASSA-PSS signer (``services/scan/software_kms_signer.py``, refuses
+to run when ``ENV``/``SCANIPY_ENV=prod``). Each production default function
+(``_default_queue``, ``_default_object_store``, ``_default_findings_session``,
+``_default_signer``) still fails closed with a clear :class:`InvariantViolation`
+when its required env var is unset, mirroring the established ``CLAR-PROC-01``
+build-ahead pattern (``services.scan.worker``'s ``fail_closed_oracle_adapter``
+precedent): :func:`run_detector_job` — the per-job pipeline body — stays
+fully real and directly unit-testable against fakes for every I/O boundary
+via the same keyword arguments, while ``run_detector`` and the CMP-DET-02
+registry run FOR REAL.
 
 KNOWN GAPS (verified during this build; not invented — reported upstream,
 not filed as WBS.md CLAR-* rows per this track's explicit instructions):
@@ -111,16 +118,21 @@ import uuid
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+import sqlalchemy
+from sqlalchemy.orm import Session as SqlAlchemySession
+
 from detectors.registry import DetectorRegistry
 from services.scan.models.findings import Finding as FindingRow
 from services.scan.provenance import (
     ClaimLabel,
+    InvariantViolation,
     KMSAsymmetricSigner,
     ProvenanceRecord,
     ProvenanceStore,
     SignedProvenanceRecord,
     sign_provenance,
 )
+from services.scan.software_kms_signer import SoftwareKMSSigner
 from services.scan.worker import (
     Finding as WorkerFinding,
 )
@@ -136,8 +148,8 @@ from services.substrate.cpg_tarball import (
     deserialize_cpg_tarball,
     serialize_cpg_tarball,
 )
-from services.substrate.object_store import ObjectStore, SnapshotKeyBuilder
-from services.substrate.queue import ReceivedMessage
+from services.substrate.object_store import ObjectStore, S3ObjectStore, SnapshotKeyBuilder
+from services.substrate.queue import ReceivedMessage, SQSQueue
 from tools.observability.logging import get_logger
 
 if TYPE_CHECKING:
@@ -156,6 +168,18 @@ if TYPE_CHECKING:
 
 _ENV_DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 ENV_DIGEST_VAR = "SCANIPY_ENV_DIGEST"
+
+# Tenant-binding GUC names, byte-identical to ``services.control_plane.
+# constants.SESSION_VAR_ORG_ID/_USER_ID/_ROLE`` and ``SCANNER_USER_ID`` — NOT
+# imported from there (same image-boundary reasoning as resolve_env_digest/
+# boot above: workers/detector/Dockerfile does not COPY services/control_plane).
+# Used by :class:`_SqlAlchemyFindingsSession` to reproduce db/session.py::
+# acquire_for_request's SET LOCAL contract on a SQLAlchemy ORM Session (see
+# that module's docstring for the full RLS rationale).
+_SESSION_VAR_ORG_ID = "app.org_id"
+_SESSION_VAR_USER_ID = "app.user_id"
+_SESSION_VAR_ROLE = "app.role"
+_SCANNER_USER_ID = "scanner"
 
 
 class EnvDigestMissing(Exception):  # noqa: N818 — name fixed verbatim by DOC-CMP-SNAP-05 §3.4 precedent
@@ -291,113 +315,151 @@ class QueuePort(Protocol):
     def fail(self, receipt_handle: int) -> None: ...
 
 
-class _FailClosedQueue:
-    """Production default: raises until a real queue is wired (Track 1E)."""
-
-    def receive(self) -> ReceivedMessage | None:
-        raise NotImplementedError(
-            "the detector-jobs SQS queue is env-gated (CMP-ORCH-03 build-ahead, "
-            "Track 1E — real boto3-backed SQSQueue not yet wired). Inject a "
-            "QueuePort via run_execute_loop(..., queue=...) in a hermetic test."
-        )
-
-    def ack(self, receipt_handle: int) -> None:  # pragma: no cover — receive() always raises first
-        raise NotImplementedError("detector-jobs SQS queue is env-gated (see receive())")
-
-    def fail(self, receipt_handle: int) -> None:  # pragma: no cover — receive() always raises first
-        raise NotImplementedError("detector-jobs SQS queue is env-gated (see receive())")
-
-
-def fail_closed_queue() -> QueuePort:
-    """The default queue port: fail-closed until Track 1E lands."""
-    return _FailClosedQueue()
-
-
-class _FailClosedObjectStore:
-    """Production default: raises until a real bucket is wired (Track 1D/AWS)."""
-
-    def get(self, org_id: str, key: str) -> bytes:
-        raise NotImplementedError(
-            "the S3 artifact store is env-gated (CMP-ORCH-03 build-ahead): a real "
-            "S3ObjectStore needs a bucket name + AWS credentials not resolved "
-            "here. Inject an ObjectStore (e.g. "
-            "services.substrate.object_store.S3ObjectStore / InMemoryObjectStore) "
-            "via run_detector_job(..., object_store=...) in a hermetic test."
-        )
-
-    def put(  # pragma: no cover — get() always raises first
-        self, org_id: str, key: str, body: bytes
-    ) -> None:
-        raise NotImplementedError("S3 artifact store is env-gated (see get())")
-
-
-def fail_closed_object_store() -> ObjectStore:
-    """The default object-store port: fail-closed until a bucket is wired."""
-    return _FailClosedObjectStore()
-
-
 @runtime_checkable
 class FindingsSession(Protocol):
     """Structural subset of a SQLAlchemy ``Session`` this module writes through.
 
-    Any object exposing ``add``/``commit`` satisfies this: a real
-    ``sqlalchemy.orm.Session`` bound via ``db/session.py::acquire_for_request``
-    (Track 1D) in production, or a lightweight in-memory fake in tests.
+    Any object exposing ``add``/``commit`` satisfies this: the real production
+    default is :class:`_SqlAlchemyFindingsSession` (below), which wraps a real
+    ``sqlalchemy.orm.Session``; tests inject a lightweight in-memory fake.
     """
 
     def add(self, instance: object) -> None: ...
     def commit(self) -> None: ...
 
 
-class _FailClosedFindingsSession:
-    """Production default: raises until the real DB session is wired (Track 1D)."""
+def _default_queue(environ: Mapping[str, str]) -> QueuePort:
+    """Production ``QueuePort`` default: a REAL ``SQSQueue`` (lazy boto3).
+
+    Mirrors ``services/snapshot/worker.py::_default_snapshot_queue`` exactly.
+    ``DETECTOR_QUEUE_URL`` is already provisioned on the live ECS task
+    definition (verified 2026-07-17: ``aws ecs describe-task-definition
+    --task-definition scanipy-detector-worker``) — this is pure wiring, not a
+    new design decision.
+    """
+    queue_url = environ.get("DETECTOR_QUEUE_URL")
+    if not queue_url:
+        raise InvariantViolation(
+            "DETECTOR_QUEUE_URL must be set; refusing to construct an unbound SQSQueue",
+            code="missing_detector_queue_url",
+        )
+    return SQSQueue(queue_url)
+
+
+def _default_object_store(environ: Mapping[str, str]) -> ObjectStore:
+    """Production ``ObjectStore`` default: a REAL ``S3ObjectStore`` (lazy boto3).
+
+    Mirrors ``services/snapshot/worker.py::_default_object_store`` exactly.
+    ``S3_BUCKET`` is already provisioned on the live ECS task definition
+    (verified 2026-07-17) — pure wiring.
+    """
+    bucket = environ.get("S3_BUCKET")
+    if not bucket:
+        raise InvariantViolation(
+            "S3_BUCKET must be set; refusing to construct an unbucketed S3ObjectStore",
+            code="missing_s3_bucket",
+        )
+    return S3ObjectStore(bucket)
+
+
+class _SqlAlchemyFindingsSession:
+    """Production ``FindingsSession`` default: a real ``sqlalchemy.orm.Session``
+    with per-tenant RLS binding.
+
+    ``FindingsSession``'s own Protocol docstring names ``db/session.py::
+    acquire_for_request`` as the intended production binder, but that function
+    operates on a raw DB-API ``Connection`` (cursor-based ``SET LOCAL``), not
+    an ORM ``Session`` — a real shape mismatch, since ``run_detector_job``
+    calls ``findings_session.add(FindingRow_instance)`` against the real
+    SQLAlchemy-mapped ``services.scan.models.findings.Finding``. This adapter
+    reproduces ``acquire_for_request``'s exact GUC-binding contract
+    (``SELECT set_config('app.org_id', ..., true)`` etc — DOC-DB §3.2) via
+    ``Session.execute`` instead of a raw cursor, adapted to the fact that
+    ``org_id`` is only known per-job (from the dequeued message), not at
+    session-construction time (``run_execute_loop`` builds this once and
+    reuses it across many jobs, possibly spanning tenants).
+
+    Binds on every ``add()`` call (idempotent within a transaction — ``SET
+    LOCAL`` re-setting the same value is a no-op cost, not a correctness
+    issue) so a job whose org differs from the previous job's is always
+    correctly scoped, and re-binds again after every ``commit()`` since ``SET
+    LOCAL`` is discarded at commit (the same transaction-boundary-is-binding-
+    boundary property ``acquire_for_request`` relies on).
+
+    Per RLS grants (``db/migrations/versions/20260524_0001_...py`` CLAR-DB-02):
+    ``scanipy_app`` — NOT ``scanipy_system``/BYPASSRLS — already holds
+    INSERT on ``findings``/``provenance_records`` and is exactly the role
+    every RLS-scoped write should go through; this worker does not need (and
+    must not attempt) a ``BYPASSRLS`` connection. Whether the live connection
+    role (``SCANIPY_DATABASE_URL``'s user) is itself a member of
+    ``scanipy_app`` was not independently verifiable from this sandbox (the
+    RDS instance sits in an isolated private subnet with no network path
+    here, confirmed via a direct connect timeout) — if the grant is missing,
+    the first live INSERT fails with a clear Postgres permission-denied
+    error, not a silent isolation bug; see CLAR-DEPLOY-24.
+    """
+
+    def __init__(self, session: SqlAlchemySession) -> None:
+        self._session = session
+        self._bound_org_id: str | None = None
+
+    def _bind_tenant(self, org_id: str) -> None:
+        for name, value in (
+            (_SESSION_VAR_ORG_ID, org_id),
+            (_SESSION_VAR_USER_ID, _SCANNER_USER_ID),
+            (_SESSION_VAR_ROLE, "scanner"),
+        ):
+            self._session.execute(
+                sqlalchemy.text("SELECT set_config(:name, :value, true)"),
+                {"name": name, "value": value},
+            )
+        self._bound_org_id = org_id
 
     def add(self, instance: object) -> None:
-        raise NotImplementedError(
-            "the findings-store DB session is env-gated (CMP-ORCH-03 build-ahead, "
-            "Track 1D — real sqlalchemy.orm.Session via db/session.py::"
-            "acquire_for_request not yet wired). Inject a FindingsSession via "
-            "run_detector_job(..., findings_session=...) in a hermetic test."
+        org_id = getattr(instance, "org_id", None)
+        if org_id is not None and str(org_id) != self._bound_org_id:
+            self._bind_tenant(str(org_id))
+        self._session.add(instance)
+
+    def commit(self) -> None:
+        self._session.commit()
+        # SET LOCAL is discarded at COMMIT (DOC-DB §3.2) — force a re-bind on
+        # the next add(), even if the next job is the same org.
+        self._bound_org_id = None
+
+
+def _default_findings_session(environ: Mapping[str, str]) -> FindingsSession:
+    """Production ``FindingsSession`` default: a real Postgres-backed ORM Session.
+
+    ``SCANIPY_DATABASE_URL`` is NOT currently provisioned on the live ECS task
+    definition (verified 2026-07-17 — ``secrets: null``); wiring it in is
+    tracked alongside this change (CLAR-DEPLOY-24) as an ECS task-def update
+    (new revision adding a ``secrets`` entry sourced from the already-live
+    Secrets Manager secret ``scanipy/dev/database_url``), not a code gap.
+    """
+    database_url = environ.get("SCANIPY_DATABASE_URL")
+    if not database_url:
+        raise InvariantViolation(
+            "SCANIPY_DATABASE_URL must be set; refusing to construct an unbound DB session",
+            code="missing_database_url",
         )
-
-    def commit(self) -> None:  # pragma: no cover — add() always raises first
-        raise NotImplementedError("findings-store DB session is env-gated (see add())")
-
-
-def fail_closed_findings_session() -> FindingsSession:
-    """The default findings-session port: fail-closed until Track 1D lands."""
-    return _FailClosedFindingsSession()
+    engine = sqlalchemy.create_engine(database_url)
+    return _SqlAlchemyFindingsSession(SqlAlchemySession(bind=engine))
 
 
-class _FailClosedKMSSigner:
-    """Production default: raises until a real tenant CMK is wired."""
+def _default_signer(environ: Mapping[str, str]) -> KMSAsymmetricSigner:
+    """Production ``KMSAsymmetricSigner`` default: the CLAR-DEPLOY-24 shortcut.
 
-    def sign(
-        self,
-        *,
-        KeyId: str,  # noqa: N803 — boto3 wire parameter names are PascalCase.
-        Message: bytes,  # noqa: N803
-        SigningAlgorithm: str,  # noqa: N803
-    ) -> dict[str, object]:
-        raise NotImplementedError(
-            "the KMS asymmetric signer is env-gated (CMP-ORCH-03 build-ahead): "
-            "real kms:Sign needs a live AWS KMS CMK (CLAR-DEPLOY-16: one CMK per "
-            "tenant), not resolved here. Inject a KMSAsymmetricSigner via "
-            "run_detector_job(..., signer=...) in a hermetic test."
-        )
-
-    def get_public_key(
-        self,
-        *,
-        KeyId: str,  # noqa: N803
-        KeyVersion: str,  # noqa: N803
-    ) -> dict[str, object]:  # pragma: no cover — sign() always raises first
-        raise NotImplementedError("KMS asymmetric signer is env-gated (see sign())")
-
-
-def fail_closed_kms_signer() -> KMSAsymmetricSigner:
-    """The default KMS signer port: fail-closed until a real CMK is wired."""
-    return _FailClosedKMSSigner()
+    No real per-tenant AWS KMS CMK exists yet (verified 2026-07-17 — see
+    ``services/scan/software_kms_signer.py``'s module docstring for the full
+    two-part gap: no provisioned CMK, and the ``KeyVersion``-per-signature
+    Protocol contract not mapping onto AWS KMS's no-rotation-for-asymmetric-
+    keys semantics). Until both are resolved, this constructs the explicitly
+    test/dev-flagged software signer, which itself refuses at construction
+    when ``ENV``/``SCANIPY_ENV`` is ``"prod"`` (CLAR-DEPLOY-24, mirrors
+    CLAR-CP-01-02's established test-only-bypass pattern).
+    """
+    return SoftwareKMSSigner(env=environ)
 
 
 def default_registry() -> DetectorRegistry:
@@ -695,6 +757,7 @@ def run_execute_loop(
     kms_key_arn: str = "",
     registry: DetectorRegistry | None = None,
     provenance_store: ProvenanceStore | None = None,
+    environ: Mapping[str, str] | None = None,
 ) -> None:  # pragma: no cover — infinite production loop; handle_queue_message /
     # run_detector_job are the directly-tested units (tests/unit/test_detector_worker_specs.py)
     """The per-job SQS execute loop (mirrors ``services/snapshot/worker.py::
@@ -708,20 +771,28 @@ def run_execute_loop(
     starts, rather than silently threading a mismatched INV-2 value into
     provenance (caught by claude-review on PR #320).
 
-    Every port defaults to its fail-closed production seam (CLAR-PROC-01):
-    with no injected collaborators this raises ``NotImplementedError`` naming
-    the first genuinely-unbuilt dependency it touches (the queue, Track 1E),
-    exactly mirroring the honest gating in
-    ``services/snapshot/worker.py::run_execute_loop``. A hermetic test (or a
-    future production wiring layer, once Tracks 1D/1E land) injects real
-    collaborators.
+    Every port defaults to a REAL production collaborator, resolved from
+    ``environ`` (defaults to :data:`os.environ`): ``queue``/``object_store``
+    read ``DETECTOR_QUEUE_URL``/``S3_BUCKET`` (already provisioned on the live
+    ECS task definition) and fail closed with :class:`InvariantViolation` if
+    unset; ``findings_session`` builds a real SQLAlchemy session from
+    ``SCANIPY_DATABASE_URL``; ``signer`` is the CLAR-DEPLOY-24 software
+    stand-in (no real per-tenant KMS CMK exists yet — see
+    ``services/scan/software_kms_signer.py``). A hermetic test injects fakes
+    for all of these via the keyword arguments directly.
     """
-    queue = queue if queue is not None else fail_closed_queue()
-    object_store = object_store if object_store is not None else fail_closed_object_store()
+    env = os.environ if environ is None else environ
+    queue = queue if queue is not None else _default_queue(env)
+    object_store = object_store if object_store is not None else _default_object_store(env)
     findings_session = (
-        findings_session if findings_session is not None else fail_closed_findings_session()
+        findings_session if findings_session is not None else _default_findings_session(env)
     )
-    signer = signer if signer is not None else fail_closed_kms_signer()
+    signer = signer if signer is not None else _default_signer(env)
+    # No real per-tenant CMK ARN exists yet (CLAR-DEPLOY-24); KMS_KEY_ARN lets
+    # a future real binding opt in without a code change, but the software
+    # signer does not parse this as a real ARN — it is stored/threaded as an
+    # opaque provenance-record label either way.
+    kms_key_arn = kms_key_arn or env.get("KMS_KEY_ARN", "software-dev-signer")
     registry = registry if registry is not None else default_registry()
 
     while True:
@@ -775,10 +846,6 @@ __all__ = [
     "boot",
     "default_registry",
     "deserialize_cpg_tarball",
-    "fail_closed_findings_session",
-    "fail_closed_kms_signer",
-    "fail_closed_object_store",
-    "fail_closed_queue",
     "handle_queue_message",
     "main",
     "parse_job_message",
