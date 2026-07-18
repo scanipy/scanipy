@@ -27,6 +27,11 @@
       "version": "1:2.39.5-0+deb12u3",
       "sha256": "637a85ddd6247fab13bdd0592f2f39aff04ce4dbf0655d3ab553ac359a38ce6f",
       "source": "https://deb.debian.org/debian"
+    },
+    "temurin_jre": {
+      "version": "jdk-21.0.11+10",
+      "sha256": "e5038aae3ca9ff670bc696496b0728dbd23d280026bad30291cb919221ecfdcb",
+      "source": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.11%2B10/OpenJDK21U-jre_x64_linux_hotspot_21.0.11_10.tar.gz"
     }
   },
   "python_packages_lockfile": "workers/snapshot/requirements.txt",
