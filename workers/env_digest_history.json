@@ -80,8 +80,8 @@
       "tag": "v0.1.4",
       "git_sha": "f477bf1ead35bd14d8b93a00c58c307b9c526583",
       "signed_at": "2026-07-17T19:34:50Z",
-      "status": "active",
-      "note": ""
+      "status": "superseded",
+      "note": "superseded by v0.1.6"
     },
     {
       "image": "scanipy-detector",
@@ -89,6 +89,24 @@
       "tag": "v0.1.4",
       "git_sha": "f477bf1ead35bd14d8b93a00c58c307b9c526583",
       "signed_at": "2026-07-17T19:34:50Z",
+      "status": "superseded",
+      "note": "superseded by v0.1.6"
+    },
+    {
+      "image": "scanipy-snapshot",
+      "env_digest": "sha256:61a206b24d8cf6d586b30684b1db7f88931d110907b2b49781042d42d2026350",
+      "tag": "v0.1.6",
+      "git_sha": "a33a2a9c9e0a1efb7ce7ffcea8a2cc527e4b4240",
+      "signed_at": "2026-07-18T19:31:50Z",
+      "status": "active",
+      "note": ""
+    },
+    {
+      "image": "scanipy-detector",
+      "env_digest": "sha256:a789500c6de0ee6335ee256ef3dc0ed4b60fe3a5dab77843073acac08cf56117",
+      "tag": "v0.1.6",
+      "git_sha": "a33a2a9c9e0a1efb7ce7ffcea8a2cc527e4b4240",
+      "signed_at": "2026-07-18T19:31:50Z",
       "status": "active",
       "note": ""
     }
