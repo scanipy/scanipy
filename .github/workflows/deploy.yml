@@ -187,6 +187,8 @@ jobs:
               f.write(f"codeql_sha256={d['tools']['codeql']['sha256']}\n")
               f.write(f"git_version={d['tools']['git']['version']}\n")
               f.write(f"git_sha256={d['tools']['git']['sha256']}\n")
+              f.write(f"temurin_jre_version={d['tools']['temurin_jre']['version']}\n")
+              f.write(f"temurin_jre_sha256={d['tools']['temurin_jre']['sha256']}\n")
           PY
 
       - name: Configure AWS credentials (OIDC)
@@ -216,6 +218,8 @@ jobs:
             CODEQL_SHA256=${{ steps.pins.outputs.codeql_sha256 }}
             GIT_VERSION=${{ steps.pins.outputs.git_version }}
             GIT_SHA256=${{ steps.pins.outputs.git_sha256 }}
+            TEMURIN_JRE_VERSION=${{ steps.pins.outputs.temurin_jre_version }}
+            TEMURIN_JRE_SHA256=${{ steps.pins.outputs.temurin_jre_sha256 }}
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.version=${{ github.ref_name }}

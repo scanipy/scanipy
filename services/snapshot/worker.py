@@ -518,8 +518,25 @@ def _git_env(home: Path) -> dict[str, str]:
 
 
 def _default_parse_env() -> dict[str, str]:
-    """Minimal explicit env threaded into ``parse_source`` (DOC §6.3 example shape)."""
-    return {"PATH": "/opt/joern/bin:/opt/codeql:/usr/bin", "JAVA_HOME": "/opt/jdk"}
+    """Minimal explicit env threaded into ``parse_source`` (DOC §6.3 example shape).
+
+    ``JAVA_HOME``/``PATH`` point at the pinned Eclipse Temurin JRE
+    (``workers/pins.json`` ``tools.temurin_jre``, ``workers/snapshot/
+    Dockerfile``'s tools stage) — joern's own launcher script is JVM-based
+    and resolves ``java`` via one or both of these. The previous
+    ``JAVA_HOME=/opt/jdk`` value here pointed at a path the Dockerfile never
+    actually populated (Joern's own release archive does not bundle a JVM,
+    and this pinned Debian base has no installable OpenJDK 21 package — real
+    smoke-tested runtime gap found live via a one-shot ECS task, v0.1.4).
+    ``secure_run`` explicitly does NOT inherit the host/image environment
+    (``tools/worker/secure_subprocess.py``'s own docstring), so the Dockerfile's
+    ``ENV JAVA_HOME``/``PATH`` alone do not reach this subprocess — this
+    dict is the actual effective environment.
+    """
+    return {
+        "PATH": "/opt/joern/bin:/opt/codeql:/opt/temurin-jre/bin:/usr/bin",
+        "JAVA_HOME": "/opt/temurin-jre",
+    }
 
 
 def _build_reverse_symbol_index(cpg: CPG) -> bytes:
