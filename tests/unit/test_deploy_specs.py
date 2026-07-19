@@ -46,14 +46,14 @@ def test_deploy_02a_pinned_tools_present_at_pinned_digests() -> None:
         digests inside the image.
     Kind tag: [UNIT]
     Inputs: built `scanipy-snapshot` worker image; `workers/pins.json` pin set.
-    Outputs: per-tool sha256 of `/opt/joern/bin/joern`, `/opt/codeql/codeql`,
+    Outputs: per-tool sha256 of `/opt/joern/joern`, `/opt/codeql/codeql`,
         `/usr/bin/git` inside the image.
     Pass criteria: each tool binary's measured sha256 equals the corresponding
         `sha256` in `workers/pins.json`; all three tools are present.
     Frequency: every CI run.
     Hard gate?: yes — INV-2 producer (env_digest derives from pinned tools).
     """
-    # TODO: build image; `docker run --rm <image> sha256sum /opt/joern/bin/joern
+    # TODO: build image; `docker run --rm <image> sha256sum /opt/joern/joern
     #       /opt/codeql/codeql /usr/bin/git`; compare each against workers/pins.json
     #       when CMP-DEPLOY-02 is DONE.
     pytest.skip("CMP-DEPLOY-02 not implemented yet")

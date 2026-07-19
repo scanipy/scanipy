@@ -247,14 +247,23 @@ def test_parse_source_secure_run_call_shape(tmp_path: Path) -> None:
     assert len(calls) == 2
 
     parse_call, export_call = calls
-    # --- Phase 1: parse (pinned binary, allowlisted flags, shell=False). ---
-    assert parse_call["cmd"][0] == "/opt/joern/bin/joern"
-    assert "--language" in parse_call["cmd"] and "python" in parse_call["cmd"]
-    assert "--cpg-only" in parse_call["cmd"]
+    # --- Phase 1: parse (headless joern-parse — validated against real joern
+    # v4.0.554: the main `joern` launcher has no --output/--cpg-only, and the
+    # Scanipy language id "python" must map to joern's "pythonsrc" frontend
+    # name (bare "python" selects the unbundled legacy py2cpg.sh generator). ---
+    assert parse_call["cmd"][0] == "/opt/joern/joern-parse"
+    assert "--language" in parse_call["cmd"] and "pythonsrc" in parse_call["cmd"]
+    assert "python" not in parse_call["cmd"]  # the UNMAPPED id must never pass through
+    assert "--cpg-only" not in parse_call["cmd"]
+    # The source root rides as the trailing POSITIONAL argument.
+    assert parse_call["cmd"][-1] == str(tmp_path / "src")
     assert parse_call["kwargs"]["shell"] is False
+    # Both phases receive a writable HOME (defaulted to the workdir) — the JVM
+    # + joern console need one; without it the script phase dies opaquely.
+    assert parse_call["kwargs"]["env"]["HOME"] == str(tmp_path / "work")
 
     # --- Phase 2: export (fixed in-image script path, env-threaded params). ---
-    assert export_call["cmd"] == ["/opt/joern/bin/joern", "--script", jf.EXPORT_SCRIPT_PATH]
+    assert export_call["cmd"] == ["/opt/joern/joern", "--script", jf.EXPORT_SCRIPT_PATH]
     assert export_call["kwargs"]["shell"] is False
     export_env = export_call["kwargs"]["env"]
     assert jf.ENV_CPG_BIN_PATH in export_env
