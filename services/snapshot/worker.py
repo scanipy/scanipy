@@ -799,7 +799,19 @@ def run_execute_loop(
             precondition_status=outcome_precondition,
             environ=env,
         )
-        logger.error(f"snapshot execute loop: job failed: {exc}")
+        # A subprocess failure's generic "exit status N" hides the actual
+        # cause; surface the child's captured stderr (secure_run always
+        # captures it) so a failed git/joern invocation is diagnosable from
+        # CloudWatch alone. Two live one-shot smoke tests (v0.1.4, v0.1.6)
+        # each burned a full build+deploy+run cycle on a blind `git clone
+        # ... exit status 128` before this was added.
+        stderr_detail = ""
+        child_stderr = getattr(exc, "stderr", None)
+        if child_stderr:
+            if isinstance(child_stderr, bytes):
+                child_stderr = child_stderr.decode("utf-8", errors="replace")
+            stderr_detail = f" | child stderr: {child_stderr.strip()[:2000]}"
+        logger.error(f"snapshot execute loop: job failed: {exc}{stderr_detail}")
         return
 
     # Reached only via the non-exception path: both were assigned unconditionally

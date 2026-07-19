@@ -570,7 +570,7 @@ def test_snap_05a_argv_allowlist_rejects_non_sanctioned_flag() -> None:
     # shell=False is a hard invariant of secure_run (DOC §3.3) — never shell=True.
     assert spawned["kwargs"]["shell"] is False  # type: ignore[index]
     # The pinned in-image binary path is used, NOT a bare "joern" from host PATH.
-    assert spawned["cmd"][0] == "/opt/joern/bin/joern"  # type: ignore[index]
+    assert spawned["cmd"][0] == "/opt/joern/joern"  # type: ignore[index]
 
 
 @pytest.mark.unit

@@ -46,21 +46,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 FROM python:3.11-slim-bookworm@sha256:8dca233de9f3d9bb410665f00a4da6dd06f331083137e0e98ccf227236fcc438
 LABEL org.opencontainers.image.title="scanipy-detector-worker"
 LABEL org.opencontainers.image.source="https://github.com/scanipy/scanipy-v3.2"
+ARG GIT_VERSION
 
-# ca-certificates: same gap as workers/snapshot/Dockerfile (see that file's
-# comment for the full story — found live via a real one-shot ECS smoke
-# test, v0.1.4). This worker's own HTTPS calls (S3, SQS, Secrets Manager,
-# and Postgres with sslmode=require) all rely on the system trust store,
-# which the "slim" runtime base does not ship by default.
+# ca-certificates + git installed via apt in the runtime stage — same fix as
+# workers/snapshot/Dockerfile (see that file's comment for the full story:
+# copying git binaries across stages misses the OS dependency closure —
+# libcurl3-gnutls/perl/liberror-perl — so every https:// clone failed; found
+# live via one-shot ECS smoke tests on v0.1.4 + v0.1.6).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ca-certificates && \
+        ca-certificates "git=${GIT_VERSION}" && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy the pinned tooling from the fetcher stage.
 COPY --from=tools /opt/joern        /opt/joern
 COPY --from=tools /opt/codeql       /opt/codeql
-COPY --from=tools /usr/bin/git      /usr/bin/git
-COPY --from=tools /usr/lib/git-core /usr/lib/git-core
 
 # Python deps pinned by hash in requirements.txt (lockfile sha256 in pins.json).
 COPY workers/detector/requirements.txt /tmp/requirements.txt
