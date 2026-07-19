@@ -48,6 +48,24 @@ JOERN_ARGV_ALLOWLIST: Final[frozenset[str]] = frozenset(
         "--cpg-only",
     }
 )
+# joern-parse — the HEADLESS parse tool. Validated against real joern
+# v4.0.554 (local docker rehearsal, Wave-4): the main `joern` launcher does
+# NOT accept `--output`/`--cpg-only` in this version ("Warning: Unknown
+# option", then it silently drops into interactive REPL mode and exits 0
+# without producing any cpg.bin — DOC-CMP-SNAP-05 §6.3's `joern ...
+# --cpg-only` example predates this and does not match the pinned release).
+# The real headless parse surface is the separate `joern-parse` binary
+# (`joern-parse [options] [input]`), whose only flags this worker needs are
+# `--language` and `--output`; the source root is a POSITIONAL argument
+# (positional tokens are not gated by this allowlist mechanism, same as
+# codeql's `database create` verbs). Kept as its own tool + allowlist rather
+# than widening `joern`'s: narrowest-possible per-binary surface (AC-SNAP-05a).
+JOERN_PARSE_ARGV_ALLOWLIST: Final[frozenset[str]] = frozenset(
+    {
+        "--language",
+        "--output",
+    }
+)
 CODEQL_ARGV_ALLOWLIST: Final[frozenset[str]] = frozenset(
     {
         "database",
@@ -86,6 +104,7 @@ GIT_ARGV_ALLOWLIST: Final[frozenset[str]] = frozenset(
 
 _ALLOWLISTS: Final[dict[str, frozenset[str]]] = {
     "joern": JOERN_ARGV_ALLOWLIST,
+    "joern-parse": JOERN_PARSE_ARGV_ALLOWLIST,
     "codeql": CODEQL_ARGV_ALLOWLIST,
     "git": GIT_ARGV_ALLOWLIST,
 }
@@ -93,8 +112,18 @@ _ALLOWLISTS: Final[dict[str, frozenset[str]]] = {
 # Fixed in-image binary paths. The host ``PATH`` is NOT consulted — see module
 # docstring + DOC-INV §4.5. These mirror the Dockerfile layout (DOC-CMP-DEPLOY-02
 # §3.1: joern under /opt/joern, codeql under /opt/codeql, git at /usr/bin/git).
+#
+# joern's launcher lives at the ARCHIVE ROOT (`/opt/joern/joern`), not under
+# `bin/` — verified against the real pinned joern-cli v4.0.554 release layout
+# (its `bin/` holds `repl-bridge`/`joern-cli`/`joern-export` etc., no `joern`).
+# The previous `/opt/joern/bin/joern` value was a plausible-looking guess that
+# survived every hermetic test (they monkeypatch the subprocess call) and was
+# only caught by the first real in-container `parse_source` invocation during
+# the local docker rehearsal (CLAR-SNAP-05 explicitly flagged the real-Joern
+# layer as UNVERIFIED for exactly this reason).
 _PINNED_BINARIES: Final[dict[str, str]] = {
-    "joern": "/opt/joern/bin/joern",
+    "joern": "/opt/joern/joern",
+    "joern-parse": "/opt/joern/joern-parse",
     "codeql": "/opt/codeql/codeql",
     "git": "/usr/bin/git",
 }
@@ -111,7 +140,7 @@ class ArgvAllowlistViolation(Exception):  # noqa: N818 — name fixed verbatim b
 class UnknownTool(Exception):  # noqa: N818 — paired with ArgvAllowlistViolation; fail-closed default-deny
     """``secure_run`` was asked to run a tool with no registered allowlist.
 
-    Fail-closed default-deny: only ``joern`` / ``codeql`` / ``git`` are
+    Fail-closed default-deny: only ``joern`` / ``joern-parse`` / ``codeql`` / ``git`` are
     sanctioned (DOC-CMP-SNAP-05 §3.3). An unknown tool is refused rather than run
     with an empty/permissive allowlist.
     """
@@ -132,7 +161,7 @@ def _enforce_allowlist(tool: str, argv: list[str]) -> frozenset[str]:
     except KeyError:
         raise UnknownTool(
             f"tool {tool!r} has no sanctioned argv allowlist; "
-            "only 'joern', 'codeql', 'git' are permitted (fail-closed)"
+            "only 'joern', 'joern-parse', 'codeql', 'git' are permitted (fail-closed)"
         ) from None
 
     for arg in argv:
@@ -173,7 +202,7 @@ def secure_run(
     (the host environment is not inherited).
 
     Args:
-        tool: one of ``joern`` / ``codeql`` / ``git``.
+        tool: one of ``joern`` / ``joern-parse`` / ``codeql`` / ``git``.
         argv: the tool arguments (subcommands + sanctioned flags). Every ``-``/
             ``--`` flag must be on the per-tool allowlist.
         timeout_s: mandatory wall-clock timeout in seconds.

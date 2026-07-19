@@ -1,19 +1,13 @@
 // export_cpg.sc — CMP-SNAP-05 CLAR-SNAP-05 fixed in-image CPGQL export script.
 //
-// *** UNVERIFIED AGAINST A REAL JOERN INSTALL ***
-// No `joern` binary exists in the build sandbox this script was authored in
-// (see analysis/cpg_ingest/joern_frontend.py + mapper.py module docstrings,
-// and tests/cpg_ingest_fixtures.py). This is a best-effort,
-// plausible CPGQL/Scala script built from Joern's well-documented DSL step
-// names (`importCpg`, `cpg.all`, `.astChildren`, `.cfgNext`, `.label`,
-// `.code`, `.name`, `.methodFullName`, `.fullName`, `.lineNumber`,
-// `.columnNumber`, `.file.name`, low-level `.property(key)` generic
-// accessors) and Joern's actual CDG/REACHING_DEF step names
-// (`.controlledBy`/`.controls`, `.reachingDefIn`/`.reachingDefOut`). It MUST
-// be diffed against a real `joern --script export_cpg.sc` run (Wave-2/Wave-4
-// rehearsal, plan "Wave 4 — local rehearsal") before this is trusted in
-// production, and every API assumption below is called out explicitly so
-// that diff is fast to do.
+// VALIDATED against real joern v4.0.554 (the pinned workers/pins.json
+// version) via the local docker rehearsal (Wave-4): `joern --script` over a
+// real python cpg.bin compiles and runs this script end-to-end. Exactly one
+// authoring-time API assumption proved wrong and was corrected — see the
+// `reachingDefEdges` comment (`.reachingDefOut` → `._reachingDefOut`). All
+// other assumed step/property names (`importCpg`, `cpg.all`, `.astChildren`,
+// `.cfgNext`, `.controls`, `.label`, `.propertyOption`, `.file.name`,
+// `.lineNumber`, `.columnNumber`) compile as authored.
 //
 // Design contract (CLAR-SNAP-05, mirrored in mapper.py's module docstring —
 // keep both in sync if this script changes):
@@ -74,13 +68,14 @@ import scala.util.Try
   def jsonIntOpt(o: Option[Integer]): String = o.map(_.toString).getOrElse("null")
   def jsonField(key: String, value: String): String = jsonStr(key) + ":" + value
 
-  // Generic, node-type-agnostic property reader — every Joern StoredNode
-  // exposes low-level `.property(key)` / `.propertyOption(key)` accessors on
-  // top of the typed DSL (ASSUMPTION: exact method name may be
-  // `.propertyOption` vs `.property(...).headOption`-style depending on the
-  // Joern/OverflowDB version pinned in workers/pins.json — diff at Wave-4).
+  // Generic, node-type-agnostic property reader. VALIDATED against real joern
+  // v4.0.554: `.propertyOption` exists but is GENERIC in its return type — an
+  // unbound call site makes the Scala compiler infer `Nothing`, which
+  // compiles fine and then throws `ClassCastException: String cannot be cast
+  // to scala.runtime.Nothing$` at RUNTIME on the first present property. The
+  // explicit `[Any]` type argument pins the erased-safe element type.
   def propOpt(n: nodes.StoredNode, key: String): Option[String] =
-    Try(n.propertyOption(key)).toOption.flatten.map(_.toString).filter(_.nonEmpty)
+    Try(n.propertyOption[Any](key)).toOption.flatten.map(_.toString).filter(_.nonEmpty)
 
   val allNodes = cpg.all.l
 
@@ -122,8 +117,13 @@ import scala.util.Try
     Try(n.controls.collectAll[nodes.CfgNode].l).getOrElse(Nil).map(c => (n.id.toString, c.id.toString, "CDG"))
       .map { case (s, d, k) => "{" + jsonField("src", jsonStr(s)) + "," + jsonField("dst", jsonStr(d)) + "," + jsonField("kind", jsonStr(k)) + "}" }
 
+  // VALIDATED against real joern v4.0.554 (local docker rehearsal): the
+  // high-level `.reachingDefOut` DSL step does NOT exist on CfgNode in this
+  // version — the Scala compiler's own suggestion is the generated low-level
+  // adjacency accessor `._reachingDefOut` (an Iterator[StoredNode] over
+  // REACHING_DEF-edge neighbors), which is what compiles and runs.
   def reachingDefEdges(n: nodes.CfgNode): List[String] =
-    Try(n.reachingDefOut.l).getOrElse(Nil).map(c => (n.id.toString, c.id.toString, "REACHING_DEF"))
+    Try(n._reachingDefOut.toList).getOrElse(Nil).map(c => (n.id.toString, c.id.toString, "REACHING_DEF"))
       .map { case (s, d, k) => "{" + jsonField("src", jsonStr(s)) + "," + jsonField("dst", jsonStr(d)) + "," + jsonField("kind", jsonStr(k)) + "}" }
 
   val astNodes = allNodes.collect { case n: nodes.AstNode => n }

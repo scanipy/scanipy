@@ -251,15 +251,26 @@ on dequeue SnapshotJob{snapshot_id, codebase_id, commit_sha, env_digest, artifac
 
 ### 6.3 Tool invocation example (secure)
 
+> **AMENDED 2026-07-19 (Wave-4 real-Joern validation):** the original example
+> (`secure_run("joern", ["--language", …, "--src", …, "--cpg-only"])`) does
+> NOT match the pinned joern v4.0.554 release — the main `joern` launcher has
+> no `--output`/`--cpg-only` flags (it warns "Unknown option", drops into
+> interactive REPL mode, and exits 0 without producing a `cpg.bin`). The real
+> headless parse surface is the separate `joern-parse` binary (source root
+> positional). The Scanipy language id is mapped to Joern's bundled-frontend
+> name first (`python` → `pythonsrc`; bare `python` selects a legacy
+> generator that is not bundled). `analysis/cpg_ingest/joern_frontend.py` is
+> the authoritative implementation.
+
 ```python
 secure_run(
-    "joern",
-    argv=["--language", "java",
-          "--src", src_root,
+    "joern-parse",
+    argv=["--language", "javasrc",       # JOERN_LANGUAGE_BY_SCANIPY_LANG["java"]
           "--output", str(tmp_cpg_path),
-          "--cpg-only"],
+          str(src_root)],                # positional input, no --src
     timeout_s=600,
-    env={"PATH": "/opt/joern/bin", "JAVA_HOME": "/opt/jdk"},
+    env={"PATH": "/opt/joern/bin:/opt/temurin-jre/bin", "JAVA_HOME": "/opt/temurin-jre",
+         "HOME": str(tmp_workdir)},      # JVM/joern-console need a WRITABLE HOME
     cwd=tmp_workdir,
 )
 ```

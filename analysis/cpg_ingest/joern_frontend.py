@@ -5,13 +5,23 @@ Implements the plan's Wave-1 track-1A/1B handshake signature:
     parse_source(src_root: Path, language: str, *, env: Mapping[str, str],
                  workdir: Path) -> CPG
 
-Two ``secure_run`` phases per ``DOC-CMP-SNAP-05 §6.3`` (both routed through
+Two ``secure_run`` phases (both routed through
 ``tools.worker.secure_subprocess.secure_run`` — every ``joern`` invocation goes
 through the argv allowlist, ``shell=False``, fail-closed):
 
-1. **Parse phase** — ``joern --language <lang> --src <src_root> --output
-   <cpg.bin> --cpg-only`` (verbatim ``DOC §6.3`` example). Produces the
-   binary CPG at a workdir-local path.
+1. **Parse phase** — ``joern-parse --language <joern-lang> --output <cpg.bin>
+   <src_root>``. VALIDATED against real joern v4.0.554 (local docker
+   rehearsal, Wave-4): ``DOC-CMP-SNAP-05 §6.3``'s original ``joern ...
+   --cpg-only`` example does NOT match the pinned release — the main
+   ``joern`` launcher rejects ``--output``/``--cpg-only`` ("Warning: Unknown
+   option"), silently drops into interactive REPL mode, and exits 0 without
+   producing any ``cpg.bin``; the real headless parse surface is the separate
+   ``joern-parse`` binary (source root POSITIONAL, no ``--src``/``--cpg-only``).
+   The Scanipy language id is additionally mapped to Joern's frontend
+   language name (:data:`JOERN_LANGUAGE_BY_SCANIPY_LANG` — e.g. ``python`` →
+   ``pythonsrc``: bare ``python`` selects joern's LEGACY ``py2cpg.sh``
+   generator, which is not bundled in the release archive and hard-fails;
+   ``pythonsrc`` is the bundled modern ``pysrc2cpg`` frontend).
 2. **Export phase (CLAR-SNAP-05)** — ``joern --script <in-image .sc script>``.
    The ``JOERN_ARGV_ALLOWLIST`` (``tools/worker/secure_subprocess.py``) has
    ``--script`` but no ``joern-export`` pair and no generic ``--param``/
@@ -77,6 +87,36 @@ JOERN_EXPORT_TIMEOUT_S: Final[int] = 300
 _CPG_BIN_FILENAME: Final[str] = "cpg.bin"
 _EXPORT_JSON_FILENAME: Final[str] = "cpg_export.json"
 
+# Scanipy language id (services/snapshot/worker.py::_SOURCE_EXTENSIONS values)
+# -> the Joern frontend language name `joern-parse --language` actually
+# accepts for the BUNDLED modern source frontends (from `joern-parse
+# --list-languages` + the /opt/joern/frontends/ directory of the pinned
+# v4.0.554 release). Deliberately NOT identity for python/java/js: joern's
+# bare "python"/"java"/"javascript" names select legacy/bytecode generators
+# ("python" -> the unbundled py2cpg.sh shell generator, which hard-fails with
+# "CPG generator does not exist"; "java" -> jimple bytecode). Fail-closed: an
+# unmapped Scanipy language raises rather than passing an unvetted name
+# through (UnsupportedParseLanguageError).
+JOERN_LANGUAGE_BY_SCANIPY_LANG: Final[dict[str, str]] = {
+    "python": "pythonsrc",  # pysrc2cpg (bundled)
+    "java": "javasrc",  # javasrc2cpg (bundled; source, not jimple)
+    "js": "jssrc",  # jssrc2cpg (bundled)
+    "ts": "jssrc",  # jssrc2cpg handles TS too
+    "go": "golang",  # gosrc2cpg (bundled)
+    "ruby": "rubysrc",  # rubysrc2cpg (bundled)
+    "php": "php",  # php2cpg (bundled)
+}
+
+
+class UnsupportedParseLanguageError(Exception):
+    """The Scanipy language id has no vetted Joern frontend mapping.
+
+    Fail-closed (INV-4 posture): passing an unmapped name through verbatim
+    can silently select a legacy/bytecode generator with different semantics
+    (or one that is not bundled at all), so an unknown language refuses
+    rather than guesses.
+    """
+
 
 class JoernExportMissingError(Exception):
     """The export phase completed (secure_run did not raise) but no valid
@@ -100,10 +140,11 @@ def parse_source(src_root: Path, language: str, *, env: Mapping[str, str], workd
         src_root: the cloned source tree root to parse (already checked out at
             the target commit by the SCM clone step — this function does no
             cloning of its own).
-        language: the Joern ``--language`` value (e.g. ``"python"``,
-            ``"java"``) — passed through verbatim, not validated here (the
-            caller is responsible for having run CW-DETECT's
-            ``detect_langs`` first per ``DOC-CMP-SNAP-05 §6.2``).
+        language: the SCANIPY language id (e.g. ``"python"``, ``"java"`` —
+            the values ``services/snapshot/worker.py::_SOURCE_EXTENSIONS``
+            produces), mapped to Joern's frontend language name via
+            :data:`JOERN_LANGUAGE_BY_SCANIPY_LANG` before invocation
+            (fail-closed on an unmapped id).
         env: the explicit worker env to thread to both ``secure_run`` phases
             (never the host environment — ``secure_run`` never inherits it).
             This function does not read or set ``env_digest`` here; ``env`` is
@@ -136,25 +177,43 @@ def parse_source(src_root: Path, language: str, *, env: Mapping[str, str], workd
     cpg_bin_path = workdir / _CPG_BIN_FILENAME
     export_json_path = workdir / _EXPORT_JSON_FILENAME
 
-    # --- Phase 1: parse (DOC-CMP-SNAP-05 §6.3) ---
+    try:
+        joern_language = JOERN_LANGUAGE_BY_SCANIPY_LANG[language]
+    except KeyError:
+        raise UnsupportedParseLanguageError(
+            f"no vetted Joern frontend mapping for Scanipy language {language!r} "
+            f"(known: {sorted(JOERN_LANGUAGE_BY_SCANIPY_LANG)}); refusing to pass "
+            "an unvetted name through (it can silently select a legacy/bytecode "
+            "generator with different semantics)"
+        ) from None
+
+    # Both phases need a WRITABLE HOME: the JVM resolves user.home for prefs/
+    # logging, and `joern --script`'s console init creates a workspace dir —
+    # from an unwritable location it dies with an opaque "Error during
+    # compilation: null" (validated live, local docker rehearsal). The
+    # container user's /etc/passwd home does not exist in the image, so the
+    # per-job writable workdir doubles as HOME unless the caller already set
+    # one explicitly.
+    base_env = dict(env)
+    base_env.setdefault("HOME", str(workdir))
+
+    # --- Phase 1: parse (headless joern-parse — see module docstring) ---
     secure_run(
-        "joern",
+        "joern-parse",
         argv=[
             "--language",
-            language,
-            "--src",
-            str(src_root),
+            joern_language,
             "--output",
             str(cpg_bin_path),
-            "--cpg-only",
+            str(src_root),
         ],
         timeout_s=JOERN_PARSE_TIMEOUT_S,
-        env=dict(env),
+        env=dict(base_env),
         cwd=str(workdir),
     )
 
     # --- Phase 2: export (CLAR-SNAP-05) ---
-    export_env = dict(env)
+    export_env = dict(base_env)
     export_env[ENV_CPG_BIN_PATH] = str(cpg_bin_path)
     export_env[ENV_EXPORT_JSON_PATH] = str(export_json_path)
     secure_run(
@@ -182,7 +241,9 @@ __all__ = [
     "ENV_EXPORT_JSON_PATH",
     "EXPORT_SCRIPT_PATH",
     "JOERN_EXPORT_TIMEOUT_S",
+    "JOERN_LANGUAGE_BY_SCANIPY_LANG",
     "JOERN_PARSE_TIMEOUT_S",
     "JoernExportMissingError",
+    "UnsupportedParseLanguageError",
     "parse_source",
 ]

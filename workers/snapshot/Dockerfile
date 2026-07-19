@@ -66,26 +66,31 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 FROM python:3.11-slim-bookworm@sha256:8dca233de9f3d9bb410665f00a4da6dd06f331083137e0e98ccf227236fcc438
 LABEL org.opencontainers.image.title="scanipy-snapshot-worker"
 LABEL org.opencontainers.image.source="https://github.com/scanipy/scanipy-v3.2"
+ARG GIT_VERSION
 
-# ca-certificates: the "slim" runtime base does NOT ship a trusted CA bundle
-# by default, and the fetcher stage's own ca-certificates install (line ~23)
-# is a *different* apt layer that was never COPYed forward — only the git
-# binary itself was. Without this, `git clone https://...` (the real clone
-# this worker performs every job) fails TLS certificate verification with a
-# generic non-zero exit, discovered live via a real one-shot ECS smoke test
-# against a real GitHub HTTPS clone (first real-Joern proof run, v0.1.4).
-# Installed here (not copied from the fetcher stage) so the trust store
-# matches this stage's own OS packages, not a cross-stage/cross-base copy.
+# ca-certificates + git are installed HERE, via apt, in the runtime stage —
+# NOT copied from the fetcher stage. Two live one-shot ECS smoke tests
+# (v0.1.4, v0.1.6) each caught a different piece of the same underlying bug
+# class: copying `/usr/bin/git` + `/usr/lib/git-core` across stages brings
+# the binaries but NOT their OS-level dependency closure. v0.1.4: no CA
+# trust store in the runtime base (slim ships none), so HTTPS clones failed
+# TLS verification. v0.1.6: still exit 128, because `git-remote-https` (the
+# helper every https:// clone execs) links `libcurl3-gnutls` — a hard
+# Depends of Debian's git package (alongside perl/liberror-perl/libexpat1)
+# that the slim runtime base does not ship and the binary COPY never
+# brought. A real apt install of the SAME pinned git version resolves the
+# complete dependency closure by construction; the pin (GIT_VERSION, from
+# workers/pins.json) is unchanged, and the base image both stages share the
+# same Debian release (bookworm), so the installed binary is identical to
+# what the fetcher stage verified.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ca-certificates && \
+        ca-certificates "git=${GIT_VERSION}" && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy the pinned tooling from the fetcher stage.
 COPY --from=tools /opt/joern        /opt/joern
 COPY --from=tools /opt/codeql       /opt/codeql
 COPY --from=tools /opt/temurin-jre  /opt/temurin-jre
-COPY --from=tools /usr/bin/git      /usr/bin/git
-COPY --from=tools /usr/lib/git-core /usr/lib/git-core
 
 # Joern's own launcher script resolves `java` off PATH (and some JVM tooling
 # additionally checks JAVA_HOME) — both are set here rather than relying on
