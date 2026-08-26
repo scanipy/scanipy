@@ -1,5 +1,13 @@
 # DOC-DEPLOY-DECISIONS — Substrate decision record
 
+> **⚠️ SUPERSEDED (2026-08-26) for all AWS substrate choices.** The owner has redirected the
+> platform to a **Docker-deployed, self-hosted, open-source** substrate. The AWS-specific
+> resolutions in this file (`CLAR-DEPLOY-01/-02/-04/-05/-06/-07/-09/-11/-13/-16`) are reversed by
+> **`CLAR-DEPLOY-25`** — see `docs/DECISION-DEPLOY-02-docker-oss-pivot-2026-08-26.md` for the current
+> substrate remapping (Docker Compose · local/MinIO · Postgres service · local key provider ·
+> env/.env · local queue · OTel→stdout/OTLP · GHCR + Cosign · optional auth · single-tenant).
+> The records below are retained for history; do not treat their AWS choices as current.
+
 **Owner:** CTO Agent
 **Status:** ACTIVE (Phase 0a output; covers `CLAR-DEPLOY-01..22`; 17..18 added 2026-06-03, 19..22 added 2026-07-14)
 **Resolved date (applies to all 16 records in this file unless a per-section override is noted):** 2026-05-23
