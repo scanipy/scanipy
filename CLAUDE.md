@@ -176,6 +176,15 @@ crypto-misuse, authn-authz  mixed: IFDS portion follows language staging; patter
 
 ## 8. Technology stack (resolved CLAR-DEPLOY-*)
 
+> **⚠️ SUPERSEDED for the substrate rows (2026-08-26).** The AWS-specific decisions below
+> (Compute, Object store, RDS, KMS, Secrets, Queue, CloudWatch/X-Ray, ECR, Auth0, CI-OIDC,
+> S3 Object Lock) were reversed by the **Docker / self-hosted / open-source pivot** —
+> `CLAR-DEPLOY-25`, full record `docs/DECISION-DEPLOY-02-docker-oss-pivot-2026-08-26.md`.
+> Read that record for the current substrate (Docker Compose · local/MinIO · Postgres service ·
+> local key provider · env/.env · local queue · OTel→stdout/OTLP · **GHCR** + Cosign · optional
+> auth · single-tenant-per-deployment). The engine/version choices (PostgreSQL 16, Anthropic
+> LLM, RBAC role names, retention *durations*) are unchanged; only the AWS *hosting* is dropped.
+
 | Primitive | Decision |
 |---|---|
 | Compute | AWS ECS Fargate (pinned-image workers) |

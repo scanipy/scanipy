@@ -1,5 +1,13 @@
 # DOC-DEPLOY-DECISIONS — Substrate decision record
 
+> **⚠️ SUPERSEDED (2026-08-26) for all AWS substrate choices.** The owner has redirected the
+> platform to a **Docker-deployed, self-hosted, open-source** substrate. The AWS-specific
+> resolutions in this file (`CLAR-DEPLOY-01/-02/-04/-05/-06/-07/-09/-11/-13/-16`) are reversed by
+> **`CLAR-DEPLOY-25`** — see `docs/DECISION-DEPLOY-02-docker-oss-pivot-2026-08-26.md` for the current
+> substrate remapping (Docker Compose · local/MinIO · Postgres service · local key provider ·
+> env/.env · local queue · OTel→stdout/OTLP · GHCR + Cosign · optional auth · single-tenant).
+> The records below are retained for history; do not treat their AWS choices as current.
+
 **Owner:** CTO Agent
 **Status:** ACTIVE (Phase 0a output; covers `CLAR-DEPLOY-01..22`; 17..18 added 2026-06-03, 19..22 added 2026-07-14)
 **Resolved date (applies to all 16 records in this file unless a per-section override is noted):** 2026-05-23
@@ -662,6 +670,18 @@ Call site: the stage-gate harness (`stage-gate.yml` benchmark step / the pytest 
 - `kms_key_arn = "software-dev-signer"` is a human-readable sentinel, not a real ARN — any downstream code that assumes `kms_key_arn` parses as a real AWS ARN (none does today, verified: `sign_provenance`/`verify_chain` treat it as an opaque string) would break; flagged here so a future real-ARN parser addition checks for this sentinel first.
 - The `_SqlAlchemyFindingsSession` GUC-rebind-per-`add()` costs one extra `set_config` round-trip per finding even when consecutive findings share the same org (idempotent, correctness-only tradeoff) — acceptable at this stage's traffic volume; worth batching per-job rather than per-row if profiling ever shows it matters.
 - Whether the live `SCANIPY_DATABASE_URL` connection role is actually a member of `scanipy_app` (required for the RLS-scoped INSERT to succeed) was not independently verifiable from this build's sandbox — the RDS instance sits in an isolated private subnet with no network path from outside the VPC (consistent with `CLAR-DEPLOY-23`'s remediation). If the grant is missing, the first live INSERT fails with a clear Postgres permission-denied error (fail-closed, not a silent isolation bug), diagnosable and fixable with a one-line `GRANT scanipy_app TO <role>;` during the Wave-5 live proof run.
+
+---
+
+## CLAR-DEPLOY-25 — AWS-SaaS → Docker / self-hosted / open-source pivot (reverses the AWS substrate)
+
+**Status:** RESOLVED (2026-08-26)
+**Approver:** Project owner (directing the orchestrating agent in the acting-CTO role, per the CLAR-DEPLOY-24 posture).
+**Decision:** Reverse the AWS-specific substrate choices in this document (`CLAR-DEPLOY-01/-02/-04/-05/-06/-07/-09/-11/-13/-16`) onto a **Docker-deployed, self-hostable, open-source** substrate. Full remapping in `docs/DECISION-DEPLOY-02-docker-oss-pivot-2026-08-26.md`: Fargate→Docker Compose · S3→local volume / optional MinIO · RDS→Postgres Compose service · AWS-KMS→pluggable local software key · Secrets Manager→env/.env · SQS→local queue + DLQ table · CloudWatch/X-Ray→OTel stdout/OTLP · AWS-OIDC CI→GitHub Actions publishing **Cosign-signed images to GHCR** · Auth0 SSO→optional. Multi-tenancy de-scoped to single-tenant-per-deployment (`CMP-CP-03` RLS kept in code, inert). Attestor (`CMP-CP-05`) and signed provenance (`CMP-FND-03`) kept as core.
+
+**Rationale:** A self-hostable open-source SAST platform removes substrate lock-in and lets anyone run the reproducibility/provenance guarantees (`PLAN.md` properties (a) and (c)) on their own hardware. `PLAN.md` and `SDD.md` themselves are untouched (forbidden writes): the three load-bearing properties and INV-1..6 are substrate-independent, so dropping the AWS *hosting* changes no theorem — only the `Env` realization behind `env_digest` (INV-2). The engine/version choices (`WBS.md §17` CLAR-DEPLOY-03 PostgreSQL 16; the RBAC role names; retention *durations*) are retained; only the AWS managed services are dropped. Owner authority sits above the CTO agent (`RULE-8` names the CTO as substrate approver; the owner directs it).
+
+**Consequences:** Moving image publication ECR→GHCR changes the registry-reported image digest, which is a normal **env_digest rollover** (same mechanism as the `CMP-DEPLOY-04` rollover PRs #331/#333/#335); INV-2 is otherwise unaffected and Cosign signing is retained on GHCR. The board `AWS-TRACK` epic (#273) and its infra subtasks are retired; a `DOCKER-TRACK` epic (#337) with `DOCKER-01..03` + `OSS-01..03` replaces them (enumerated in `WBS.md §17` CLAR-DEPLOY-25). The AWS sections above (`CLAR-DEPLOY-01..24`) are retained for history but are no longer the current substrate — see the superseded-by banner at the top of this file.
 
 ---
 

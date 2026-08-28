@@ -21,8 +21,14 @@ dependencies = [
 dev = [
     "pytest>=7.4",
     "pytest-cov>=4.1",
-    "ruff>=0.4.10",
-    "mypy>=1.10",
+    # Pin the linter/type-checker to the versions the tree was formatted against.
+    # ruff's `format` changed in 0.16 (it now rewrites aligned inline comments),
+    # so an unpinned `>=` floats CI onto a formatter that reports repo-wide diffs
+    # even on no-op branches (broke PR #336's Lint gate; CLAR-DEPLOY-25). Pinning
+    # keeps `ruff format --check` reproducible — the project's own pinned-tooling
+    # ethos (env_digest) applied to the linter. Bump deliberately + reformat, never float.
+    "ruff>=0.15.22,<0.16",
+    "mypy>=1.10,<2.4",
     "types-PyYAML",
     "types-requests",
     "psycopg2-binary>=2.9",
