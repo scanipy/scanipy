@@ -2,6 +2,24 @@
 
 Algorithmically-grounded, auditable, multi-SCM SAST platform.
 
+## Quickstart — one-command self-host (Docker)
+
+No cloud account, no AWS. Brings up Postgres + the scan API and opens a paste-a-repo UI:
+
+```bash
+docker compose up --build
+# → open http://localhost:8000  and paste a public GitHub repo URL
+```
+
+Detection on this path is **oracle-passthrough** (Semgrep): every finding is labeled
+`origin=oracle-passthrough` with a `weak` same-source fingerprint — a stable id, not a
+canonical-graph claim. Findings persist to the `oracle` schema in the same Postgres the
+tenanted schema is migrated into on start. The deterministic-core IFDS/CPG engine (byte-identical
+reproducibility, refactor-invariant identity) is staged and not on this path yet — see the
+honest-labeling ledger in [PLAN.md](PLAN.md). See [`deploy/`](deploy/) for the image and service.
+
+(`docker-compose.dev.yml` remains the DB-only file for running the test suite on the host.)
+
 ## Source-of-truth documents
 
 | Document | Purpose |

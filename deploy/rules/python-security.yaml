@@ -1,0 +1,132 @@
+# Scanipy oracle ruleset — general Python security patterns (CWE-mapped).
+# These are engine-agnostic dataflow/pattern rules run by the Semgrep oracle
+# adapter (origin = oracle-passthrough in Scanipy's INV-1 taxonomy). They encode
+# well-known vulnerability shapes, not repository-specific signatures.
+rules:
+  - id: python-sql-injection-fstring-execute
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Untrusted input is interpolated into a SQL string passed to a database
+      cursor. This is a SQL injection (CWE-89). Use parameterized queries with
+      placeholders instead of f-strings or concatenation.
+    metadata: { cwe: "CWE-89", category: security, title: "SQL Injection" }
+    patterns:
+      - pattern-either:
+          - pattern: $CUR.execute(f"...{$X}...")
+          - pattern: $CUR.execute("..." + $X)
+          - pattern: $CUR.execute("..." % $X)
+          - pattern: $CUR.execute("...".format(...))
+          - pattern: $CUR.executemany(f"...{$X}...")
+
+  - id: python-sql-injection-formatted-query-taint
+    languages: [python]
+    severity: ERROR
+    message: >-
+      A SQL string built with %-formatting or .format() flows into a database
+      cursor's execute(). If the formatted value is user-controlled this is SQL
+      injection (CWE-89), even when the query is assembled in a separate
+      statement. Use parameterized queries (execute(sql, params)) instead.
+    metadata: { cwe: "CWE-89", category: security, title: "SQL Injection" }
+    mode: taint
+    pattern-sources:
+      - pattern: '"..." % $X'
+      - pattern: '"...".format(...)'
+    pattern-sinks:
+      - pattern: $CUR.execute($SINK, ...)
+
+  - id: python-ssti-template-concatenation
+    languages: [python]
+    severity: ERROR
+    message: >-
+      A Jinja2 template is constructed from concatenated/interpolated input and
+      then rendered. This is Server-Side Template Injection (CWE-1336) and can
+      lead to remote code execution. Never build templates from untrusted data.
+    metadata: { cwe: "CWE-1336", category: security, title: "Server-Side Template Injection" }
+    patterns:
+      - pattern-either:
+          - pattern: Template("..." + $X).render(...)
+          - pattern: Template($S + $X).render(...)
+          - pattern: |
+              $T = Template("..." + $X)
+              ...
+              $T.render(...)
+          - pattern: render_template_string(f"...{$X}...", ...)
+
+  - id: python-ssrf-requests-nonliteral-url
+    languages: [python]
+    severity: WARNING
+    message: >-
+      An outbound HTTP request is made to a non-constant URL. If the URL derives
+      from user input this is Server-Side Request Forgery (CWE-918), allowing
+      access to internal services. Validate the host against an allowlist.
+    metadata: { cwe: "CWE-918", category: security, title: "Server-Side Request Forgery" }
+    patterns:
+      - pattern: requests.$M(url=$X, ...)
+      - metavariable-pattern:
+          metavariable: $X
+          patterns:
+            - pattern-not: "\"...\""
+
+  - id: python-tls-verification-disabled
+    languages: [python]
+    severity: WARNING
+    message: >-
+      TLS certificate verification is disabled (verify=False). This exposes the
+      connection to man-in-the-middle attacks (CWE-295). Leave verification on.
+    metadata: { cwe: "CWE-295", category: security, title: "TLS Verification Disabled" }
+    pattern: requests.$M(..., verify=False, ...)
+
+  - id: python-path-traversal-open-nonliteral
+    languages: [python]
+    severity: WARNING
+    message: >-
+      A file is opened using a non-constant path. If the path derives from user
+      input an attacker can read arbitrary files via path traversal (CWE-22).
+      Resolve and confine the path to an allowed base directory.
+    metadata: { cwe: "CWE-22", category: security, title: "Path Traversal / LFI" }
+    patterns:
+      - pattern: open($X, ...)
+      - metavariable-pattern:
+          metavariable: $X
+          patterns:
+            - pattern-not: "\"...\""
+            - pattern-not: "'...'"
+
+  - id: python-flask-debug-enabled
+    languages: [python]
+    severity: WARNING
+    message: >-
+      Flask is run with debug=True. The Werkzeug debugger exposes an interactive
+      console and can allow remote code execution if reachable (CWE-489). Never
+      enable debug mode in production.
+    metadata: { cwe: "CWE-489", category: security, title: "Debug Mode Enabled" }
+    pattern: $APP.run(..., debug=True, ...)
+
+  - id: python-dangerous-eval-exec
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Dynamic code execution via eval/exec on a non-constant expression can lead
+      to arbitrary code execution (CWE-95) when the input is attacker-controlled.
+    metadata: { cwe: "CWE-95", category: security, title: "Code Injection (eval/exec)" }
+    patterns:
+      - pattern-either:
+          - pattern: eval($X)
+          - pattern: exec($X)
+      - metavariable-pattern:
+          metavariable: $X
+          patterns:
+            - pattern-not: "\"...\""
+
+  - id: python-insecure-deserialization
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Deserializing untrusted data with pickle or yaml.load (unsafe Loader) can
+      execute arbitrary code (CWE-502). Use yaml.safe_load / a safe format.
+    metadata: { cwe: "CWE-502", category: security, title: "Insecure Deserialization" }
+    patterns:
+      - pattern-either:
+          - pattern: pickle.loads(...)
+          - pattern: yaml.load($X)
