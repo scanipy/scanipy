@@ -224,7 +224,14 @@ class SQSQueue:
         if client is None:
             import boto3
 
-            client = boto3.client("sqs", region_name=os.environ.get("AWS_REGION", "us-east-1"))
+            # AWS_ENDPOINT_URL lets the same SQS adapter target a self-hosted,
+            # SQS-compatible queue (LocalStack) — CLAR-DEPLOY-25. Unset ⇒ real
+            # AWS SQS (behaviour unchanged).
+            client = boto3.client(
+                "sqs",
+                region_name=os.environ.get("AWS_REGION", "us-east-1"),
+                endpoint_url=os.environ.get("AWS_ENDPOINT_URL") or None,
+            )
         self._queue_url = queue_url
         self._client: Any = client
         self._in_flight: dict[int, str] = {}
