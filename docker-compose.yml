@@ -1,0 +1,48 @@
+# Scanipy v3.2 — one-command self-host deployment (DOCKER-01, CLAR-DEPLOY-25).
+#
+#     docker compose up --build
+#     open http://localhost:8000     # paste a public GitHub repo → findings
+#
+# NO cloud account, NO AWS. Two services: Postgres (substrate, migrated on start)
+# and the Scanipy scan API (oracle-passthrough detection via Semgrep). The
+# deterministic-core IFDS/CPG engine is staged and not on this path yet.
+#
+# (docker-compose.dev.yml remains the DB-only file for running the test suite on
+#  the host; this file is the packaged application deployment.)
+
+services:
+  db:
+    container_name: scanipy-db
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: scanipy
+      POSTGRES_PASSWORD: scanipy_dev
+      POSTGRES_DB: scanipy_dev
+    volumes:
+      - scanipy-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scanipy -d scanipy_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  scanipy:
+    container_name: scanipy-app
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SCANIPY_DATABASE_URL: postgresql://scanipy:scanipy_dev@db:5432/scanipy_dev
+      SCANIPY_ENV: development
+      SCANIPY_S_VERSION: oracle-2026.08
+      LLM_TRIAGE: "off"
+    ports:
+      - "8000:8000"
+
+volumes:
+  scanipy-pgdata:

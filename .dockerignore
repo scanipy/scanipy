@@ -1,0 +1,23 @@
+# Keep the build context lean. The app + alembic need the Python packages listed
+# in pyproject (analysis/detectors/integrations/services/workers/tools/db) plus
+# deploy/, pyproject.toml, alembic.ini, README.md. Everything below is not needed
+# at runtime and is excluded.
+.git
+**/__pycache__
+**/*.pyc
+**/*.pyo
+.venv
+venv
+tests
+docs
+infra
+.github
+.claude
+web
+node_modules
+**/node_modules
+*.log
+.env
+.mypy_cache
+.pytest_cache
+.ruff_cache
