@@ -7,7 +7,7 @@ name = "scanipy"
 version = "3.2.0"
 description = "Multi-tenant SaaS SAST platform — deterministic taint analysis via IFDS/IDE"
 requires-python = ">=3.11"
-license = { text = "Proprietary" }
+license = { text = "Apache-2.0" }
 dependencies = [
     # CMP-FND-03 signs provenance records via KMS and verifies RSASSA-PSS
     # signatures locally (AC-FND-03a: verify without re-running analysis).
