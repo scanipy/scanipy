@@ -253,8 +253,20 @@ class S3ObjectStore:
     def __init__(self, bucket: str, client: object | None = None) -> None:
         if client is None:
             import boto3
+            from botocore.config import Config
 
-            client = boto3.client("s3", region_name=os.environ.get("AWS_REGION", "us-east-1"))
+            # AWS_ENDPOINT_URL lets the same S3 adapter target a self-hosted,
+            # S3-compatible store (MinIO / LocalStack) — CLAR-DEPLOY-25's optional
+            # MinIO backend. Unset ⇒ real AWS S3 (behaviour unchanged). A custom
+            # endpoint needs path-style addressing (MinIO does not do virtual-host
+            # buckets by default).
+            endpoint = os.environ.get("AWS_ENDPOINT_URL") or None
+            client = boto3.client(
+                "s3",
+                region_name=os.environ.get("AWS_REGION", "us-east-1"),
+                endpoint_url=endpoint,
+                config=Config(s3={"addressing_style": "path"}) if endpoint else None,
+            )
         self._bucket = bucket
         self._client: Any = client
 
