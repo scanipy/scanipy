@@ -673,6 +673,18 @@ Call site: the stage-gate harness (`stage-gate.yml` benchmark step / the pytest 
 
 ---
 
+## CLAR-DEPLOY-25 — AWS-SaaS → Docker / self-hosted / open-source pivot (reverses the AWS substrate)
+
+**Status:** RESOLVED (2026-08-26)
+**Approver:** Project owner (directing the orchestrating agent in the acting-CTO role, per the CLAR-DEPLOY-24 posture).
+**Decision:** Reverse the AWS-specific substrate choices in this document (`CLAR-DEPLOY-01/-02/-04/-05/-06/-07/-09/-11/-13/-16`) onto a **Docker-deployed, self-hostable, open-source** substrate. Full remapping in `docs/DECISION-DEPLOY-02-docker-oss-pivot-2026-08-26.md`: Fargate→Docker Compose · S3→local volume / optional MinIO · RDS→Postgres Compose service · AWS-KMS→pluggable local software key · Secrets Manager→env/.env · SQS→local queue + DLQ table · CloudWatch/X-Ray→OTel stdout/OTLP · AWS-OIDC CI→GitHub Actions publishing **Cosign-signed images to GHCR** · Auth0 SSO→optional. Multi-tenancy de-scoped to single-tenant-per-deployment (`CMP-CP-03` RLS kept in code, inert). Attestor (`CMP-CP-05`) and signed provenance (`CMP-FND-03`) kept as core.
+
+**Rationale:** A self-hostable open-source SAST platform removes substrate lock-in and lets anyone run the reproducibility/provenance guarantees (`PLAN.md` properties (a) and (c)) on their own hardware. `PLAN.md` and `SDD.md` themselves are untouched (forbidden writes): the three load-bearing properties and INV-1..6 are substrate-independent, so dropping the AWS *hosting* changes no theorem — only the `Env` realization behind `env_digest` (INV-2). The engine/version choices (`WBS.md §17` CLAR-DEPLOY-03 PostgreSQL 16; the RBAC role names; retention *durations*) are retained; only the AWS managed services are dropped. Owner authority sits above the CTO agent (`RULE-8` names the CTO as substrate approver; the owner directs it).
+
+**Consequences:** Moving image publication ECR→GHCR changes the registry-reported image digest, which is a normal **env_digest rollover** (same mechanism as the `CMP-DEPLOY-04` rollover PRs #331/#333/#335); INV-2 is otherwise unaffected and Cosign signing is retained on GHCR. The board `AWS-TRACK` epic (#273) and its infra subtasks are retired; a `DOCKER-TRACK` epic (#337) with `DOCKER-01..03` + `OSS-01..03` replaces them (enumerated in `WBS.md §17` CLAR-DEPLOY-25). The AWS sections above (`CLAR-DEPLOY-01..24`) are retained for history but are no longer the current substrate — see the superseded-by banner at the top of this file.
+
+---
+
 ## env_digest history (CLAR-DEPLOY-22 pointer)
 
 `DOC-CMP-DEPLOY-02.md §6.1` step 6 says the image digest is "written to the substrate decision record under 'env_digest history'"; `DOC-CMP-DEPLOY-04.md §6.2` step 7 says this file is **not** mechanically updated for tool-version bumps. `CLAR-DEPLOY-22` (full record above; `WBS.md §17`) reconciles the two by making this a **pointer, not a ledger**: the canonical, machine-readable, append-only `env_digest` registry is the committed file `workers/env_digest_history.json` (schema + validation in `workers/build/env_digest_registry.py`; CI-checked by `scripts/check_env_digest_registry.py` and the rollover-ceremony lint `scripts/check_rollover_ceremony.py`). It is written only via a human-reviewed `env_digest rollover` PR auto-opened by the `register-env-digest` job in `.github/workflows/deploy.yml` (never a direct push — `enforce-pr-only-merges.yml` + RULE-10); registration is effective on merge. `CMP-CP-06` consumes the registry's active `scanipy-snapshot` entry via `services/control_plane/fidelity.py::production_env_digest` / `enforce_production_env` (`CLAR-CP-06-02`). This section is not itself updated per rollover — see the registry file's own git history for the authoritative timeline.
