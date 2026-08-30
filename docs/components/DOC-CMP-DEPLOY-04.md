@@ -102,8 +102,8 @@ Per `CLAR-DEPLOY-11`, GitHub Actions assumes AWS IAM via OIDC keyless auth. The 
       },
       "StringLike": {
         "token.actions.githubusercontent.com:sub": [
-          "repo:scanipy/scanipy-v3.2:ref:refs/tags/v*",
-          "repo:scanipy/scanipy-v3.2:ref:refs/heads/main"
+          "repo:scanipy/scanipy:ref:refs/tags/v*",
+          "repo:scanipy/scanipy:ref:refs/heads/main"
         ]
       }
     }

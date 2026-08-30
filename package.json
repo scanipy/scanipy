@@ -1,5 +1,5 @@
 {
-  "name": "scanipy-v3.2",
+  "name": "scanipy",
   "version": "3.2.0",
   "description": "Multi-tenant SaaS SAST platform — web dashboard and frontend tooling",
   "private": true,

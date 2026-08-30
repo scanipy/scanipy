@@ -9,7 +9,7 @@ resource "aws_cloudwatch_dashboard" "scanipy" {
       {
         type   = "text"
         x      = 0; y = 0; width = 24; height = 1
-        properties = { markdown = "## Scanipy v3.2 — ${var.env} | [Runbook](https://github.com/scanipy/scanipy-v3.2/blob/main/docs/cross-cutting/DOC-RUNBOOK.md)" }
+        properties = { markdown = "## Scanipy v3.2 — ${var.env} | [Runbook](https://github.com/scanipy/scanipy/blob/main/docs/cross-cutting/DOC-RUNBOOK.md)" }
       },
 
       # --- Scan lifecycle ---

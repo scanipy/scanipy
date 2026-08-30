@@ -123,7 +123,7 @@ These outputs are the published contract; sibling components reference them by T
 |---|---|---|
 | 16 `CLAR-DEPLOY-*` decisions | `DOC-DEPLOY-DECISIONS.md` | All RESOLVED 2026-05-23. CTO Agent has approved per RULE-8. |
 | AWS account ID + organization | Bootstrap secret (one-time setup) | Two accounts: `prod` and `staging`. Account separation is part of the isolation story even though tenants share an account within an env. |
-| GitHub OIDC issuer fingerprint | AWS IAM trust-policy reference | Encodes `repo:scanipy/scanipy-v3.2:*` as the allowed `sub` (`CLAR-DEPLOY-11`). |
+| GitHub OIDC issuer fingerprint | AWS IAM trust-policy reference | Encodes `repo:scanipy/scanipy:*` as the allowed `sub` (`CLAR-DEPLOY-11`). |
 | Domain names | DNS provider (Route 53 zone) | `api.scanipy.io`, `app.scanipy.io`, `auth.scanipy.io`. |
 
 ### 4.2 Outputs

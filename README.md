@@ -76,7 +76,7 @@ CODEOWNERS (`.github/CODEOWNERS`) is also advisory-only on Free — it routes re
 To upgrade now: `Settings → Billing and plans → Plans and usage → Upgrade` (Team is ~$4 / user / month). Once on Team, run:
 
 ```bash
-gh api -X PUT repos/scanipy/scanipy-v3.2/branches/main/protection \
+gh api -X PUT repos/scanipy/scanipy/branches/main/protection \
   -F required_status_checks.strict=true \
   -F 'required_status_checks.contexts[]=Lint & typecheck' \
   -F 'required_status_checks.contexts[]=Unit tests' \

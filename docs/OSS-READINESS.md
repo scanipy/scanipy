@@ -38,4 +38,4 @@ Requires, in order:
 3. [ ] Optional: decommission the referenced AWS account / rotate anything the owner considers
        sensitive before or independent of the flip.
 
-When confirmed: `gh repo edit scanipy/scanipy-v3.2 --visibility public --accept-visibility-change-consequences`.
+When confirmed: `gh repo edit scanipy/scanipy --visibility public --accept-visibility-change-consequences`.

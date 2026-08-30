@@ -65,8 +65,8 @@ def _build(root: Path, **overrides: object) -> dict[str, object]:
         "image_digest": _IMAGE_DIGEST,
         "build_commit": _BUILD_COMMIT,
         "source_ref": "refs/tags/v0.1.2",
-        "repository": "scanipy/scanipy-v3.2",
-        "builder_id": "https://github.com/scanipy/scanipy-v3.2/.github/workflows/deploy.yml@refs/tags/v0.1.2",
+        "repository": "scanipy/scanipy",
+        "builder_id": "https://github.com/scanipy/scanipy/.github/workflows/deploy.yml@refs/tags/v0.1.2",
         "pins_path": pins_path,
         "dockerfile_path": dockerfile_path,
         "requirements_path": requirements_path,
@@ -105,7 +105,7 @@ def test_predicate_type_and_build_type_are_slsa_v02() -> None:
 def test_predicate_links_builder_and_image_digest(tmp_path: Path) -> None:
     predicate = _build(tmp_path)
     assert predicate["builder"] == {
-        "id": "https://github.com/scanipy/scanipy-v3.2/.github/workflows/deploy.yml@refs/tags/v0.1.2"
+        "id": "https://github.com/scanipy/scanipy/.github/workflows/deploy.yml@refs/tags/v0.1.2"
     }
     assert predicate["buildType"] == BUILD_TYPE
     parameters = predicate["invocation"]["parameters"]  # type: ignore[index]
@@ -117,7 +117,7 @@ def test_predicate_links_build_commit_via_config_source(tmp_path: Path) -> None:
     predicate = _build(tmp_path)
     config_source = predicate["invocation"]["configSource"]  # type: ignore[index]
     assert config_source["digest"] == {"sha1": _BUILD_COMMIT}
-    assert config_source["uri"] == "git+https://github.com/scanipy/scanipy-v3.2@refs/tags/v0.1.2"
+    assert config_source["uri"] == "git+https://github.com/scanipy/scanipy@refs/tags/v0.1.2"
     assert config_source["entryPoint"] == ".github/workflows/deploy.yml"
 
 
@@ -204,8 +204,8 @@ def test_build_predicate_refuses_pins_with_no_tools_section(tmp_path: Path) -> N
             image_digest=_IMAGE_DIGEST,
             build_commit=_BUILD_COMMIT,
             source_ref="refs/tags/v0.1.2",
-            repository="scanipy/scanipy-v3.2",
-            builder_id="https://github.com/scanipy/scanipy-v3.2/.github/workflows/deploy.yml@x",
+            repository="scanipy/scanipy",
+            builder_id="https://github.com/scanipy/scanipy/.github/workflows/deploy.yml@x",
             pins_path=pins_path,
             dockerfile_path=dockerfile_path,
             requirements_path=requirements_path,
@@ -231,8 +231,8 @@ def test_build_predicate_refuses_a_tool_missing_sha256(tmp_path: Path) -> None:
             image_digest=_IMAGE_DIGEST,
             build_commit=_BUILD_COMMIT,
             source_ref="refs/tags/v0.1.2",
-            repository="scanipy/scanipy-v3.2",
-            builder_id="https://github.com/scanipy/scanipy-v3.2/.github/workflows/deploy.yml@x",
+            repository="scanipy/scanipy",
+            builder_id="https://github.com/scanipy/scanipy/.github/workflows/deploy.yml@x",
             pins_path=pins_path,
             dockerfile_path=dockerfile_path,
             requirements_path=requirements_path,
@@ -259,9 +259,9 @@ def test_cli_writes_predicate_and_returns_zero(tmp_path: Path) -> None:
             "--source-ref",
             "refs/tags/v0.1.2",
             "--repository",
-            "scanipy/scanipy-v3.2",
+            "scanipy/scanipy",
             "--builder-id",
-            "https://github.com/scanipy/scanipy-v3.2/.github/workflows/deploy.yml@x",
+            "https://github.com/scanipy/scanipy/.github/workflows/deploy.yml@x",
             "--pins",
             str(pins_path),
             "--dockerfile",
@@ -289,9 +289,9 @@ def test_cli_returns_one_on_missing_pins_file(tmp_path: Path) -> None:
             "--source-ref",
             "refs/tags/v0.1.2",
             "--repository",
-            "scanipy/scanipy-v3.2",
+            "scanipy/scanipy",
             "--builder-id",
-            "https://github.com/scanipy/scanipy-v3.2/.github/workflows/deploy.yml@x",
+            "https://github.com/scanipy/scanipy/.github/workflows/deploy.yml@x",
             "--pins",
             str(tmp_path / "nope.json"),
             "--dockerfile",
