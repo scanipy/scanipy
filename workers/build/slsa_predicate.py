@@ -34,7 +34,7 @@ from pathlib import Path
 #: cosign ``--type slsaprovenance`` binds this predicate type.
 PREDICATE_TYPE = "https://slsa.dev/provenance/v0.2"
 
-BUILD_TYPE = "https://github.com/scanipy/scanipy-v3.2/worker-image-build@v1"
+BUILD_TYPE = "https://github.com/scanipy/scanipy/worker-image-build@v1"
 
 _WORKFLOW_ENTRYPOINT = ".github/workflows/deploy.yml"
 

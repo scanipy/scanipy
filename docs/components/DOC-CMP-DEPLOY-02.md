@@ -92,7 +92,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ----- Stage 2: runtime -----
 FROM python:3.11-slim-bookworm@sha256:<PYTHON_DIGEST>
 LABEL org.opencontainers.image.title="scanipy-snapshot-worker"
-LABEL org.opencontainers.image.source="https://github.com/scanipy/scanipy-v3.2"
+LABEL org.opencontainers.image.source="https://github.com/scanipy/scanipy"
 
 # Copy the pinned tooling from the fetcher stage.
 COPY --from=tools /opt/joern    /opt/joern

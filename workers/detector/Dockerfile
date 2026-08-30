@@ -45,7 +45,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ----- Stage 2: runtime -----
 FROM python:3.11-slim-bookworm@sha256:8dca233de9f3d9bb410665f00a4da6dd06f331083137e0e98ccf227236fcc438
 LABEL org.opencontainers.image.title="scanipy-detector-worker"
-LABEL org.opencontainers.image.source="https://github.com/scanipy/scanipy-v3.2"
+LABEL org.opencontainers.image.source="https://github.com/scanipy/scanipy"
 ARG GIT_VERSION
 
 # ca-certificates + git installed via apt in the runtime stage — same fix as
