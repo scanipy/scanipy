@@ -1,9 +1,13 @@
-name: Deploy — ECS Fargate (tagged releases only)
+name: Deploy — ECS Fargate (SUPERSEDED — Docker/OSS pivot)
 
+# ⚠️ SUPERSEDED (CLAR-DEPLOY-25 / docs/DECISION-DEPLOY-02-docker-oss-pivot-2026-08-26.md).
+# The AWS ECS/ECR deploy path was retired by the Docker/self-hosted/open-source
+# pivot. The current release path publishes Cosign-signed images to GHCR —
+# see .github/workflows/publish-images.yml (DOCKER-03). This workflow is kept
+# for history and is NO LONGER auto-triggered on release tags (it would fail
+# without the decommissioned AWS substrate). It can only be run manually.
 on:
-  push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch: {}
 
 # Workflow-level default is the least-privilege floor. Each job below declares
 # its own `permissions:` block scoped to exactly what that job needs — a
