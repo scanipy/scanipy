@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import re
 import shutil
@@ -45,6 +46,7 @@ from sqlalchemy import (
     Table,
     Text,
     create_engine,
+    func,
     insert,
     select,
     text,
@@ -70,9 +72,14 @@ SCAN_TIMEOUT_S = 600
 # Semgrep severity → display band (ERROR/WARNING/INFO).
 _SEV_BAND = {"ERROR": "critical", "WARNING": "high", "INFO": "medium"}
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+logger = logging.getLogger("scanipy.oracle")
+
 _engine = create_engine(DATABASE_URL, pool_pre_ping=True, future=True)
 _meta = MetaData(schema="oracle")
-_pool = ThreadPoolExecutor(max_workers=4)
+_MAX_WORKERS = 4
+_MAX_INFLIGHT = 8  # queued+running cap; excess is rejected with 429 (crude DoS backstop)
+_pool = ThreadPoolExecutor(max_workers=_MAX_WORKERS)
 
 scan_tbl = Table(
     "scan",
@@ -244,23 +251,29 @@ def _run_scan(scan_id: str, repo_url: str) -> None:
                     insert(finding_tbl),
                     [{"scan_id": scan_id, **f} for f in findings],
                 )
+            dur = round((_now() - started).total_seconds(), 1)
             conn.execute(
                 update(scan_tbl)
                 .where(scan_tbl.c.id == scan_id)
-                .values(
-                    status="done",
-                    phase="done",
-                    files=py_files,
-                    duration_s=round((_now() - started).total_seconds(), 1),
-                )
+                .values(status="done", phase="done", files=py_files, duration_s=dur)
             )
+        logger.info(
+            "scan %s done: %d finding(s) over %d file(s) in %.1fs",
+            scan_id,
+            len(findings),
+            py_files,
+            dur,
+        )
     except subprocess.CalledProcessError as exc:
         err = (exc.stderr or b"").decode(errors="replace")[-400:]
         _set_scan(scan_id, status="error", phase="done", error=f"clone failed: {err}")
+        logger.warning("scan %s: clone failed: %s", scan_id, err)
     except subprocess.TimeoutExpired:
-        _set_scan(scan_id, status="error", phase="done", error="analysis timed out")
+        _set_scan(scan_id, status="error", phase="done", error="clone or analysis timed out")
+        logger.warning("scan %s: timed out", scan_id)
     except Exception as exc:
         _set_scan(scan_id, status="error", phase="done", error=str(exc)[:1200])
+        logger.exception("scan %s failed", scan_id)
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
 
@@ -280,6 +293,15 @@ def _startup() -> None:
     global _ENV_DIGEST
     _init_db()
     _ENV_DIGEST = _compute_env_digest()
+    # Reap scans orphaned by a restart: their in-process worker thread did not
+    # survive, so a `running` row would otherwise leave the UI polling forever.
+    with _engine.begin() as conn:
+        reaped = conn.execute(
+            update(scan_tbl)
+            .where(scan_tbl.c.status == "running")
+            .values(status="error", phase="done", error="interrupted by a restart")
+        ).rowcount
+    logger.info("startup complete; env_digest=%s; reaped %s orphaned scan(s)", _ENV_DIGEST, reaped)
 
 
 @app.get("/healthz")
@@ -302,6 +324,13 @@ def post_scan(req: ScanRequest) -> JSONResponse:
         )
     scan_id = str(uuid.uuid4())
     with _engine.begin() as conn:
+        inflight = conn.execute(
+            select(func.count()).select_from(scan_tbl).where(scan_tbl.c.status == "running")
+        ).scalar_one()
+        if inflight >= _MAX_INFLIGHT:
+            return JSONResponse(
+                {"error": "too many scans in progress — try again shortly"}, status_code=429
+            )
         conn.execute(
             insert(scan_tbl).values(
                 id=scan_id,
@@ -314,6 +343,7 @@ def post_scan(req: ScanRequest) -> JSONResponse:
             )
         )
     _pool.submit(_run_scan, scan_id, url)
+    logger.info("scan %s queued for %s", scan_id, url)
     return JSONResponse({"id": scan_id}, status_code=202)
 
 

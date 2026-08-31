@@ -3,7 +3,8 @@
 # oracle scan API. POSIX sh (python:3.11-slim ships dash, not bash).
 set -eu
 
-echo "[entrypoint] waiting for database at ${SCANIPY_DATABASE_URL%%@*}@… "
+# NB: never echo SCANIPY_DATABASE_URL — it contains the DB password.
+echo "[entrypoint] waiting for the database…"
 python - <<'PY'
 import os, time, sqlalchemy
 url = os.environ["SCANIPY_DATABASE_URL"]
