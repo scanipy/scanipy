@@ -1,0 +1,42 @@
+name: Bug report
+description: Report a problem with Scanipy (the tool, the Docker deploy, or the scanner)
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. **Do not report security vulnerabilities here** — see
+        [SECURITY.md](https://github.com/scanipy/scanipy/blob/main/SECURITY.md).
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, and what went wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Ideally the exact commands and the public repo URL you scanned.
+      placeholder: |
+        docker compose up --build
+        # scanned https://github.com/owner/repo → ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      description: Image tag or git commit you're running.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / output
+      render: shell

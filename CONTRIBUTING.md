@@ -46,6 +46,14 @@ To run the full self-host app locally: `docker compose up --build` (see [README]
 - The `claude-review` check must reach an **APPROVE** verdict before merge (RULE-10).
 - Add tests for new behavior; never weaken a falsifier threshold to make a build pass.
 
+**Contributing from a fork.** The automated `claude-review` gate only runs on branches in this
+repository (it needs repository secrets, which fork PRs cannot access), so a **fork PR cannot satisfy
+RULE-10 on its own** — that's expected, not a rejection. A maintainer will run the review from a repo
+branch (or re-run it after pulling your change) and merge once it's APPROVE. Open your PR from a fork
+as normal; the internal `CMP-*` / board rituals in the PR template are for in-team work — for an
+external contribution, describe the change and the tests you ran, and a maintainer maps it to the
+process.
+
 ## Reporting security issues
 
 Please **do not** open a public issue for vulnerabilities. See [SECURITY.md](SECURITY.md).
