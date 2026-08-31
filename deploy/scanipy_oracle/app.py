@@ -67,8 +67,10 @@ S_VERSION = os.environ.get("SCANIPY_S_VERSION", "oracle-2026.08")
 GITHUB_URL_RE = re.compile(r"^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 CLONE_TIMEOUT_S = 120
 SCAN_TIMEOUT_S = 600
-# Semgrep severity → display band (ERROR/WARNING/INFO).
-_SEV_BAND = {"ERROR": "critical", "WARNING": "high", "INFO": "medium"}
+# Semgrep severity → display band. ERROR = high-signal (SQLi/SSTI/eval/pickle);
+# WARNING = medium; INFO = low-confidence heuristics (non-literal open/URL) — so a
+# repo of heuristic findings renders as low, not a wall of HIGH false positives.
+_SEV_BAND = {"ERROR": "critical", "WARNING": "medium", "INFO": "low"}
 
 _engine = create_engine(DATABASE_URL, pool_pre_ping=True, future=True)
 _meta = MetaData(schema="oracle")
@@ -194,7 +196,7 @@ def _map_findings(data: dict, src: Path, commit_sha: str) -> list[dict]:
                 "engine": "semgrep",
                 "cwe": meta.get("cwe", ""),
                 "rule_id": r["check_id"],
-                "severity": _SEV_BAND.get(r["extra"].get("severity", "WARNING"), "high"),
+                "severity": _SEV_BAND.get(r["extra"].get("severity", "WARNING"), "medium"),
                 "title": title,
                 "message": (r["extra"].get("message") or "").strip(),
                 "file": rel,

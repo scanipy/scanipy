@@ -55,18 +55,23 @@ rules:
 
   - id: python-ssrf-requests-nonliteral-url
     languages: [python]
-    severity: WARNING
+    severity: INFO
     message: >-
-      An outbound HTTP request is made to a non-constant URL. If the URL derives
-      from user input this is Server-Side Request Forgery (CWE-918), allowing
-      access to internal services. Validate the host against an allowlist.
-    metadata: { cwe: "CWE-918", category: security, title: "Server-Side Request Forgery" }
+      HEURISTIC (low confidence): an outbound HTTP request targets a non-constant
+      URL. If the URL derives from untrusted input this is Server-Side Request
+      Forgery (CWE-918). Confirm the URL is not user-controlled, or validate the
+      host against an allowlist. Pattern heuristic — no dataflow, so a config- or
+      constant-derived URL will also match.
+    metadata: { cwe: "CWE-918", category: security, confidence: LOW, title: "Server-Side Request Forgery" }
     patterns:
-      - pattern: requests.$M(url=$X, ...)
+      - pattern-either:
+          - pattern: requests.$M(url=$X, ...)
+          - pattern: requests.$M($X, ...)
       - metavariable-pattern:
           metavariable: $X
           patterns:
             - pattern-not: "\"...\""
+            - pattern-not: "'...'"
 
   - id: python-tls-verification-disabled
     languages: [python]
@@ -79,12 +84,14 @@ rules:
 
   - id: python-path-traversal-open-nonliteral
     languages: [python]
-    severity: WARNING
+    severity: INFO
     message: >-
-      A file is opened using a non-constant path. If the path derives from user
-      input an attacker can read arbitrary files via path traversal (CWE-22).
-      Resolve and confine the path to an allowed base directory.
-    metadata: { cwe: "CWE-22", category: security, title: "Path Traversal / LFI" }
+      HEURISTIC (low confidence): a file is opened using a non-constant path. If
+      the path derives from untrusted input this is path traversal (CWE-22).
+      Confirm the path is not user-controlled, or confine it to an allowed base
+      directory. Pattern heuristic — no dataflow, so a safe constant such as
+      open(os.path.join(BASE_DIR, "file")) will also match.
+    metadata: { cwe: "CWE-22", category: security, confidence: LOW, title: "Path Traversal / LFI" }
     patterns:
       - pattern: open($X, ...)
       - metavariable-pattern:
