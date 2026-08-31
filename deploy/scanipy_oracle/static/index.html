@@ -158,7 +158,7 @@ const PHASE_TEXT = {
   detecting:"<b>Scanning</b> with the Semgrep oracle…",
 };
 const PHASE_ORDER = ["cloning","detecting","done"];
-let poll = null;
+let poll = null, polls = 0;
 
 $("example").onclick = () => { $("url").value = $("example").textContent; };
 $("url").addEventListener("keydown", e => { if (e.key === "Enter") start(); });
@@ -179,15 +179,23 @@ async function start() {
       body: JSON.stringify({repo_url: url}) });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || "scan request failed");
+    polls = 0;
     poll = setInterval(() => check(j.id), 1200);
   } catch (e) { fail(e.message); }
 }
 
+const MAX_POLLS = 200;   // 200 × 1.2s ≈ 4 min before the client gives up
+
 async function check(id) {
-  let j;
-  try { j = await (await fetch("/api/scan/" + id)).json(); }
-  catch { return; }
-  if (j.status === "running") { setPhase(j.phase); return; }
+  let r, j;
+  try { r = await fetch("/api/scan/" + id); j = await r.json(); }
+  catch { if (++polls > MAX_POLLS) endPoll("scan timed out — no response from the server"); return; }
+  if (!r.ok) { endPoll(j.error || "scan not found"); return; }
+  if (j.status === "running") {
+    setPhase(j.phase);
+    if (++polls > MAX_POLLS) endPoll("scan is taking too long — giving up");
+    return;
+  }
   clearInterval(poll);
   $("go").disabled = false;
   $("status").style.display = "none";
@@ -195,6 +203,8 @@ async function check(id) {
   setPhase("done");
   render(j);
 }
+
+function endPoll(msg) { clearInterval(poll); $("go").disabled = false; $("status").style.display = "none"; fail(msg); }
 
 function setPhase(p) {
   $("phaseText").innerHTML = PHASE_TEXT[p] || "<b>Working</b>…";
@@ -218,11 +228,14 @@ function esc(s) { return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&l
 
 function render(j) {
   const f = j.findings || [];
-  $("count").textContent = f.length
-    ? `${f.length} finding${f.length === 1 ? "" : "s"}`
-    : "No findings";
-  $("count").className = "count " + (f.length ? "bad" : "good");
   const s = j.stats || {};
+  if (!f.length && s.files === 0) {
+    $("count").textContent = "No Python files found — nothing was scanned";
+    $("count").className = "count good";
+  } else {
+    $("count").textContent = f.length ? `${f.length} finding${f.length === 1 ? "" : "s"}` : "No findings";
+    $("count").className = "count " + (f.length ? "bad" : "good");
+  }
   $("stats").innerHTML =
     (s.files    != null ? `<div><b>${s.files}</b> Python files scanned</div>` : "") +
     (s.duration_s != null ? `<div><b>${s.duration_s}s</b> scan time</div>` : "") +

@@ -17,7 +17,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: scanipy
-      POSTGRES_PASSWORD: scanipy_dev
+      # Override in .env for anything beyond a local trial: SCANIPY_DB_PASSWORD=...
+      POSTGRES_PASSWORD: ${SCANIPY_DB_PASSWORD:-scanipy_dev}
       POSTGRES_DB: scanipy_dev
     volumes:
       - scanipy-pgdata:/var/lib/postgresql/data
@@ -37,12 +38,31 @@ services:
       db:
         condition: service_healthy
     environment:
-      SCANIPY_DATABASE_URL: postgresql://scanipy:scanipy_dev@db:5432/scanipy_dev
+      SCANIPY_DATABASE_URL: postgresql://scanipy:${SCANIPY_DB_PASSWORD:-scanipy_dev}@db:5432/scanipy_dev
       SCANIPY_ENV: development
       SCANIPY_S_VERSION: oracle-2026.08
       LLM_TRIAGE: "off"
+    # The API is unauthenticated — bind to loopback by default. Put it behind your
+    # own reverse proxy / auth to expose it beyond localhost.
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
+    # Hardening: this service parses untrusted repositories, so lock it down.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - "no-new-privileges:true"
+    mem_limit: 2g
+    pids_limit: 512
+    stop_grace_period: 15s
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/healthz').status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
 
 volumes:
   scanipy-pgdata:

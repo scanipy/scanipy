@@ -27,11 +27,20 @@ COPY . /app
 # they cover every module the app + alembic env import.
 RUN pip install --no-cache-dir -e ".[dev,http]"
 
+# Run as a non-root system user. Everything written at runtime — the git clone
+# (tempfile.mkdtemp → /tmp) and Semgrep's cache (HOME=/tmp) — lives under /tmp,
+# so the container runs cleanly with a read-only root filesystem + tmpfs /tmp
+# and dropped capabilities (see docker-compose.yml).
+RUN useradd --system --uid 10001 --no-create-home appuser
+
 ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app \
+    HOME=/tmp \
     SCANIPY_ENV=development \
     LLM_TRIAGE=off
 
+USER appuser
 EXPOSE 8000
 # Invoke via sh so a missing exec-bit through COPY is never an issue.
 ENTRYPOINT ["/bin/sh", "/app/deploy/entrypoint.sh"]
