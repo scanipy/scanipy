@@ -1,6 +1,10 @@
-# deploy.yml — Deploy — ECS Fargate (tagged releases only)
+# deploy.yml — Deploy — ECS Fargate (SUPERSEDED)
 
-**Workflow `name:`** `Deploy — ECS Fargate (tagged releases only)`
+> **⚠️ SUPERSEDED by the Docker/OSS pivot (`CLAR-DEPLOY-25`).** The AWS ECS/ECR deploy path is
+> retired; the current release path is `publish-images.yml` (GHCR + Cosign, `DOCKER-03`). `deploy.yml`
+> is now `workflow_dispatch`-only and no longer fires on release tags. Retained for history.
+
+**Workflow `name:`** `Deploy — ECS Fargate (SUPERSEDED — Docker/OSS pivot)`
 **File:** `.github/workflows/deploy.yml`
 
 ---

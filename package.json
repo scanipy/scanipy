@@ -1,7 +1,7 @@
 {
   "name": "scanipy",
   "version": "3.2.0",
-  "description": "Multi-tenant SaaS SAST platform — web dashboard and frontend tooling",
+  "description": "Scanipy — self-hosted SAST platform: web/frontend tooling (staged)",
   "private": true,
   "scripts": {
     "prepare": "husky",

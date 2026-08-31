@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "scanipy"
 version = "3.2.0"
-description = "Multi-tenant SaaS SAST platform — deterministic taint analysis via IFDS/IDE"
+description = "Self-hosted, open-source, auditable SAST platform — oracle-engine detection today; deterministic-core IFDS/IDE engine staged"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = [

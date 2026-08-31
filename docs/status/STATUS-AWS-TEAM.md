@@ -1,5 +1,10 @@
 # STATUS — AWS / SRE team
 
+> **⚠️ SUPERSEDED — historical record.** The AWS/ECS substrate this status tracked was retired by
+> the **Docker/OSS pivot** (`docs/DECISION-DEPLOY-02-docker-oss-pivot-2026-08-26.md`, `CLAR-DEPLOY-25`).
+> The DONE items below (ECS deploys, ECR images, env_digests) refer to now-decommissioned
+> infrastructure. Kept for history; not the current deployment story — see the repo `README.md`.
+
 **Owner:** SRE/DevOps · **Updated by:** AWS team, via PR.
 
 Every substrate **decision** below is already RESOLVED in WBS §17 (the CLAR-DEPLOY-* register) — what

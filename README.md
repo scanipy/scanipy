@@ -1,91 +1,68 @@
-# Scanipy v3.2
+# Scanipy
 
-Algorithmically-grounded, auditable, multi-SCM SAST platform.
+**Auditable, self-hostable SAST — findings you can trust as code changes.**
 
-## Quickstart — one-command self-host (Docker)
+[![CI](https://github.com/scanipy/scanipy/actions/workflows/ci.yml/badge.svg)](https://github.com/scanipy/scanipy/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+![Docker](https://img.shields.io/badge/deploy-docker--compose-2496ed)
 
-No cloud account, no AWS. Brings up Postgres + the scan API and opens a paste-a-repo UI:
+Scanipy runs established static-analysis engines (Semgrep, and a CodeQL adapter) and wraps every
+finding in a **trust layer**: a refactor-invariant identity, reproducibility under a pinned
+environment, and a signed, machine-checkable provenance chain — so a finding keeps the same identity
+across refactors, reproduces on re-run, and is auditable.
+
+## Quickstart — one command, no cloud
 
 ```bash
 docker compose up --build
 # → open http://localhost:8000  and paste a public GitHub repo URL
 ```
 
-Detection on this path is **oracle-passthrough** (Semgrep): every finding is labeled
-`origin=oracle-passthrough` with a `weak` same-source fingerprint — a stable id, not a
-canonical-graph claim. Findings persist to the `oracle` schema in the same Postgres the
-tenanted schema is migrated into on start. The deterministic-core IFDS/CPG engine (byte-identical
-reproducibility, refactor-invariant identity) is staged and not on this path yet — see the
-honest-labeling ledger in [PLAN.md](PLAN.md). See [`deploy/`](deploy/) for the image and service.
+No AWS, no account. Brings up Postgres + the scan API + a paste-a-repo UI, all self-hosted.
 
-(`docker-compose.dev.yml` remains the DB-only file for running the test suite on the host.)
+## What works today vs. what's staged
 
-## Source-of-truth documents
-
-| Document | Purpose |
+| Capability | Status |
 |---|---|
-| [PLAN.md](PLAN.md) | Architecture — wins on disagreement with SDD |
-| [SDD.md](SDD.md) | Software Design Document — component specs, IDs, acceptance criteria |
-| [WBS.md](WBS.md) | Work Breakdown Structure — phases, tasks, dependency DAG, test index |
+| One-command Docker deploy · self-hosted · single-tenant | ✅ shipping |
+| Detection via oracle engines (Semgrep; CodeQL adapter) — Python today | ✅ shipping — `origin=oracle-passthrough` |
+| Findings persisted + served; signed-provenance & attestor machinery | ✅ mechanisms built + tested |
+| Refactor-invariant fingerprint · byte-identical reproducibility on **live** findings | 🧪 staged — implemented & unit-tested, integration in progress |
+| Deterministic-core IFDS/IDE engine (theorem-backed detection) | 🧪 staged |
+| Multi-language · multi-tenant · SSO | 🔮 future / de-scoped for the OSS build |
 
-## Project board
+**Honest labeling.** Findings on the shipping path are `origin=oracle-passthrough` with a `weak`
+fingerprint — a stable id, **not** a canonical-graph claim. Engine-backed findings are never
+presented as theorem-backed. Details in [`deploy/README.md`](deploy/README.md).
 
-All implementation work is tracked in the [Scanipy v3.2 GitHub Project](https://github.com/orgs/scanipy/projects).
+## Documentation
 
-## Reading guide (for coding agents)
+- **[`deploy/README.md`](deploy/README.md)** — self-hosting guide (configuration, upgrade, backup, security posture).
+- [LICENSE](LICENSE) (Apache-2.0) · [CONTRIBUTING](CONTRIBUTING.md) · [SECURITY](SECURITY.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
 
-Before implementing any component `CMP-X`:
-
-1. Read `DOC-CMP-X` (Phase 0 output) as the primary spec
-2. Read the cross-cutting references in `WBS.md §3.2`
-3. Read the `TST-AC-X-*` test specs (Phase 1 output) — these are the done contract
-4. Confirm every `Depends-On` for `CMP-X` is `DONE`
-5. Implement, run tests, verify green
-6. If anything is unspecified, file a `CLAR-*` entry in `WBS.md §17` — never invent scope
-
-## Definition of Done
-
-See `WBS.md §21` for the full v3.2 baseline Definition of Done checklist.
-
-## Local development
+## Development
 
 ```bash
 cp .env.example .env
-docker compose -f docker-compose.dev.yml up -d   # Postgres 16
-pip install -e ".[dev]"
-pre-commit install                                # arms pre-commit + commit-msg + pre-push
+docker compose -f docker-compose.dev.yml up -d   # Postgres 16 (for the test suite)
+pip install -e ".[dev,http]"                      # requires Python 3.11+
+pre-commit install
 pytest -m unit -q
 ```
 
-`docker-compose.dev.yml` mirrors the CI service-container shape, so the same `SCANIPY_DATABASE_URL` works locally and in CI.
+`docker-compose.dev.yml` mirrors the CI service-container shape, so the same `SCANIPY_DATABASE_URL`
+works locally and in CI. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Branch protection
+## Project internals (design & governance)
 
-Server-side branch protection on `main` is not available today: the org is on GitHub Free, and Free + private repos blocks both classic Branch Protection and Rulesets (`gh api repos/.../branches/main/protection` returns 403 with `"Upgrade to GitHub Pro or make this repository public to enable this feature."`).
+Scanipy is developed against a set of source-of-truth documents.
 
-Until the org upgrades to GitHub Team, three process-level shims stand in:
+> **Note on the plan docs:** `PLAN.md` and `SDD.md` describe the *original* architecture — a
+> multi-tenant AWS SaaS. The project has since **pivoted** to the Docker / self-hosted /
+> open-source, single-tenant design shown above. The pivot is recorded in
+> [`docs/DECISION-DEPLOY-02-docker-oss-pivot-2026-08-26.md`](docs/DECISION-DEPLOY-02-docker-oss-pivot-2026-08-26.md)
+> and `CLAR-DEPLOY-25` (`WBS.md §17`); the algorithms and invariants in PLAN/SDD are unchanged.
 
-| Layer | Where | Enforces |
-|---|---|---|
-| Local — pre-commit | `.pre-commit-config.yaml` → `no-commit-to-branch` (`main`, `production`, `release`) | Refuses `git commit` from a protected branch. |
-| Local — pre-push | `.husky/pre-push` → protected-branch guard | Refuses `git push origin main` (and deletes). Bypass with `--no-verify`. |
-| Remote — CI | `.github/workflows/enforce-pr-only-merges.yml` | Runs on every push to `main`. Fails with a red check unless the commit came from the GitHub merge UI (committer = `noreply@github.com`), a known automation actor (`renovate[bot]`, `github-actions[bot]`, `dependabot[bot]`), or an explicit `Revert ` subject. |
-
-CODEOWNERS (`.github/CODEOWNERS`) is also advisory-only on Free — it routes reviewer suggestions in the PR sidebar but does not block merges. When the org upgrades, the file is ready for "Require review from Code Owners" with no changes needed.
-
-To upgrade now: `Settings → Billing and plans → Plans and usage → Upgrade` (Team is ~$4 / user / month). Once on Team, run:
-
-```bash
-gh api -X PUT repos/scanipy/scanipy/branches/main/protection \
-  -F required_status_checks.strict=true \
-  -F 'required_status_checks.contexts[]=Lint & typecheck' \
-  -F 'required_status_checks.contexts[]=Unit tests' \
-  -F 'required_status_checks.contexts[]=Gate 1 — DSL proofs (AC-DET-01a)' \
-  -F 'required_status_checks.contexts[]=Gate 4 — e-process martingale (AC-TRI-02b)' \
-  -F 'required_status_checks.contexts[]=Direct-push detector' \
-  -F enforce_admins=true \
-  -F required_pull_request_reviews.require_code_owner_reviews=true \
-  -F restrictions= \
-  -F allow_force_pushes=false \
-  -F allow_deletions=false
-```
+- [CLAUDE.md](CLAUDE.md) — project map (read this first for internals).
+- [PLAN.md](PLAN.md) · [SDD.md](SDD.md) · [WBS.md](WBS.md) — architecture · component specs · work breakdown (original plan; see the note above).
+- Governance rules live under [`.claude/rules/`](.claude/rules/); contribution process is in [CONTRIBUTING.md](CONTRIBUTING.md).

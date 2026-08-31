@@ -48,7 +48,7 @@ that is unavailable on the current GitHub plan.
 | [`falsifier-cw.md`](falsifier-cw.md) (`falsifier-cw.yml`) | CW-DETECT zero-false-negative falsifier. | nightly cron, release tags, `workflow_dispatch` | **Gate 2** (Falsifier CW) |
 | [`canary.md`](canary.md) (`canary.yml`) | SCM parity + nightly full-suite regression. | nightly cron, `workflow_dispatch` | Not a gate — supporting workflow |
 | [`stage-gate.md`](stage-gate.md) (`stage-gate.yml`) | CPG-fidelity gate harness (`CMP-CP-06`). | `workflow_dispatch` only (required inputs) | Enforces RULE-7 staging gate (`CMP-CP-06`) |
-| [`deploy.md`](deploy.md) (`deploy.yml`) | Build + sign + deploy worker images to ECS. | tag push `v[0-9]+.[0-9]+.[0-9]+` | Re-verifies Gates 1–3; `CMP-DEPLOY-04` |
+| [`deploy.md`](deploy.md) (`deploy.yml`) | **SUPERSEDED** — AWS ECS deploy (retired by the Docker/OSS pivot). | `workflow_dispatch` only (no longer fires on tags) | Superseded by `publish-images.yml` (`DOCKER-03`) |
 | [`publish-images.md`](publish-images.md) (`publish-images.yml`) | Build + Cosign-sign the self-host app image to GHCR (no AWS). | tag push `v*`, `workflow_dispatch` | Not a gate — release publish (`DOCKER-03`, CLAR-DEPLOY-25) |
 | [`enforce-pr-only-merges.md`](enforce-pr-only-merges.md) | Detect direct pushes to `main` (branch-protection shim). | push to `main` | Process-level shim (RULE-10 support) |
 | [`claude.md`](claude.md) (`claude.yml`) | On-demand `@claude` agent (fixes, questions, re-review). | `issue_comment` / `pull_request_review_comment` / `issues` / `pull_request_review` containing `@claude` | Not a gate — supporting workflow |
@@ -63,12 +63,12 @@ Which event fires which workflow (✓ = configured trigger):
 | Event | ci | attestor | falsifier-cw | canary | stage-gate | deploy | publish-images | enforce-pr | claude | claude-review |
 |---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
 | `push` to `main` | ✓ | ✓ (path-filtered) | | | | | | ✓ | | |
-| `push` tags `v*.*.*` | | | ✓ (`-rc*` + final) | | | ✓ | ✓ (`v*`) | | | |
+| `push` tags `v*.*.*` | | | ✓ (`-rc*` + final) | | | | ✓ (`v*`) | | | |
 | `pull_request` to `main` | ✓ | | | | | | | | | |
 | `pull_request` (any branch, path-filtered) | | ✓ | | | | | | | | |
 | `pull_request` (opened/ready/reopened) | | | | | | | | | | ✓ |
 | `schedule` (cron) | | | ✓ (02:00 UTC) | ✓ (03:30 UTC) | | | | | | |
-| `workflow_dispatch` | | ✓ | ✓ | ✓ | ✓ (required inputs) | | ✓ (`tag` input) | | | |
+| `workflow_dispatch` | | ✓ | ✓ | ✓ | ✓ (required inputs) | ✓ (superseded) | ✓ (`tag` input) | | | |
 | `issue_comment` / `issues` / `pull_request_review*` | | | | | | | | | ✓ | |
 
 Notes:
@@ -141,7 +141,7 @@ command.
 - [`falsifier-cw.md`](falsifier-cw.md) — Gate 2 — Falsifier CW.
 - [`canary.md`](canary.md) — Canary — SCM parity + nightly regression.
 - [`stage-gate.md`](stage-gate.md) — Stage Gate — CPG-fidelity evaluation.
-- [`deploy.md`](deploy.md) — Deploy — ECS Fargate (tagged releases only).
+- [`deploy.md`](deploy.md) — Deploy — ECS Fargate (**SUPERSEDED**; dispatch-only).
 - [`publish-images.md`](publish-images.md) — Publish images (GHCR) — Cosign-signed self-host app image.
 - [`enforce-pr-only-merges.md`](enforce-pr-only-merges.md) — Enforce PR-only merges on main.
 - [`claude.md`](claude.md) — Claude Code (on-demand `@claude` agent).
