@@ -1,0 +1,30 @@
+Refactor-fingerprint invariance — empirical run
+==============================================================
+corpus   : CMP-CORP-REFAC-01 v0.1.0 (8 distinct topologies, 350 pairs on record)
+digest   : sha256:0750651a2d915dbdb672993b2a41d644f893f5e7407d260e5e28054b3f4e50f6
+run      : fingerprinter=RealFingerprinter(joern+algorithm-3) limit=8 pairs=56 seeds=8
+
+refactor                    expect    stayed flipped  uneval  as-exp  CONTRA  strong
+------------------------------------------------------------------------------------
+aliasing-changing-extract   flipped        0       4       4       4       0       4
+alpha-rename-local          stayed         8       0       0       8       0       8
+fqn-move-package-rename     stayed         4       4       0       4       4       8
+genuine-fix                 flipped        1       7       0       7       1       8
+independent-reordering      stayed         4       4       0       4       4       8
+pdg-only-formatting         stayed         8       0       0       8       0       8
+pure-extract                stayed         5       3       0       5       3       8
+------------------------------------------------------------------------------------
+TOTAL                                     30      22       4      40      12      52
+
+fingerprint_class: before strong=56, weak=0, other=0 | after strong=52, weak=0, other=0
+
+UNEVALUATED PAIRS (4) — never counted as a result:
+      4  no-fingerprint-after
+    - seed-001/aliasing-changing-extract: no-fingerprint-after
+    - seed-003/aliasing-changing-extract: no-fingerprint-after
+    - seed-005/aliasing-changing-extract: no-fingerprint-after
+    - seed-007/aliasing-changing-extract: no-fingerprint-after
+
+CAVEAT (corpus): Results are only as strong as the corpus. CMP-CORP-REFAC-01 v0.1.0 is count-complete but TOPOLOGY-THIN: its 350 pairs are round-robined from 8 base templates, so it contains only ~8 distinct (class, language) sink-topologies. Treat these numbers as evidence about 8 topologies repeated 50 times, not about 50 independent programs (see tests/corpora/refactor/README.md and CLAR-CORP-17).
+
+CAVEAT (weak class): A 'weak' fingerprint_class is the witness-edge-sequence hash — a same-source identity only, NOT canonical across isomorphic programs (INV-5). A stayed/flipped verdict on a pair where either side is weak is NOT invariance evidence; read the strong/strong subset.
