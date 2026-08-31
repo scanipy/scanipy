@@ -38,6 +38,17 @@ INTERFACE RECONCILE (reported, not invented — same pattern as CLAR-CORE-01).
   source of the budget, the ``BudgetExhausted`` signal, and the
   ``CPG_ORDER_HASH_ANNOTATION`` constant).
 
+STRUCTURAL INPUT PORT (:class:`SliceRequest`).
+  Algorithm 3 reads exactly one field off its input — the witness node sequence —
+  so the entry point is typed against the structural :class:`SliceRequest`
+  Protocol instead of the nominal ``solver.Finding``. ``solver.Finding``
+  satisfies it structurally (no caller changes), and an **oracle** finding —
+  which must NOT be spelled as a ``solver.Finding``, whose ``origin`` /
+  ``engine`` literals are a deliberate INV-1 honesty guard — can present its own
+  witness carrier (:class:`services.scan.oracle_fingerprint.OracleSliceRequest`).
+  Widening the port does NOT widen any guarantee: the determinism theorem still
+  covers ``origin=deterministic-core`` findings only.
+
 WHY THE FINGERPRINT IS A *CONTENT* HASH, NOT THE CPG-ORDER HASH.
   CMP-CORE-03's ``cpg_order_hash`` is a hash of node *ids* in canonical order; it
   is invariant under an alpha-rename only because the ids happen to be identical, not
@@ -56,7 +67,7 @@ import hashlib
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import Protocol
 
 from analysis.ordering import (
     CPG,
@@ -72,8 +83,42 @@ from analysis.ordering import (
     canonical_order,
 )
 
-if TYPE_CHECKING:  # pragma: no cover - typing-only import (avoids a runtime cycle)
-    from analysis.ifds.solver import Finding
+# ---------------------------------------------------------------------------
+# The input port (structural, not nominal)
+# ---------------------------------------------------------------------------
+
+
+class SliceRequest(Protocol):
+    """Minimal shape :func:`compute_slice_fingerprint` needs: the realising witness path.
+
+    Algorithm 3 consumes exactly ONE field of its input — the witness node
+    sequence — and nothing else (see :func:`compute_slice_fingerprint`: the
+    backward cone is taken from ``witness[-1]``, the fields the content hash
+    reads all come from the ``CPG``). Typing the parameter as this structural
+    Protocol rather than the nominal
+    :class:`~analysis.ifds.solver.Finding` therefore widens the *port*, not the
+    *guarantee*.
+
+    Why structural: ``analysis.ifds.solver.Finding`` deliberately declares
+    ``origin: Literal["deterministic-core"]`` and ``engine: Literal["ifds",
+    "ide"]`` — a type-level honesty guard so nothing that is not a core finding
+    can be spelled as one (INV-1). An oracle finding
+    (``origin="oracle-passthrough"``, ``engine="semgrep"``) MUST NOT be
+    shoehorned into that type; it presents its own witness carrier instead (see
+    :class:`services.scan.oracle_fingerprint.OracleSliceRequest`).
+    ``solver.Finding`` satisfies this Protocol structurally, so every existing
+    caller is unchanged.
+
+    IMPORTANT — this Protocol carries NO partition semantics. Computing a
+    fingerprint says nothing about a finding's ``origin``: the determinism
+    theorem (property (a)) covers ``origin=deterministic-core`` findings only,
+    and a fingerprint computed for an oracle finding stays
+    ``oracle-passthrough`` (``.claude/rules/05-determinism.md``). The caller owns
+    the label; this module never sets or implies one.
+    """
+
+    @property
+    def witness(self) -> tuple[NodeId, ...]: ...
 
 
 # ---------------------------------------------------------------------------
@@ -458,7 +503,7 @@ def _witness_edge_sequence_hash(witness: tuple[NodeId, ...]) -> Sha256:
 
 
 def compute_slice_fingerprint(
-    finding: Finding,
+    finding: SliceRequest,
     cpg: CPG,
     *,
     B: int = DEFAULT_B,  # noqa: N803 ((B, T) budget symbols are the public contract)
@@ -471,7 +516,11 @@ def compute_slice_fingerprint(
 
     The witness is consumed from ``finding.witness`` (a concrete
     ``tuple[NodeId, ...]`` per the CORE-01 PR2/PR3 reconcile — see the module
-    docstring). On ``(B, T)`` exhaustion, returns ``fingerprint_class = "weak"``
+    docstring); it is the ONLY field read off the parameter, which is therefore
+    typed as the structural :class:`SliceRequest` port rather than the nominal
+    ``solver.Finding``. Computing a fingerprint asserts NOTHING about the
+    finding's ``origin`` — see :class:`SliceRequest`. On ``(B, T)`` exhaustion,
+    returns ``fingerprint_class = "weak"``
     with the witness-edge-sequence hash. A ``weak`` fingerprint MUST NOT be used to
     auto-suppress a finding across a refactor (AC-CORE-02c; the CORE-02-owned
     predicate :func:`eligible_for_baseline_suppression` encodes this for the
@@ -547,6 +596,7 @@ def eligible_for_baseline_suppression(result: SliceFingerprintResult) -> bool:
 __all__ = [
     "EmptyWitness",
     "SliceFingerprintResult",
+    "SliceRequest",
     "WitnessNotInCPG",
     "compute_slice_fingerprint",
     "eligible_for_baseline_suppression",
