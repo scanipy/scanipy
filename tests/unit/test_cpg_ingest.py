@@ -15,14 +15,21 @@ table):
     (fake the process spawn, never a real ``joern`` binary).
   - :mod:`analysis.cpg_ingest.graph_views` / ``decl_reparser`` — honest
     Wave-2 stubs: assert they raise (never silently return a fake result).
+  - ``map_export_with_locations`` — the ``file:line`` -> ``NodeId`` side-table
+    (Tier-2 track A). Its anti-vacuity controls are (a) a byte-level GOLDEN
+    regression proving ``map_export``'s output did not move when the shared
+    walk was extracted, and (b) an INV-5 guard proving no location field ever
+    reached ``CPGNode`` / the ``cpg_order_hash`` (the whole refactor-invariance
+    claim rests on locations staying OUT of the hashed surface).
 """
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
 import pytest
 
@@ -31,11 +38,13 @@ from analysis.cpg_ingest import decl_reparser as decl_reparser_mod
 from analysis.cpg_ingest import graph_views
 from analysis.cpg_ingest import joern_frontend as jf
 from analysis.cpg_ingest.mapper import (
+    SourceLocation,
     UnknownEdgeKindError,
     UnknownNodeReferenceError,
     map_export,
+    map_export_with_locations,
 )
-from analysis.ordering import canonical_order
+from analysis.ordering import CPGNode, canonical_order
 from tests.cpg_ingest_fixtures import SQLI_JOERN_EXPORT_FIXTURE, shuffled_export
 
 # ---------------------------------------------------------------------------
@@ -201,6 +210,312 @@ def test_mapper_dangling_non_ast_edge_reference_is_fail_closed() -> None:
     }
     with pytest.raises(UnknownNodeReferenceError):
         map_export(bad_export)
+
+
+# ---------------------------------------------------------------------------
+# mapper.py -- location side-table (Tier-2 track A)
+# ---------------------------------------------------------------------------
+#
+# GOLDEN SNAPSHOT of ``map_export(SQLI_JOERN_EXPORT_FIXTURE)``, captured by
+# running the PRE-CHANGE mapper (commit 46cf572, before
+# ``map_export_with_locations`` existed) and serialising every CPGNode /
+# CPGEdge field. ``map_export`` was then refactored into a thin wrapper over
+# the shared walk; this snapshot is the evidence that the refactor was
+# behaviour-preserving down to node ids, emission order, field derivation and
+# edge order. Regenerating it to make a failure go away defeats its purpose: a
+# diff here means ``map_export``'s contract moved, which would ripple into
+# ``cpg_order_hash`` and the CMP-CP-05 byte-identical-SARIF guarantee.
+_GOLDEN_NODES: Final[list[tuple[int, str, str, str, str, str]]] = [
+    (0, "METHOD", "", "helpers.py:<module>.noop", "helpers.py:<module>.noop", ""),
+    (1, "METHOD_RETURN", "", "", "helpers.py:<module>.noop", "0"),
+    (2, "METHOD", "", "sqli.py:<module>.get_user", "sqli.py:<module>.get_user", ""),
+    (3, "METHOD_PARAMETER_IN", "", "", "sqli.py:<module>.get_user", "0"),
+    (4, "BLOCK", "", "", "sqli.py:<module>.get_user", "1"),
+    (5, "LOCAL", "", "", "sqli.py:<module>.get_user", "1.0"),
+    (6, "CALL", "<operator>.assignment", "", "sqli.py:<module>.get_user", "1.1"),
+    (7, "IDENTIFIER", "", "", "sqli.py:<module>.get_user", "1.1.0"),
+    (8, "CALL", "", "sqlite3.py:sqlite3.connect", "sqli.py:<module>.get_user", "1.1.1"),
+    (9, "IDENTIFIER", "", "", "sqli.py:<module>.get_user", "1.1.1.0"),
+    (10, "LITERAL", '"db.sqlite3"', "", "sqli.py:<module>.get_user", "1.1.1.1"),
+    (11, "LOCAL", "", "", "sqli.py:<module>.get_user", "1.2"),
+    (12, "CALL", "<operator>.assignment", "", "sqli.py:<module>.get_user", "1.3"),
+    (13, "IDENTIFIER", "", "", "sqli.py:<module>.get_user", "1.3.0"),
+    (
+        14,
+        "CALL",
+        "",
+        "sqlite3.py:sqlite3.Connection.cursor",
+        "sqli.py:<module>.get_user",
+        "1.3.1",
+    ),
+    (15, "IDENTIFIER", "", "", "sqli.py:<module>.get_user", "1.3.1.0"),
+    (16, "CALL", "", "sqlite3.py:sqlite3.Cursor.execute", "sqli.py:<module>.get_user", "1.4"),
+    (17, "IDENTIFIER", "", "", "sqli.py:<module>.get_user", "1.4.0"),
+    (18, "CALL", "<operator>.formatString", "", "sqli.py:<module>.get_user", "1.4.1"),
+    (
+        19,
+        "LITERAL",
+        '"SELECT * FROM USERS WHERE USERNAME=\'"',
+        "",
+        "sqli.py:<module>.get_user",
+        "1.4.1.0",
+    ),
+    (20, "IDENTIFIER", "", "", "sqli.py:<module>.get_user", "1.4.1.1"),
+    (21, "LITERAL", '"\'"', "", "sqli.py:<module>.get_user", "1.4.1.2"),
+    (22, "RETURN", "", "", "sqli.py:<module>.get_user", "1.5"),
+    (23, "CALL", "", "sqlite3.py:sqlite3.Cursor.fetchone", "sqli.py:<module>.get_user", "1.5.0"),
+    (24, "IDENTIFIER", "", "", "sqli.py:<module>.get_user", "1.5.0.0"),
+    (25, "METHOD_RETURN", "", "", "sqli.py:<module>.get_user", "2"),
+]
+
+_GOLDEN_EDGES: Final[list[tuple[int, int, str]]] = [
+    (0, 1, "AST"),
+    (2, 3, "AST"),
+    (2, 4, "AST"),
+    (2, 25, "AST"),
+    (4, 5, "AST"),
+    (4, 6, "AST"),
+    (4, 11, "AST"),
+    (4, 12, "AST"),
+    (4, 16, "AST"),
+    (4, 22, "AST"),
+    (6, 7, "AST"),
+    (6, 8, "AST"),
+    (8, 9, "AST"),
+    (8, 10, "AST"),
+    (12, 13, "AST"),
+    (12, 14, "AST"),
+    (14, 15, "AST"),
+    (16, 17, "AST"),
+    (16, 18, "AST"),
+    (18, 19, "AST"),
+    (18, 20, "AST"),
+    (18, 21, "AST"),
+    (22, 23, "AST"),
+    (23, 24, "AST"),
+    (0, 1, "CFG"),
+    (2, 6, "CFG"),
+    (6, 12, "CFG"),
+    (12, 16, "CFG"),
+    (16, 22, "CFG"),
+    (22, 25, "CFG"),
+    (2, 6, "PDG"),
+    (2, 12, "PDG"),
+    (2, 16, "PDG"),
+    (2, 22, "PDG"),
+    (3, 20, "PDG"),
+    (7, 15, "PDG"),
+    (13, 17, "PDG"),
+    (13, 24, "PDG"),
+]
+
+# A minimal export that the SQLI fixture structurally CANNOT express: its
+# ``_node`` helper always stamps ``filename``/``lineNumber``/``columnNumber`` on
+# every node, so nothing in it has an absent filename or an absent line/col.
+# Here the BLOCK child carries neither, so it must (a) inherit ``"app.py"`` from
+# its METHOD AST ancestor and (b) report the documented ``0`` unknown-sentinel.
+_INHERITANCE_EXPORT: Final[dict[str, Any]] = {
+    "nodes": [
+        {
+            "id": "m",
+            "label": "METHOD",
+            "fullName": "app.py:<module>.handler",
+            "filename": "app.py",
+            "lineNumber": 12,
+            "columnNumber": 3,
+        },
+        {"id": "b", "label": "BLOCK"},  # no filename, no lineNumber/columnNumber
+    ],
+    "edges": [{"src": "m", "dst": "b", "kind": "AST"}],
+}
+
+
+@pytest.mark.unit
+def test_map_export_output_is_unchanged_by_the_side_table_refactor() -> None:
+    """REGRESSION: ``map_export`` still returns exactly what it returned pre-change.
+
+    Field-for-field against the golden snapshot captured from the pre-refactor
+    implementation (see the ``_GOLDEN_*`` comment above) — node ids, emission
+    order, every derived ``CPGNode`` field, and the full re-sorted edge list.
+    This is the backward-compatibility contract: ``map_export_with_locations``
+    was added *alongside* ``map_export``; it did not redefine it.
+    """
+    cpg = map_export(SQLI_JOERN_EXPORT_FIXTURE)
+
+    assert [
+        (
+            n.node_id,
+            n.kind,
+            n.operator_or_literal,
+            n.resolved_fqn,
+            n.enclosing_decl_fqn,
+            n.structural_path,
+        )
+        for n in cpg.nodes
+    ] == _GOLDEN_NODES
+    assert [(e.src, e.dst, e.kind) for e in cpg.edges] == _GOLDEN_EDGES
+
+
+@pytest.mark.unit
+def test_map_export_with_locations_returns_the_identical_cpg() -> None:
+    """The contract sentence, asserted literally: "Identical CPG to map_export()"."""
+    cpg_plain = map_export(SQLI_JOERN_EXPORT_FIXTURE)
+    cpg_with_locs, _locations = map_export_with_locations(SQLI_JOERN_EXPORT_FIXTURE)
+
+    assert cpg_with_locs.nodes == cpg_plain.nodes
+    assert cpg_with_locs.edges == cpg_plain.edges
+
+
+@pytest.mark.unit
+def test_location_side_table_is_keyed_by_the_cpg_node_ids() -> None:
+    """Every ``NodeId`` the CPG assigned — and no other key — is in the side-table.
+
+    This is the property that makes the table usable as a lookup at all: a
+    caller resolving ``file:line`` -> ``NodeId`` must land on ids that actually
+    index into ``cpg.nodes``.
+    """
+    cpg, locations = map_export_with_locations(SQLI_JOERN_EXPORT_FIXTURE)
+
+    assert set(locations) == {n.node_id for n in cpg.nodes}
+    assert len(locations) == 26
+    # Keys index into cpg.nodes positionally (CPG.add_node assigns 0..n-1).
+    for node in cpg.nodes:
+        assert cpg.nodes[node.node_id] is node
+
+
+@pytest.mark.unit
+def test_location_side_table_maps_known_fixture_nodes_to_their_file_and_line() -> None:
+    """Spot-checks against the fixture's own documented source coordinates."""
+    cpg, locations = map_export_with_locations(SQLI_JOERN_EXPORT_FIXTURE)
+
+    # cpg.nodes[0] is helpers.py's `noop` METHOD (filename is the primary sort
+    # key, so the whole helpers.py subtree sorts first) — fixture n24, line 1.
+    assert cpg.nodes[0].resolved_fqn == "helpers.py:<module>.noop"
+    assert locations[cpg.nodes[0].node_id] == SourceLocation(
+        filename="helpers.py", line=1, column=1
+    )
+    # ...and its METHOD_RETURN — fixture n25, line 2.
+    assert locations[cpg.nodes[1].node_id] == SourceLocation(
+        filename="helpers.py", line=2, column=1
+    )
+
+    # The tainted `username` IDENTIFIER inside the f-string — fixture n18,
+    # sqli.py line 6 col 54. Located by its structural path (the mapper does
+    # not expose raw ids), exactly as the field-derivation test above does.
+    username_use = next(
+        n
+        for n in cpg.nodes
+        if n.kind == "IDENTIFIER"
+        and n.enclosing_decl_fqn == "sqli.py:<module>.get_user"
+        and n.structural_path == "1.4.1.1"
+    )
+    assert locations[username_use.node_id] == SourceLocation(filename="sqli.py", line=6, column=54)
+
+    # The `cur.execute(...)` sink CALL — fixture n14, sqli.py line 6 col 5.
+    execute_call = next(
+        n for n in cpg.nodes if n.resolved_fqn == "sqlite3.py:sqlite3.Cursor.execute"
+    )
+    assert locations[execute_call.node_id] == SourceLocation(filename="sqli.py", line=6, column=5)
+
+    # Every node reports one of the fixture's two files; none is left blank.
+    assert {loc.filename for loc in locations.values()} == {"sqli.py", "helpers.py"}
+
+
+@pytest.mark.unit
+def test_location_side_table_inherits_filename_and_zeroes_unknown_line_col() -> None:
+    """Inherited-filename + ``0``-sentinel behaviour, on an export the SQLI
+    fixture structurally cannot express (see ``_INHERITANCE_EXPORT``)."""
+    cpg, locations = map_export_with_locations(_INHERITANCE_EXPORT)
+
+    assert len(cpg.nodes) == 2
+    method = next(n for n in cpg.nodes if n.kind == "METHOD")
+    block = next(n for n in cpg.nodes if n.kind == "BLOCK")
+
+    assert locations[method.node_id] == SourceLocation(filename="app.py", line=12, column=3)
+    # The BLOCK carries NO filename of its own: it inherits its METHOD AST
+    # ancestor's, exactly as the mapper's ordering walk already resolved it.
+    # Its absent lineNumber/columnNumber become the documented `0` sentinel
+    # (NOT `None`, and never a guessed real position).
+    assert locations[block.node_id] == SourceLocation(filename="app.py", line=0, column=0)
+
+
+@pytest.mark.unit
+def test_location_side_table_is_independent_of_raw_export_array_order() -> None:
+    """ANTI-VACUITY: reversing both raw arrays leaves the side-table identical.
+
+    The side-table is keyed by NodeIds the mapper assigns from its OWN
+    deterministic emission order, so a ``file:line`` lookup performed against
+    two runs of a threaded/overlay Joern parse must agree — the same obligation
+    ``test_mapper_order_independent_of_raw_export_array_order`` discharges for
+    the graph itself.
+    """
+    shuffled = shuffled_export(SQLI_JOERN_EXPORT_FIXTURE)
+    assert shuffled["nodes"] != SQLI_JOERN_EXPORT_FIXTURE["nodes"]  # sanity
+
+    _cpg_original, locations_original = map_export_with_locations(SQLI_JOERN_EXPORT_FIXTURE)
+    _cpg_shuffled, locations_shuffled = map_export_with_locations(shuffled)
+
+    assert locations_original == locations_shuffled
+
+
+@pytest.mark.unit
+def test_source_locations_never_leak_into_the_hashed_cpg_surface() -> None:
+    """INV-5 / refactor-invariance GUARD — the load-bearing anti-faking control.
+
+    A finding's identity is the canonical form of its dependence slice, NOT its
+    source position: renaming a file or inserting lines above a sink must not
+    change ``cpg_order_hash`` (and hence ``slice_fingerprint``). That only holds
+    while location data stays strictly in the side-table. This test fails the
+    moment anyone adds a filename/line/column field to ``CPGNode`` or lets one
+    reach the hashed surface.
+    """
+    # 1. `CPGNode` has no location-shaped field at all.
+    cpg_node_fields = {f.name for f in dataclasses.fields(CPGNode)}
+    assert cpg_node_fields == {
+        "node_id",
+        "kind",
+        "operator_or_literal",
+        "resolved_fqn",
+        "enclosing_decl_fqn",
+        "structural_path",
+    }
+
+    # 2. Relocating EVERY node to a different file, line and column — with the
+    #    AST shape, sibling order and all semantic fields preserved — leaves
+    #    both the derived CPGNode fields and the `cpg_order_hash` untouched.
+    #    That is the refactor-invariance claim itself, executed: same program,
+    #    relocated source.
+    cpg, locations = map_export_with_locations(SQLI_JOERN_EXPORT_FIXTURE)
+
+    relocated: dict[str, Any] = json.loads(json.dumps(SQLI_JOERN_EXPORT_FIXTURE))
+    for raw in relocated["nodes"]:
+        raw["filename"] = "renamed/" + str(raw["filename"])
+        raw["lineNumber"] = int(raw["lineNumber"]) + 500
+        raw["columnNumber"] = int(raw["columnNumber"]) + 7
+
+    cpg_relocated, locations_relocated = map_export_with_locations(relocated)
+
+    def _hashed_fields(node: Any) -> tuple[str, str, str, str, str]:
+        return (
+            node.kind,
+            node.operator_or_literal,
+            node.resolved_fqn,
+            node.enclosing_decl_fqn,
+            node.structural_path,
+        )
+
+    assert [_hashed_fields(n) for n in cpg_relocated.nodes] == [
+        _hashed_fields(n) for n in cpg.nodes
+    ]
+    assert cpg_relocated.edges == cpg.edges
+    assert canonical_order(cpg_relocated).cpg_order_hash == canonical_order(cpg).cpg_order_hash
+
+    # 3. ...while the SIDE-TABLE — the only place locations live — DID move.
+    #    (Anti-vacuity for step 2: proves the relocation was real, not a no-op.)
+    assert locations_relocated != locations
+    assert locations_relocated[cpg.nodes[0].node_id] == SourceLocation(
+        filename="renamed/helpers.py", line=501, column=8
+    )
 
 
 # ---------------------------------------------------------------------------

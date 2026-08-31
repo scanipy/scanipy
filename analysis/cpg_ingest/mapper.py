@@ -57,14 +57,25 @@ enclosing_decl_fqn) per the Provenance section above.
   ancestor-or-self (resets to ``""`` AT that declaration node itself).
   Never a raw Joern field.
 
-``filename`` / ``lineNumber`` / ``columnNumber`` are consumed ONLY as ordering
-signal (never persisted onto ``CPGNode`` — ``ordering.CPGNode`` has no location
-fields today). A node missing ``filename`` inherits its nearest AST ancestor's
-resolved filename (Joern typically stamps ``filename`` only on
-``METHOD``/``TYPE_DECL``-shaped nodes and leaves it blank on descendants — see
-the export script's own doc header for why); a missing ``lineNumber`` /
-``columnNumber`` sorts as ``0`` (documented sentinel, not a real source
-position).
+``filename`` / ``lineNumber`` / ``columnNumber`` are consumed as ordering
+signal AND returned as a **side-table** by :func:`map_export_with_locations`
+(``dict[NodeId, SourceLocation]``) so a caller holding a real finding's
+``file:line`` can resolve it to a CPG ``NodeId``. A node missing ``filename``
+inherits its nearest AST ancestor's resolved filename (Joern typically stamps
+``filename`` only on ``METHOD``/``TYPE_DECL``-shaped nodes and leaves it blank
+on descendants — see the export script's own doc header for why); a missing
+``lineNumber`` / ``columnNumber`` sorts as (and is reported as) ``0``
+(documented sentinel, not a real source position).
+
+**Source locations live ONLY in that side-table.** They are never persisted
+onto :class:`analysis.ordering.CPGNode` (which has no location fields, by
+design) and never enter anything hashed, canonicalised, or fingerprinted —
+not the Algorithm 5 seed labels, not ``cpg_order_hash``, not
+``slice_fingerprint``. That separation is what makes a finding's identity
+refactor-invariant: renaming or moving a file, or inserting a line above a
+sink, must not change the fingerprint. Admitting ``filename``/``lineNumber``
+into any hashed field would silently destroy that property, so the side-table
+is an OUTPUT ALONGSIDE the graph, never a field of it.
 
 ## CLAR-SNAP-05 edge-kind vocabulary (this module's contract)
 
@@ -108,6 +119,7 @@ Assumptions baked into both this mapper and the export script it pairs with:
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any, Final, TypedDict
 
 from analysis.ordering import CPG, NodeId
@@ -155,6 +167,29 @@ class RawJoernExport(TypedDict, total=False):
 
     nodes: list[RawJoernNode]
     edges: list[RawJoernEdge]
+
+
+@dataclass(frozen=True)
+class SourceLocation:
+    """Where a CPG node came from in the source — side-table payload ONLY.
+
+    Deliberately a SEPARATE type from :class:`analysis.ordering.CPGNode`: a
+    location is an out-of-band lookup aid (``file:line`` -> ``NodeId``), never
+    part of node identity. Nothing in this dataclass may ever reach a hashed,
+    ordered, canonicalised, or fingerprinted field — see the module docstring's
+    "Source locations live ONLY in that side-table" paragraph and
+    ``.claude/rules/01-invariants.md §INV-5``.
+
+    Attributes:
+        filename: the path exactly as Joern reported it (or as inherited from
+            the nearest AST ancestor); ``""`` when unknown.
+        line: 1-based line number; ``0`` is the documented unknown sentinel.
+        column: column number; ``0`` is the documented unknown sentinel.
+    """
+
+    filename: str
+    line: int
+    column: int
 
 
 # Node labels that count as a "declaration" for enclosing_decl_fqn/structural_path
@@ -301,8 +336,17 @@ def _walk_ast(
     return preorder_index, structural_path, enclosing_decl_fqn, resolved_filename
 
 
-def map_export(export: RawJoernExport | dict[str, Any]) -> CPG:
-    """Map a Joern export JSON object into an :class:`analysis.ordering.CPG`.
+def map_export_with_locations(
+    export: RawJoernExport | dict[str, Any],
+) -> tuple[CPG, dict[NodeId, SourceLocation]]:
+    """Identical CPG to :func:`map_export`, plus a side-table of node_id -> source location.
+
+    The single shared implementation of the mapper walk; :func:`map_export` is a
+    thin wrapper that discards the second element. Building the side-table is
+    purely additive (a dict populated inside the existing emission loop from the
+    same ``NodeId`` :meth:`~analysis.ordering.CPG.add_node` returns), so the
+    ``CPG`` this returns is byte-identical to what :func:`map_export` has always
+    returned for the same input.
 
     Args:
         export: the parsed JSON object written by ``export_cpg.sc`` (or an
@@ -310,10 +354,14 @@ def map_export(export: RawJoernExport | dict[str, Any]) -> CPG:
             other top-level key is ignored.
 
     Returns:
-        A :class:`~analysis.ordering.CPG` whose node emission order is this
-        module's OWN deterministic ``(filename, line, col, ast_preorder_index)``
-        order (never the raw array order) and whose edges are re-sorted by
-        ``(kind, src_node_id, dst_node_id)`` — see module docstring.
+        ``(cpg, locations)`` where ``cpg`` is exactly :func:`map_export`'s result
+        and ``locations`` maps EVERY ``NodeId`` in ``cpg.nodes`` (orphans
+        included) to its :class:`SourceLocation`. The filename is the node's own
+        ``filename`` or, when absent, the one inherited from its nearest AST
+        ancestor; a missing ``lineNumber``/``columnNumber`` is reported as the
+        documented ``0`` sentinel. The side-table is a lookup aid ONLY — see the
+        module docstring: locations never touch ``CPGNode`` or any hashed,
+        ordered, or fingerprinted field.
 
     Raises:
         UnknownEdgeKindError: a raw edge's ``kind`` is outside the
@@ -356,14 +404,22 @@ def map_export(export: RawJoernExport | dict[str, Any]) -> CPG:
 
     cpg = CPG()
     raw_to_node_id: dict[str, NodeId] = {}
+    # Side-table ONLY (never a CPGNode field, never hashed) — module docstring.
+    locations: dict[NodeId, SourceLocation] = {}
     for nid in emission_order:
         node = nodes_by_id[nid]
-        raw_to_node_id[nid] = cpg.add_node(
+        node_id = cpg.add_node(
             node.get("label", ""),
             operator_or_literal=_operator_or_literal(node),
             resolved_fqn=_resolved_fqn(node),
             enclosing_decl_fqn=enclosing_decl_fqn[nid],
             structural_path=structural_path[nid],
+        )
+        raw_to_node_id[nid] = node_id
+        locations[node_id] = SourceLocation(
+            filename=resolved_filename[nid],
+            line=_line(node),
+            column=_col(node),
         )
 
     mapped_edges: list[tuple[str, NodeId, NodeId]] = []
@@ -386,6 +442,30 @@ def map_export(export: RawJoernExport | dict[str, Any]) -> CPG:
     for kind, src_id, dst_id in sorted(mapped_edges):
         cpg.add_edge(src_id, dst_id, kind)
 
+    return cpg, locations
+
+
+def map_export(export: RawJoernExport | dict[str, Any]) -> CPG:
+    """Map a Joern export JSON object into an :class:`analysis.ordering.CPG`.
+
+    Args:
+        export: the parsed JSON object written by ``export_cpg.sc`` (or an
+            equivalent fixture) — ``{"nodes": [...], "edges": [...]}``. Any
+            other top-level key is ignored.
+
+    Returns:
+        A :class:`~analysis.ordering.CPG` whose node emission order is this
+        module's OWN deterministic ``(filename, line, col, ast_preorder_index)``
+        order (never the raw array order) and whose edges are re-sorted by
+        ``(kind, src_node_id, dst_node_id)`` — see module docstring.
+
+    Raises:
+        UnknownEdgeKindError: a raw edge's ``kind`` is outside the
+            CLAR-SNAP-05 vocabulary (``AST``/``CFG``/``CDG``/``REACHING_DEF``).
+        UnknownNodeReferenceError: a raw edge references a node id absent from
+            ``export["nodes"]``.
+    """
+    cpg, _locations = map_export_with_locations(export)
     return cpg
 
 
@@ -394,7 +474,9 @@ __all__ = [
     "RawJoernEdge",
     "RawJoernExport",
     "RawJoernNode",
+    "SourceLocation",
     "UnknownEdgeKindError",
     "UnknownNodeReferenceError",
     "map_export",
+    "map_export_with_locations",
 ]
