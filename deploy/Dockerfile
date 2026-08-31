@@ -7,25 +7,29 @@
 #
 # Semgrep is installed into its OWN venv so its (large) dependency tree can never
 # clash with the application's pinned deps.
-FROM python:3.11-slim
+#
+# Base is digest-pinned and Semgrep is version-pinned so the image — and therefore
+# env_digest (INV-2) — is REPRODUCIBLE, per the project's pinned-tooling ethos.
+# Bump both deliberately.
+FROM python:3.11-slim@sha256:1042b61448fef4ba92d16a8c7eb4996d027568ce64792a7877fd88511e0af7c6
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-# --- Semgrep (oracle engine) in an isolated venv ---
+# --- Semgrep (oracle engine) in an isolated venv, version-pinned ---
 RUN python -m venv /opt/semgrep && \
-    /opt/semgrep/bin/pip install --no-cache-dir semgrep && \
+    /opt/semgrep/bin/pip install --no-cache-dir semgrep==1.175.0 && \
     ln -s /opt/semgrep/bin/semgrep /usr/local/bin/semgrep && \
     semgrep --version
 
 WORKDIR /app
 COPY . /app
 
-# Application + migration deps. `http` = the pinned FastAPI/uvicorn/pydantic
-# stack (CLAR-DEPLOY-19); `dev` supplies sqlalchemy/psycopg2/alembic. Together
-# they cover every module the app + alembic env import.
-RUN pip install --no-cache-dir -e ".[dev,http]"
+# Application + migration deps — the LEAN `oracle` extra (FastAPI/uvicorn/pydantic
+# + sqlalchemy/psycopg2/alembic) covers the scan API + the Alembic env without the
+# dev/test toolchain (pytest, moto, boto3, ruff), keeping the shipped image small.
+RUN pip install --no-cache-dir -e ".[oracle]"
 
 # Run as a non-root system user. Everything written at runtime — the git clone
 # (tempfile.mkdtemp → /tmp) and Semgrep's cache (HOME=/tmp) — lives under /tmp,

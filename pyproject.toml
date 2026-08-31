@@ -59,6 +59,19 @@ http = [
     "pydantic==2.13.4",
     "uvicorn==0.51.0",
 ]
+# Lean runtime set for the self-host deploy image (deploy/Dockerfile): the oracle
+# scan API + Alembic migrations, WITHOUT the dev/test toolchain (pytest, moto,
+# boto3, ruff, pre-commit). Keeps the shipped image small and its attack surface
+# minimal. Mirrors the pinned HTTP stack (CLAR-DEPLOY-19) plus the DB stack.
+oracle = [
+    "fastapi==0.138.2",
+    "starlette==1.3.1",
+    "pydantic==2.13.4",
+    "uvicorn==0.51.0",
+    "sqlalchemy>=2.0",
+    "psycopg2-binary>=2.9",
+    "alembic>=1.13",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
