@@ -21,6 +21,7 @@ from tools.worker.joern_java_safety import (
     validate_java_static_environment,
 )
 
+pytestmark = pytest.mark.unit
 PROFILE = JoernEnvironmentProfile.JAVA_STATIC_V1
 
 
