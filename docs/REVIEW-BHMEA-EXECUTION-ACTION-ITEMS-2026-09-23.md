@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 3 — 2026-09-25 owner decisions and implementation handoff incorporated |
+| Revision | 4 — 2026-09-25 reviewed foundations and newly identified safety/lifecycle gaps |
 | Status | Execution started; no remediation task or submitted claim is yet accepted as complete |
 | Reviewed code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
@@ -41,6 +41,14 @@ an independent authority to reinstate its deadlines or reduced-demo fallback.
 All unchecked acceptance items below remain required unless explicitly
 classified optional. An adopted design, recovered historical report, or one
 successful Joern parse does not complete a task or verify a submitted claim.
+
+Reviewed foundations have now landed through main `51da8a6`: independent
+artifact metadata, typed report checking, corrected corpus and dependency
+locks, board tooling, and the occurrence/decision contract. See the
+[bounded merge/evidence record](evidence/2026-09-25-foundation-merges/README.md)
+for exact heads, checks and limitations. Initial defect observations below
+remain historical evidence; do not assume every described defect is still
+present, or mistake a narrow repair for full R-task acceptance.
 
 ## 1. Objective and document boundaries
 
@@ -170,7 +178,7 @@ present it as an unrestricted guarantee from the original wording.
 | C13 | Pasting a repository produces real findings labeled with CWE and origin | 5 | T0.4 covers a smoke check; retain it through the new path | R08, R13, R17 |
 | C14 | Detection uses Semgrep and a CodeQL adapter | 2, 6 | Semgrep demo exists; no demonstrated CodeQL adapter task | R13 |
 | C15 | Demo compares Scanipy identity with actual incumbent IDs after refactoring | 3, 5 | No task captures actual comparator output | R14 |
-| C16 | Scanned repository code is analyzed, never executed | 6 | Current static path states this; preserve across new worker/adapter paths | R16 |
+| C16 | Scanned repository code is analyzed, never executed | 6 | Java dependency-fetch/preprocessing defaults and arbitrary JVM environment need explicit safety controls; full runtime proof remains missing | R16 |
 | C17 | Apache-2.0 open-source tool, publicly reproducible release | 6, 7 | Release/publication gates exist; ownership and final checks need completion | R17 |
 | C18 | Runnable Joern-backed validation harness and published evidence artifacts | 4, 7 | Harness exists; command packaging, corpus validity, and evidence gates need work | R03, R04, R05, R17 |
 
@@ -617,6 +625,13 @@ TODO:
 - [ ] Define transitions for unchanged, changed, resolved, reappearing, and
   analysis-failed findings. Distinguish successful absence after a fix from a
   scan failure or parser failure. Specify decision behavior when a bug returns.
+- [ ] Bind links to a monotonic lifecycle generation and bind each inherited
+  decision dimension to its own fresh human authorization generation. An old
+  link created while open must not regain suppression after resolved/reappeared
+  or uncertain states return to open. A fresh verdict/reference event must not
+  reauthorize old suppression. Test old links, newly proposed links, repeated
+  reopen cycles and replayed authorization events; enforce this in real storage,
+  not only a pure snapshot validator.
 - [ ] Define fingerprint-algorithm/rule-version compatibility. Historical
   decisions must not be silently migrated across incompatible identities.
 - [ ] Test scan → triage/suppress → harmless refactor → rescan → same decision;
@@ -969,6 +984,12 @@ C12 promise. Neither milestone may be silently substituted for the other.
 Evidence: C16; worker subprocess contracts and the current deployment posture.
 Scope: new worker/adapter subprocess paths and deployment integration.
 
+Pinned Java source review identified additional concrete hazards; corrective
+issue [#386](https://github.com/scanipy/scanipy/issues/386) covers a restricted
+invocation/environment profile. Its source audit is recorded in the
+[foundation evidence note](evidence/2026-09-25-foundation-merges/README.md#parser-safety-audit).
+It is not a parser-exploit or complete runtime no-execution proof.
+
 TODO:
 
 - [ ] Review every newly introduced execution path, including frontend plugins,
@@ -978,6 +999,23 @@ TODO:
 - [ ] Preserve the existing sanctioned-tool/argument handling and trusted export
   script model. Resolve actual adapter limitations rather than quietly enabling
   repository-controlled execution.
+- [ ] For the pinned Java frontend, enforce the exact trusted suffix
+  `--frontend-args --delombok-mode no-delombok` using a value-aware grammar;
+  do not admit arbitrary frontend forwarding. Force the exact dependency-fetch
+  disable value `JAVASRC_FETCH_DEPENDENCIES=no-fetch`. Values such as `false`
+  and `0` enable fetching upstream and are not safe aliases.
+- [ ] Validate a closed, versioned Java subprocess environment for both parse
+  and export: pinned tool paths, private writable directories, approved locale
+  and explicit fetch disable. Reject unknown JVM/native-loader/build overrides
+  before binary resolution/spawn. Verify the adapter and observer report actual
+  effective options; do not expose secrets or mutate the caller's environment.
+- [ ] Verify expected-versus-processed file coverage, including `test/` defaults,
+  parser omissions and unavailable generated-member semantics with Delombok
+  disabled. Successful exit, raw CALL edges and network isolation do not prove
+  full coverage, safe static-only behavior, or absence of findings.
+- [ ] Verify timeout/cancellation contains all descendant processes. Repeat
+  sentinel and process-evidence checks on the final merged container/Compose
+  path; never run an unsafe target-build positive control to validate a sentinel.
 - [ ] Add a controlled fixture with repository execution hooks/sentinels and
   confirm the declared scan path never triggers them. Run only the intended
   scanner against it; do not execute the sentinel as part of setup.

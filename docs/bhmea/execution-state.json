@@ -32,7 +32,8 @@
     "The DAG expresses milestone acceptance prerequisites; explicitly assigned hermetic build-ahead may proceed with unmet verification dependencies, without claiming them satisfied.",
     "Evidence targets are planned locations; only evidence_paths records retained actual evidence.",
     "No full task, claim or shared gate has passed. Corrective board ownership was reconciled on 2026-09-25 after transient GraphQL failures.",
-    "Narrow prerequisite #370 / PR #373 is merged after required CI and review; this is not full R15 or submission acceptance."
+    "Reviewed foundations through main 51da8a6 are indexed in docs/evidence/2026-09-25-foundation-merges/README.md; narrow issue closure is not full task or submission acceptance.",
+    "R07 lifecycle-generation and R16 implicit Java execution/coverage gaps are explicit follow-ups; no production continuity policy or corrected G0 exists."
   ],
   "tasks": [
     {
@@ -44,11 +45,11 @@
       ],
       "owner": "Plan maintainer",
       "status": "IN_PROGRESS",
-      "issue": 365,
+      "issue": 362,
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R01",
       "evidence_paths": [],
-      "next_action": "Validate and publish current authority, ownership, task/claim mapping and acyclic milestones."
+      "next_action": "Initial handoff #368 merged; reconcile reviewed progress and new falsifiers, retain full task/claim coverage and reforecast after corrected G0/G1."
     },
     {
       "id": "R02",
@@ -79,7 +80,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R03",
       "evidence_paths": [],
-      "next_action": "PR #372's 422-case source correction merged after current-head CI and canonical APPROVE. Retain syntax evidence and run complete corrected G0; #361 remains open."
+      "next_action": "PR #372's 422-case source correction merged; finish remaining fixture/precondition/correspondence and real-frontend validation, preserve eight-topology limits and supply G0 inputs. R03 component acceptance precedes G0; #361 remains open."
     },
     {
       "id": "R04",
@@ -94,7 +95,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R04",
       "evidence_paths": [],
-      "next_action": "Review/integrate PR #375; bind semantic policy and protected history, then verify real fresh all-case producer through the G0 gate."
+      "next_action": "Typed checker #375 merged; integrate the real fresh all-case producer and verify honest G0 plus protected acceptance history. Narrow #367 closure is not full R04 acceptance."
     },
     {
       "id": "R05",
@@ -111,7 +112,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R05",
       "evidence_paths": [],
-      "next_action": "Implement separate typed real campaign producer, retained execution evidence and bounded Docker command; attempt all 844 case sides. One Python diagnostic is not completion."
+      "next_action": "Integrate draft #380 with reviewed #369/current main and #386 Java safety profile; verify corrected image and bounded sequential probes before all 844 uncached side attempts. No real G0 yet."
     },
     {
       "id": "R06",
@@ -142,7 +143,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R07",
       "evidence_paths": [],
-      "next_action": "Review #378 occurrence/decision contract, then implement durable scoped storage, closed-group matching, revocable policy/decision state and fenced lifecycle commits. No runtime acceptance yet."
+      "next_action": "Contract #385 merged; peer-reviewed pure matcher remains unmerged. Enforce lifecycle generations and fresh per-dimension authorization, then review exact schema/grants and implement durable scoped storage/CAS. Production policy registry stays empty."
     },
     {
       "id": "R08",
@@ -172,7 +173,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R09",
       "evidence_paths": [],
-      "next_action": "Propagate independent artifact verdicts; version producers, schemas and historical compatibility."
+      "next_action": "Scoped metadata/migration #371 merged. Verify combined actual canonical producers, full observed environment and source-only snapshot/final persistence producers; retain legacy bytes. Full R09 remains open."
     },
     {
       "id": "R10",
@@ -266,7 +267,7 @@
       "evidence_paths": [
         "docs/EVIDENCE-BHMEA-DEPENDENCY-COMPATIBILITY-2026-09-25.md"
       ],
-      "next_action": "PR #373 fixes declared dependency compatibility only. Verify clean Docker installation; collect stage hardware, measure budgets and rehearse offline twice."
+      "next_action": "Runtime #373 and snapshot lock #383 merged; hook correction #384 in progress. After resource/safety review, verify real image install/startup and clean Docker install; obtain actual stage hardware, measure budgets and rehearse offline twice."
     },
     {
       "id": "R16",
@@ -277,12 +278,12 @@
         "correctness_prerequisite"
       ],
       "owner": "Worker/security",
-      "status": "TODO",
-      "issue": null,
+      "status": "IN_PROGRESS",
+      "issue": 386,
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R16",
       "evidence_paths": [],
-      "next_action": "Review permitted worker/engine modes before activation; test non-execution on actual production paths."
+      "next_action": "Implement #386 exact Java no-delombok/no-fetch invocation and closed parse/export environment; verify coverage omissions and descendant/sentinel safety. Other frontend/engine and final Compose proof remain required."
     },
     {
       "id": "R17",
@@ -313,7 +314,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R18",
       "evidence_paths": [],
-      "next_action": "Replace unsound labeling with framed content-binding encoding and complete bounded search."
+      "next_action": "Finalize #369 on merged R09/current main with actual four-class producer regression, legacy-default ineligibility and deadline failure propagation; obtain fresh canonical review before real semantic acceptance."
     },
     {
       "id": "R19",
