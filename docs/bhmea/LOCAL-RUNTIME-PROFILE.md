@@ -874,6 +874,13 @@ Key-inclusive pre-parse bounds and retained-graph semantic validation are
 mandatory even when stored JSON is canonical. Original child handles, notes and
 live primary/cleanup chains remain private and unchanged.
 
+[RUNTIME-EVIDENCE-STORE.md](RUNTIME-EVIDENCE-STORE.md) proposes the concrete
+durable journal/receipt boundary and explicit additional pre-release/spool/
+recovery variants. Those additive fields and kinds require a joint schema
+freeze before a journal codec is implemented; they are not silently added
+to deployed records. No such deployment or operational journal acceptance
+is asserted here. The pure PE checkpoint remains unchanged.
+
 `KernelObservation` is closed:
 
 ```text
@@ -939,6 +946,14 @@ recheck, result admission and durable occurrence/result finalization. A single
 syntax file must not retire custody needed by subsequent files. If the parent
 needs renewal, it obtains new genuine immutable authorization/fence evidence
 before the next invocation; it cannot restamp an old release as current.
+
+The proposed durable-store contract separates its local invocation slot from
+the outer capture/work leases and a new persistent runtime orphan barrier.
+Existing occurrence expiry/retirement code must not be treated as already
+enforcing this barrier. Its actual restricted DB/source-custody integration
+and restore-admission procedure remain prerequisites to operational launch;
+a filesystem receipt, expired lease or stopped Docker client cannot release
+source custody on its own.
 
 After complete cleanup, perform final prerequisite recheck, retain the admitted
 or failed terminal record, then release the controller's concurrency slot.
