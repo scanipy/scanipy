@@ -16,6 +16,14 @@ This is an additive engineering decision for that existing task. Historical
 PLAN/SDD/WBS, completed R09 constraints, old signed records and existing grants
 are not rewritten. No full R07/R08 milestone or submitted claim is complete.
 
+PR #411 canonical-review follow-up (2026-09-25): root additionally authorizes
+the single `CLAR-BHMEA-02` append in WBS.md section 17 for the still-unimplemented
+occurrence-to-final-Finding/SARIF/signature bridge. It remains OPEN; no historical
+approval/status or runtime behavior is rewritten by the append. The eventual
+projection must use actual identity evidence and the accepted R09 metadata
+contract, including explicit missing/failed/not-applicable cases, not synthetic
+hashes or an unconditional legacy emitter. #378 and #362 remain In Progress.
+
 ## 1. First implementation slice and explicit exclusions
 
 Deliver one coherent PostgreSQL-backed path: allocate an idempotent request and
@@ -137,6 +145,11 @@ Coordination: nonnegative monotonic `revision`, separate capture/detection/
 identity/finalization/lifecycle states, active detection work reference, and
 structured error references. Initial stages are pending, not completed.
 The first store does not promote finalization or lifecycle to completed.
+In the version-1 SQL schema, `finalization_state` and `lifecycle_state` are
+explicitly constrained to the literal `pending`. They are reserved integration
+states, not claims that an executor or decision-lifecycle processor exists.
+Any later transition requires an additive reviewed migration, actual producer
+and failure/replay tests; ordinary store success cannot promote these fields.
 
 ### 3.2 `source_captures`
 
