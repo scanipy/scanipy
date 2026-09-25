@@ -959,12 +959,23 @@ def check_files(
     evidence_root: Path | None = None,
     baseline: Path | None = None,
     accepted_improvements: Sequence[Path] = (),
+    expected_revision: str | None = None,
     now: datetime | None = None,
 ) -> dict[str, Any]:
     policy = validate_policy(read_json(policy_path))
     cases = load_corpus(corpus_root, policy)
+    candidate = read_json(report)
+    if mode != "baseline":
+        _require(expected_revision is not None, "expected code revision is required for this gate")
+    if expected_revision is not None:
+        _require(
+            REVISION.fullmatch(expected_revision) is not None,
+            "expected revision must be a full lowercase 40-hex code commit",
+        )
+        run = _object(candidate.get("run"), "candidate run")
+        _require(run.get("code_revision") == expected_revision, "candidate code revision is stale")
     current = validate_report(
-        read_json(report),
+        candidate,
         policy=policy,
         cases=cases,
         corpus_root=corpus_root,
@@ -1009,7 +1020,10 @@ def check_files(
             baseline is None and not accepted_improvements,
             "baseline mode does not consume protected history",
         )
-    return evaluate(mode, current, references)
+    result = evaluate(mode, current, references)
+    result["expected_revision"] = expected_revision
+    result["candidate_revision"] = candidate["run"]["code_revision"]
+    return result
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -1022,6 +1036,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--policy", type=Path, default=DEFAULT_POLICY)
     parser.add_argument("--evidence-root", type=Path)
     parser.add_argument("--baseline", type=Path)
+    parser.add_argument("--expected-revision")
     parser.add_argument("--accepted-improvement", type=Path, action="append", default=[])
     args = parser.parse_args(argv)
     try:
@@ -1033,6 +1048,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             evidence_root=args.evidence_root,
             baseline=args.baseline,
             accepted_improvements=args.accepted_improvement,
+            expected_revision=args.expected_revision,
         )
     except (ReportError, OSError, ValueError, TypeError, KeyError, yaml.YAMLError) as exc:
         print(

@@ -186,12 +186,26 @@ arbitrary environment manifest complete. Signed provenance, actual producer
 integration and real G0/G2 runs remain separate obligations. Unit-test reports
 are explicitly controlled fixtures, not corpus measurements.
 
-## Commands and exits
+## Expected code artifact and commands
+
+Acceptance and nonregression require `--expected-revision`: the exact lowercase
+40-hex **analysis-code artifact** commit supplied by the trusted release/run
+controller. It is not the scanned repository's commit, and must not be copied
+from the candidate report. Only the candidate must match; protected historical
+reports legitimately describe older analysis revisions. Baseline accepts the
+option when explicit G0 artifact binding is required. This rejects a still-fresh
+old green report submitted for a new buggy implementation. A Git SHA alone does
+not identify dirty or mounted code: the environment manifest must also capture
+actual mounted analysis-code content and the controller must verify that binding.
+Neither this option nor hashes authenticate producer assertions.
+
+Set `ANALYSIS_CODE_REVISION` from that trusted controller before the commands
+below; do not derive it from candidate JSON.
 
 ```bash
 python3 scripts/check_refactor_report.py --mode baseline --report /evidence/g0/report.json --corpus-root tests/corpora/refactor
-python3 scripts/check_refactor_report.py --mode nonregression --report /evidence/current/report.json --corpus-root tests/corpora/refactor --baseline /evidence/g0/report.json --accepted-improvement /evidence/improved/report.json
-python3 scripts/check_refactor_report.py --mode acceptance --report /evidence/g2/report.json --corpus-root tests/corpora/refactor --baseline /evidence/g0/report.json --accepted-improvement /evidence/improved/report.json
+python3 scripts/check_refactor_report.py --mode nonregression --expected-revision "$ANALYSIS_CODE_REVISION" --report /evidence/current/report.json --corpus-root tests/corpora/refactor --baseline /evidence/g0/report.json --accepted-improvement /evidence/improved/report.json
+python3 scripts/check_refactor_report.py --mode acceptance --expected-revision "$ANALYSIS_CODE_REVISION" --report /evidence/g2/report.json --corpus-root tests/corpora/refactor --baseline /evidence/g0/report.json --accepted-improvement /evidence/improved/report.json
 ```
 
 Use supported Python 3.11+ and PyYAML. The default policy is
