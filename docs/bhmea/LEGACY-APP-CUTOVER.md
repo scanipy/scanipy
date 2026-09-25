@@ -158,7 +158,10 @@ the reviewed vertical path with real evidence for each prerequisite:
 8. Re-enable the new scan endpoint/UI only after its real end-to-end path passes
    review/tests. Verify local Docker start/restart, no-network rehearsal, fresh
    provenance verification and real refactor/rescan. Measure actual stage budgets
-   on the owner's presentation hardware; this host is a reference only.
+   on this development machine, which the owner confirmed as the local Docker
+   presentation host. The [stage-machine observation](../evidence/2026-09-25-stage-machine/README.md)
+   records its selected capacity sample, not verified performance or offline
+   readiness. Recheck available resources before each real rehearsal.
 
 All full R08/R16 and shared G1/G2/G3 criteria remain open. No release, image
 publication, organizer message or user-container operation is authorized here.
