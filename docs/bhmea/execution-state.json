@@ -79,7 +79,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R03",
       "evidence_paths": [],
-      "next_action": "Integrate reviewed PR #372's 422-case source correction after fresh CI; retain syntax evidence and run complete corrected G0."
+      "next_action": "PR #372's 422-case source correction merged after current-head CI and canonical APPROVE. Retain syntax evidence and run complete corrected G0; #361 remains open."
     },
     {
       "id": "R04",
@@ -323,12 +323,12 @@
         "correctness_prerequisite"
       ],
       "owner": "Ingest/core analysis",
-      "status": "TODO",
-      "issue": null,
+      "status": "IN_PROGRESS",
+      "issue": 376,
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R19",
       "evidence_paths": [],
-      "next_action": "Finalize real graph roles, call bindings, access paths, returns and summary fixpoint; verify Java/Python traces."
+      "next_action": "R19-A #376 implements opt-in raw v2 export/schema with actual roles/properties and explicit missing evidence. Then deliver versioned semantic mapping, call bindings, access paths, returns and summary fixpoint; verify Java/Python traces."
     },
     {
       "id": "R20",

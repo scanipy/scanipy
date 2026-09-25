@@ -1,0 +1,1 @@
+"""Relocated synthetic fixture package."""
