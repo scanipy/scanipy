@@ -1,0 +1,19 @@
+package com.scanipy.corpus.refac;
+
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
+
+public class SessionService {
+    public Object restore(byte[] input006) throws Exception {
+        int left006 = 0;
+        int right006 = 0;
+        int value006 = _extracted_value(input006.length, left006, right006);
+        ByteArrayInputStream bin = new ByteArrayInputStream(input006, left006, value006);
+        ObjectInputStream stream = new ObjectInputStream(bin);
+        return stream.readObject();
+    }
+
+    private static int _extracted_value(int length, int left006, int right006) {
+        return length - left006 - right006;
+    }
+}
