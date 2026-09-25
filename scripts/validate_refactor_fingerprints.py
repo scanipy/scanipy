@@ -185,6 +185,10 @@ class RefactorPair:
     after_dir: Path
     sink_file: str
     before_sink_line: int
+    # Schema-2 corpus metadata declares the physical after path. This legacy
+    # report still performs structural comparisons only; it does not establish
+    # finding-removal/lifecycle outcomes or replace the typed R04 gate.
+    after_sink_file: str | None = None
 
 
 def _as_str(value: object, *, where: str, key: str) -> str:
@@ -333,6 +337,14 @@ def _load_seed_pairs(
                 f"{seed_id}/{refactor}: unknown ground_truth_label {label!r} "
                 f"(expected one of {sorted(EXPECTED_OUTCOME)})"
             )
+        after_locator = entry_map.get("after_locator")
+        after_sink_file = None
+        if after_locator is not None:
+            locator = _as_mapping(after_locator, where=where, key="after_locator")
+            after_sink_file = _as_str(locator.get("file"), where=where, key="after_locator.file")
+            relative = Path(after_sink_file)
+            if relative.is_absolute() or ".." in relative.parts or not relative.parts:
+                raise CorpusIntegrityError(f"{seed_id}/{refactor}: unsafe after_locator.file")
         pairs.append(
             RefactorPair(
                 seed_id=seed_id,
@@ -344,6 +356,7 @@ def _load_seed_pairs(
                 after_dir=after_dir,
                 sink_file=sink_file,
                 before_sink_line=sink_line,
+                after_sink_file=after_sink_file,
             )
         )
     return pairs
@@ -616,7 +629,17 @@ def evaluate_pair(pair: RefactorPair, fingerprinter: Fingerprinter) -> PairResul
     before_file = resolve_source_file(pair.before_dir, pair.sink_file)
     if before_file is None:
         return _unevaluated(pair, "before-source-missing", str(pair.before_dir))
-    after_file = resolve_source_file(pair.after_dir, pair.sink_file)
+    if pair.after_sink_file is not None:
+        # An explicit locator is not a hint: do not silently fall back to a
+        # different file if it is missing or escapes through a symlink.
+        candidate = pair.after_dir / pair.after_sink_file
+        after_file = (
+            candidate
+            if candidate.is_file() and candidate.resolve().is_relative_to(pair.after_dir.resolve())
+            else None
+        )
+    else:
+        after_file = resolve_source_file(pair.after_dir, pair.sink_file)
     if after_file is None:
         return _unevaluated(pair, "after-source-missing", str(pair.after_dir))
 
@@ -660,7 +683,7 @@ def evaluate_pair(pair: RefactorPair, fingerprinter: Fingerprinter) -> PairResul
         before_fp = fingerprinter(
             src_dir=pair.before_dir,
             language=pair.language,
-            filename=before_file.name,
+            filename=before_file.relative_to(pair.before_dir).as_posix(),
             line=pair.before_sink_line,
         )
     except Exception as exc:
@@ -676,7 +699,7 @@ def evaluate_pair(pair: RefactorPair, fingerprinter: Fingerprinter) -> PairResul
         after_fp = fingerprinter(
             src_dir=pair.after_dir,
             language=pair.language,
-            filename=after_file.name,
+            filename=after_file.relative_to(pair.after_dir).as_posix(),
             line=after_line,
         )
     except Exception as exc:

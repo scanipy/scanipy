@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Refactor corpus case manifest, schema 2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "corpus_id", "corpus_version", "path_base", "tree_digest_algorithm", "case_count", "cases"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "corpus_id": {"const": "CMP-CORP-REFAC-01"},
+    "corpus_version": {"const": "0.2.0"},
+    "path_base": {"const": "corpus_root"},
+    "tree_digest_algorithm": {"const": "sha256-length-prefixed-path-and-content-v1"},
+    "case_count": {"type": "integer", "minimum": 1},
+    "cases": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/case"}}
+  },
+  "$defs": {
+    "path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "locator": {
+      "type": "object", "additionalProperties": false,
+      "required": ["file", "line", "column", "callee", "call_text"],
+      "properties": {
+        "file": {"$ref": "#/$defs/path"},
+        "line": {"type": "integer", "minimum": 1},
+        "column": {"type": "integer", "minimum": 1},
+        "callee": {"type": "string", "minLength": 1},
+        "call_text": {"type": "string", "minLength": 1}
+      }
+    },
+    "case": {
+      "type": "object", "additionalProperties": false,
+      "required": ["case_id", "seed_id", "language", "finding_class", "refactor", "ground_truth_label", "evidence_type", "expected_outcome", "required_strength", "before_dir", "after_dir", "before_locator", "after_locator", "expected_preconditions", "rationale", "observation_subject", "expected_failure", "before_tree_digest", "after_tree_digest"],
+      "properties": {
+        "case_id": {"type": "string", "minLength": 1},
+        "seed_id": {"type": ["string", "null"], "pattern": "^seed-[0-9]{3}$"},
+        "language": {"enum": ["java", "python"]},
+        "finding_class": {"enum": ["injection", "path-traversal", "ssrf", "deserialization"]},
+        "refactor": {"type": "string", "minLength": 1},
+        "ground_truth_label": {"enum": ["should-stay", "should-flip", null]},
+        "evidence_type": {"enum": ["structural_comparison", "finding_removal", "analysis_failure"]},
+        "expected_outcome": {"enum": ["stay", "flip", "absent", "failure"]},
+        "required_strength": {"enum": ["strong_strong", null]},
+        "before_dir": {"$ref": "#/$defs/path"},
+        "after_dir": {"$ref": "#/$defs/path"},
+        "before_tree_digest": {"$ref": "#/$defs/digest"},
+        "after_tree_digest": {"$ref": "#/$defs/digest"},
+        "before_locator": {"$ref": "#/$defs/locator"},
+        "after_locator": {"anyOf": [{"$ref": "#/$defs/locator"}, {"type": "null"}]},
+        "expected_preconditions": {
+          "type": "object", "additionalProperties": false,
+          "required": ["fixture_syntax", "transformation_validation"],
+          "properties": {
+            "fixture_syntax": {"enum": ["valid", "invalid_after"]},
+            "transformation_validation": {"const": "valid"},
+            "purity_certificate": {"enum": ["proven", "not_proven"]}
+          }
+        },
+        "rationale": {"type": "string", "minLength": 1},
+        "observation_subject": {"enum": ["corresponding_sink_slice", "finding_lifecycle"]},
+        "expected_failure": {
+          "anyOf": [{"type": "null"}, {
+            "type": "object", "additionalProperties": false,
+            "required": ["stage", "visible", "must_not_resolve"],
+            "properties": {"stage": {"const": "parse"}, "visible": {"const": true}, "must_not_resolve": {"const": true}}
+          }]
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"evidence_type": {"const": "structural_comparison"}}},
+          "then": {"properties": {
+            "expected_outcome": {"enum": ["stay", "flip"]},
+            "required_strength": {"const": "strong_strong"},
+            "after_locator": {"$ref": "#/$defs/locator"},
+            "expected_failure": {"type": "null"},
+            "observation_subject": {"const": "corresponding_sink_slice"},
+            "expected_preconditions": {"properties": {"fixture_syntax": {"const": "valid"}}}
+          }}
+        },
+        {
+          "if": {"properties": {"evidence_type": {"const": "finding_removal"}}},
+          "then": {"properties": {
+            "expected_outcome": {"const": "absent"},
+            "required_strength": {"type": "null"},
+            "after_locator": {"type": "null"},
+            "expected_failure": {"type": "null"},
+            "observation_subject": {"const": "finding_lifecycle"},
+            "expected_preconditions": {"properties": {"fixture_syntax": {"const": "valid"}}}
+          }}
+        },
+        {
+          "if": {"properties": {"evidence_type": {"const": "analysis_failure"}}},
+          "then": {"properties": {
+            "expected_outcome": {"const": "failure"},
+            "required_strength": {"type": "null"},
+            "after_locator": {"type": "null"},
+            "expected_failure": {"type": "object"},
+            "expected_preconditions": {"properties": {"fixture_syntax": {"const": "invalid_after"}}}
+          }}
+        }
+      ]
+    }
+  }
+}
