@@ -292,6 +292,19 @@ def test_missing_precondition_status_fails_closed() -> None:
         _provenance(precondition_status="unknown")
 
 
+@pytest.mark.parametrize(
+    "fields",
+    [
+        {"cpg_order_hash": None, "cpg_order_class": "strong", "cpg_order_namespace": "graph/2"},
+        {"cpg_order_class": "strong"},
+        {"cpg_order_class": "pending", "cpg_order_namespace": "graph/2"},
+    ],
+)
+def test_incomplete_graph_producer_metadata_has_typed_failure(fields) -> None:
+    with pytest.raises(OracleProvenanceUnavailable, match="graph producer metadata"):
+        _provenance(**fields)
+
+
 def test_unmapped_rule_class_fails_closed() -> None:
     """Oracle ``class_`` sourcing is the OPEN CLAR-ORCH-03 — never guessed."""
     prov = _provenance(rule_classes={})

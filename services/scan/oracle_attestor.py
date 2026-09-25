@@ -191,11 +191,8 @@ class OracleScanProvenance:
                 f"cpg_order_hash must be 64 lowercase hex chars (INV-5); got "
                 f"{self.cpg_order_hash!r}. Its ONLY legitimate producer is "
                 f"CMP-CORE-03 canonical_order(cpg) over a CPG of this same "
-                f"checkout. A Semgrep-only scan builds no CPG, so on a CPG-less "
-                f"deployment this value does not exist and no oracle SARIF can be "
-                f"emitted through CMP-FND-01 (which requires it NOT NULL on every "
-                f"finding, oracle included). This is a reported integration "
-                f"constraint: do NOT substitute a hash of the source tree, the "
+                f"checkout. A CPG-less oracle scan must explicitly supply None. "
+                f"Do NOT substitute a hash of the source tree, the "
                 f"ruleset, or the findings — that would forge an INV-5 canonical-"
                 f"order digest."
             )
@@ -214,9 +211,14 @@ class OracleScanProvenance:
         if self.cpg_order_class is not None or self.cpg_order_namespace is not None:
             from analysis.artifact_identity import ArtifactIdentity
 
-            ArtifactIdentity(
-                "completed", self.cpg_order_hash, self.cpg_order_class, self.cpg_order_namespace
-            )
+            try:
+                ArtifactIdentity(
+                    "completed", self.cpg_order_hash, self.cpg_order_class, self.cpg_order_namespace
+                )
+            except ValueError as exc:
+                raise OracleProvenanceUnavailable(
+                    f"invalid graph producer metadata: {exc}"
+                ) from exc
 
     def class_for(self, check_id: str) -> str:
         """The Scanipy class for ``check_id``; fail-closed when unmapped."""
