@@ -7,6 +7,8 @@ presentation context; there is no October 23 deadline. The owner confirmed this
 development machine as the presentation machine. That designation is not a
 latency, resource-headroom, offline-readiness or runtime-isolation acceptance.
 Every launch still needs fresh resource and independently bound host evidence.
+The [retained stage-machine observation](../evidence/2026-09-25-stage-machine/README.md)
+records the owner's designation and the limitations of the observed capacity.
 
 ## Contract and scope
 
@@ -44,7 +46,8 @@ fails. There is no hidden source-directory cache, retry, or resume shortcut.
   `16252b21db172b967f13a815ca9bd8fe3078dd19`, after all required checks and a
   successful canonical APPROVE action. The earlier failed session-limit action
   remains historical evidence, not approval. This branch now incorporates
-  reviewed main `e79dc54d56a740ae49015b598e21074cc0beb2ac`.
+  reviewed main `69f7f480e2bb04febec103b04d2b753924d3090a`, including the later
+  reviewed documentation reconciliation #401.
 - [ ] Complete this producer's combined checks, exact-head CI and successful
   canonical review, then its reviewed merge before collecting protected G0.
   Local dependency merges and controlled tests do not authorize a real run.
@@ -274,3 +277,32 @@ no-overwrite behavior, container isolation command construction, shared Java
 both-phase profile serialization/privacy, required safety-module binding and
 fatal direct/chained evidence loss. These tests
 validate orchestration, not real Joern accuracy, parser coverage or invariance.
+
+## Local reviewed-main integration record
+
+Normal local integration checkpoint `cf19d22` incorporated reviewed main
+`e79dc54`; the later documentation merge incorporates reviewed main
+`69f7f480e2bb04febec103b04d2b753924d3090a`. Incoming raw-v2 evidence, continuity
+and stage-machine records remain intact. Against checkpoint `11dba03`, producer
+and shared observer behavior are unchanged. The only controller change is the
+host-role description; a hermetic resource test checks that it does not assert
+that an arbitrary launch host is the designated presentation machine.
+
+An initial focused command named a nonexistent report-gate test file, exiting
+4 with no tests run. After discovering the actual filename, the four-module
+producer/Java-profile/observer/report-gate selection passed 223 tests without
+skips in 96.90 seconds (`/tmp/scanipy-r05-main-refresh-focused.xml`). The new
+host-role regression separately passed one test, 53 deselected, in 0.39 seconds
+(`/tmp/scanipy-r05-host-role.xml`). The correction did not change a product
+fence or test expectation. An independent read-only delta review found no
+scoped blocker; it performed no tests or native probes.
+
+The configured full suite on the reviewed-main integration passed **1,613 tests
+with 51 existing skips and zero failures/errors**, 1,664 total, in 235.90 seconds
+(`/tmp/scanipy-r05-reviewed-main-full.xml`). Repository Ruff/format passed
+(214 files); broader strict mypy, including both producer scripts and `tools`,
+passed all 98 selected source files. Root requested the next normal pre-push
+wait for the separately reviewed #395 main integration; no manual pre-push or
+new remote candidate is claimed for this checkpoint. These local paths are
+diagnostic records, not immutable G0/feature-acceptance artifacts or execution
+authorization. Exact-head remote gates remain pending.
