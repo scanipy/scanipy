@@ -156,6 +156,14 @@ Source/capture/evidence and other metadata origins are NOT inputs to this API:
 the installed factory must separately check all real origins in both directions.
 No discovery, callback or extra authority field fills that gap implicitly.
 
+The domain FILE must be disjoint, component-wise in both directions, from
+every supplied runtime root/file and the host work root. Its PARENT must be
+disjoint from runtime/import roots and host/container work/control paths.
+Distinct standalone executable/worker files may share that private parent;
+do not invent a stronger parent-versus-standalone-file exclusion than the
+actual verifier imposes. The installed factory and worker still establish
+real filesystem ownership, modes, ancestry and distinct file origins.
+
 The closed reserved container targets are `/proc`, `/sys`, `/dev`,
 `/etc/hosts`, `/etc/hostname`, `/etc/resolv.conf`, `/run/scanipy-control` and
 `/run/scanipy-work`. Reject runtime-root/file/domain-profile bind destinations
@@ -469,7 +477,8 @@ finalization and all children. Unknown cleanup blocks reuse and admission.
   count/byte caps above after independent corpus/schema reviews. Root allocates
   only tools/worker/runtime_docker_policy.py and
   tests/unit/test_runtime_docker_policy.py for the pure create renderer.
-  Implementation, tests and canonical acceptance remain outstanding.
+  The pure implementation and focused review checkpoint is recorded below;
+  composed tests, normal hooks and canonical acceptance remain outstanding.
   Image/inspect validation and launch remain separately gated by DP-03/04/08.
 - [ ] DP-03: Freeze every Config/HostConfig/NetworkSettings/Mounts field,
   container-state variant and unknown-field refusal; include daemon-injected
@@ -485,9 +494,11 @@ finalization and all children. Unknown cleanup blocks reuse and admission.
   rules. The entire profile parent must be disjoint in both directions from
   every import root and invocation cwd. Do not bind the whole host metadata
   directory, chmod user files, or relax the existing verifier checks.
-- [ ] DP-06: Independent design/security review, then allocate pure renderer
-  and validator files/tests separately. No Docker launch implementation is
-  enabled by an approved pure rendering function.
+- [x] DP-06a: Independent scoped design/code review of the pure renderer, with
+  root and corpus reading its complete source/tests and the corpus independently
+  running its 288 focused tests. This does not approve runtime enforcement.
+- [ ] DP-06b: Independently review and allocate the image/inspect validator
+  separately. No Docker launch is enabled by an approved pure renderer.
 - [ ] DP-07: Add N-1/N/N+1, duplicate/poisoned/CSV-path, image-extra, init-default,
   seccomp-file, credential-helper, mount-shadow, field-unknown and changed-state
   falsifiers; actual pinned-parser controls must accompany authored fixtures.
@@ -502,3 +513,47 @@ finalization and all children. Unknown cleanup blocks reuse and admission.
 
 This draft deliberately leaves unresolved decisions unchecked. Its source
 inspection is useful implementation evidence, not a runtime acceptance report.
+
+## 8. Local pure-renderer checkpoint — not Docker or launch acceptance
+
+The only new implementation files are tools/worker/runtime_docker_policy.py
+and tests/unit/test_runtime_docker_policy.py. At the frozen reviewed checkpoint:
+
+- Source raw SHA-256:
+  ee1d44eaa032b3078ed5d2f8b13537a0f441895e309578181860497eec5af629.
+- Test raw SHA-256:
+  efce66b6243afd0a919c73dc9f21ae6f4f466dffd5cdae7da11201455666ca29.
+- Author's final configured focused run: 288 passed, zero skips/failures/errors,
+  0.893s, /tmp/scanipy-docker-renderer-final.xml.
+- Independent corpus run: 288 passed, zero skips/failures/errors, 0.75s,
+  /tmp/scanipy-runtime-docker-policy-corpus-review.xml; complete contract,
+  source and tests read with no blocking finding.
+- Root independently read all 387 source and 735 test lines, then reran the
+  configured focused suite: 288 passed, zero skips/failures/errors, 1.21s,
+  /tmp/scanipy-docker-renderer-root-review.xml. Root approves this pure slice.
+- Ruff/format and source strict mypy passed at the author's frozen checkpoint;
+  git diff --check was clean. Root's explicit normal pre-commit run on the
+  three authored renderer/source/test/contract files passed all applicable
+  checks, including mypy and secret checks; irrelevant hooks skipped normally.
+- After normal accepted-main integration a43927d04e052840ded6ad1fffbdfdfcaf29947e
+  (main through #403), the configured combined pytest tests/ suite passed
+  2,298 tests with 51 existing optional skips and zero failures/errors in
+  160.34s, /tmp/scanipy-400-renderer-combined-full.xml. This includes the actual
+  shared transport, inventory, loader and renderer sources together; the
+  renderer source/test hashes above were independently rechecked unchanged.
+  Normal final commit/push and exact-head remote gates remain pending.
+
+The initial test collection failed because pytest attempted to format an
+int-subclass poison fixture. Explicit diagnostic parameter IDs corrected the
+harness; the subsequent initial 278-test and final 288-test runs passed. The
+collection failure is not a product test pass or a suppressed falsifier.
+
+Tests cover exact flags/labels/environments, shared FrozenInvocation, primitive
+and missing-slot rejection, mutation-safe snapshots, component-wise overlap,
+minimal nested-root cover, destination deduplication, all relevant count/byte
+boundaries, escaping amplification and absence of external operations. CSV
+round-trips use the authored Python grammar; they do NOT prove the pinned Go
+parser, Docker daemon, image defaults, kernel mounts, device inventory, limits,
+pipe behavior or current-host compatibility. No filesystem discovery, native
+process, controller, installed key/anchor, image build or runtime activation is
+introduced. DP-01b/03/04/05/06b/07/08/09/10 remain required.
