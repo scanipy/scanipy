@@ -1,0 +1,20 @@
+{
+  "argv": [
+    "/opt/joern/joern-parse",
+    "--language",
+    "pythonsrc",
+    "--output",
+    "/job/python/cpg.bin",
+    "/repo/tests/fixtures/joern_raw_v2/python"
+  ],
+  "cwd": "/job/python",
+  "elapsed_seconds": 10.744969081133604,
+  "env": {
+    "JAVA_HOME": "/opt/temurin-jre",
+    "JAVA_TOOL_OPTIONS": "-Xmx1536m -XX:ActiveProcessorCount=2 -Duser.home=/job/python -Djava.io.tmpdir=/job/python/tmp",
+    "PATH": "/opt/joern:/opt/joern/bin:/opt/temurin-jre/bin:/usr/bin:/usr/local/bin",
+    "TMPDIR": "/job/python/tmp"
+  },
+  "returncode": 0,
+  "timeout_s": 120
+}

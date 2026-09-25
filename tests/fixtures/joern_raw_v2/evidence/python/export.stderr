@@ -1,0 +1,9 @@
+Picked up JAVA_TOOL_OPTIONS: -Xmx1536m -XX:ActiveProcessorCount=2 -Duser.home=/job/python -Djava.io.tmpdir=/job/python/tmp
+Picked up JAVA_TOOL_OPTIONS: -Xmx1536m -XX:ActiveProcessorCount=2 -Duser.home=/job/python -Djava.io.tmpdir=/job/python/tmp
+executing /repo/workers/snapshot/joern-scripts/export_cpg_v2.sc
+Creating project `cpg.bin` for CPG at `/job/python/cpg.bin`
+Creating working copy of CPG to be safe
+Loading base CPG from: /job/python/workspace/cpg.bin/cpg.bin.tmp
+Overlay dataflowOss already exists - skipping
+The graph has been modified. You may want to use the `save` command to persist changes to disk.  All changes will also be saved collectively on exit
+closing/saving project `cpg.bin`

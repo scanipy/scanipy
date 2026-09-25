@@ -12,9 +12,9 @@ see `integrations/scm/_http.py`):
     its own; it calls an injected `AsyncHTTPTransport` whose responses satisfy
     the `_http.HTTPResponseLike` shape (`status_code`, case-insensitive
     `headers`, `text`) plus a `json()` accessor. No third-party HTTP dependency.
-  * **Injected git runner.** `clone()` shells out through an injected
-    `GitRunner`; the default runner uses `asyncio.create_subprocess_exec` over
-    the pinned `git` binary. Tests inject a recording stub.
+  * **Explicitly trusted injected runner.** Native default acquisition refuses
+    before staging (#395); tests inject a recording stub. Injection is not a
+    production no-execution profile (docs/bhmea/GIT-SOURCE-ACQUISITION.md).
   * **Shared retry/backoff.** Every REST call is wrapped with `CMP-SCM-05`'s
     `with_retry` + `classify_gitlab`, so the GitLab default backoff curve and
     `429`/`Retry-After` honouring apply uniformly (DOC §3.4).
@@ -49,6 +49,7 @@ from integrations.scm.base import (
     SCMTransientError,
     WebhookSubscription,
 )
+from integrations.scm.native_acquisition import refuse_native_git_acquisition
 
 __all__ = [
     "AsyncHTTPTransport",
@@ -97,22 +98,8 @@ GitRunner = Callable[[Sequence[str], Path], Awaitable[tuple[int, str, str]]]
 
 
 async def _default_git_runner(argv: Sequence[str], cwd: Path) -> tuple[int, str, str]:
-    """Default git runner: exec the pinned `git` binary via asyncio subprocess."""
-    import asyncio
-
-    proc = await asyncio.create_subprocess_exec(
-        "git",
-        *argv,
-        cwd=str(cwd),
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-    out, err = await proc.communicate()
-    return (
-        proc.returncode if proc.returncode is not None else -1,
-        out.decode("utf-8", "replace"),
-        err.decode("utf-8", "replace"),
-    )
+    """Unavailable default; direct calls also refuse before any native I/O."""
+    refuse_native_git_acquisition()
 
 
 def _project_id(repo_ref: RepoRef) -> str:
@@ -144,6 +131,10 @@ class GitLabConnector(SCMConnector):
         self._api_base_url = api_base_url.rstrip("/")
         self._retry_policy = retry_policy if retry_policy is not None else GITLAB_DEFAULT
         self._git_runner: GitRunner = git_runner if git_runner is not None else _default_git_runner
+        # Explicitly passing the disabled default is still the default route.
+        # Other injected Python runners are trusted collaborators, not a
+        # sanctioned production no-execution profile.
+        self._explicit_git_runner = git_runner is not None and git_runner is not _default_git_runner
 
     # ---- internal REST plumbing -------------------------------------------
 
@@ -258,6 +249,8 @@ class GitLabConnector(SCMConnector):
         shallow: bool = True,
     ) -> CloneMetadata:
         """Materialise the working tree at `commit_sha` into `dest_dir` (DOC §3.2)."""
+        if not self._explicit_git_runner:
+            refuse_native_git_acquisition()
         dest_dir.mkdir(parents=True, exist_ok=True)
         authed_url = self._authed_clone_url(repo_ref.clone_url)
 

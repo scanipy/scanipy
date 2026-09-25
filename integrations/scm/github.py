@@ -15,9 +15,9 @@ seams — see `integrations/scm/_http.py`):
     `_http.HTTPResponseLike` shape (`status_code`, case-insensitive `headers`,
     `text`) plus a `json()` accessor. This keeps the connector free of any
     third-party HTTP dependency and fully unit-testable.
-  * **Injected git runner.** `clone()` shells out through an injected
-    `GitRunner` callable; the default runner uses `asyncio.create_subprocess_exec`
-    over the pinned `git` binary. Tests inject a recording stub.
+  * **Explicitly trusted injected runner.** Native default acquisition refuses
+    before staging (#395); tests inject a recording stub. Injection is not a
+    production no-execution profile (docs/bhmea/GIT-SOURCE-ACQUISITION.md).
   * **Shared retry/backoff.** Every REST call is wrapped with `CMP-SCM-05`'s
     `with_retry` + `classify_github`, so the GitHub default backoff curve and
     primary/secondary rate-limit honouring apply uniformly (DOC §3.4).
@@ -53,6 +53,7 @@ from integrations.scm.base import (
     SCMTransientError,
     WebhookSubscription,
 )
+from integrations.scm.native_acquisition import refuse_native_git_acquisition
 
 __all__ = [
     "AsyncHTTPTransport",
@@ -105,8 +106,8 @@ class AsyncHTTPTransport(Protocol):
 
 
 # A git runner takes the argv (after the `git` program name) and a cwd, runs it,
-# and returns (returncode, stdout, stderr). The default runner shells out to the
-# pinned `git` binary; tests inject a recording stub. Async to match clone().
+# and returns (returncode, stdout, stderr). The default refuses; trusted tests
+# inject a recording stub. Async to match clone(), not a native safety profile.
 GitRunner = Callable[[Sequence[str], Path], Awaitable[tuple[int, str, str]]]
 
 
@@ -126,25 +127,8 @@ class CodeSearchHit:
 
 
 async def _default_git_runner(argv: Sequence[str], cwd: Path) -> tuple[int, str, str]:
-    """Default git runner: exec the pinned `git` binary via asyncio subprocess.
-
-    Off the determinism partition; performs the only real I/O in this module.
-    """
-    import asyncio
-
-    proc = await asyncio.create_subprocess_exec(
-        "git",
-        *argv,
-        cwd=str(cwd),
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-    out, err = await proc.communicate()
-    return (
-        proc.returncode if proc.returncode is not None else -1,
-        out.decode("utf-8", "replace"),
-        err.decode("utf-8", "replace"),
-    )
+    """Unavailable default; direct calls also refuse before any native I/O."""
+    refuse_native_git_acquisition()
 
 
 # ---------------------------------------------------------------------------
@@ -171,6 +155,10 @@ class GitHubConnector(SCMConnector):
         self._api_base_url = api_base_url.rstrip("/")
         self._retry_policy = retry_policy if retry_policy is not None else GITHUB_DEFAULT
         self._git_runner: GitRunner = git_runner if git_runner is not None else _default_git_runner
+        # Explicitly passing the disabled default is still the default route.
+        # Other injected Python runners are trusted collaborators, not a
+        # sanctioned production no-execution profile.
+        self._explicit_git_runner = git_runner is not None and git_runner is not _default_git_runner
 
     # ---- internal REST plumbing -------------------------------------------
 
@@ -315,10 +303,13 @@ class GitHubConnector(SCMConnector):
     ) -> CloneMetadata:
         """Materialise the working tree at `commit_sha` into `dest_dir` (DOC §3.2).
 
-        Uses HTTPS clone with the installation token / PAT injected into the
+        The default route refuses before staging. With an explicitly trusted
+        injected runner only, uses HTTPS with the installation token / PAT in the
         clone URL's userinfo, then `git fetch` + `git checkout` the exact SHA.
         `shallow=True` ⇒ `--depth=1`. Returns CloneMetadata feeding CMP-SNAP-01.
         """
+        if not self._explicit_git_runner:
+            refuse_native_git_acquisition()
         dest_dir.mkdir(parents=True, exist_ok=True)
         authed_url = self._authed_clone_url(repo_ref.clone_url)
 
