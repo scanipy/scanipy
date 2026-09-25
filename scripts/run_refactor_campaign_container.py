@@ -46,7 +46,7 @@ def host_resources(parent: Path) -> dict[str, Any]:
         "cpu_count": os.cpu_count(),
         "available_memory_bytes": values["MemAvailable"],
         "disk_free_bytes": shutil.disk_usage(parent).free,
-        "host_role": "reference host; presentation hardware not confirmed",
+        "host_role": "observed launch host; compare with owner-confirmed presentation evidence",
     }
 
 

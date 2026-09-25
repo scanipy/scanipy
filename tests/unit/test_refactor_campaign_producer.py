@@ -767,6 +767,24 @@ def test_controller_rejects_unpinned_broad_or_root_targets(tmp_path, field, valu
         controller.container_command(**args)
 
 
+def test_host_resource_sample_does_not_assert_presentation_identity(tmp_path, monkeypatch):
+    def meminfo(path):
+        assert path == "/proc/meminfo"
+        return SimpleNamespace(read_text=lambda: "MemAvailable: 8388608 kB\n")
+
+    monkeypatch.setattr(controller, "Path", meminfo)
+    monkeypatch.setattr(controller.os, "cpu_count", lambda: 32)
+    monkeypatch.setattr(controller.shutil, "disk_usage", lambda _: SimpleNamespace(free=42))
+    monkeypatch.setattr(controller, "utc_now", lambda: "2026-09-25T14:00:00Z")
+    assert controller.host_resources(tmp_path) == {
+        "observed_at": "2026-09-25T14:00:00Z",
+        "cpu_count": 32,
+        "available_memory_bytes": 8 * controller.GIB,
+        "disk_free_bytes": 42,
+        "host_role": "observed launch host; compare with owner-confirmed presentation evidence",
+    }
+
+
 @pytest.mark.parametrize(
     "key,value",
     [

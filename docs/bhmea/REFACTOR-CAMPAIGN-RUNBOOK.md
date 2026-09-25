@@ -3,14 +3,20 @@
 Status: implementation and controlled validation; **no new real campaign, corrected G0,
 feature acceptance, or full R05 completion is claimed by this document**. Issue #374
 tracks this work. The full submission/review remains the target. December 2/3 is the
-presentation context; there is no October 23 deadline. The current machine is a
-reference host, not confirmed presentation hardware.
+presentation context; there is no October 23 deadline. The owner confirmed this
+development machine as the presentation machine. That designation is not a
+latency, resource-headroom, offline-readiness or runtime-isolation acceptance.
+Every launch still needs fresh resource and independently bound host evidence.
 
 ## Contract and scope
 
-Use `scripts/run_refactor_campaign_container.py` as the local controller and
-`scripts/run_refactor_campaign.py` as the in-container producer. The legacy
+`scripts/run_refactor_campaign_container.py` is the current diagnostic controller
+and `scripts/run_refactor_campaign.py` is the in-container producer. The legacy
 `scripts/validate_refactor_fingerprints.py` remains unchanged by this work.
+The diagnostic controller's subprocess capture and requested container flags do
+not supply the separately required #400 bounded transport, effective runtime
+checks, trusted installation or lifecycle/cleanup proof. No native campaign is
+authorized by this source checkpoint or the command examples below.
 
 The authoritative machine contract is [report v2](REFACTOR-REPORT-V2.md) and its
 repository-owned gate policy. The producer calls actual production `parse_source`,
@@ -33,12 +39,18 @@ fails. There is no hidden source-directory cache, retry, or resume shortcut.
   independent artifact metadata #371 (`c540644`), snapshot hash-lock correction
   #383 (`85a9600`), and fail-closed developer hooks #387 (`0223651`) are merged.
   Those scoped merges do not establish a runnable image or feature acceptance.
-- [ ] Confirm reviewed merges of Java static safety #390 and this producer before
-  collecting a protected full G0. Local integration currently includes frozen
-  #390 head `16252b21db172b967f13a815ca9bd8fe3078dd19` as an **unmerged dependency**.
-  Its latest review action failed on a session limit despite an APPROVE comment;
-  that failed check is not acceptance. Local dependency merges and controlled
-  tests do not authorize a real run or remote merge.
+- [x] Java static safety #390 merged at
+  `8d38c06addc49f382b36d17fee4125fdf4628b3d` from exact tested head
+  `16252b21db172b967f13a815ca9bd8fe3078dd19`, after all required checks and a
+  successful canonical APPROVE action. The earlier failed session-limit action
+  remains historical evidence, not approval. This branch now incorporates
+  reviewed main `e79dc54d56a740ae49015b598e21074cc0beb2ac`.
+- [ ] Complete this producer's combined checks, exact-head CI and successful
+  canonical review, then its reviewed merge before collecting protected G0.
+  Local dependency merges and controlled tests do not authorize a real run.
+- [ ] Integrate the reviewed bounded controller/runtime enforcement under #400
+  and obtain explicit readiness/resource approval before any native campaign.
+  A successful preview or a supplied `--execute` flag is not that approval.
 - [ ] Use a clean committed analysis checkout containing those changes. The
   controller refuses dirty tracked or untracked files. It records Git revision and
   hashes all tracked `analysis/`, `tools/`, and `scripts/` files, including the
@@ -61,7 +73,8 @@ fails. There is no hidden source-directory cache, retry, or resume shortcut.
   single parse is not proof that this producer's full runtime is ready.
 - [ ] Confirm available resources immediately before launch: at least two CPUs,
   6 GiB available memory and 20 GiB free disk. The controller refuses otherwise.
-  Obtain the actual presentation hardware specification separately.
+  Compare the actual launch host with the separately retained owner-confirmed
+  presentation-machine evidence; this resource sample alone does not identify it.
 - [ ] Review and run bounded Python **and** Java cases first on the selected image.
   Inspect actual launcher events, exported graph capabilities, unique locators and
   returned identity namespaces. A syntax pass does not substitute for this step.
@@ -95,8 +108,9 @@ python -B -X pycache_prefix="$CAMPAIGN_PARENT/host-bytecode" \
   --maximum-seconds 1200
 ```
 
-After checking the printed context, repeat that exact command with `--execute` to
-authorize the bounded two-side attempt. For Java use a new output path/name and
+Only after the prerequisites and separate native-run approval, the intended
+interface repeats that command with `--execute` for a bounded two-side attempt.
+For Java use a new output path/name and
 `--case-id control/java-injection-inline-method`. A bounded diagnostic still emits
 all 422 case identities: every omitted case stays `not_run`, so G0 remains false.
 Do not relabel it a full campaign.
@@ -112,7 +126,8 @@ python -B -X pycache_prefix="$CAMPAIGN_PARENT/host-bytecode" \
   --maximum-seconds 86400
 ```
 
-Add `--execute` only after reviewing that preview and resource check. Default
+Add `--execute` only after the required controller/readiness approval as well as
+reviewing that preview and fresh resource check. Default
 fingerprint budgets are `--states 65536 --seconds 0.2`; actual values are retained
 in runtime evidence. Changing a budget must be deliberate and included in the
 eventual full environment manifest. A prior single Python parse/export took about
@@ -246,7 +261,8 @@ measurement process completed; it is not a feature acceptance assertion.
 4. Fix observed graph/fingerprint failures without denominator or expectation
    changes that merely conceal failures; run non-regression against protected
    prior successes as well as final all-feature acceptance.
-5. Establish stage hardware, runtime/disk budget, operator walkthrough and demo
+5. Bind the actual launch host to the owner-confirmed presentation-machine
+   evidence, then measure runtime/disk budgets, operator walkthrough and demo
    fallback independently. Historical and controlled artifacts remain separately
    labeled; they never become a new real G0 through rewriting.
 
