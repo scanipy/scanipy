@@ -575,6 +575,8 @@ def test_cli_history_is_exact_and_exit_codes_distinguish_invalid_from_red(
         str(bundle["corpus"]),
         "--policy",
         str(bundle["policy_path"]),
+        "--expected-revision",
+        "1" * 40,
     ]
     assert gate.main([*args, "--mode", "baseline"]) == 0
     assert gate.main([*args, "--mode", "acceptance", "--baseline", str(baseline_path)]) == 2
@@ -858,3 +860,61 @@ def test_locked_seed_metadata_drift_is_rejected(bundle: dict[str, Any]) -> None:
     metadata.write_text("controlled: changed\n")
     with pytest.raises(gate.ReportError, match="locked metadata changed"):
         gate.load_corpus(root, bundle["policy"])
+
+
+@pytest.mark.parametrize("mode", ["acceptance", "nonregression"])
+def test_current_code_revision_must_be_supplied_and_match_even_for_fresh_green_report(
+    bundle: dict[str, Any],
+    mode: str,
+) -> None:
+    report_path = bundle["root"] / "candidate.json"
+    baseline_path = bundle["root"] / "baseline.json"
+    _write_json(report_path, bundle["report"])
+    baseline_hash = _write_json(baseline_path, bundle["report"])
+    bundle["policy"]["history"]["baseline_sha256"] = baseline_hash
+    _write_json(bundle["policy_path"], bundle["policy"])
+    options: dict[str, Any] = {
+        "report": report_path,
+        "corpus_root": bundle["corpus"],
+        "policy_path": bundle["policy_path"],
+        "mode": mode,
+        "baseline": baseline_path,
+        "now": NOW,
+    }
+    with pytest.raises(gate.ReportError, match="expected code revision is required"):
+        gate.check_files(**options)
+    with pytest.raises(gate.ReportError, match="candidate code revision is stale"):
+        gate.check_files(**options, expected_revision="2" * 40)
+    with pytest.raises(gate.ReportError, match="full lowercase 40-hex"):
+        gate.check_files(**options, expected_revision="main")
+    assert gate.check_files(**options, expected_revision="1" * 40)["passed"]
+
+
+def test_expected_revision_does_not_rewrite_legitimate_older_protected_history(
+    bundle: dict[str, Any],
+) -> None:
+    old = copy.deepcopy(bundle["report"])
+    old["run"]["code_revision"] = "0" * 40
+    old["run"]["started_at"] = "2025-01-01T00:00:00Z"
+    old["run"]["completed_at"] = "2025-01-01T01:00:00Z"
+    environment = gate.read_json(bundle["root"] / "environment.json")
+    environment["code_revision"] = "0" * 40
+    old["run"]["environment_manifest"] = {
+        "path": "old-environment.json",
+        "sha256": _write_json(bundle["root"] / "old-environment.json", environment),
+    }
+    old["run"]["environment_digest"] = gate.environment_digest(environment)
+    baseline = bundle["root"] / "old-report.json"
+    bundle["policy"]["history"]["baseline_sha256"] = _write_json(baseline, old)
+    _write_json(bundle["policy_path"], bundle["policy"])
+    report = bundle["root"] / "candidate.json"
+    _write_json(report, bundle["report"])
+    assert gate.check_files(
+        report=report,
+        corpus_root=bundle["corpus"],
+        policy_path=bundle["policy_path"],
+        mode="acceptance",
+        baseline=baseline,
+        expected_revision="1" * 40,
+        now=NOW,
+    )["passed"]
