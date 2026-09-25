@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Updated | 2026-09-25 |
-| Snapshot | Revision 13; observed 2026-09-25 20:51 UTC plus 20:54 update; accepted main `075f92fe`, earlier cutoffs preserved |
+| Snapshot | Revision 14; observed 2026-09-25 22:25 UTC plus explicit 22:30 update; accepted main `4911f656`, earlier cutoffs preserved |
 | Target | FULL_SUBMISSION; all C01–C18 claims and applicable R01–R20 acceptance items |
 | Tracking | [Umbrella issue #362](https://github.com/scanipy/scanipy/issues/362) |
 | Presentation | December 2 or 3, 2026; exact date unconfirmed |
@@ -128,7 +128,60 @@ source custody alone does not make an unsafe checkout trustworthy. See the
 
 ## 3. Work ownership and next actions
 
-### Revision 13 execution queue — observed at 20:51 UTC
+### Revision 14 execution queue — observed at 22:25 UTC
+
+Accepted main `4911f6568a85206651adbf40428529eb090c389f` now includes inventory
+#414, Revision 13 documentation #415, rule #416 and metadata-loader #417. The
+[Revision 14 evidence index](evidence/2026-09-25-foundation-merges/README.md#revision-14--observed-2225-utc-september-25)
+records exact review/test links and retained failures. The earlier queues below
+are historical; do not repeat completed merges or promote full acceptance.
+
+1. **Root — publication and evidence:** resolver B `b0717452` has 804 affected
+   passes and its normal push is running, not assumed complete. The pre-C full
+   3,549/51 belongs only to `c365e129`. Open/review it only after real push
+   success; require exact-head CI/canonical and merged-artifact checks. Keep
+   all broad/full/pre-push runs serialized and canonical reviews serialized.
+2. **Runtime owner — narrow dependency packaging:** D `6bf0651` has 856 affected
+   passes and needs fresh full then normal push/remote gates. E `257336c` has
+   479 owned passes and normal commit hooks, but requires accepted-parent
+   refresh and its own gates. Package complete reviewed F journal unit after E,
+   then G packet/controller dependencies; do not import a stale baseline or
+   reconstruct selected semantics from a large combined branch.
+3. **Accepted-input owner — real database verification:** AL-03 SQL/validation/
+   reads now include reviewed stored-error, generated-denial precharge and
+   backward-time corrections. Its 147 unit/source checks and five-resource
+   scoped security approval are not PostgreSQL evidence. Finish independent
+   facade review, then use a separately owned bounded cluster and reviewed
+   fixture. Do not reuse the application's DB or the occurrence fixture's
+   global roles. Preserve every real failure; no provider or key is installed.
+4. **Root/provenance — compatibility before producers:** `de17aa06` has 702
+   affected passes; 3,391/51 full belongs to pre-C `1a349f22`. Complete its
+   normal push/current-head gates. Then finish every producer/finalization/
+   persistent-key/export TODO in the compatibility contract; synthetic signed
+   examples authenticate neither a source scan nor an operator.
+5. **Physical runtime and delivered workflow:** RES `3194baa1` has 4,720/51 full
+   on its recorded combined tree, not on a later publication composition.
+   Qualified storage, event/spool/full-reader, current six-role owner closure,
+   DB orphan barriers, kernel/Docker/controller and actual native producers
+   remain required. Wire raw detections before identity, durable decisions,
+   final provenance, API/UI, all-source campaigns and independent rehearsal.
+
+All recorded skips stay skips; repeated focused runs are not additive distinct
+coverage. No full R/C/G state changes. Acceptance/RSVP remains done, presentation
+December 2 or 3, no October lock, this development machine as Docker target.
+Release/image publication, spending and external messages still need authority.
+
+**Later update — observed 22:30 UTC:** B normal push passed and the independently
+verified remote `b0717452` is now [PR #418](https://github.com/scanipy/scanipy/pull/418).
+Its current CI/canonical gates remain pending, not accepted. AL's final unit
+selection is 185 on each Python version (149 AL +36 unchanged occurrence);
+138 PostgreSQL cases were collected only. A new root-owned, network-none,
+1.5 GiB-limited PostgreSQL container is ready on a private task socket; no AL
+SQL test has run. Finish facade review before the separately granted three-case
+smoke, then expanded SQL tests. Existing app/DB and occurrence cluster are
+untouched; D full remains queued. Earlier 147-case evidence retains its own scope.
+
+### Revision 13 execution queue — historical observation at 20:51 UTC
 
 Accepted main `075f92fe9d6aa1afb0a16494769e9cc96ba0df16` includes CodeQL
 parser #413 and occurrence store #411. Their exact reviewed trees, successful
