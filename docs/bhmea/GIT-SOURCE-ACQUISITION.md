@@ -1,18 +1,23 @@
 # R16 — Native Git containment and source-capture replacement
 
 Status: root-approved containment and packaging correction implemented and
-independently reviewed locally; local test/hook checks passed. Merged-base and
+independently reviewed locally; local test/hook checks passed at the earlier
+checkpoint. Reviewed main is now incorporated for combined verification;
 publication gates remain open.
 Issue: [#395](https://github.com/scanipy/scanipy/issues/395).
 Owner: corpus/tooling agent; root owns review, project status and merge.
-Date: 2026-09-25. Local dependency base:
-`16252b21db172b967f13a815ca9bd8fe3078dd19` (pending PR #390).
+Date: 2026-09-25. Initial local dependency base:
+`16252b21db172b967f13a815ca9bd8fe3078dd19` (then-pending PR #390).
+That exact head subsequently passed all required checks and successful canonical
+review, merging at `8d38c06addc49f382b36d17fee4125fdf4628b3d`. This branch now
+incorporates reviewed main `e79dc54d56a740ae49015b598e21074cc0beb2ac`.
 
 Authority: [DECISION-BHMEA-01](../DECISION-BHMEA-01-current-execution-authority-2026-09-25.md).
 This is an explicitly unavailable acquisition route until its replacement is
 reviewed. Containment is not delivery of safe Git acquisition, source custody,
 offline readiness, full R16 or any submitted Black Hat claim. #362 remains open.
-The pending Java dependency is not accepted merely because this branch uses it.
+The Java dependency's reviewed merge does not accept this containment branch
+or its still-missing operational acquisition replacement.
 
 ## 1. Observed defects and immediate objective
 
@@ -206,9 +211,12 @@ hook, alias, helper, smudge filter, repository command or remote clone.
 - [x] Scoped Ruff/strict mypy, actual configured test selection, normal pre-commit
   and locally invoked pre-push hooks pass without skips/bypasses added to hide
   changed behavior. Remote push and merge gates are not claimed.
-- [ ] After #390 is reviewed and merged, incorporate approved main and rerun
-  combined checks. Obtain exact-head CI and successful canonical APPROVE before
-  merge. A local dependency merge or review comment alone is not that gate.
+- [x] Incorporate approved main after #390's reviewed merge, preserving the
+  existing containment banner and Git-only exception precedence across the
+  two mechanical merge conflicts.
+- [ ] Rerun combined checks and obtain exact-head CI and successful canonical
+  APPROVE before merge. A local dependency merge or review comment alone is
+  not that gate.
 
 Root has already verified #395 Project 5 Todo -> check -> In Progress. The
 assigned agent must not duplicate board mutations. No native run, push or PR
