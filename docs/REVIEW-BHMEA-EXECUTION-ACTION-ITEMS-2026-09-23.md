@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 11 — 2026-09-25 accepted R05/source/typed-transport foundations; 17:29 UTC evidence snapshot with explicit 17:45 UTC update, full acceptance unresolved |
+| Revision | 12 — 2026-09-25 19:00 UTC implementation/review snapshot; earlier cutoffs preserved, full acceptance unresolved |
 | Status | Execution started; no full R01–R20 task or submitted claim is yet accepted as complete |
 | Initial review code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
@@ -140,6 +140,48 @@ after correcting authorization-domain versus raw-hash linkage and accounting;
 only its two pure source/test files are now allocated and in progress. No
 filesystem store, trusted authority, Docker controller or native acceptance is
 established. Use the handoff's latest update for immediate next actions.
+
+**Revision 12 — 19:00 UTC snapshot:** Revision 11 documentation is accepted in
+main `d4ad0c0` through #408. The earlier 17:29/17:45 statements above remain
+historical; this snapshot supersedes their corresponding pending statuses,
+not the acceptance criteria or any task/claim/gate state.
+
+| Work | Observed checkpoint | Required next action |
+|---|---|---|
+| Offline Git capture / #409 | Corrected `acbd9d6`: full 2,437 passed /51 existing skips; normal push and all five exact-head CI jobs passed. Canonical re-review `36176791343` is running; its initial REQUEST-CHANGES is retained. | Obtain successful final canonical APPROVE before merge; then integrate the source seal/runtime/online path. Online acquisition remains unavailable. |
+| Occurrence store / #411 | `2fec34d` full 2,287/51 includes 89 actual isolated PostgreSQL cases without skips; all eight remote test checks passed. Initial canonical review requested a formal bridge clarification and completed CI checklist. Local `e08ac41` adds only the OPEN CLAR and explicit pending-finalization documentation. | Push/retest/re-review the corrected combined head; integrate actual producers, final Finding/R09 bridge, durable decisions and API/UI. |
+| Rule/model decoder | `6ae81ad`: 192 focused tests and full 2,269/51 passed; no PR yet. | Complete current combined/remote gates; structural rule validity is not model acceptance or a producer. |
+| Runtime inventory | `980c5ef`: independent 107 focused controls and full 2,202/51 passed. A controlled unrelated-sibling failure justified narrowing only ancestor equality; full measured-root/file checks remain. | Preserve original unlocalized and controlled failures separately; complete remote gates and actual installation/controller integration. |
+| CodeQL observations / #410 | Independent 440 focused controls passed after two genuine path-validation corrections. `93ae0aa` includes reviewed Git dependencies for its first full suite, still running at this cutoff. | Finish combined/remote gates, then implement a real import/invocation entrypoint and known-positive mapping. Parsing supplied test SARIF does not fulfill R13. |
+| Pure runtime journal | Final 331-case selection passes on Python 3.11 and 3.12; `0dbee6e` incorporates current main and the inventory correction, with 434 affected checks passing. | Complete combined/remote gates and physical store, capacity, current authority, database barriers and actual Docker lifecycle. Results remain structural-only. |
+| Accepted-input ledger command codec | Two frozen files pass 286 tests on each Python version; independent full-source review is in progress at the cutoff. | Finish review/gates and actual seven-command database/authority integration. No signature/currentness/permission follows from decoding input. |
+| Scalar source-bound producer | `c8fb75c` retains the full-tested `f6903cf` tree: 3,365 passed /140 existing optional/environment skips. | Finish dependency/current-head/remote gates and real source/native/accepted-model/durable integration; no Java/full-fidelity or G1 result follows. |
+
+The authority-ledger design and amendment have scoped approval, not installed
+authority or a database implementation. Physical-store planning found a real
+publication-ID recovery gap after retiring the sole intent, and an unresolved
+delegated hash-work allowance for the full reader. Record and resolve those
+before allocating the affected implementation; do not silently retain more
+metadata, widen quotas or infer a previous acknowledgment from visible bytes.
+Real operator/current-admission/independent restore choices remain open.
+
+Continue the full R01–R20 TODOs below. These library checks, local branches,
+designs and review corrections do not accept any C01–C18 claim or G0–G3 gate.
+The user application/database, original submission and historical evidence are
+unchanged; no target code, native engine, image/release or external message was
+executed/published by these preparation steps. Exact links and limitations are
+in the handoff and foundation evidence record.
+
+**Later update — 19:05 UTC:** Git-capture PR #409 is merged at `595484b`
+from exact reviewed `acbd9d6`, with identical tree. Canonical action
+`36176791343` completed SUCCESS/final APPROVE; all five corrected-head CI jobs
+were green before merge. Only this offline/transport slice is accepted:
+#398/#362, online acquisition, DB sealing and runtime integration remain open.
+After the 19:00 cutoff, CodeQL's `93ae0aa` full suite passed 2,864/51, and
+independent AL-02 review passed 291 controls and approved the exact two files;
+normal commit `66607b9` passed applicable hooks. Neither has remote acceptance
+or real CodeQL/current-authority execution. These later observations do not
+rewrite the cutoff table or promote any full R-task, claim or shared gate.
 
 ## 1. Objective and document boundaries
 
