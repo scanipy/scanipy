@@ -266,6 +266,16 @@ budget from the installed profile. Do not silently apply that intended policy
 to erase a mismatching **actual** invocation. Retain a structurally valid shared
 invocation mismatch and fail domain admission independently.
 
+For `prepare_call_intent` only, the normalized cwd ends in slash plus the
+binding's canonical attempt UUID, with a nonroot normalized parent as the
+intended host work root. Derive HOME/TMPDIR/PATH as cwd plus cli-home/cli-tmp/
+cli-bin and require the exact ten fixed host environment rows from the outer
+profile, including every derived path's byte cap. This is internal consistency,
+not proof that a directory, empty PATH, trusted root or installed CLI exists.
+The standalone invocation codec and actual-outcome snapshot retain the wider
+shared model. Full argv/executable/configuration agreement remains a separate
+actual renderer/controller check, not inferred from the enum or environment.
+
 The shared `FrozenInvocation` does not distinguish `stdin=None` from `b""`:
 both have size zero and SHA256(empty). Do not invent a requested-input-mode bit.
 An intended zero input is not observed EOF or proof a child consumed nothing.
@@ -301,6 +311,12 @@ PID/PGID/returncode and stream bounds mirror the actual shared classes. Elapsed
 is a nonnegative signed-64-bit integer, never a reconstructed inner duration.
 Validate the shared cross-field invariants independently from class-owned
 snapshots; constructors are not trusted after mutation.
+
+The pure stored-result decoder validates all locally available fields but does
+not open its invocation BlobRef. Checking stdin_sent_bytes against the referenced
+invocation's stdin_bytes requires future store cross-blob readback; preparation
+already enforces that full relation against the actual live invocation snapshot.
+No decoder success claims cross-blob integrity or runtime admission.
 
 An observed outcome requires null unavailable_reason. An absent outcome requires
 a real returned error and nonnull unavailable_reason/error ID/graph. Use
@@ -698,19 +714,19 @@ checks can decide cleanup or domain admission.
 
 - [x] **PE-01:** Root and independent review of this complete document, exact API,
   enum, two journal variants and the targeted profile cross-reference changes.
-- [ ] **PE-02:** Allocate only tools/worker/process_evidence.py and
+- [x] **PE-02:** Allocate only tools/worker/process_evidence.py and
   tests/unit/test_process_evidence.py for the pure first slice, using the actual
   reviewed shared models. No storage/launch code in that allocation.
-- [ ] **PE-03:** N-1/N/N+1 encoding/depth/value/aggregate bounds; duplicate/extras;
+- [x] **PE-03:** N-1/N/N+1 encoding/depth/value/aggregate bounds; duplicate/extras;
   byte-preserving binary/UTF-8; poisoned models/enums/errors/Path/UUID and no
   caller iteration/formatting/property callbacks; unchanged live exception chains.
-- [ ] **PE-04:** Missing versus empty versus unknown stream retention; independent
+- [x] **PE-04:** Missing versus empty versus unknown stream retention; independent
   stream loss; late exited-zero/incomplete; completed cleanup on non-success;
   truncated prefix; actual/requested mismatch; malformed partial outcome rejection.
   Direct/explicit-immediate-cause transport carriers must reject missing/different
   supplied outcomes and poisoned storage; context/deeper/group carriers are never
   selected as fallback. Live child handles/notes remain uninspected and unchanged.
-- [ ] **PE-05:** Error cycles/shared groups, cause/context/suppression, interruptions,
+- [x] **PE-05:** Error cycles/shared groups, cause/context/suppression, interruptions,
   opaque args,32/33 omission details, byte-budget overflow and fixed footer;
   prove traversal stops without counting unvisited branches or touching callbacks.
   Reject unreachable/reordered/out-of-depth retained graphs and invalid refs,
@@ -745,3 +761,58 @@ This is local design approval only. No source, codec, store, migration, keys,
 profiles, native process, container or operational event was created by this
 documentation slice. The later two-file codec must pass independent code
 review, normal hooks and exact-head remote gates; PE-06 onward remain separate.
+
+### Local pure-codec implementation checkpoint — 2026-09-25
+
+PE-02 through PE-05 now have an implemented, locally tested and independently
+reviewed pure slice; these ticks are not repository merge, durability or runtime
+acceptance. The allocation added only tools/worker/process_evidence.py and
+tests/unit/test_process_evidence.py. This document's intent-only path and
+cross-blob decoder clarifications preserve the existing outer-profile policy
+and actual shared transport evidence; they do not broaden authority.
+
+Root reviewed the complete implementation and tests. Independent corpus/tooling
+review approved the corrected slice after finding a loss-record mismatch. Frozen
+source SHA256 is
+`601fef04b641b28c6f7e3abe948490bd7507287c103194a42b2cc7f943ac0fe8`;
+test SHA256 is
+`14178e56d736b301715941bebe3da051d8482f5fbb3f0ff7d061b01be844628a`.
+
+Retain both discovered failures and their corrections:
+
+- Root's three intended-path falsifiers initially failed against source
+  `f974ad14e99e75e7ff525603b25f3439c7a38eabffbe8708d4e34f72c8277c72`:
+  `/tmp/scanipy-process-evidence-root-path-red.xml`. Intended Docker cwd now
+  rejects backslash and C0/DEL/C1 characters. Standalone and actual invocation
+  evidence still preserves the wider valid shared-model paths unchanged.
+- Independent real-byte-budget regression failed against source
+  `b023663fa34a6702302d339982feac7c1de830e2fb423f3e087991cbd91b9a0f`:
+  `/tmp/scanipy-process-evidence-corpus-loss-red.xml` (one failure). The two
+  implementation-owner regressions also failed before the correction:
+  `/tmp/scanipy-process-evidence-owner-loss-red.xml` (two failures). Node/edge
+  and argument rollback now attempt the smaller per-field bytes-omission record;
+  aggregate overflow starts only when an omission detail cannot fit. Existing
+  true overflow and traversal-stop controls remain intact.
+
+Final checks on these exact frozen bytes:
+
+- Root: **483 passed**, zero failures/errors/skips, in 3.79 seconds:
+  `/tmp/scanipy-process-evidence-root-final.xml`.
+- Implementation owner: the same **483 passed** on Python 3.11.16 and 3.12.14:
+  `/tmp/scanipy-process-evidence-loss-final-py311.xml` and
+  `/tmp/scanipy-process-evidence-loss-corrected-py312.xml`.
+- Independent reviewer: **480 passed**, zero failures/errors/skips, in 5.43
+  seconds: `/tmp/scanipy-process-evidence-corpus-final.xml`.
+- Scoped Ruff, format, strict source mypy and diff checks passed. The final
+  483-case selection is 479 repository cases plus three unchanged root path
+  falsifiers and the unchanged independent loss falsifier. The reviewer's
+  480-case selection omits the three root external cases. These overlapping
+  counts and earlier 477/480-case checkpoints are not additive evidence.
+
+These are local controlled records, not a portable immutable acceptance archive.
+No filesystem store, journal event, installed profile/key, process launch,
+container, kernel observation or authenticated admission was created by the
+pure codec tests. Final combined-tree full regression, normal commit/push hooks,
+exact-head CI and successful canonical APPROVE remain required. PE-06 through
+PE-08, the installed runtime/controller/factory and all full Black Hat acceptance
+claims remain open.
