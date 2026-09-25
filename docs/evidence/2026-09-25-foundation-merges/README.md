@@ -1,8 +1,9 @@
 # September 25 — reviewed foundation corrections
 
 Scope: repository correction evidence, not Black Hat feature acceptance.
-Snapshot main: `6ae30df64678bf916062fa67dde98704d0c36153` on 2026-09-25 at 16:03:44 UTC.
-Local verification cutoff: 16:07 UTC; later local work requires its own updated gates.
+Snapshot main: `1b29100ad9c96ebab9a4ac1a439fc2a5b19ac2ee` on 2026-09-25 at 17:42:32 UTC.
+Revision 11 retains the 17:29 UTC local snapshot and explicit 17:45 update below;
+later local work requires its own updated gates.
 Owner: root engineering coordinator, umbrella #362.
 
 Every merged row below had the required tests and canonical `claude-review`
@@ -33,6 +34,33 @@ R17 obligations. No full R-task, C01–C18 claim, or shared gate is accepted her
 | [#402](https://github.com/scanipy/scanipy/pull/402), fail-closed legacy Git acquisition | `b25c180008ea761a10bb032d9d2275ad7bd730c7` | `cfadaa238d22bfdfce64b3ff60e396bd18dda934` | [CI](https://github.com/scanipy/scanipy/actions/runs/36152183209), [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36152182852), [successful APPROVE](https://github.com/scanipy/scanipy/actions/runs/36153520147), [final verdict](https://github.com/scanipy/scanipy/pull/402#issuecomment-5834860540) |
 | [#403](https://github.com/scanipy/scanipy/pull/403), legacy application containment | `286d6b9d95c1a8110ac0774ad43f206b16cd8648` | `4cf10d015a4b9ce8c96a93601a2e30588265e1f1` | [CI](https://github.com/scanipy/scanipy/actions/runs/36154521403), [successful APPROVE](https://github.com/scanipy/scanipy/actions/runs/36154521435), [final verdict](https://github.com/scanipy/scanipy/pull/403#issuecomment-5834988173) |
 | [#404](https://github.com/scanipy/scanipy/pull/404), bounded Semgrep observations | `ed55bfc833be031934be079dfa47916ff3e1f29b` | `6ae30df64678bf916062fa67dde98704d0c36153` | [CI](https://github.com/scanipy/scanipy/actions/runs/36156963079), [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36156963061), [successful APPROVE](https://github.com/scanipy/scanipy/actions/runs/36156963009), [final verdict](https://github.com/scanipy/scanipy/pull/404#issuecomment-5835302857) |
+| [#405](https://github.com/scanipy/scanipy/pull/405), Revision 10 handoff | `90a89c9500f5004d2028b0b4b6b586fd4ec466c0` | `2ee3fc026a5f77894355470922a5f399a330f4d6` | [CI](https://github.com/scanipy/scanipy/actions/runs/36159730381), [successful APPROVE](https://github.com/scanipy/scanipy/actions/runs/36159730401), [final verdict](https://github.com/scanipy/scanipy/pull/405#issuecomment-5835660379) |
+| [#380](https://github.com/scanipy/scanipy/pull/380), evidence-backed R05 campaign producer | `9be0579cd745fff4c4115c1f241a93926113a9be` | `3e2773e2a1f6578c2a712a1b85b5a45d172503eb` | [CI](https://github.com/scanipy/scanipy/actions/runs/36161586241), [successful APPROVE](https://github.com/scanipy/scanipy/actions/runs/36162235882), [final verdict](https://github.com/scanipy/scanipy/pull/380#issuecomment-5835971061) |
+| [#406](https://github.com/scanipy/scanipy/pull/406), bounded local source-custody prep | `b005eaa5e7081a3920a97b01be0281430f5ef74f` | `6f1ebc8720cac8f2bbba20a061c0cba7ca8ff792` | [CI](https://github.com/scanipy/scanipy/actions/runs/36164994819), [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36164994869), [successful APPROVE](https://github.com/scanipy/scanipy/actions/runs/36165792723), [final verdict](https://github.com/scanipy/scanipy/pull/406#issuecomment-5836441907) |
+| [#407](https://github.com/scanipy/scanipy/pull/407), lossless typed observed transport | `83b9ec6cc96e2d1283be87d12ea85de50ddef50b` | `1b29100ad9c96ebab9a4ac1a439fc2a5b19ac2ee` | [CI](https://github.com/scanipy/scanipy/actions/runs/36167975265), [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36167975015), [successful APPROVE](https://github.com/scanipy/scanipy/actions/runs/36167975158), [final verdict](https://github.com/scanipy/scanipy/pull/407#issuecomment-5836718691) |
+
+### Explicit later update — 17:45 UTC
+
+- #407 merged at17:42:32 with tree `01ad138a6e67b1816b5db6b35c3d37ed38d10954`
+  identical to reviewed83b9ec6. Full2,103/51 and normal push passed; all seven
+  test checks completed before canonical SUCCESS/final APPROVE. The review's
+  earlier pending-CI/checklist condition was resolved before that success.
+  Narrow393Done only; source semantics and fullR19/G1 remain open. Public
+  lookup indexing is an optional future measured optimization, not a defect
+  correction required for this merge.
+- Scalar c4f85c5 is now normally committed, with accepted-main integration
+  f6903cf; its full run is still in progress. Git7dccd5e full passed2,265/51
+  in275.96s; subsequent typed-main3abf021 needs fresh combined checks. Their
+  older pending statuses below are the explicit17:29 checkpoint, not current
+  instructions to redo already completed commits/tests.
+- Later pure-journal API review found and corrected a generic raw/domain hash
+  comparison that was wrong for execution authorization and undefined for
+  admission. Four raw links and two explicit owner-dependent obligations are
+  now separate. Final API checkpoint47731c42 also fixes inclusive total-byte
+  accounting, repeated-reference charges and missing/unknown stream summaries.
+  Root/peer approved only that pure design and allocated two pure code/test
+  files. No filesystem capacity, durable store, DB/current authority, native
+  controller or full runtime acceptance follows.
 
 ### What this establishes—and does not
 
@@ -85,7 +113,26 @@ R17 obligations. No full R-task, C01–C18 claim, or shared gate is accepted her
   reads/schema. These commits do not implement safe acquisition or the actual
   asynchronous scan workflow, build an image, or alter the user's running app/DB.
 
-Narrow issues #365/#367/#363/#377/#381/#384/#364/#386/#376/#395/#396/#394 and the earlier #370 are closed after
+Additional accepted scopes:
+
+- #405 merged at 16:21:50 UTC. Its full backlog and states are preserved;
+  Revision 11 updates evidence/next actions, not acceptance or the milestone DAG.
+- #380 merged at 16:49:57 UTC with reviewed tree
+  `27b6a03d69671906cca9f6f97c4ec1148ab1a14b`. The exact `9be0579` full run
+  passed 1,894 tests / 51 existing optional skips
+  (`/tmp/scanipy-r05-revision10-combined-full.xml`). No fresh 844-side campaign,
+  corrected G0, detection/purity/lifecycle or full environment acceptance is
+  established by the five-file producer merge. #374 remains open.
+- #406 merged at 17:20:34 UTC with tested tree
+  `2a9d914d226f27d36a1111b2c1488068ceb9e4a1`, identical to `b005eaa`.
+  Its full run passed 1,958 / 51 existing optional skips, reported elapsed
+  271.58s (`/tmp/scanipy-392-r05-combined-full.xml`; XML suite time 271.463s).
+  All three authored files remain identical to scoped-reviewed `e3d318b3`.
+  This is bounded no-follow custody/readback, not actual Git acquisition,
+  a database seal, current authority, an installed runtime or scan completion.
+  Narrow #392 alone is Done.
+
+Narrow issues #365/#367/#363/#377/#381/#384/#364/#386/#376/#395/#396/#394/#392/#393 and the earlier #370 are closed after
 their reviewed corrections. #361/#362/#366/#374/#378 remain open for their
 larger scope. GitHub auto-closed #378 when it parsed a closing keyword inside
 a negated sentence in #385; root removed that wording, reopened #378 and
@@ -121,8 +168,9 @@ followed at 14:29:55 UTC. Root verified the squash tree equals the tested head.
 future output-boundary validation and optional type-only assertion hygiene are
 tracked in the handoff; they are not represented as implemented by this merge.
 Continue remaining candidates serially with their own exact-head gates.
-Local source/core/typed-CPG/store work is indexed in the current handoff,
-not counted as merged evidence. The later #404 parser merge is recorded
+Local core/typed-CPG/occurrence-store work is indexed in the current handoff,
+not counted as merged evidence. Source custody is now merged separately in
+#406. The later #404 parser merge is recorded
 separately below. No local test count fills a shared-gate PASS.
 
 The later #401 merge followed at 14:50:36 UTC. #402's first
@@ -141,6 +189,22 @@ annotations, and use `NoReturn` for unconditional compatibility refusals where
 appropriate. They are not implemented by this evidence update. The existing
 public development-default credential limitation remains explicit. No full
 CMP-ORCH-03, R08/R16 or Black Hat claim was closed by narrow #396.
+
+#380's historical [REQUEST-CHANGES action36119641485](https://github.com/scanipy/scanipy/actions/runs/36119641485)
+is retained. The final review confirmed its dependency/contract blockers were
+resolved by accepted prerequisite merges, including the Java observer and
+canonical budget contract. The final five-file producer delta was reviewed on
+its own exact head; no old failed action became approval.
+
+#406's [first action36164994933](https://github.com/scanipy/scanipy/actions/runs/36164994933)
+failed with [REQUEST-CHANGES](https://github.com/scanipy/scanipy/pull/406#issuecomment-5836335604)
+over prep/component scope and missing exact CI links. The same code, tests and
+contract were resubmitted with a precise prep title/body, actual test mapping
+and successful CI/Gate 3 links. The later action36165792723 and final APPROVE
+5836441907 succeeded before merge. DECISION-BHMEA-01 and the existing prep
+workflow explain the scope; no gate was bypassed, no historical AC-SNAP-05a/b
+completion was claimed, and no historical WBS status was changed. The optional
+traceability suggestion remains optional, not a new missing-authority claim.
 
 ## Parser safety audit
 
@@ -190,7 +254,7 @@ acceptance archive. Final evidence retention and combined-artifact gates remain 
 
 - Local-only checkpoint details are in the current handoff. #378's final
   dedicated PostgreSQL suite passed 89 checks with zero skips; #393 and
-  #391/#392 have scoped tested checkpoints. No count here certifies production
+  #391 have scoped tested checkpoints, while narrow #392 is now merged. No count here certifies production
   source, accepted rule authority or a deployed scan. Optional skips remain
   explicit and suites from different branches are not summed into coverage.
 - #395, now merged through #402, contained legacy Git routes, but its first local checkpoint omitted the
@@ -227,15 +291,52 @@ acceptance archive. Final evidence retention and combined-artifact gates remain 
   the correction and reran 206 dedicated tests (zero skips/failures,46.01s,
   /tmp/scanipy-397-projection-corpus-final-review.xml); root and corpus approve
   source raw SHA prefix74ab0618. Root's configured full suite then passed2,469/51
-  in263.41s with no failures (/tmp/scanipy-397-projection-full.xml). Normal commit,
-  current-main and remote gates remain pending. Constructed
+  in263.41s with no failures (/tmp/scanipy-397-projection-full.xml). That result
+  belongs to the earlier projection tree, not the later compiler/raw slice. Constructed
   native fixtures never establish a real Joern producer, fidelity or G1.
+- #397's later base `e6c4a2e26de4b195ee541670d76ee56f20fe6dc0` has seven frozen
+  uncommitted files at this cutoff. Compiler/declaration files have scoped
+  approval: `bound_rules.py` SHA256
+  `085a3bce52a33a951412025c002e84131866a29b24a9262d279df2c1f5aa3dc9`
+  and projection SHA256
+  `6cef9ac304db056f8815585f5e253a7b03aa46a22740cf7d80765c7e13c18667`.
+  Root then preserved six genuine UUID-slot coercion failures at raw source
+  `1c161ae7` in `/tmp/scanipy-397-root-binding-shape-red.xml`. The corrected
+  raw source SHA256 is
+  `2a1043b0ddde50b1cb64b3a6dd4baaa31d2a9e811852d1e60b62abfe3e319b2b`;
+  it snapshots original exact owner-schema slots rather than repairing UUID
+  strings. Root's 126 checks passed (34.380s XML suite time,
+  `/tmp/scanipy-397-root-binding-final.xml`). Corpus independently read the full
+  source/tests/contract and passed 128 checks (56.214s,
+  `/tmp/scanipy-397-raw-corpus-corrected.xml`): 120 repository cases, the same
+  six root regressions and two multi-entry/shared-helper controls. These are
+  overlapping selections, not additive tests. The peer's earlier 127-pass /
+  one-failure run (`/tmp/scanipy-397-raw-corpus-final.xml`) used an invalid
+  helper-sink fixture, correctly rejected before solving; it is not a product
+  defect and remains separate from the genuine six-failure record.
+  Scoped compiler/raw approval is not current-tree whole-suite, normal commit,
+  remote, native/model/authority or durable acceptance. Earlier 500-case and
+  2,469/51 results stay with their earlier heads. Full Java/Python semantics,
+  native fidelity and G1 remain unaccepted.
 - #398 final shared-transport path correction `d3ce731` passed 130 focused
   checks on each of Python 3.11 and 3.12 and the configured full suite
   (1,774 passed/51 existing skips), with scoped review and normal gates.
   This follows the separate offline producer checkpoint; preserve its prior
   deadline-failing full run rather than replacing it with the later green run.
   No online Git/egress controller or native source command was enabled.
+- #398's accepted-main refresh `7dccd5e8ecef5a5bd3d4cada49d4d9152a0c373d`
+  has tree `7791ee03c49cbd5b480b722d1e9e8d7743680a6a`. All ten authored files
+  remain unchanged after integrating accepted `6f1ebc8`. Its fresh full run
+  is pending at this cutoff; the 2,211/51 result belongs only to prior
+  `c2c2078c14b6e9aac58068d8360b2cb1786b495e`. Remote gates and actual runtime/
+  acquisition authority remain required.
+- #393's current `83b9ec6cc96e2d1283be87d12ea85de50ddef50b` has tree
+  `01ad138a6e67b1816b5db6b35c3d37ed38d10954` after accepted `6f1ebc8` integration.
+  Full verification passed 2,103 / 51 existing optional skips, reported
+  elapsed 285.47s (`/tmp/scanipy-393-source-combined-full.xml`; XML suite time
+  285.368s). The actual push was running with no PR at the cutoff. Prior
+  `0929e47` full 2,039/51 and normal-push success are not this head's remote
+  evidence. Observed graph transport is not source semantics or a live producer.
 - #399's inventory integration at `58b552c` now has 309 combined focused
   passes. Its prior 2,297/140 full result remains tied to the earlier verifier
   tree. The public operational launcher still refuses; test keys, a supplied
@@ -249,9 +350,33 @@ acceptance archive. Final evidence retention and combined-artifact gates remain 
   these are not additive cases or actual Docker-parser/runtime observations.
   Combined accepted-main/transport/loader/renderer tests then passed 2,298 with
   51 existing skips in160.34s (/tmp/scanipy-400-renderer-combined-full.xml), and
-  renderer commit af75910 passed normal hooks. Remote gates remain pending. Actual factory,
-  current trust anchors, journal/outcome storage, kernel observers, supervised
-  controller/recovery and operational admission remain required.
+  renderer commit af75910 passed normal hooks. The later local
+  `d51c5f33a0c929bd95be9107a1b46f73b5690652` includes the pure process-evidence
+  codec and passed 2,971/51 combined full verification. Source SHA256
+  `601fef04b641b28c6f7e3abe948490bd7507287c103194a42b2cc7f943ac0fe8`
+  and test SHA256
+  `14178e56d736b301715941bebe3da051d8482f5fbb3f0ff7d061b01be844628a`
+  have scoped review: root and author passed the same 483-case selection;
+  corpus passed the overlapping 480 selection. These are not additive.
+  `/tmp/scanipy-process-evidence-root-path-red.xml`,
+  `/tmp/scanipy-process-evidence-corpus-loss-red.xml` and
+  `/tmp/scanipy-process-evidence-owner-loss-red.xml` preserve the path and fitting-loss-
+  omission failures fixed before approval. Root final evidence is
+  `/tmp/scanipy-process-evidence-root-final.xml` (483 passed, 3.79s).
+  Pure PE serialization is not durable storage or runtime authority.
+- The corrected 1,477-line runtime-store design SHA256
+  `42d31451bade18ddfe8f488527e4f033cdc618baf25fa3d1ce5af10ca6d98b39`
+  has scoped wire/state/replay review approval. It distinguishes verified
+  visible readback from writer-acknowledged durability, immutable retries,
+  registered spool ownership and sticky recovery/orphan state. The exact
+  pure-journal API is still being specified; no store implementation exists.
+  Required six-role authority linkage must use actual owning adapters and
+  distinguish execution-authorization domain digests from raw artifact hashes;
+  missing admission raw-digest fields cannot be invented. Physical capacity
+  qualification, installer/work isolation, parent DB orphan barriers, current
+  trust anchors/factory, kernel observers, supervised Docker lifecycle/recovery
+  and actual operational authority remain unresolved. No guessed 64 MiB slot
+  split, free-space sample, model constructor or design approval enables a run.
 - #394's final combined candidate `ed55bfc` passed 1,840/51 with no failures;
   actual normal push passed and PR #404 had all seven remote test checks green
   ([CI](https://github.com/scanipy/scanipy/actions/runs/36156963079),
@@ -266,9 +391,10 @@ acceptance archive. Final evidence retention and combined-artifact gates remain 
   resolved before merge, not deferred as a failing requirement.
 - #392's accepted-main integration `c5eaa472` preserves its three reviewed
   authored files byte-identically and passed1,710/51 with no failures in151.17s
-  (/tmp/scanipy-392-containment-combined-full.xml). Current-main integration,
-  normal push and exact-head remote review remain required; this is local-only
-  filesystem custody, not SCM authenticity or durable source admission.
+  (/tmp/scanipy-392-containment-combined-full.xml). That earlier local result
+  remains historical; the later `b005eaa` 1,958/51 and accepted #406 merge are
+  recorded above. Custody still does not prove SCM authenticity, DB admission
+  or protection against a hostile process with the same OS identity.
 - R11 native coverage follow-up: pinned Semgrep 1.175.0 source inspection shows
   core `scanned` includes targets that raise timeout/memory/parse errors. Its
   ordinary flag uses a nonempty applicable-rule list, not proof that every rule
@@ -305,13 +431,13 @@ acceptance archive. Final evidence retention and combined-artifact gates remain 
 - #369 (merged): preserve actual four-class producers, explicit legacy-default
   rejection and deadline failures while adding richer graph semantics. New
   labels/roles require a separately versioned identity contract and evidence.
-- #380: local `652f1ee` now incorporates accepted main `4cf10d0`; nine
+- #380: earlier local `652f1ee` incorporated accepted main `4cf10d0`; nine
   non-process controls, targeted lint/type checks and normal commit gates passed.
   Producer/test bytes are unchanged from the earlier reviewed local source.
   The refreshed full suite passed1,700/51 in237.52s with no failures/errors
-  (/tmp/scanipy-r05-containment-combined-full.xml). Normal push and remote
-  canonical gates remain pending; the prior1,613/51 full result is not
-  reassigned to this new tree.
+  (/tmp/scanipy-r05-containment-combined-full.xml). It is not the final accepted
+  `9be0579` tree: the later 1,894/51, normal push and successful remote review
+  are recorded above. Neither the prior 1,613/51 nor 1,700/51 is reassigned.
   #382 is now merged, but raw transport is not semantic mapping, call binding, matched returns or
   purity. R05 reports unavailable semantic observations honestly; it may not
   copy expected corpus labels into observed success fields.
