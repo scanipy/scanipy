@@ -1,0 +1,627 @@
+{
+  "accepted-content": {
+    "detector_sha256s": {
+      "$array": "digest"
+    },
+    "rule_sha256s": {
+      "$array": "digest"
+    },
+    "schema": {
+      "$enum": [
+        "scanipy-execution/accepted-content/1"
+      ]
+    },
+    "spec_sha256": "digest"
+  },
+  "attempt-policy": {
+    "assignment_id": "nonempty",
+    "code_policy_digest": "digest",
+    "environment_policy_digest": "digest",
+    "lease_seconds": "int:1:900",
+    "schema": {
+      "$enum": [
+        "scanipy-execution/attempt-policy/1"
+      ]
+    }
+  },
+  "attempt-result": {
+    "actual_code_digest": {
+      "$nullable": "digest"
+    },
+    "actual_env_digest": {
+      "$nullable": "env"
+    },
+    "completed_run_ids": {
+      "$array": "uuid"
+    },
+    "error": {
+      "$nullable": {
+        "code": "nonempty",
+        "message": "text"
+      }
+    },
+    "identity": {
+      "$nullable": {
+        "cpg_order": {
+          "annotation": {
+            "$enum": [
+              "canonical iff fingerprint_class = strong"
+            ]
+          },
+          "digest": {
+            "$nullable": "digest"
+          },
+          "fingerprint_class": {
+            "$nullable": {
+              "$enum": [
+                "strong",
+                "weak"
+              ]
+            }
+          },
+          "namespace": {
+            "$nullable": "nonempty"
+          },
+          "status": {
+            "$enum": [
+              "completed",
+              "pending",
+              "running",
+              "failed",
+              "not-applicable"
+            ]
+          }
+        },
+        "schema_version": {
+          "$enum": [
+            2
+          ]
+        },
+        "slice": {
+          "annotation": {
+            "$enum": [
+              "canonical iff fingerprint_class = strong"
+            ]
+          },
+          "digest": {
+            "$nullable": "digest"
+          },
+          "fingerprint_class": {
+            "$nullable": {
+              "$enum": [
+                "strong",
+                "weak"
+              ]
+            }
+          },
+          "namespace": {
+            "$nullable": "nonempty"
+          },
+          "status": {
+            "$enum": [
+              "completed",
+              "pending",
+              "running",
+              "failed",
+              "not-applicable"
+            ]
+          }
+        }
+      }
+    },
+    "identity_policy_reason": {
+      "$nullable": "nonempty"
+    },
+    "retryable": "bool",
+    "schema": {
+      "$enum": [
+        "scanipy-execution/attempt-result/1"
+      ]
+    },
+    "status": {
+      "$enum": [
+        "completed",
+        "failed"
+      ]
+    }
+  },
+  "cancellation": {
+    "reason": "nonempty",
+    "request_id": "uuid",
+    "schema": {
+      "$enum": [
+        "scanipy-execution/cancellation/1"
+      ]
+    }
+  },
+  "detection-batch": {
+    "actual_invocation": {
+      "argv": {
+        "$array": "text"
+      },
+      "cwd": "nonempty"
+    },
+    "code_identity": {
+      "artifact_digest": "digest",
+      "evidence_digest": "digest",
+      "policy_digest": "digest"
+    },
+    "coverage": {
+      "errors": {
+        "$array": {
+          "code": "nonempty",
+          "message": "text"
+        }
+      },
+      "files": {
+        "$array": "path"
+      },
+      "rules": {
+        "$array": "nonempty"
+      },
+      "status": {
+        "$enum": [
+          "complete",
+          "partial",
+          "failed"
+        ]
+      }
+    },
+    "detector_env_digest": "env",
+    "full_env_digest": {
+      "$nullable": "env"
+    },
+    "inventory_digest": "digest",
+    "occurrences": {
+      "$array": {
+        "cwe": {
+          "$nullable": "nonempty"
+        },
+        "duplicate_ordinal": "nat",
+        "engine": {
+          "$enum": [
+            "ifds",
+            "ide",
+            "semgrep",
+            "cpg-query",
+            "external"
+          ]
+        },
+        "location": {
+          "end_column": {
+            "$nullable": "positive"
+          },
+          "end_line": {
+            "$nullable": "positive"
+          },
+          "path": {
+            "$nullable": "path"
+          },
+          "start_column": {
+            "$nullable": "positive"
+          },
+          "start_line": {
+            "$nullable": "positive"
+          },
+          "status": {
+            "$enum": [
+              "known",
+              "partial",
+              "unknown"
+            ]
+          }
+        },
+        "message": "text",
+        "raw_sha256": "digest",
+        "result_key": "nonempty",
+        "rule_id": "nonempty",
+        "severity": {
+          "$enum": [
+            "info",
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        },
+        "tool_ordinal": "nat",
+        "witness_sha256": {
+          "$nullable": "digest"
+        }
+      }
+    },
+    "run_id": "uuid",
+    "schema": {
+      "$enum": [
+        "scanipy-execution/detection-batch/1"
+      ]
+    },
+    "status": {
+      "$enum": [
+        "completed",
+        "failed"
+      ]
+    },
+    "stderr_sha256": "digest",
+    "stdout_sha256": "digest",
+    "tool_identity": {
+      "artifact_digest": "digest",
+      "evidence_digest": "digest",
+      "policy_digest": "digest"
+    }
+  },
+  "lease-release": {
+    "attempt_id": "uuid",
+    "reason": "nonempty",
+    "schema": {
+      "$enum": [
+        "scanipy-execution/lease-release/1"
+      ]
+    },
+    "token": "positive"
+  },
+  "occurrence-inventory": {
+    "occurrences": {
+      "$array": {
+        "cwe": {
+          "$nullable": "nonempty"
+        },
+        "duplicate_ordinal": "nat",
+        "engine": {
+          "$enum": [
+            "ifds",
+            "ide",
+            "semgrep",
+            "cpg-query",
+            "external"
+          ]
+        },
+        "location": {
+          "end_column": {
+            "$nullable": "positive"
+          },
+          "end_line": {
+            "$nullable": "positive"
+          },
+          "path": {
+            "$nullable": "path"
+          },
+          "start_column": {
+            "$nullable": "positive"
+          },
+          "start_line": {
+            "$nullable": "positive"
+          },
+          "status": {
+            "$enum": [
+              "known",
+              "partial",
+              "unknown"
+            ]
+          }
+        },
+        "message": "text",
+        "raw_sha256": "digest",
+        "result_key": "nonempty",
+        "rule_id": "nonempty",
+        "severity": {
+          "$enum": [
+            "info",
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        },
+        "tool_ordinal": "nat",
+        "witness_sha256": {
+          "$nullable": "digest"
+        }
+      }
+    },
+    "schema": {
+      "$enum": [
+        "scanipy-execution/occurrence-inventory/1"
+      ]
+    }
+  },
+  "planned-policy": {
+    "bindings": {
+      "$array": {
+        "adapter_policy_digest": "digest",
+        "class_id": "nonempty",
+        "code_policy_digest": "digest",
+        "detector_content_digest": "digest",
+        "detector_id": "nonempty",
+        "engines": {
+          "$array": {
+            "$enum": [
+              "ifds",
+              "ide",
+              "semgrep",
+              "cpg-query",
+              "external"
+            ]
+          }
+        },
+        "environment_policy_digest": "digest",
+        "expected_code_digest": {
+          "$nullable": "digest"
+        },
+        "expected_image_digest": {
+          "$nullable": "env"
+        },
+        "expected_tool_digest": {
+          "$nullable": "digest"
+        },
+        "key": "nonempty",
+        "language": "nonempty",
+        "rules": {
+          "$array": {
+            "content_digest": "digest",
+            "rule_id": "nonempty",
+            "semantic_digest": "digest"
+          }
+        },
+        "tool_policy_digest": "digest"
+      }
+    },
+    "capture_detection_runner": {
+      "code_policy_digest": "digest",
+      "environment_policy_digest": "digest",
+      "expected_code_digest": {
+        "$nullable": "digest"
+      },
+      "expected_image_digest": {
+        "$nullable": "env"
+      }
+    },
+    "identity_policy": {
+      "mode": {
+        "$enum": [
+          "required",
+          "not-applicable"
+        ]
+      },
+      "policy_digest": "digest",
+      "policy_id": "nonempty",
+      "reason": {
+        "$nullable": "nonempty"
+      }
+    },
+    "identity_runner": {
+      "code_policy_digest": "digest",
+      "environment_policy_digest": "digest",
+      "expected_code_digest": {
+        "$nullable": "digest"
+      },
+      "expected_image_digest": {
+        "$nullable": "env"
+      }
+    },
+    "schema": {
+      "$enum": [
+        "scanipy-execution/planned-policy/1"
+      ]
+    }
+  },
+  "request": {
+    "codebase_id": "uuid",
+    "idempotency_key": "nonempty",
+    "identity_policy": {
+      "mode": {
+        "$enum": [
+          "required",
+          "not-applicable"
+        ]
+      },
+      "policy_digest": "digest",
+      "policy_id": "nonempty",
+      "reason": {
+        "$nullable": "nonempty"
+      }
+    },
+    "lineage_id": "uuid",
+    "org_id": "uuid",
+    "predecessor_request_id": {
+      "$nullable": "uuid"
+    },
+    "requested_policy_digest": "digest",
+    "requested_s_version": "nonempty",
+    "retry_policy": {
+      "initial_backoff_seconds": "int:0:3600",
+      "lease_seconds": "int:1:900",
+      "max_attempts": "int:1:16",
+      "max_backoff_seconds": "int:0:86400",
+      "schema": {
+        "$enum": [
+          "scanipy-execution/retry-policy/1"
+        ]
+      }
+    },
+    "schema": {
+      "$enum": [
+        "scanipy-execution/request/1"
+      ]
+    },
+    "source_selector": {
+      "kind": {
+        "$enum": [
+          "git-ref"
+        ]
+      },
+      "value": "nonempty"
+    }
+  },
+  "retirement": {
+    "capture_id": "uuid",
+    "evidence_digest": "digest",
+    "reason": "nonempty",
+    "schema": {
+      "$enum": [
+        "scanipy-execution/retirement/1"
+      ]
+    },
+    "storage_object_id": "uuid",
+    "token": "positive"
+  },
+  "retry-policy": {
+    "initial_backoff_seconds": "int:0:3600",
+    "lease_seconds": "int:1:900",
+    "max_attempts": "int:1:16",
+    "max_backoff_seconds": "int:0:86400",
+    "schema": {
+      "$enum": [
+        "scanipy-execution/retry-policy/1"
+      ]
+    }
+  },
+  "run-failure": {
+    "code": "nonempty",
+    "message": "text",
+    "observed_byte_count": {
+      "$nullable": "nat"
+    },
+    "observed_full_sha256": {
+      "$nullable": "digest"
+    },
+    "prefix_sha256": "digest",
+    "schema": {
+      "$enum": [
+        "scanipy-execution/run-failure/1"
+      ]
+    },
+    "truncated": "bool"
+  },
+  "run-input": {
+    "argv": {
+      "$array": "text"
+    },
+    "binding_key": "nonempty",
+    "code_policy_digest": "digest",
+    "cwd": "nonempty",
+    "environment_policy_digest": "digest",
+    "run_ordinal": "nat",
+    "schema": {
+      "$enum": [
+        "scanipy-execution/run-input/1"
+      ]
+    },
+    "tool_policy_digest": "digest"
+  },
+  "seal": {
+    "acceptance_evidence_digest": "digest",
+    "accepted_content_digest": "digest",
+    "bindings": {
+      "$array": {
+        "adapter_policy_digest": "digest",
+        "class_id": "nonempty",
+        "code_policy_digest": "digest",
+        "detector_content_digest": "digest",
+        "detector_id": "nonempty",
+        "engines": {
+          "$array": {
+            "$enum": [
+              "ifds",
+              "ide",
+              "semgrep",
+              "cpg-query",
+              "external"
+            ]
+          }
+        },
+        "environment_policy_digest": "digest",
+        "expected_code_digest": {
+          "$nullable": "digest"
+        },
+        "expected_image_digest": {
+          "$nullable": "env"
+        },
+        "expected_tool_digest": {
+          "$nullable": "digest"
+        },
+        "key": "nonempty",
+        "language": "nonempty",
+        "rules": {
+          "$array": {
+            "content_digest": "digest",
+            "rule_id": "nonempty",
+            "semantic_digest": "digest"
+          }
+        },
+        "tool_policy_digest": "digest"
+      }
+    },
+    "commit_algorithm": {
+      "$enum": [
+        "git-sha1"
+      ]
+    },
+    "intended_files": {
+      "$array": "path"
+    },
+    "inventory_digest": "digest",
+    "planned_policy_digest": "digest",
+    "request_id": "uuid",
+    "resolved_commit": "commit",
+    "retain_seconds": "int:0:315360000",
+    "s_version": "nonempty",
+    "schema": {
+      "$enum": [
+        "scanipy-execution/seal/1"
+      ]
+    },
+    "storage_object_id": "uuid",
+    "storage_reference": "nonempty",
+    "tree_algorithm": {
+      "$enum": [
+        "sha256-length-prefixed-path-and-content-v1"
+      ]
+    },
+    "tree_digest": "digest"
+  },
+  "source-inventory": {
+    "files": {
+      "$array": {
+        "path": "path",
+        "sha256": "digest",
+        "size": "nat"
+      }
+    },
+    "schema": {
+      "$enum": [
+        "scanipy-execution/source-inventory/1"
+      ]
+    }
+  },
+  "work-payload": {
+    "kind": {
+      "$enum": [
+        "capture_detection",
+        "identity"
+      ]
+    },
+    "occurrence_id": {
+      "$nullable": "uuid"
+    },
+    "policy": {
+      "mode": {
+        "$enum": [
+          "required",
+          "not-applicable"
+        ]
+      },
+      "policy_digest": "digest",
+      "policy_id": "nonempty",
+      "reason": {
+        "$nullable": "nonempty"
+      }
+    },
+    "request_id": "uuid",
+    "schema": {
+      "$enum": [
+        "scanipy-execution/work-payload/1"
+      ]
+    }
+  }
+}
