@@ -1,5 +1,14 @@
 # Scanipy v3.2 — Agent Context
 
+> **Current Black Hat work:** the owner's 2026-09-25 instructions identify
+> `PLAN.md`, `SDD.md`, and `WBS.md` as old and potentially architecturally
+> obsolete. For BHMEA corrective work, follow
+> [the active handoff](docs/PLAN-BHMEA-EXECUTION-2026-09-25.md) and its full-scope
+> review backlog. Preserve historical contracts/data and relevant safety/tests;
+> obsolete architecture approvals do not block that authorized work. The issue/
+> PR workflow and required review/test merge gates remain in force. The legacy
+> hierarchy below describes prior work, not a veto over these user directions.
+
 > **Read this file first.** It is derivative of PLAN.md, SDD.md, and WBS.md.
 > When this file conflicts with any of those three, the upstream document wins.
 > Correct this file, never the upstream.

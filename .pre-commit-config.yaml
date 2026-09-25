@@ -10,7 +10,11 @@ repos:
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
+        # Retained execution bytes must not be rewritten by hygiene hooks.
+        # Schema/secret/size checks still apply; manifests verify content hashes.
+        exclude: ^docs/evidence/(historical/|[^/]+/raw/)
       - id: end-of-file-fixer
+        exclude: ^docs/evidence/(historical/|[^/]+/raw/)
       - id: check-yaml
         args: [--allow-multiple-documents]
       - id: check-json
