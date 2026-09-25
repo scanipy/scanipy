@@ -11,6 +11,11 @@ legacy witness fallback. The typed v2 entry point requires a real snapshot tree
 digest; none is invented. Nested normalization shares B/T. B exhaustion is weak;
 T expiry raises an incomplete attempt instead of selecting different successful
 bytes. Elapsed telemetry is outside the deterministic semantic payload.
+
+Active contract: docs/PROPOSAL-BHMEA-CANONICAL-BUDGET-2026-09-25.md (R18/R20).
+Compatibility and remaining normalization obligations: DOC-CMP-CORE-02,
+DOC-ALGS section 4, DOC-PROVENANCE section 2.1, and INV-5 in
+.claude/rules/01-invariants.md. These references do not imply completed R06/R19.
 """
 
 from __future__ import annotations
@@ -580,11 +585,13 @@ def _compute(
             assert source_weak is not None
             fingerprint = source_weak
             namespace = SOURCE_WITNESS_NAMESPACE
+    elapsed_ms = budget.elapsed_ms()
+    budget.check()  # No completed/weak artifact is published after the total deadline.
     return SliceFingerprintResult(
         fingerprint,
         klass,
         klass == "weak",
-        budget.elapsed_ms(),
+        elapsed_ms,
         CPG_ORDER_HASH_ANNOTATION,
         namespace,
         BUDGET_POLICY,
