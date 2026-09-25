@@ -1,0 +1,85 @@
+schema_version: 1
+evidence_kind: historical_recovery
+recovery_started_at_utc: "2026-09-25T08:15:23Z"
+transfer_verified_at_utc: "2026-09-25T08:17:59Z"
+historical_date_as_labeled: "2026-08-31"
+original_execution_at_utc: null
+original_executed_code_revision: null
+original_executed_code_tree_digest: null
+original_resolved_image_digest: null
+original_S_version: null
+original_cache_mode: null
+original_parse_count: null
+recovery_workspace_revision: "940d440cb99e23131d28ee5bbb1655ea29d46a58"
+recovery_workspace_revision_is_original_execution_revision: false
+source_root: "/tmp/claude-1000/-home-test-scanipy-v3-2/bfebf1ac-36ab-4fc6-b548-f9447894b2d9/scratchpad/t2run/docs"
+destination_root: "docs/evidence/historical/2026-08-31"
+transfer_method: exact_file_copy
+new_joern_execution: false
+corrected_corpus_G0: false
+acceptance_status: not_evaluated
+scope:
+  declared_fingerprinter: "RealFingerprinter(joern+algorithm-3)"
+  corpus_id: CMP-CORP-REFAC-01
+  corpus_version: "0.1.0"
+  corpus_digest: "sha256:0750651a2d915dbdb672993b2a41d644f893f5e7407d260e5e28054b3f4e50f6"
+  corpus_seeds_on_record: 50
+  corpus_pairs_on_record: 350
+  declared_distinct_topologies: 8
+  run_limit: 8
+  observed_seeds: 8
+  observed_pairs: 56
+  languages: [java, python]
+observations_recounted_from_pairs:
+  evaluated: 52
+  unevaluated: 4
+  stayed: 30
+  flipped: 22
+  as_expected: 40
+  contrary_to_expectation: 12
+  labeled_strong_strong_evaluated: 52
+  labeled_strong_strong_as_expected: 40
+artifacts:
+  - path: refactor-invariance-topo8-2026-08-31.json
+    source_relative_path: evidence/refactor-invariance-topo8-2026-08-31.json
+    artifact_kind: raw_machine_report
+    bytes: 50303
+    source_sha256: fc851c78ec356d22e329129a9be8544f359e0ff40164b268a850c39ce40374b4
+    destination_sha256: fc851c78ec356d22e329129a9be8544f359e0ff40164b268a850c39ce40374b4
+    byte_comparison: equal
+  - path: refactor-invariance-topo8-2026-08-31.txt
+    source_relative_path: evidence/refactor-invariance-topo8-2026-08-31.txt
+    artifact_kind: original_emitted_summary
+    bytes: 2416
+    source_sha256: c5fb00d230db2d324b39bd608d39378c14b83bff484a27682433f54ce313ed53
+    destination_sha256: c5fb00d230db2d324b39bd608d39378c14b83bff484a27682433f54ce313ed53
+    byte_comparison: equal
+  - path: original-writeup.md
+    source_relative_path: EVIDENCE-refactor-invariance-2026-08-31.md
+    artifact_kind: original_authored_interpretation
+    bytes: 4442
+    source_sha256: fc60f0abfe9792d11f46534b3e18de0be0a039c31b197618b587f23f86a3ba8f
+    destination_sha256: fc60f0abfe9792d11f46534b3e18de0be0a039c31b197618b587f23f86a3ba8f
+    byte_comparison: equal
+    current_claim_guidance: false
+content_review:
+  method: "Static field/string inspection and credential-pattern search of the three selected artifacts"
+  apparent_credentials_found: false
+  unrelated_private_source_found: false
+  redacted: false
+  full_repository_or_history_secret_audit: false
+verification:
+  source_and_destination_sha256: equal
+  source_and_destination_cmp: equal
+  unique_case_count: 56
+  reported_totals_match_recomputed_pairs: true
+  historical_language_table_matches_recomputed_pairs: true
+  all_reported_fingerprint_comparisons_recomputed: true
+  original_execution_independently_authenticated: false
+limitations:
+  - "Original executed revision, image digest, exact timestamp, S_version, cache mode, and parse counts are not established by this bundle."
+  - "No original Joern exports or execution logs are included."
+  - "The corpus is topology-thin and contains transformations later found invalid or vacuous."
+  - "Library strong labels do not establish canonicality; the later review contains a counterexample."
+  - "Missing after-fingerprints are unevaluated, not flips or successful finding removals."
+  - "Original authored claim guidance and reproduction commands are historical, not current acceptance or verified instructions."
