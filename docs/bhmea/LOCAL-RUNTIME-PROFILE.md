@@ -368,6 +368,10 @@ Load protocol:
    dev/inode/type/size/mode/owner/nlink/mtime/ctime; a concurrent metadata
    replacement fails. This step does not reread an external anchor or establish
    admission currentness.
+   The exact role boundary in section 13 retains these full checks for every
+   metadata file and its direct private parent. Ancestor-only directories retain
+   device/inode/full-mode/UID/GID equality; their unrelated namespace activity
+   does not assert that selected metadata changed.
    Close each acquired descriptor once on every path. Track a child before
    releasing its parent; never retry an uncertain close-failed numeric FD.
    Preserve primary exceptions/interruption and later cleanup causes.
@@ -1105,3 +1109,109 @@ remote CI/canonical SUCCESS with final APPROVE remain required before merge.
 No runtime/container permission is inferred from these checks.
 The real factory/current-anchor, domain decoder, image-namespace, controller,
 admission/ledger and operational no-egress integrations remain unimplemented here.
+
+## 13. Ancestor-only recheck correction — September 26 PKT
+
+Root engineering correction under the existing root-owned #400 work, not a new
+installation or runtime authority. The board check on September 25 UTC confirms
+#400 remains In Progress; this is a distinct root-assigned correction in
+`/tmp/scanipy-profile-ancestor-fix-QdZAxU3f`, not duplicate work in an active
+agent's packet or evidence-store tree. Preparation HEAD is
+`6b7639294c4a85bfd9c6502f3039a3c979b23033`, tree
+`9b61238f31d7eb102326ec196cb5f12a0a784c4d`.
+
+### 13.1 Contrary evidence and limited conclusion
+
+The configured full suite on that unchanged tree recorded **3772 passes,
+51 skips and one failure** in 345.76 seconds, in
+`test_short_reads_are_assembled_through_eof` at the loader's final held-object
+recheck (`/tmp/scanipy-runtime-controller-git-main-full.xml`). That run did not
+record which held object changed. Its exact cause is not retrospectively known;
+it is not discarded as flaky or replaced by earlier passing reports.
+
+A separate controlled diagnostic on the same unchanged source passed the
+original short-read test, then failed after creating one unmeasured sibling
+directory **after actual runtime measurement**. All four selected metadata
+files were unchanged. Instrumentation observed only the enclosing fixture
+ancestor's nlink/mtime/ctime changes, and the original final recheck rejected
+them. This one-pass/one-failure report
+(`/tmp/scanipy-runtime-profile-stamp-controlled.xml`) proves the ancestor-only
+overreach, not which object caused the earlier full-suite failure.
+
+### 13.2 Approved exact role distinction before code
+
+Keep all nine original stat fields recorded on every acquired descriptor.
+Keep all no-follow traversal, original owner/mode checks, read/hash/EOF work,
+budgets/deadlines, exception evidence and once-only close behavior unchanged.
+Only the final comparison of an **ancestor-only directory** projects to
+device, inode, full st_mode (including type/security bits), UID and GID.
+Both its held-FD observation and no-follow name observation must match those
+five fields independently. An ancestor's nlink, size, mtime and ctime alone
+do not imply a change to a selected metadata object.
+
+All four metadata files and **every direct metadata parent directory** keep
+full nine-field equality. A parent that also serves as an ancestor retains
+the stricter direct-parent rule. Internally remember these direct parents
+only after their existing exact0700/pinned-owner check; at most four distinct
+paths, no new public policy flag or caller-supplied role. No extra file read,
+descriptor, retry, time allowance or special new temporary-path bypass.
+The actual shared runtime verifier continues to fence measured roots,
+descendants and runtime leaves independently; its byte/membership checks are
+unchanged. No public wire type, metadata observation or hash meaning changes.
+
+This finite recheck cannot exclude a hostile same-UID/root writer, mutation
+restored between observations, or unobserved ACL/mount changes. Protected
+installation and nonconcurrent administrative ownership remain mandatory.
+The correction is not broader filesystem integrity or runtime acceptance.
+
+### 13.3 Exact allocation and verification TODOs
+
+Root allocates only this contract, the narrow private `_Files` recheck in
+`tools/worker/runtime_profiles.py`, and new
+`tests/unit/test_runtime_profile_ancestors.py`. Existing loader/renderer/inventory
+tests and all other sources remain unchanged. The independently allocated
+pure packet extraction will be combined only after coordinated freeze/review.
+
+- [x] Promote the controlled real-sibling positive case and original short-read
+  control; demonstrate the positive case fails against the unchanged source.
+- [x] Prove all nine fields remain fenced for each selected metadata file and
+  direct parent, on both FD and no-follow name observations.
+- [x] Prove every ancestor identity/security field stays fenced, including a
+  safe-but-changed actual mode; only the four declared fields are projected out.
+- [x] Prove actual direct-parent namespace mutation is still rejected, including
+  a parent also used as an ancestor; preserve full recorded observations.
+- [x] Run unchanged loader, renderer and shared-inventory controls plus the new
+  cases, targeted static checks and independent correction review.
+- [ ] Schedule combined full verification, ordinary hooks and current-head remote
+  tests/canonical APPROVE before merge. Preserve all failed-run evidence.
+
+No new native child, image, application database, installation key, trust root
+or operational factory is authorized by this scoped corrective allocation.
+
+### 13.4 Local correction evidence, not acceptance
+
+Before source correction, the new file's 115 applicable cases recorded
+**103 passed /12 failed /zero skipped or errored**, 2.566 seconds, in
+`/tmp/scanipy-profile-ancestor-before.xml`. The 12 are exactly four real-sibling
+controls (both purposes, ordinary/short reads) and eight allowed ancestor-field
+changes (four fields times FD/name). The new internal parent-set inspection was
+explicitly deselected because the old implementation has no such field.
+
+After the 14-line source delta, all **664 selected cases passed**, zero
+failures/errors/skips, 5.744 seconds, in
+`/tmp/scanipy-profile-ancestor-after.xml`: 116 new cases plus 548 unchanged
+loader/renderer/shared-inventory cases. The unchanged original short-read
+control runs in that suite. Targeted Ruff/format, strict module mypy and
+whitespace checks pass after ordinary new-test formatting/import cleanup.
+Source SHA256 is
+`7728f03a104d50ce4c986d4a37dd22b3a5e7520630efbebca2a8f1a673c5158b`;
+new-test SHA256 is
+`8fe2f93ad31145dcf41a3d0469da05183c5bc70a909f08acbbedc8dd009b0ee6`.
+Independent scoped review approved those source/test bytes and contract
+`41b542668b11ec28afc4610a9637f5148a33832006bc67c98856f40119273817`.
+It independently passed all116 new cases plus the unchanged original short-read
+control: **117 passed**, zero skips/failures/errors, 1.623 seconds
+(`/tmp/scanipy-profile-ancestor-canonical-peer.xml`). It confirmed compatibility
+with the separate pure extraction; the two have not yet been merged. Combined
+full verification and canonical acceptance remain outstanding. No prior failing
+report is rewritten or attributed to this result.
