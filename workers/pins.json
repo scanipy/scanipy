@@ -35,5 +35,5 @@
     }
   },
   "python_packages_lockfile": "workers/snapshot/requirements.txt",
-  "python_packages_lockfile_sha256": "aad38638969e79d16db3ee3d55f605fb08119f35a1ae6d34309e29f8ea341add"
+  "python_packages_lockfile_sha256": "a3c384ca85126c5712b7124b035f0754d4da4e484b401383a85690f03868b581"
 }

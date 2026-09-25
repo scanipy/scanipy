@@ -1,0 +1,21 @@
+# Exact snapshot runtime closure, Python 3.11 / Linux x86-64.
+# Existing versions are intentionally preserved; do not upgrade implicitly.
+# Regenerate with workers/build/compile_snapshot_lock.py (pinned uv).
+boto3==1.43.48
+botocore==1.43.48
+greenlet==3.5.1
+jmespath==1.1.0
+psycopg2-binary==2.9.12
+python-dateutil==2.9.0.post0
+s3transfer==0.19.1
+six==1.17.0
+sqlalchemy[asyncio]==2.0.50
+typing-extensions==4.15.0
+urllib3==2.7.0
+
+# Production YAML/campaign imports and provenance cryptography/native closure.
+# Versions observed in the tested Python 3.11.16 reference environment.
+PyYAML==6.0.3
+cryptography==50.0.1
+cffi==2.1.1
+pycparser==3.0
