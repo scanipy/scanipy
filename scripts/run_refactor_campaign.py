@@ -15,6 +15,7 @@ import json
 import math
 import os
 import re
+import stat
 import subprocess
 import sys
 from collections.abc import Callable, Mapping, Sequence
@@ -69,22 +70,52 @@ def python_cache_observation(*, require_private: bool) -> dict[str, Any]:
     }
 
 
+class EvidenceStoreError(RuntimeError):
+    """Required evidence could not be retained; the campaign must not continue."""
+
+
+def _has_evidence_store_error(error: BaseException) -> bool:
+    """Find evidence loss even when a frontend preserves the child as primary."""
+    pending = [error]
+    seen: set[int] = set()
+    while pending:
+        current = pending.pop()
+        if id(current) in seen:
+            continue
+        seen.add(id(current))
+        if isinstance(current, EvidenceStoreError):
+            return True
+        if isinstance(current, BaseExceptionGroup):
+            pending.extend(current.exceptions)
+        for related in (current.__cause__, current.__context__):
+            if related is not None:
+                pending.append(related)
+    return False
+
+
 class EvidenceStore:
     """Exclusive-create artifacts; never overwrite an earlier run or raw event."""
 
     def __init__(self, root: Path) -> None:
-        root.mkdir(parents=True, exist_ok=False)
+        root.mkdir(mode=0o700, parents=True, exist_ok=False)
         self.root = root.resolve()
 
     def bytes(self, name: str, content: bytes) -> dict[str, str]:
-        target = safe_path(self.root, name)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        with target.open("xb") as stream:
-            stream.write(content)
+        try:
+            target = safe_path(self.root, name)
+            target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+            with target.open("xb") as stream:
+                if stream.write(content) != len(content):
+                    raise OSError("incomplete evidence write")
+        except Exception as exc:
+            raise EvidenceStoreError(f"could not retain required evidence: {name}") from exc
         return {"path": name, "sha256": sha256_bytes(content)}
 
     def json(self, name: str, value: object) -> dict[str, str]:
-        content = (json.dumps(value, sort_keys=True, indent=2, allow_nan=False) + "\n").encode()
+        try:
+            content = (json.dumps(value, sort_keys=True, indent=2, allow_nan=False) + "\n").encode()
+        except Exception as exc:
+            raise EvidenceStoreError(f"could not serialize required evidence: {name}") from exc
         return self.bytes(name, content)
 
 
@@ -104,6 +135,44 @@ class Backend(Protocol):
     def fingerprint(
         self, cpg: CPG, sink: NodeId, digest: str, states: int, seconds: float
     ) -> SliceFingerprintResult: ...
+
+
+def _retain_parse_outputs(
+    work: Path, prefix: str, store: EvidenceStore, references: list[dict[str, str]]
+) -> None:
+    """Retain existing frontend outputs, including malformed partial exports."""
+
+    def output_stat(path: Path) -> os.stat_result | None:
+        try:
+            info = path.stat(follow_symlinks=False)
+        except FileNotFoundError:
+            return None
+        if not stat.S_ISREG(info.st_mode):
+            raise ValueError(f"required Joern output is not a regular file: {path.name}")
+        return info
+
+    try:
+        export_path = work / "cpg_export.json"
+        if output_stat(export_path) is not None:
+            references.append(store.bytes(f"{prefix}/cpg_export.json", export_path.read_bytes()))
+        cpg_bin = work / "cpg.bin"
+        binary_info = output_stat(cpg_bin)
+        if binary_info is not None:
+            references.append(
+                store.json(
+                    f"{prefix}/cpg-bin-reference.json",
+                    {
+                        "path": str(cpg_bin),
+                        "size": binary_info.st_size,
+                        "sha256": sha256_bytes(cpg_bin.read_bytes()),
+                        "retention": "Original bytes retained in isolated run work directory.",
+                    },
+                )
+            )
+    except EvidenceStoreError:
+        raise
+    except Exception as exc:
+        raise EvidenceStoreError("could not retain required Joern output evidence") from exc
 
 
 @dataclass(frozen=True)
@@ -278,6 +347,7 @@ def _process_side(
     references = result["evidence"]
     references.append(runtime_ref)
     started_at, started = utc_now(), monotonic()
+    env = {"PATH": JOERN_PATH, "JAVA_HOME": JAVA_HOME, "HOME": str(work), "LC_ALL": "C.UTF-8"}
     references.append(
         store.json(
             f"{prefix}/attempt.json",
@@ -289,47 +359,51 @@ def _process_side(
                 "started_at": started_at,
                 "workdir": str(work),
                 "cache_mode": "disabled",
+                "frontend_environment_input": env,
+                "environment_input_note": "Pre-adapter input, not an observed child environment.",
             },
         )
     )
     events: list[JoernProcessEvent] = []
 
     def observe(event: JoernProcessEvent) -> None:
-        events.append(event)
-        name = f"{prefix}/process-{len(events):02d}-{event.phase}"
-        stdout_ref = store.bytes(name + ".stdout.bin", event.stdout)
-        stderr_ref = store.bytes(name + ".stderr.bin", event.stderr)
-        metadata = asdict(event)
-        metadata["stdout"], metadata["stderr"] = stdout_ref, stderr_ref
-        references.extend([stdout_ref, stderr_ref, store.json(name + ".json", metadata)])
+        try:
+            events.append(event)
+            name = f"{prefix}/process-{len(events):02d}-{event.phase}"
+            stdout_ref = store.bytes(name + ".stdout.bin", event.stdout)
+            stderr_ref = store.bytes(name + ".stderr.bin", event.stderr)
+            metadata = asdict(event)
+            metadata["stdout"], metadata["stderr"] = stdout_ref, stderr_ref
+            references.extend([stdout_ref, stderr_ref, store.json(name + ".json", metadata)])
+        except EvidenceStoreError:
+            raise
+        except Exception as exc:
+            raise EvidenceStoreError("could not retain required process-event evidence") from exc
 
     stage = "parse"
     try:
-        work.mkdir(parents=True, exist_ok=False)
-        env = {"PATH": JOERN_PATH, "JAVA_HOME": JAVA_HOME, "HOME": str(work), "LC_ALL": "C.UTF-8"}
+        work.mkdir(mode=0o700, parents=True, exist_ok=False)
         export_path = work / "cpg_export.json"
+        parse_error: Exception | None = None
         try:
             backend.parse(source, case["language"], env=env, workdir=work, observer=observe)
+        except Exception as exc:
+            parse_error = exc
+            raise
         finally:
-            # Preserve even malformed or partially written export bytes when
-            # the production mapper/exporter raises before returning a CPG.
-            if export_path.is_file():
-                references.append(
-                    store.bytes(f"{prefix}/cpg_export.json", export_path.read_bytes())
-                )
-            cpg_bin = work / "cpg.bin"
-            if cpg_bin.is_file():
-                references.append(
-                    store.json(
-                        f"{prefix}/cpg-bin-reference.json",
-                        {
-                            "path": str(cpg_bin),
-                            "size": cpg_bin.stat().st_size,
-                            "sha256": sha256_bytes(cpg_bin.read_bytes()),
-                            "retention": "Original bytes retained in isolated run work directory.",
-                        },
-                    )
-                )
+            try:
+                _retain_parse_outputs(work, prefix, store, references)
+            except EvidenceStoreError as retention_error:
+                if parse_error is not None:
+                    if parse_error.__cause__ is not None:
+                        # Preserve an earlier observer failure too, rather than
+                        # replacing it with a second output-retention failure.
+                        raise parse_error from BaseExceptionGroup(
+                            "prior invocation cause and output-retention failure",
+                            [parse_error.__cause__, retention_error],
+                        )
+                    raise parse_error from retention_error
+                raise
         raw = read_json(export_path)
         cpg, locations = map_export_with_locations(raw)
         references.append(
@@ -362,7 +436,10 @@ def _process_side(
         result["processing_status"], result["reason"] = "completed", None
     except Exception as exc:
         # A side failure never suppresses the independent attempt of the other
-        # side. Storage errors that prevent evidence capture still propagate.
+        # side. Required evidence loss is infrastructure failure, including a
+        # storage error chained beneath the original subprocess exception.
+        if _has_evidence_store_error(exc):
+            raise
         result["processing_status"], result["reason"] = "failed", f"{type(exc).__name__}: {exc}"
         result["fingerprint"] = None
         if isinstance(exc, LocatorError):
@@ -439,6 +516,7 @@ def runtime_observation(context: dict[str, Any], *, require_tools: bool) -> dict
         "analysis/cpg_ingest/mapper.py",
         "analysis/cpg_ingest/joern_frontend.py",
         "tools/worker/secure_subprocess.py",
+        "tools/worker/joern_java_safety.py",
         "scripts/run_refactor_campaign.py",
         "scripts/check_refactor_report.py",
     }
@@ -478,7 +556,15 @@ def runtime_observation(context: dict[str, Any], *, require_tools: bool) -> dict
         "imported_module_files": imported_files,
         "tools": tools,
         "packages": packages,
-        "joern_environment": {"PATH": JOERN_PATH, "JAVA_HOME": JAVA_HOME, "LC_ALL": "C.UTF-8"},
+        "joern_environment_input": {
+            "PATH": JOERN_PATH,
+            "JAVA_HOME": JAVA_HOME,
+            "LC_ALL": "C.UTF-8",
+        },
+        "environment_input_note": (
+            "Pre-adapter defaults; HOME is recorded per case. Effective closed Java "
+            "mappings are observed per process event, not inferred from these defaults."
+        ),
         "joern_path_directories": {name: Path(name).is_dir() for name in JOERN_PATH.split(":")},
         "environment_manifest": None,
         "limitation": "Partial runtime observation; not the full analysis environment digest.",
@@ -515,7 +601,7 @@ def run_campaign(
     if selected is not None and (not selected or not selected <= set(cases)):
         raise ValueError("diagnostic selection must name existing case IDs")
     runtime = runtime_observation(context, require_tools=backend is None)
-    work.mkdir(parents=True, exist_ok=False)
+    work.mkdir(mode=0o700, parents=True, exist_ok=False)
     store = EvidenceStore(output)
     runtime["canonicalization"] = {"B": states, "T_seconds": seconds}
     runtime_ref = store.json("runtime.json", runtime)
@@ -671,6 +757,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             seconds=args.seconds,
         )
     except (OSError, ValueError, importlib.metadata.PackageNotFoundError) as exc:
+        if _has_evidence_store_error(exc):
+            raise
         print(f"campaign refused/incomplete: {exc}", file=sys.stderr)
         return 2
     return 0

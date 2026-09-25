@@ -1,0 +1,169 @@
+"""Evidence-local one-parse diagnostic; no production collaborator is replaced.
+
+Run only in the isolated container described by this bundle's command record.
+The scanned fixture is parsed as data, never imported or executed.
+"""
+
+from __future__ import annotations
+
+import datetime
+import hashlib
+import importlib
+import importlib.metadata
+import json
+import os
+import shutil
+import subprocess
+import sys
+import time
+import traceback
+from collections import Counter
+from pathlib import Path
+
+JOB = Path("/job")
+OUT = JOB / "out"
+WORK = JOB / "work"
+SOURCE = Path("/repo/tests/corpora/refactor/seeds/seed-002/before")
+ENV = {
+    "PATH": "/opt/joern:/opt/joern/bin:/opt/codeql:/opt/temurin-jre/bin:/usr/bin:/usr/local/bin",
+    "JAVA_HOME": "/opt/temurin-jre",
+    "HOME": str(WORK),
+    "TMPDIR": "/job/tmp",
+    "JAVA_TOOL_OPTIONS": "-Xmx1536m -XX:ActiveProcessorCount=2 -Duser.home=/job/work -Djava.io.tmpdir=/job/tmp",
+}
+
+
+def digest(path: Path) -> dict[str, object]:
+    body = path.read_bytes()
+    return {"path": str(path), "bytes": len(body), "sha256": hashlib.sha256(body).hexdigest()}
+
+
+def main() -> int:
+    started = time.monotonic()
+    report: dict[str, object] = {
+        "evidence_kind": "real_frontend_readiness_diagnostic",
+        "started_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "python_version": sys.version,
+        "uid": os.getuid(),
+        "cwd": str(Path.cwd()),
+        "source": str(SOURCE),
+        "source_language": "python",
+        "source_file": digest(SOURCE / "order_service.py"),
+        "joern_child_environment": ENV,
+        "parse_attempts": 0,
+        "fresh_parse": True,
+        "cache_reused": False,
+        "scanned_code_executed": False,
+        "detection_or_fingerprinting_performed": False,
+    }
+    invocations: list[dict[str, object]] = []
+
+    def audit(event: str, args: tuple[object, ...]) -> None:
+        if event == "subprocess.Popen":
+            record = {
+                "event": event,
+                "executable": args[0],
+                "argv": args[1],
+                "cwd": args[2],
+                "environment": args[3],
+                "elapsed_seconds": time.monotonic() - started,
+            }
+            invocations.append(record)
+            print(json.dumps(record, sort_keys=True), flush=True)
+
+    sys.addaudithook(audit)
+    exit_code = 1
+    try:
+        if sys.version_info < (3, 11):
+            raise RuntimeError("supported Python >=3.11 required")
+        imports = {}
+        for name in (
+            "yaml",
+            "analysis.cpg_ingest.joern_frontend",
+            "analysis.cpg_ingest.mapper",
+            "services.scan.oracle_fingerprint",
+        ):
+            module = importlib.import_module(name)
+            imports[name] = str(module.__file__)
+        report["imports"] = imports
+        report["pyyaml_version"] = importlib.metadata.version("PyYAML")
+
+        from analysis.cpg_ingest.joern_frontend import EXPORT_SCRIPT_PATH, parse_source
+        from analysis.cpg_ingest.mapper import map_export_with_locations
+        from tools.worker.secure_subprocess import resolve_pinned_binary
+
+        binaries = {}
+        for name in ("joern", "joern-parse"):
+            pinned = Path(resolve_pinned_binary(name))
+            if not pinned.is_file() or not os.access(pinned, os.X_OK):
+                raise RuntimeError(f"missing executable pinned launcher: {pinned}")
+            discovered = shutil.which(name, path=ENV["PATH"])
+            if discovered is None:
+                raise RuntimeError(f"launcher not discoverable in explicit child PATH: {name}")
+            binaries[name] = {**digest(pinned), "explicit_PATH_lookup": discovered}
+        report["launchers"] = binaries
+        report["export_script"] = digest(Path(EXPORT_SCRIPT_PATH))
+        report["current_worktree_export_script"] = digest(
+            Path("/repo/workers/snapshot/joern-scripts/export_cpg.sc")
+        )
+        report["export_script_matches_worktree"] = (
+            report["export_script"]["sha256"]
+            == report["current_worktree_export_script"]["sha256"]
+        )
+        for directory in (OUT, WORK, JOB / "tmp"):
+            if not directory.is_dir() or not os.access(directory, os.W_OK):
+                raise RuntimeError(f"diagnostic directory not writable: {directory}")
+        print(json.dumps({"preflight": report}, sort_keys=True), flush=True)
+
+        report["parse_attempts"] = 1
+        graph = parse_source(SOURCE, "python", env=ENV, workdir=WORK)
+        export_path = WORK / "cpg_export.json"
+        raw_export = json.loads(export_path.read_text(encoding="utf-8"))
+        mapped_graph, locations = map_export_with_locations(raw_export)
+        if graph != mapped_graph:
+            raise RuntimeError("map_export and map_export_with_locations graphs disagree")
+        if not graph.nodes or not graph.edges:
+            raise RuntimeError("empty mapped graph is insufficient readiness evidence")
+        report["graph"] = {
+            "nodes": len(graph.nodes),
+            "edges": len(graph.edges),
+            "edge_kinds": dict(sorted(Counter(e.kind for e in graph.edges).items())),
+            "location_entries": len(locations),
+            "location_entries_with_lines": sum(location.line > 0 for location in locations.values()),
+            "two_production_mapper_surfaces_agree": True,
+        }
+        report["raw_export"] = digest(export_path)
+        report["cpg_bin"] = digest(WORK / "cpg.bin")
+        report["status"] = "parse_export_map_succeeded"
+        exit_code = 0
+    except Exception as exc:
+        report["status"] = "failed"
+        report["error"] = {"type": type(exc).__name__, "message": str(exc)}
+        if isinstance(exc, (subprocess.CalledProcessError, subprocess.TimeoutExpired)):
+            report["error"]["command"] = exc.cmd
+            if isinstance(exc, subprocess.CalledProcessError):
+                report["error"]["returncode"] = exc.returncode
+            else:
+                report["error"]["timeout_seconds"] = exc.timeout
+            for stream in ("stdout", "stderr"):
+                body = getattr(exc, stream, None)
+                if body is not None:
+                    body = body.encode() if isinstance(body, str) else body
+                    path = OUT / f"failure-{stream}.txt"
+                    path.write_bytes(body)
+                    report["error"][stream] = digest(path)
+                    print(f"{stream}:\n{body.decode(errors='replace')}", flush=True)
+        traceback.print_exc()
+    finally:
+        report["tool_invocations"] = invocations
+        report["elapsed_seconds"] = time.monotonic() - started
+        report["finished_at_utc"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        report["diagnostic_exit_code"] = exit_code
+        encoded = json.dumps(report, indent=2, sort_keys=True) + "\n"
+        (OUT / "diagnostic.json").write_text(encoded, encoding="utf-8")
+        print(encoded, flush=True)
+    return exit_code
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

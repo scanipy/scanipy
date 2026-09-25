@@ -10,6 +10,7 @@ import analysis.ordering as ordering
 from analysis.fingerprint import (
     LEGACY_WITNESS_NAMESPACE,
     SOURCE_WITNESS_NAMESPACE,
+    SliceFingerprintResult,
     compute_slice_fingerprint,
     compute_slice_fingerprint_v2,
     eligible_for_baseline_suppression,
@@ -179,6 +180,16 @@ def test_legacy_strong_or_unknown_namespace_never_auto_inherits() -> None:
     assert eligible_for_baseline_suppression(strong)
     for namespace in ("scanipy-slice-fingerprint/1", "unknown/999"):
         assert not eligible_for_baseline_suppression(replace(strong, identity_namespace=namespace))
+
+
+def test_old_positional_strong_constructor_does_not_gain_v2_eligibility() -> None:
+    graph, request = _graph()
+    strong = compute_slice_fingerprint(request, graph, T=Duration(10))
+    legacy = SliceFingerprintResult(
+        strong.slice_fingerprint, "strong", False, 0.0, strong.cpg_order_hash_annotation
+    )
+    assert legacy.identity_namespace == "scanipy-slice-fingerprint/1"
+    assert not eligible_for_baseline_suppression(legacy)
 
 
 @pytest.mark.parametrize("bad", [0, -1, True, 1.5])

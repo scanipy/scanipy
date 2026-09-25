@@ -232,7 +232,7 @@ def run_container(
         return 0
     store = EvidenceStore(output)
     store.json("controller-context.json", context)
-    (output / "data").mkdir()
+    (output / "data").mkdir(mode=0o700)
     store.bytes(
         "existing-containers-before.txt",
         checked(

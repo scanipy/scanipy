@@ -29,13 +29,21 @@ fails. There is no hidden source-directory cache, retry, or resume shortcut.
 
 - [x] Runtime dependency repair #373 merged at `89ed803`; corrected corpus #372
   merged at `c3444e7`. These are scoped prerequisites, not full R03/R05/G0 acceptance.
-- [ ] Confirm reviewed merges of the canonical API (#369), typed report gate
-  (#375), and this producer before collecting a protected full G0. Local dependency
-  merges are development only, even when controlled tests pass.
+- [x] Canonical API #369 (`bcce692`), typed report gate #375 (`cd62f5f`),
+  independent artifact metadata #371 (`c540644`), snapshot hash-lock correction
+  #383 (`85a9600`), and fail-closed developer hooks #387 (`0223651`) are merged.
+  Those scoped merges do not establish a runnable image or feature acceptance.
+- [ ] Confirm reviewed merges of Java static safety #390 and this producer before
+  collecting a protected full G0. Local integration currently includes frozen
+  #390 head `16252b21db172b967f13a815ca9bd8fe3078dd19` as an **unmerged dependency**.
+  Its latest review action failed on a session limit despite an APPROVE comment;
+  that failed check is not acceptance. Local dependency merges and controlled
+  tests do not authorize a real run or remote merge.
 - [ ] Use a clean committed analysis checkout containing those changes. The
   controller refuses dirty tracked or untracked files. It records Git revision and
-  hashes all tracked `analysis/`, `tools/`, and `scripts/` files; the container
-  verifies those mounted bytes before any case runs. Do not edit the checkout
+  hashes all tracked `analysis/`, `tools/`, and `scripts/` files, including the
+  required Java safety module; the container verifies those mounted bytes before
+  any case runs. Do not edit the checkout
   during execution or run a hook that temporarily stashes its source changes.
 - [ ] Start the host controller with `-B` and `-X pycache_prefix=<private empty path>`
   as shown below. `-B` alone can still read an old ignored `.pyc`; the fresh prefix
@@ -45,7 +53,9 @@ fails. There is no hidden source-directory cache, retry, or resume shortcut.
   `sha256:<64 lowercase hex>` image ID, never a tag. It must contain Python >=3.11,
   PyYAML, cryptography, the pinned Joern launchers, Java, and export script. No
   runtime install, image pull, or image build is performed by the controller.
-- [ ] Verify/rebuild the worker dependency set through reviewed work. The earlier
+- [ ] Verify/rebuild the worker dependency set through reviewed work using the
+  committed exact snapshot input/generator/hash-lock validator from #383. No ad hoc
+  package overlay establishes readiness. The earlier
   diagnostic image `sha256:911e6f836fcf5e183a0c559e04e1868ba9d1838c35263728fe85dc1e9cce987b`
   had Python 3.11.15 and PyYAML but lacked cryptography. Its earlier successful
   single parse is not proof that this producer's full runtime is ready.
@@ -60,6 +70,8 @@ The controller creates exactly one new explicitly named/labeled container, pinne
 to the selected image ID, with network disabled, read-only analysis/source mount
 and root filesystem, non-root user, no capabilities, no-new-privileges, two CPUs,
 4 GiB memory with no additional swap, 256 PIDs and private writable run directories.
+Fresh controller data, evidence and case-side work directories are explicitly
+mode 0700; a permissive caller umask cannot make a Java workdir group-writable.
 It does not mount the Docker socket or modify existing application/database
 containers. Its 24-hour maximum watchdog and 5 GiB disk reserve only stop the exact
 owned container ID after checking its label; neither condition starts another run.
@@ -108,7 +120,7 @@ eventual full environment manifest. A prior single Python parse/export took abou
 can take hours. Do not launch a second campaign because an observation call times
 out. Track the emitted live container ID.
 
-The production launcher override is explicit:
+The production launcher's **pre-adapter input** is explicit:
 
 ```text
 PATH=/opt/joern:/opt/joern/bin:/opt/codeql:/opt/temurin-jre/bin:/usr/bin:/bin
@@ -118,9 +130,20 @@ LC_ALL=C.UTF-8
 ```
 
 `secure_run` still resolves absolute `/opt/joern/joern-parse` and
-`/opt/joern/joern` and enforces its original allowlists. PATH supports launcher
-children; this override is not a claim that default image packaging was fixed.
+`/opt/joern/joern` and enforces its reviewed value-aware allowlists. PATH supports
+launcher children; this override is not a claim that default image packaging was fixed.
 Parse/export timeout ceilings remain the production 600/300 seconds.
+
+Java uses the shared [closed static profile](JAVA-STATIC-INVOCATION.md) for BOTH
+parser and fixed-v1 exporter: exact `--frontend-args --delombok-mode no-delombok`,
+`JAVASRC_FETCH_DEPENDENCIES=no-fetch`, private mode-0700 HOME/TMPDIR and fixed
+locale/tool paths. The adapter validates and transforms the input above; it does
+not inherit arbitrary environment variables. Each Java process event retains the
+validated **post-adapter** mapping supplied to `secure_run`, including its profile,
+phase and observed directory modes. This observation is not proof the child
+started, used a particular JVM/classpath, or satisfied full environment provenance.
+Unknown launch still has unknown actual argv/return code. Unprofiled calls do not
+record arbitrary environment values.
 
 ## Evidence and failure handling
 
@@ -137,16 +160,32 @@ archiving a complete run; do not move only report.json. The container receives a
 read-only context-file mount and can write only under `data/`; it cannot overwrite
 the host controller's initial commands, context, or ownership records.
 
+Runtime `joern_environment_input` and each attempt's `frontend_environment_input`
+are labeled pre-adapter inputs. Only an event's `environment_observation` records
+the validated closed Java child mapping; the producer does not copy input fields
+into an invented effective observation.
+
 The observer preserves actual subprocess argv from `CompletedProcess` or
 subprocess exceptions, cwd, timeouts, start/end times, elapsed time, exit status
 and byte-exact stdout/stderr. If launch failed before subprocess supplied argv,
 actual argv is null and requested arguments are separately labeled. It never
-logs the inherited worker environment. Partial/malformed export bytes are retained
-even when export or mapping fails. Missing graph capabilities and parser recovery
+logs an arbitrary inherited worker environment. Partial/malformed export bytes
+are retained even when export or mapping fails. Missing graph capabilities and parser recovery
 are not manufactured into detector findings, semantic proofs or expected failures.
 Report v2 has no export/map error enum: those failures remain visible in the side's
 failed status, reason and concrete raw error artifact, with normalized error null.
 They are never relabeled as the intentional parse-failure control's required error.
+
+Required evidence-write/serialization and existing-output read/stat failures are
+fatal infrastructure errors, not ordinary side-analysis failures. Missing outputs
+are explicitly distinguished from unreadable or non-regular outputs. This includes an evidence error retained as
+the explicit cause of an original subprocess exception: both errors survive and
+the campaign aborts without a final report/gate result. A simultaneous observer
+failure and raw-output retention failure are both preserved under the original
+child exception, including through the CLI failure boundary. A later successful
+write must not hide earlier missing stdout/stderr/metadata. Existing partial artifacts
+and checkpoints remain diagnostic only. The independent after-side attempt rule
+applies to analysis failures, not permission to continue after evidence loss.
 
 Source-derived locator text, callee token/column and a unique raw CALL must bind to
 one mapped CALL at the correct relative file/line/FQN/Joern column. Ambiguity,
@@ -211,8 +250,11 @@ measurement process completed; it is not a feature acceptance assertion.
    fallback independently. Historical and controlled artifacts remain separately
    labeled; they never become a new real G0 through rewriting.
 
-Controlled tests: `tests/unit/test_refactor_campaign_producer.py` exercises exact
+Controlled tests: `tests/unit/test_refactor_campaign_producer.py` is unit-marked for
+the actual CI selector and exercises exact
 inventory, all 844 attempts, independent after-side attempts, locator negatives,
 raw-output preservation, missing proof semantics, source drift rejection,
-no-overwrite behavior and container isolation command construction. These tests
+no-overwrite behavior, container isolation command construction, shared Java
+both-phase profile serialization/privacy, required safety-module binding and
+fatal direct/chained evidence loss. These tests
 validate orchestration, not real Joern accuracy, parser coverage or invariance.

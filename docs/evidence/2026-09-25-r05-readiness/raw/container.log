@@ -1,0 +1,131 @@
+{"preflight": {"cache_reused": false, "current_worktree_export_script": {"bytes": 8294, "path": "/repo/workers/snapshot/joern-scripts/export_cpg.sc", "sha256": "922e648f468e6172e2c56fe3ff89ca9120c5789d322fe7919609860e12ca1546"}, "cwd": "/job/work", "detection_or_fingerprinting_performed": false, "evidence_kind": "real_frontend_readiness_diagnostic", "export_script": {"bytes": 8294, "path": "/opt/joern/scripts/export_cpg.sc", "sha256": "922e648f468e6172e2c56fe3ff89ca9120c5789d322fe7919609860e12ca1546"}, "export_script_matches_worktree": true, "fresh_parse": true, "imports": {"analysis.cpg_ingest.joern_frontend": "/repo/analysis/cpg_ingest/joern_frontend.py", "analysis.cpg_ingest.mapper": "/repo/analysis/cpg_ingest/mapper.py", "services.scan.oracle_fingerprint": "/repo/services/scan/oracle_fingerprint.py", "yaml": "/usr/local/lib/python3.11/site-packages/yaml/__init__.py"}, "joern_child_environment": {"HOME": "/job/work", "JAVA_HOME": "/opt/temurin-jre", "JAVA_TOOL_OPTIONS": "-Xmx1536m -XX:ActiveProcessorCount=2 -Duser.home=/job/work -Djava.io.tmpdir=/job/tmp", "PATH": "/opt/joern:/opt/joern/bin:/opt/codeql:/opt/temurin-jre/bin:/usr/bin:/usr/local/bin", "TMPDIR": "/job/tmp"}, "launchers": {"joern": {"bytes": 501, "explicit_PATH_lookup": "/opt/joern/joern", "path": "/opt/joern/joern", "sha256": "0df7e8db4282ef2c6fc37998917aca694176e23192de5f0c631511d993e99736"}, "joern-parse": {"bytes": 470, "explicit_PATH_lookup": "/opt/joern/joern-parse", "path": "/opt/joern/joern-parse", "sha256": "93e88d1b810383e3b1bccc1350501129a28f1ae80a44c0a34179673fd76fd4cd"}}, "parse_attempts": 0, "python_version": "3.11.15 (main, May 19 2026, 23:50:05) [GCC 12.2.0]", "pyyaml_version": "6.0.3", "scanned_code_executed": false, "source": "/repo/tests/corpora/refactor/seeds/seed-002/before", "source_file": {"bytes": 315, "path": "/repo/tests/corpora/refactor/seeds/seed-002/before/order_service.py", "sha256": "48248ee8497a33887fa787c42ffb41a5a4fd33d67a998f57645cdb9279ee8704"}, "source_language": "python", "started_at_utc": "2026-09-25T08:20:54.334784+00:00", "uid": 1000}}
+{"argv": ["/opt/joern/joern-parse", "--language", "pythonsrc", "--output", "/job/work/cpg.bin", "/repo/tests/corpora/refactor/seeds/seed-002/before"], "cwd": "/job/work", "elapsed_seconds": 0.14476924389600754, "environment": {"HOME": "/job/work", "JAVA_HOME": "/opt/temurin-jre", "JAVA_TOOL_OPTIONS": "-Xmx1536m -XX:ActiveProcessorCount=2 -Duser.home=/job/work -Djava.io.tmpdir=/job/tmp", "PATH": "/opt/joern:/opt/joern/bin:/opt/codeql:/opt/temurin-jre/bin:/usr/bin:/usr/local/bin", "TMPDIR": "/job/tmp"}, "event": "subprocess.Popen", "executable": "/opt/joern/joern-parse"}
+{"argv": ["/opt/joern/joern", "--script", "/opt/joern/scripts/export_cpg.sc"], "cwd": "/job/work", "elapsed_seconds": 14.111184428911656, "environment": {"HOME": "/job/work", "JAVA_HOME": "/opt/temurin-jre", "JAVA_TOOL_OPTIONS": "-Xmx1536m -XX:ActiveProcessorCount=2 -Duser.home=/job/work -Djava.io.tmpdir=/job/tmp", "PATH": "/opt/joern:/opt/joern/bin:/opt/codeql:/opt/temurin-jre/bin:/usr/bin:/usr/local/bin", "SCANIPY_CPG_BIN_PATH": "/job/work/cpg.bin", "SCANIPY_EXPORT_JSON_PATH": "/job/work/cpg_export.json", "TMPDIR": "/job/tmp"}, "event": "subprocess.Popen", "executable": "/opt/joern/joern"}
+{
+  "cache_reused": false,
+  "cpg_bin": {
+    "bytes": 109791,
+    "path": "/job/work/cpg.bin",
+    "sha256": "f3b5b6b2b59712c56ed1b6cdc543c41b778fd4c54a51eb2d1101b2d040471f1d"
+  },
+  "current_worktree_export_script": {
+    "bytes": 8294,
+    "path": "/repo/workers/snapshot/joern-scripts/export_cpg.sc",
+    "sha256": "922e648f468e6172e2c56fe3ff89ca9120c5789d322fe7919609860e12ca1546"
+  },
+  "cwd": "/job/work",
+  "detection_or_fingerprinting_performed": false,
+  "diagnostic_exit_code": 0,
+  "elapsed_seconds": 38.78520335396752,
+  "evidence_kind": "real_frontend_readiness_diagnostic",
+  "export_script": {
+    "bytes": 8294,
+    "path": "/opt/joern/scripts/export_cpg.sc",
+    "sha256": "922e648f468e6172e2c56fe3ff89ca9120c5789d322fe7919609860e12ca1546"
+  },
+  "export_script_matches_worktree": true,
+  "finished_at_utc": "2026-09-25T08:21:33.119991+00:00",
+  "fresh_parse": true,
+  "graph": {
+    "edge_kinds": {
+      "AST": 195,
+      "CFG": 77,
+      "PDG": 228
+    },
+    "edges": 500,
+    "location_entries": 222,
+    "location_entries_with_lines": 153,
+    "nodes": 222,
+    "two_production_mapper_surfaces_agree": true
+  },
+  "imports": {
+    "analysis.cpg_ingest.joern_frontend": "/repo/analysis/cpg_ingest/joern_frontend.py",
+    "analysis.cpg_ingest.mapper": "/repo/analysis/cpg_ingest/mapper.py",
+    "services.scan.oracle_fingerprint": "/repo/services/scan/oracle_fingerprint.py",
+    "yaml": "/usr/local/lib/python3.11/site-packages/yaml/__init__.py"
+  },
+  "joern_child_environment": {
+    "HOME": "/job/work",
+    "JAVA_HOME": "/opt/temurin-jre",
+    "JAVA_TOOL_OPTIONS": "-Xmx1536m -XX:ActiveProcessorCount=2 -Duser.home=/job/work -Djava.io.tmpdir=/job/tmp",
+    "PATH": "/opt/joern:/opt/joern/bin:/opt/codeql:/opt/temurin-jre/bin:/usr/bin:/usr/local/bin",
+    "TMPDIR": "/job/tmp"
+  },
+  "launchers": {
+    "joern": {
+      "bytes": 501,
+      "explicit_PATH_lookup": "/opt/joern/joern",
+      "path": "/opt/joern/joern",
+      "sha256": "0df7e8db4282ef2c6fc37998917aca694176e23192de5f0c631511d993e99736"
+    },
+    "joern-parse": {
+      "bytes": 470,
+      "explicit_PATH_lookup": "/opt/joern/joern-parse",
+      "path": "/opt/joern/joern-parse",
+      "sha256": "93e88d1b810383e3b1bccc1350501129a28f1ae80a44c0a34179673fd76fd4cd"
+    }
+  },
+  "parse_attempts": 1,
+  "python_version": "3.11.15 (main, May 19 2026, 23:50:05) [GCC 12.2.0]",
+  "pyyaml_version": "6.0.3",
+  "raw_export": {
+    "bytes": 60555,
+    "path": "/job/work/cpg_export.json",
+    "sha256": "d03720b7ed3503a5ff9eb3c306a8a850d24f0a7f6315748d820cbb95cb48c968"
+  },
+  "scanned_code_executed": false,
+  "source": "/repo/tests/corpora/refactor/seeds/seed-002/before",
+  "source_file": {
+    "bytes": 315,
+    "path": "/repo/tests/corpora/refactor/seeds/seed-002/before/order_service.py",
+    "sha256": "48248ee8497a33887fa787c42ffb41a5a4fd33d67a998f57645cdb9279ee8704"
+  },
+  "source_language": "python",
+  "started_at_utc": "2026-09-25T08:20:54.334784+00:00",
+  "status": "parse_export_map_succeeded",
+  "tool_invocations": [
+    {
+      "argv": [
+        "/opt/joern/joern-parse",
+        "--language",
+        "pythonsrc",
+        "--output",
+        "/job/work/cpg.bin",
+        "/repo/tests/corpora/refactor/seeds/seed-002/before"
+      ],
+      "cwd": "/job/work",
+      "elapsed_seconds": 0.14476924389600754,
+      "environment": {
+        "HOME": "/job/work",
+        "JAVA_HOME": "/opt/temurin-jre",
+        "JAVA_TOOL_OPTIONS": "-Xmx1536m -XX:ActiveProcessorCount=2 -Duser.home=/job/work -Djava.io.tmpdir=/job/tmp",
+        "PATH": "/opt/joern:/opt/joern/bin:/opt/codeql:/opt/temurin-jre/bin:/usr/bin:/usr/local/bin",
+        "TMPDIR": "/job/tmp"
+      },
+      "event": "subprocess.Popen",
+      "executable": "/opt/joern/joern-parse"
+    },
+    {
+      "argv": [
+        "/opt/joern/joern",
+        "--script",
+        "/opt/joern/scripts/export_cpg.sc"
+      ],
+      "cwd": "/job/work",
+      "elapsed_seconds": 14.111184428911656,
+      "environment": {
+        "HOME": "/job/work",
+        "JAVA_HOME": "/opt/temurin-jre",
+        "JAVA_TOOL_OPTIONS": "-Xmx1536m -XX:ActiveProcessorCount=2 -Duser.home=/job/work -Djava.io.tmpdir=/job/tmp",
+        "PATH": "/opt/joern:/opt/joern/bin:/opt/codeql:/opt/temurin-jre/bin:/usr/bin:/usr/local/bin",
+        "SCANIPY_CPG_BIN_PATH": "/job/work/cpg.bin",
+        "SCANIPY_EXPORT_JSON_PATH": "/job/work/cpg_export.json",
+        "TMPDIR": "/job/tmp"
+      },
+      "event": "subprocess.Popen",
+      "executable": "/opt/joern/joern"
+    }
+  ],
+  "uid": 1000
+}
+

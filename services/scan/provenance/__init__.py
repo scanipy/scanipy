@@ -102,7 +102,7 @@ class ProvenanceRecord:
     # Link 2 — snapshot digest
     snapshot_id: uuid.UUID
     snapshot_digest: Sha256Hex
-    precondition_status: PreconditionStatus
+    precondition_status: PreconditionStatus | None
     # Links 3 + 4 — INV-2
     S_version: SemVer
     env_digest: Sha256Hex
@@ -128,6 +128,10 @@ class ProvenanceRecord:
     repartition_oracle_id: uuid.UUID | None
     # Honest-labeling (DOC-PROVENANCE §5)
     claim_label: ClaimLabel
+    # Additive signed envelope v2. V1 encoding excludes these fields exactly,
+    # retaining all original historical signature inputs and reader behavior.
+    record_schema_version: int = 1
+    artifact_identity: dict[str, object] | None = None
 
 
 @dataclass(frozen=True)
@@ -225,9 +229,33 @@ def canonical_record_bytes(record: ProvenanceRecord) -> bytes:
     trusting the stored ``canonical_bytes`` (the only way TAMPERED detection is
     meaningful).
     """
+    if type(record.record_schema_version) is not int or record.record_schema_version not in (1, 2):
+        raise ValueError("unsupported provenance record schema version")
+    if record.record_schema_version == 1 and record.artifact_identity is not None:
+        raise ValueError("v1 signed records cannot carry unsigned artifact metadata")
+    if record.record_schema_version == 2:
+        from analysis.artifact_identity import validate_identity_metadata
+
+        if record.fingerprint_class is not None:
+            raise ValueError("v2 records must not assert an ambiguous shared class")
+        graph, sliced = validate_identity_metadata(record.artifact_identity)
+        if record.origin == "deterministic-core" and (
+            graph.status != "completed"
+            or sliced.status != "completed"
+            or record.precondition_status is None
+        ):
+            raise ValueError(
+                "core records require computed graph, slice, and precondition evidence"
+            )
+        if graph.digest != _opt_hex(record.cpg_order_hash) or sliced.digest != _opt_hex(
+            record.slice_fingerprint
+        ):
+            raise ValueError("signed artifact metadata does not match record digests")
     payload = {
         field.name: _canonical_value(getattr(record, field.name))
         for field in dataclasses.fields(record)
+        if record.record_schema_version == 2
+        or field.name not in {"record_schema_version", "artifact_identity"}
     }
     return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
@@ -319,7 +347,10 @@ def verify_chain(
 
     Verdicts: ``VERIFIED`` | ``TAMPERED`` | ``KEY_NOT_FOUND`` | ``ARTIFACT_MISSING``.
     """
-    canonical = canonical_record_bytes(signed.record)
+    try:
+        canonical = canonical_record_bytes(signed.record)
+    except (ValueError, TypeError):
+        return "TAMPERED"
 
     pub_resp = signer.get_public_key(
         KeyId=signed.kms_key_arn,
@@ -397,10 +428,10 @@ def export_auditor_record(
 ) -> dict[str, object]:
     """Build the customer-facing auditor export for ``record_id`` (§8.1).
 
-    The export's ``cpg_order_hash`` and ``cpg_order_hash_annotation`` keys are
-    JSON-adjacent (consecutive ``dict`` insertion order = JSON adjacency,
-    AC-FND-03b / INV-5). A ``repartition_history`` array surfaces every
-    re-partition event chained to this record (AC-FND-03c).
+    Legacy exports retain their original adjacent graph hash/annotation keys.
+    V2 exports scope annotations inside independent graph/slice descriptors.
+    A ``repartition_history`` array surfaces every re-partition event chained
+    to this record (AC-FND-03c).
     """
     signed = store.get(record_id)
     if signed is None:
@@ -446,6 +477,11 @@ def export_auditor_record(
             for child in store.children(record_id)
         ],
     }
+    if record.record_schema_version == 2:
+        export.pop("fingerprint_class")
+        export.pop("cpg_order_hash_annotation")
+        export["record_schema_version"] = 2
+        export["artifact_identity"] = record.artifact_identity
     return export
 
 

@@ -1,0 +1,1990 @@
+{
+  "schema_version": 1,
+  "updated": "2026-09-25",
+  "target_mode": "FULL_SUBMISSION",
+  "submission_fulfillment": "UNVERIFIED",
+  "release_readiness": "NOT_VERIFIED",
+  "stage_readiness": "NOT_VERIFIED",
+  "tracking_issue": 362,
+  "review_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+  "handoff_document": "docs/PLAN-BHMEA-EXECUTION-2026-09-25.md",
+  "presentation": {
+    "candidate_dates": [
+      "2026-12-02",
+      "2026-12-03"
+    ],
+    "exact_date": null,
+    "october_demo_lock": null,
+    "acceptance_confirmed": true,
+    "execution": "local_docker",
+    "stage_hardware": null
+  },
+  "authorization": {
+    "corrective_issues_and_prs": true,
+    "merge_requires_review_and_tests": true,
+    "release_publication": false,
+    "external_messages": false,
+    "new_spending": false,
+    "reduced_scope": false
+  },
+  "notes": [
+    "All task checklists in the referenced review remain required except explicitly optional actions.",
+    "The DAG expresses milestone acceptance prerequisites; explicitly assigned hermetic build-ahead may proceed with unmet verification dependencies, without claiming them satisfied.",
+    "Evidence targets are planned locations; only evidence_paths records retained actual evidence.",
+    "No full task, claim or shared gate has passed. Corrective board ownership was reconciled on 2026-09-25 after transient GraphQL failures.",
+    "Reviewed foundations through main 0223651 are indexed in docs/evidence/2026-09-25-foundation-merges/README.md; narrow issue closure is not full task or submission acceptance.",
+    "R07 lifecycle-generation and R16 implicit Java execution/coverage gaps are explicit follow-ups; no production continuity policy or corrected G0 exists."
+  ],
+  "tasks": [
+    {
+      "id": "R01",
+      "title": "Repair execution contract, milestones, schedule, ownership",
+      "priority": "P0",
+      "requirement_kinds": [
+        "correctness_prerequisite"
+      ],
+      "owner": "Plan maintainer",
+      "status": "IN_PROGRESS",
+      "issue": 362,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R01",
+      "evidence_paths": [],
+      "next_action": "Initial handoff #368 merged; reconcile reviewed progress and new falsifiers, retain full task/claim coverage and reforecast after corrected G0/G1."
+    },
+    {
+      "id": "R02",
+      "title": "Resolve pure-extract semantics",
+      "priority": "P0",
+      "requirement_kinds": [
+        "correctness_prerequisite"
+      ],
+      "owner": "Architecture",
+      "status": "IN_PROGRESS",
+      "issue": null,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R02",
+      "evidence_paths": [],
+      "next_action": "Finalize operational Java/Python purity registry, observation model and certificate producers."
+    },
+    {
+      "id": "R03",
+      "title": "Correct and validate corpus transformations",
+      "priority": "P0",
+      "requirement_kinds": [
+        "submission_requirement",
+        "correctness_prerequisite"
+      ],
+      "owner": "Corpus/QA",
+      "status": "IN_PROGRESS",
+      "issue": 361,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R03",
+      "evidence_paths": [],
+      "next_action": "PR #372's 422-case source correction merged; finish remaining fixture/precondition/correspondence and real-frontend validation, preserve eight-topology limits and supply G0 inputs. R03 component acceptance precedes G0; #361 remains open."
+    },
+    {
+      "id": "R04",
+      "title": "Enforce typed harness/report acceptance",
+      "priority": "P0",
+      "requirement_kinds": [
+        "correctness_prerequisite"
+      ],
+      "owner": "QA",
+      "status": "IN_PROGRESS",
+      "issue": 367,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R04",
+      "evidence_paths": [],
+      "next_action": "Typed checker #375 merged; integrate the real fresh all-case producer and verify honest G0 plus protected acceptance history. Narrow #367 closure is not full R04 acceptance."
+    },
+    {
+      "id": "R05",
+      "title": "Package reproduction commands; optional caching/diagnostics",
+      "priority": "P1",
+      "requirement_kinds": [
+        "submission_requirement",
+        "correctness_prerequisite",
+        "optional_efficiency"
+      ],
+      "owner": "Analysis tooling",
+      "status": "IN_PROGRESS",
+      "issue": 374,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R05",
+      "evidence_paths": [],
+      "next_action": "Integrate draft #380 with reviewed #369/current main and #386 Java safety profile; verify corrected image and bounded sequential probes before all 844 uncached side attempts. No real G0 yet."
+    },
+    {
+      "id": "R06",
+      "title": "Validate all advertised fingerprint invariances",
+      "priority": "P0",
+      "requirement_kinds": [
+        "submission_requirement",
+        "correctness_prerequisite"
+      ],
+      "owner": "Analysis",
+      "status": "TODO",
+      "issue": null,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R06",
+      "evidence_paths": [],
+      "next_action": "Run corrected corpus and repair all advertised normalizations with semantic negative controls."
+    },
+    {
+      "id": "R07",
+      "title": "Persist finding continuity and decisions",
+      "priority": "P0",
+      "requirement_kinds": [
+        "submission_requirement"
+      ],
+      "owner": "Findings/API",
+      "status": "IN_PROGRESS",
+      "issue": 378,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R07",
+      "evidence_paths": [],
+      "next_action": "Contract #385 merged; peer-reviewed pure matcher remains unmerged. Enforce lifecycle generations and fresh per-dimension authorization, then review exact schema/grants and implement durable scoped storage/CAS. Production policy registry stays empty."
+    },
+    {
+      "id": "R08",
+      "title": "Complete asynchronous fingerprint demo integration",
+      "priority": "P0",
+      "requirement_kinds": [
+        "submission_requirement"
+      ],
+      "owner": "Deployment/API/UI",
+      "status": "IN_PROGRESS",
+      "issue": 378,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R08",
+      "evidence_paths": [],
+      "next_action": "Implement #378 pre-identity occurrence boundary before both global and per-slice canonicalization, then separate Compose worker, immutable source retention, fenced retries and truthful API/UI states."
+    },
+    {
+      "id": "R09",
+      "title": "Resolve artifact-specific classes, provenance, environment identity",
+      "priority": "P0",
+      "requirement_kinds": [
+        "correctness_prerequisite"
+      ],
+      "owner": "Architecture/provenance",
+      "status": "IN_PROGRESS",
+      "issue": 363,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R09",
+      "evidence_paths": [],
+      "next_action": "Scoped metadata/migration #371 merged. Verify combined actual canonical producers, full observed environment and source-only snapshot/final persistence producers; retain legacy bytes. Full R09 remains open."
+    },
+    {
+      "id": "R10",
+      "title": "Wire early real-source core runs and attest them",
+      "priority": "P0",
+      "requirement_kinds": [
+        "submission_requirement",
+        "correctness_prerequisite"
+      ],
+      "owner": "Analysis/attestation",
+      "status": "TODO",
+      "issue": null,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R10",
+      "evidence_paths": [],
+      "next_action": "Produce nonempty real-source core runs and compare retained canonical bytes under v2 contract."
+    },
+    {
+      "id": "R11",
+      "title": "Measure real oracle reproduction per engine",
+      "priority": "P0",
+      "requirement_kinds": [
+        "submission_requirement"
+      ],
+      "owner": "Attestation/API",
+      "status": "TODO",
+      "issue": null,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R11",
+      "evidence_paths": [],
+      "next_action": "Measure independent real Semgrep and CodeQL reruns; publish per-engine empirical rates."
+    },
+    {
+      "id": "R12",
+      "title": "Persist and independently verify finding provenance",
+      "priority": "P0",
+      "requirement_kinds": [
+        "submission_requirement"
+      ],
+      "owner": "Provenance/API",
+      "status": "TODO",
+      "issue": null,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R12",
+      "evidence_paths": [],
+      "next_action": "Persist actual scan provenance and local keys; export and verify with public key in fresh process."
+    },
+    {
+      "id": "R13",
+      "title": "Deliver the CodeQL adapter",
+      "priority": "P0",
+      "requirement_kinds": [
+        "submission_requirement"
+      ],
+      "owner": "Detection adapters",
+      "status": "TODO",
+      "issue": null,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R13",
+      "evidence_paths": [],
+      "next_action": "Implement actual CodeQL adapter in approved static-only modes; retain output and errors."
+    },
+    {
+      "id": "R14",
+      "title": "Measure actual incumbent-ID comparisons",
+      "priority": "P1",
+      "requirement_kinds": [
+        "submission_requirement"
+      ],
+      "owner": "Evaluation",
+      "status": "TODO",
+      "issue": null,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R14",
+      "evidence_paths": [],
+      "next_action": "Measure actual pinned SpotBugs/CodeQL/Semgrep IDs on declared corrected source pairs."
+    },
+    {
+      "id": "R15",
+      "title": "Verify attendee installation and offline stage readiness separately",
+      "priority": "P1",
+      "requirement_kinds": [
+        "submission_requirement",
+        "release_stage_requirement"
+      ],
+      "owner": "Deployment/demo",
+      "status": "IN_PROGRESS",
+      "issue": 366,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R15",
+      "evidence_paths": [
+        "docs/EVIDENCE-BHMEA-DEPENDENCY-COMPATIBILITY-2026-09-25.md"
+      ],
+      "next_action": "Runtime #373, snapshot lock #383 and hook correction #387 merged. After resource/safety review, verify real image install/startup and clean Docker install; obtain actual stage hardware, measure budgets and rehearse offline twice."
+    },
+    {
+      "id": "R16",
+      "title": "Preserve never-execute-scanned-code contract",
+      "priority": "P0",
+      "requirement_kinds": [
+        "submission_requirement",
+        "correctness_prerequisite"
+      ],
+      "owner": "Worker/security",
+      "status": "IN_PROGRESS",
+      "issue": 386,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R16",
+      "evidence_paths": [],
+      "next_action": "Implement #386 exact Java no-delombok/no-fetch invocation and closed parse/export environment; verify coverage omissions and descendant/sentinel safety. Other frontend/engine and final Compose proof remain required."
+    },
+    {
+      "id": "R17",
+      "title": "Aggregate evidence, lock claims, validate authorized release",
+      "priority": "P1",
+      "requirement_kinds": [
+        "submission_requirement",
+        "release_stage_requirement"
+      ],
+      "owner": "Release/docs/QA",
+      "status": "IN_PROGRESS",
+      "issue": null,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R17",
+      "evidence_paths": [],
+      "next_action": "Preserve evidence, track all claims, execute shared gates and seek separate release/video authority."
+    },
+    {
+      "id": "R18",
+      "title": "Repair and verify canonicalization and strong-label correctness",
+      "priority": "P0",
+      "requirement_kinds": [
+        "correctness_prerequisite"
+      ],
+      "owner": "Analysis/architecture",
+      "status": "IN_PROGRESS",
+      "issue": 364,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R18",
+      "evidence_paths": [],
+      "next_action": "Finalize #369 on merged R09/current main with actual four-class producer regression, legacy-default ineligibility and deadline failure propagation; obtain fresh canonical review before real semantic acceptance."
+    },
+    {
+      "id": "R19",
+      "title": "Deliver real caller/callee and argument/return connectivity",
+      "priority": "P0",
+      "requirement_kinds": [
+        "correctness_prerequisite"
+      ],
+      "owner": "Ingest/core analysis",
+      "status": "IN_PROGRESS",
+      "issue": 376,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R19",
+      "evidence_paths": [],
+      "next_action": "R19-A #376 implements opt-in raw v2 export/schema with actual roles/properties and explicit missing evidence. Then deliver versioned semantic mapping, call bindings, access paths, returns and summary fixpoint; verify Java/Python traces."
+    },
+    {
+      "id": "R20",
+      "title": "Resolve time-budget dependence in the determinism contract",
+      "priority": "P0",
+      "requirement_kinds": [
+        "correctness_prerequisite"
+      ],
+      "owner": "Architecture/analysis",
+      "status": "IN_PROGRESS",
+      "issue": 364,
+      "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
+      "acceptance_section": "R20",
+      "evidence_paths": [],
+      "next_action": "Implement deterministic work-budget fallback, whole-call time failure, versioned output and shared budgets."
+    }
+  ],
+  "claims": [
+    {
+      "id": "C01",
+      "promise": "Local-variable rename preserves identity",
+      "submission_sections": "3, 4",
+      "required_tasks": [
+        "R03",
+        "R04",
+        "R06",
+        "R08",
+        "R18"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "analysis/fingerprint.py",
+        "scripts/validate_refactor_fingerprints.py"
+      ],
+      "acceptance_criterion": "Every required Java/Python local-rename pair has corresponding strong same-version identical slice identity.",
+      "evidence_target": "docs/evidence/acceptance/C01",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    },
+    {
+      "id": "C02",
+      "promise": "Formatting preserves identity",
+      "submission_sections": "4",
+      "required_tasks": [
+        "R03",
+        "R04",
+        "R06",
+        "R08",
+        "R18"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "analysis/fingerprint.py",
+        "scripts/validate_refactor_fingerprints.py"
+      ],
+      "acceptance_criterion": "Every required formatting pair preserves strong slice identity under stated supported formatting semantics.",
+      "evidence_target": "docs/evidence/acceptance/C02",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    },
+    {
+      "id": "C03",
+      "promise": "Independent statement reordering preserves identity",
+      "submission_sections": "4",
+      "required_tasks": [
+        "R03",
+        "R04",
+        "R06",
+        "R18"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "analysis/fingerprint.py",
+        "scripts/validate_refactor_fingerprints.py"
+      ],
+      "acceptance_criterion": "Actual independent statement permutations preserve identity; dependent/effectful reorders are distinguished.",
+      "evidence_target": "docs/evidence/acceptance/C03",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    },
+    {
+      "id": "C04",
+      "promise": "Extract-method preserves identity",
+      "submission_sections": "4",
+      "required_tasks": [
+        "R02",
+        "R03",
+        "R06",
+        "R18",
+        "R19"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "analysis/fingerprint.py",
+        "analysis/ifds/solver.py",
+        "analysis/cpg_ingest/mapper.py"
+      ],
+      "acceptance_criterion": "Meaningful called-helper extraction/inline with proven bindings/purity preserves identity; body/alias/return changes remain distinguishable.",
+      "evidence_target": "docs/evidence/acceptance/C04",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    },
+    {
+      "id": "C05",
+      "promise": "File move/package rename preserves identity",
+      "submission_sections": "4",
+      "required_tasks": [
+        "R03",
+        "R04",
+        "R06",
+        "R18"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "analysis/fingerprint.py",
+        "scripts/validate_refactor_fingerprints.py"
+      ],
+      "acceptance_criterion": "Actual file/package relocation preserves identity; changed external targets remain distinguishable.",
+      "evidence_target": "docs/evidence/acceptance/C05",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    },
+    {
+      "id": "C06",
+      "promise": "A genuine fix changes the implicated structural identity",
+      "submission_sections": "4",
+      "required_tasks": [
+        "R03",
+        "R04",
+        "R06",
+        "R07",
+        "R18"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "analysis/fingerprint.py",
+        "services/scan/worker.py"
+      ],
+      "acceptance_criterion": "Predeclared structural fixes flip strong fingerprints or successful sufficiently scoped removal resolves the prior finding; errors never count.",
+      "evidence_target": "docs/evidence/acceptance/C06",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    },
+    {
+      "id": "C07",
+      "promise": "Structural hashing; location only locates the node; truthful strong/weak labels",
+      "submission_sections": "2, 3, 4",
+      "required_tasks": [
+        "R06",
+        "R08",
+        "R09",
+        "R18",
+        "R20"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "analysis/ordering.py",
+        "analysis/fingerprint.py",
+        "services/scan/worker.py"
+      ],
+      "acceptance_criterion": "Arbitrary relabeling preserves complete canonical graph bytes; semantic changes bind the hash; graph/slice classes are independently truthful.",
+      "evidence_target": "docs/evidence/acceptance/C07",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    },
+    {
+      "id": "C08",
+      "promise": "Triage history and suppression decisions survive harmless refactors",
+      "submission_sections": "1, 3",
+      "required_tasks": [
+        "R07",
+        "R08",
+        "R09",
+        "R18"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "services/scan/worker.py",
+        "services/findings"
+      ],
+      "acceptance_criterion": "Real scan/refactor/rescan preserves durable triage/suppression history only for compatible strong unambiguous identity; failure does not resolve.",
+      "evidence_target": "docs/evidence/acceptance/C08",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    },
+    {
+      "id": "C09",
+      "promise": "Core output is byte-identical under the stated reproducibility assumptions",
+      "submission_sections": "2",
+      "required_tasks": [
+        "R09",
+        "R10",
+        "R18",
+        "R19",
+        "R20"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "services/scan/attestor.py"
+      ],
+      "acceptance_criterion": "Independent fresh real-source nonempty core runs emit identical canonical bytes under identical declared inputs and approved budget policy.",
+      "evidence_target": "docs/evidence/acceptance/C09",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    },
+    {
+      "id": "C10",
+      "promise": "Oracle findings carry a measured reproduction rate",
+      "submission_sections": "2",
+      "required_tasks": [
+        "R09",
+        "R11"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "services/scan/oracle_attestor.py"
+      ],
+      "acceptance_criterion": "Independent real engine reruns produce an explicit per-engine measured reproduction rate with retained outputs and denominator.",
+      "evidence_target": "docs/evidence/acceptance/C10",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    },
+    {
+      "id": "C11",
+      "promise": "Signed, independently verifiable provenance for actual findings",
+      "submission_sections": "2, 5",
+      "required_tasks": [
+        "R09",
+        "R12"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "services/scan/provenance"
+      ],
+      "acceptance_criterion": "Actual persisted findings export a complete signed chain; fresh public-key-only verifier accepts originals and rejects tampering after restart.",
+      "evidence_target": "docs/evidence/acceptance/C11",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    },
+    {
+      "id": "C12",
+      "promise": "One-command, self-hosted, single-tenant deployment with Postgres and no cloud account",
+      "submission_sections": "5, 6, 7",
+      "required_tasks": [
+        "R08",
+        "R15",
+        "R17"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "docker-compose.yml"
+      ],
+      "acceptance_criterion": "Fresh attendee clone and one documented Compose command run Postgres/API without a cloud account.",
+      "evidence_target": "docs/evidence/acceptance/C12",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    },
+    {
+      "id": "C13",
+      "promise": "Pasting a repository produces real findings labeled with CWE and origin",
+      "submission_sections": "5",
+      "required_tasks": [
+        "R08",
+        "R13",
+        "R17"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "services/scan"
+      ],
+      "acceptance_criterion": "Pasted repository produces actual findings with correct CWE mapping and origin; asynchronous fingerprint state is visible.",
+      "evidence_target": "docs/evidence/acceptance/C13",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    },
+    {
+      "id": "C14",
+      "promise": "Detection uses Semgrep and a CodeQL adapter",
+      "submission_sections": "2, 6",
+      "required_tasks": [
+        "R13"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "services/scan/worker.py"
+      ],
+      "acceptance_criterion": "Real Semgrep and real CodeQL adapter paths work with documented versions, accepted inputs and explicit error handling.",
+      "evidence_target": "docs/evidence/acceptance/C14",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    },
+    {
+      "id": "C15",
+      "promise": "Demo compares Scanipy identity with actual incumbent IDs after refactoring",
+      "submission_sections": "3, 5",
+      "required_tasks": [
+        "R14"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "scripts/validate_refactor_fingerprints.py"
+      ],
+      "acceptance_criterion": "Retained native SpotBugs/CodeQL/Semgrep IDs and Scanipy IDs compare the same declared source pairs without invented incumbent behavior.",
+      "evidence_target": "docs/evidence/acceptance/C15",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    },
+    {
+      "id": "C16",
+      "promise": "Scanned repository code is analyzed, never executed",
+      "submission_sections": "6",
+      "required_tasks": [
+        "R16"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "tools/worker/secure_subprocess.py"
+      ],
+      "acceptance_criterion": "Actual enabled analysis paths do not run scanned source/build hooks; adversarial source-execution attempts fail safely.",
+      "evidence_target": "docs/evidence/acceptance/C16",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    },
+    {
+      "id": "C17",
+      "promise": "Apache-2.0 open-source tool, publicly reproducible release",
+      "submission_sections": "6, 7",
+      "required_tasks": [
+        "R17"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "LICENSE",
+        "docs"
+      ],
+      "acceptance_criterion": "Public Apache-2.0 source, documented evidence and separately authorized reproducible release are independently accessible.",
+      "evidence_target": "docs/evidence/acceptance/C17",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    },
+    {
+      "id": "C18",
+      "promise": "Runnable Joern-backed validation harness and published evidence artifacts",
+      "submission_sections": "4, 7",
+      "required_tasks": [
+        "R03",
+        "R04",
+        "R05",
+        "R17"
+      ],
+      "original_submission_status": "UNVERIFIED",
+      "included_in_current_public_scope": true,
+      "owner": "root",
+      "implementation_targets": [
+        "scripts/validate_refactor_fingerprints.py",
+        "tests/corpora/refactor"
+      ],
+      "acceptance_criterion": "Shipped fresh Joern-backed Java/Python harness runs corrected typed corpus with complete raw reports and verified reproduction commands.",
+      "evidence_target": "docs/evidence/acceptance/C18",
+      "evidence_paths": [],
+      "known_limitations": [
+        "No full acceptance evidence recorded. Implementation targets name intended surfaces, not a working-path assertion."
+      ]
+    }
+  ],
+  "milestones": [
+    {
+      "id": "R01.design_ready",
+      "requires": [],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R01.component_verified",
+      "requires": [
+        "R01.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R02.design_ready",
+      "requires": [
+        "R01.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R02.component_verified",
+      "requires": [
+        "R02.design_ready"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R03.design_ready",
+      "requires": [
+        "R01.design_ready",
+        "R02.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R03.implementation_ready",
+      "requires": [
+        "R03.design_ready"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R03.component_verified",
+      "requires": [
+        "R03.implementation_ready"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R03.integration_verified",
+      "requires": [
+        "G2",
+        "R03.component_verified"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R04.design_ready",
+      "requires": [
+        "R01.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R04.implementation_ready",
+      "requires": [
+        "R04.design_ready"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R04.component_verified",
+      "requires": [
+        "R04.implementation_ready"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R04.integration_verified",
+      "requires": [
+        "G2",
+        "R04.component_verified"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R05.design_ready",
+      "requires": [
+        "R01.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R05.implementation_ready",
+      "requires": [
+        "R05.design_ready"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R05.commands_verified",
+      "requires": [
+        "R05.implementation_ready"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R05.cache_verified",
+      "requires": [
+        "R05.commands_verified"
+      ],
+      "required_scope": [
+        "cache_correctness"
+      ],
+      "optional": true,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R05.component_verified",
+      "requires": [
+        "R05.commands_verified"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R05.integration_verified",
+      "requires": [
+        "G2",
+        "R05.component_verified"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R06.design_ready",
+      "requires": [
+        "R01.design_ready",
+        "R02.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R06.implementation_ready",
+      "requires": [
+        "R06.design_ready",
+        "G0"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R06.component_verified",
+      "requires": [
+        "R06.implementation_ready",
+        "R18.component_verified",
+        "R19.component_verified",
+        "R20.component_verified"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R06.integration_verified",
+      "requires": [
+        "G2",
+        "R06.component_verified"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R07.design_ready",
+      "requires": [
+        "R09.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R07.implementation_ready",
+      "requires": [
+        "R07.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R07.component_verified",
+      "requires": [
+        "R07.implementation_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R07.integration_verified",
+      "requires": [
+        "G2",
+        "R07.component_verified"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R08.design_ready",
+      "requires": [
+        "R01.design_ready",
+        "R09.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R08.implementation_ready",
+      "requires": [
+        "R08.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R08.component_verified",
+      "requires": [
+        "R08.implementation_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R08.integration_verified",
+      "requires": [
+        "G2",
+        "R08.component_verified"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R09.design_ready",
+      "requires": [
+        "R01.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R09.implementation_ready",
+      "requires": [
+        "R09.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R09.component_verified",
+      "requires": [
+        "R09.implementation_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R09.integration_verified",
+      "requires": [
+        "G2",
+        "R09.component_verified"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R10.design_ready",
+      "requires": [
+        "R09.design_ready",
+        "R20.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R10.implementation_ready",
+      "requires": [
+        "R10.design_ready"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R10.component_verified",
+      "requires": [
+        "R10.implementation_ready"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R10.integration_verified",
+      "requires": [
+        "G2",
+        "R10.component_verified"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R11.design_ready",
+      "requires": [
+        "R09.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R11.implementation_ready",
+      "requires": [
+        "R11.design_ready"
+      ],
+      "required_scope": [
+        "semgrep",
+        "codeql"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R11.component_verified",
+      "requires": [
+        "R11.implementation_ready",
+        "R13.component_verified"
+      ],
+      "required_scope": [
+        "semgrep",
+        "codeql"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R11.integration_verified",
+      "requires": [
+        "G2",
+        "R11.component_verified"
+      ],
+      "required_scope": [
+        "semgrep",
+        "codeql"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R12.design_ready",
+      "requires": [
+        "R09.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R12.implementation_ready",
+      "requires": [
+        "R12.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R12.component_verified",
+      "requires": [
+        "R12.implementation_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R12.integration_verified",
+      "requires": [
+        "G2",
+        "R12.component_verified"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R13.design_ready",
+      "requires": [
+        "R09.design_ready",
+        "R16.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R13.implementation_ready",
+      "requires": [
+        "R13.design_ready"
+      ],
+      "required_scope": [
+        "codeql",
+        "declared_languages"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R13.component_verified",
+      "requires": [
+        "R13.implementation_ready"
+      ],
+      "required_scope": [
+        "codeql",
+        "declared_languages"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R13.integration_verified",
+      "requires": [
+        "G2",
+        "R13.component_verified"
+      ],
+      "required_scope": [
+        "codeql",
+        "declared_languages"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R14.design_ready",
+      "requires": [
+        "R01.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R14.implementation_ready",
+      "requires": [
+        "R14.design_ready",
+        "R03.component_verified"
+      ],
+      "required_scope": [
+        "spotbugs",
+        "codeql",
+        "semgrep"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R14.component_verified",
+      "requires": [
+        "R14.implementation_ready"
+      ],
+      "required_scope": [
+        "spotbugs",
+        "codeql",
+        "semgrep"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R14.integration_verified",
+      "requires": [
+        "G2",
+        "R14.component_verified"
+      ],
+      "required_scope": [
+        "spotbugs",
+        "codeql",
+        "semgrep"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R15.design_ready",
+      "requires": [
+        "R01.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R15.implementation_ready",
+      "requires": [
+        "R15.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R15.install_verified",
+      "requires": [
+        "R15.implementation_ready",
+        "R08.implementation_ready"
+      ],
+      "required_scope": [
+        "clean_install"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R15.stage_verified",
+      "requires": [
+        "R15.implementation_ready",
+        "G2"
+      ],
+      "required_scope": [
+        "actual_stage_hardware",
+        "offline_twice"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R15.component_verified",
+      "requires": [
+        "R15.install_verified",
+        "R15.stage_verified"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R15.integration_verified",
+      "requires": [
+        "G3_STAGE",
+        "R15.component_verified"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R16.design_ready",
+      "requires": [
+        "R01.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R16.implementation_ready",
+      "requires": [
+        "R16.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R16.component_verified",
+      "requires": [
+        "R16.implementation_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R16.integration_verified",
+      "requires": [
+        "G2",
+        "R16.component_verified"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R17.design_ready",
+      "requires": [
+        "R01.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R17.implementation_ready",
+      "requires": [
+        "R17.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R17.component_verified",
+      "requires": [
+        "R17.implementation_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R17.integration_verified",
+      "requires": [
+        "G3_RELEASE",
+        "R17.component_verified"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R18.design_ready",
+      "requires": [
+        "R01.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R18.implementation_ready",
+      "requires": [
+        "R18.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R18.component_verified",
+      "requires": [
+        "R18.implementation_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R18.integration_verified",
+      "requires": [
+        "G2",
+        "R18.component_verified"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R19.design_ready",
+      "requires": [
+        "R02.design_ready",
+        "R16.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R19.implementation_ready",
+      "requires": [
+        "R19.design_ready"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R19.component_verified",
+      "requires": [
+        "R19.implementation_ready"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R19.integration_verified",
+      "requires": [
+        "G2",
+        "R19.component_verified"
+      ],
+      "required_scope": [
+        "java",
+        "python"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R20.design_ready",
+      "requires": [
+        "R09.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R20.implementation_ready",
+      "requires": [
+        "R20.design_ready"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R20.component_verified",
+      "requires": [
+        "R20.implementation_ready",
+        "R18.component_verified"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    },
+    {
+      "id": "R20.integration_verified",
+      "requires": [
+        "G2",
+        "R20.component_verified"
+      ],
+      "required_scope": [
+        "full_task_contract"
+      ],
+      "optional": false,
+      "status": "TODO",
+      "verified_scope": [],
+      "evidence_paths": []
+    }
+  ],
+  "gates": [
+    {
+      "id": "G0",
+      "requires": [
+        "R03.component_verified",
+        "R04.component_verified",
+        "R05.commands_verified"
+      ],
+      "scope": [
+        "complete_corrected_corpus",
+        "honest_baseline_not_feature_acceptance"
+      ],
+      "owner": "root",
+      "status": "NOT_RUN",
+      "evidence_paths": []
+    },
+    {
+      "id": "G1",
+      "requires": [
+        "R08.implementation_ready",
+        "R09.component_verified",
+        "R10.implementation_ready",
+        "R11.implementation_ready",
+        "R12.implementation_ready",
+        "R16.design_ready",
+        "R18.component_verified",
+        "R19.component_verified",
+        "R20.component_verified"
+      ],
+      "scope": [
+        "declared_real_nonempty_core",
+        "semgrep",
+        "persistent_provenance_fresh_verification"
+      ],
+      "owner": "root",
+      "status": "NOT_RUN",
+      "evidence_paths": []
+    },
+    {
+      "id": "G2",
+      "requires": [
+        "G0",
+        "G1",
+        "R06.component_verified",
+        "R07.component_verified",
+        "R08.component_verified",
+        "R09.component_verified",
+        "R10.component_verified",
+        "R11.component_verified",
+        "R12.component_verified",
+        "R13.component_verified",
+        "R14.component_verified",
+        "R16.component_verified",
+        "R18.component_verified",
+        "R19.component_verified",
+        "R20.component_verified"
+      ],
+      "scope": [
+        "all_claims",
+        "java",
+        "python",
+        "semgrep",
+        "codeql",
+        "real_comparators"
+      ],
+      "owner": "root",
+      "status": "NOT_RUN",
+      "evidence_paths": []
+    },
+    {
+      "id": "G3_RELEASE",
+      "requires": [
+        "G2",
+        "R15.install_verified"
+      ],
+      "scope": [
+        "clean_install",
+        "public_source_license_evidence",
+        "authorized_release"
+      ],
+      "owner": "root",
+      "status": "NOT_RUN",
+      "evidence_paths": []
+    },
+    {
+      "id": "G3_STAGE",
+      "requires": [
+        "G2",
+        "R15.stage_verified"
+      ],
+      "scope": [
+        "actual_stage_hardware",
+        "offline_twice",
+        "same_accepted_artifact_fallback"
+      ],
+      "owner": "root",
+      "status": "NOT_RUN",
+      "evidence_paths": []
+    }
+  ],
+  "evidence_inventory": [
+    {
+      "path": "docs/evidence/historical/2026-08-31/README.md",
+      "kind": "historical_recovery",
+      "acceptance": false
+    },
+    {
+      "path": "docs/evidence/2026-09-25-r05-readiness/README.md",
+      "kind": "real_frontend_readiness_diagnostic",
+      "acceptance": false
+    }
+  ],
+  "pending_owner_input": [
+    "Exact presentation date when scheduled.",
+    "Actual stage OS/CPU/RAM/free disk/Docker architecture before resource acceptance.",
+    "Separate release/image publication and video/external-material authorization when ready."
+  ]
+}

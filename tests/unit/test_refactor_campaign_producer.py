@@ -19,6 +19,7 @@ from scripts.check_refactor_report import load_corpus, read_json, sha256_bytes, 
 from analysis.cpg_ingest import joern_frontend as frontend
 from analysis.cpg_ingest.mapper import map_export, map_export_with_locations
 from analysis.ordering import CanonicalizationDeadlineExceeded
+from tools.worker.joern_java_safety import JoernEnvironmentProfile
 
 pytestmark = pytest.mark.unit
 CORPUS = campaign.REPO / "tests/corpora/refactor"
@@ -38,6 +39,7 @@ def context():
         "analysis/cpg_ingest/mapper.py",
         "analysis/cpg_ingest/joern_frontend.py",
         "tools/worker/secure_subprocess.py",
+        "tools/worker/joern_java_safety.py",
         "scripts/run_refactor_campaign.py",
         "scripts/check_refactor_report.py",
     ]
@@ -122,6 +124,39 @@ class ControlledBackend(campaign._RealBackend):
         return super().fingerprint(cpg, sink, digest, states, seconds)
 
 
+class SharedFrontendBackend(ControlledBackend):
+    """Use the production frontend/observer with a hermetic subprocess result."""
+
+    def __init__(self, cases, monkeypatch, *, failure=None, rejected_input=False):
+        super().__init__(cases)
+        self.process_calls = []
+        self.failure = failure
+        self.rejected_input = rejected_input
+        self.sources = {}
+        monkeypatch.setattr(frontend, "secure_run", self.secure_run)
+
+    def secure_run(self, tool, argv, *, timeout_s, env, cwd, environment_profile=None):
+        phase = "parse" if tool == "joern-parse" else "export"
+        self.process_calls.append((phase, list(argv), dict(env), environment_profile))
+        if phase == "parse":
+            self.sources[cwd] = Path(argv[4])
+            (Path(cwd) / "cpg.bin").write_bytes(b"controlled CPG bytes")
+        else:
+            locator = self.locators[self.sources[cwd]]
+            Path(env[frontend.ENV_EXPORT_JSON_PATH]).write_text(json.dumps(export_for(locator)))
+        if self.failure is not None and self.failure[0] == phase:
+            raise self.failure[1]
+        return subprocess.CompletedProcess(
+            ["/opt/joern/" + tool, *argv], 0, b"shared stdout\x00", b"shared stderr\xff"
+        )
+
+    def parse(self, source, language, *, env, workdir, observer):
+        self.calls.append((source, language, workdir, dict(env)))
+        if self.rejected_input:
+            env = {**env, "JAVA_TOOL_OPTIONS": "controlled-private-input-never-log"}
+        return frontend.parse_source(source, language, env=env, workdir=workdir, observer=observer)
+
+
 def run(tmp_path, context, cases, selected, *, backend=None):
     backend = backend or ControlledBackend(cases)
     report = campaign.run_campaign(
@@ -189,6 +224,259 @@ def test_after_attempt_happens_after_before_failure_and_raw_bytes_survive(tmp_pa
         for path in files
     )
     assert all(row["after"]["finding"]["status"] != "absent" for row in report["cases"])
+
+
+@pytest.mark.parametrize("failed_phase", [None, "parse", "export"])
+def test_shared_java_effective_profile_is_retained_separately_from_input(
+    tmp_path, context, cases, monkeypatch, failed_phase
+):
+    case = first_case(cases, language="java")
+    error = subprocess.CalledProcessError(
+        7, ["/opt/joern/joern"], output=b"partial\x00", stderr=b"failure\xff"
+    )
+    backend = SharedFrontendBackend(
+        cases, monkeypatch, failure=(failed_phase, error) if failed_phase else None
+    )
+    monkeypatch.setenv("JAVA_TOOL_OPTIONS", "controlled-ambient-value-never-log")
+    old_umask = os.umask(0)
+    try:
+        report, _ = run(tmp_path, context, cases, {case["case_id"]}, backend=backend)
+    finally:
+        os.umask(old_umask)
+    row = next(item for item in report["cases"] if item["case_id"] == case["case_id"])
+    assert len(backend.calls) == 2
+    assert report["run"]["execution_kind"] == "controlled_fixture"
+    runtime = read_json(tmp_path / "evidence/runtime.json")
+    assert "joern_environment" not in runtime
+    assert "JAVASRC_FETCH_DEPENDENCIES" not in runtime["joern_environment_input"]
+    assert "tools/worker/joern_java_safety.py" in runtime["code_files"]
+    assert "tools.worker.joern_java_safety" in runtime["imported_module_files"]
+    for side in ("before", "after"):
+        assert row[side]["processing_status"] == ("failed" if failed_phase else "completed")
+        refs = row[side]["evidence"]
+        attempt = read_json(
+            tmp_path
+            / "evidence"
+            / next(ref["path"] for ref in refs if ref["path"].endswith("/attempt.json"))
+        )
+        assert attempt["frontend_environment_input"]["HOME"] == attempt["workdir"]
+        process_records = [
+            read_json(tmp_path / "evidence" / ref["path"])
+            for ref in refs
+            if "/process-" in ref["path"] and ref["path"].endswith(".json")
+        ]
+        assert [event["phase"] for event in process_records] == (
+            ["parse"] if failed_phase == "parse" else ["parse", "export"]
+        )
+        for event in process_records:
+            observation = event["environment_observation"]
+            assert observation["profile"] == JoernEnvironmentProfile.JAVA_STATIC_V1.value
+            assert observation["phase"] == event["phase"]
+            effective = observation["effective_environment"]
+            assert effective["JAVASRC_FETCH_DEPENDENCIES"] == "no-fetch"
+            assert effective["HOME"] == str(Path(event["cwd"]) / ".scanipy-java-home")
+            assert effective["TMPDIR"] == str(Path(effective["HOME"]) / "tmp")
+            assert observation["directories"]["home"]["mode"] == "0700"
+            assert observation["directories"]["workdir"]["mode"] == "0700"
+            assert "controlled-ambient-value-never-log" not in json.dumps(event)
+            if event["phase"] == "parse":
+                assert event["requested_argv"][-3:] == [
+                    "--frontend-args",
+                    "--delombok-mode",
+                    "no-delombok",
+                ]
+            else:
+                assert effective["SCANIPY_CPG_BIN_PATH"] == str(Path(event["cwd"]) / "cpg.bin")
+            if event["phase"] == failed_phase:
+                assert event["returncode"] == 7
+                assert (
+                    tmp_path / "evidence" / event["stdout"]["path"]
+                ).read_bytes() == b"partial\x00"
+        assert row[side]["finding"]["status"] == "not_run"
+    assert all(call[3] is JoernEnvironmentProfile.JAVA_STATIC_V1 for call in backend.process_calls)
+
+
+def test_rejected_java_input_has_no_invented_effective_observation_or_private_value(
+    tmp_path, context, cases, monkeypatch
+):
+    case = first_case(cases, language="java")
+    backend = SharedFrontendBackend(cases, monkeypatch, rejected_input=True)
+    report, _ = run(tmp_path, context, cases, {case["case_id"]}, backend=backend)
+    row = next(item for item in report["cases"] if item["case_id"] == case["case_id"])
+    assert len(backend.calls) == 2
+    assert not backend.process_calls
+    assert all(row[side]["processing_status"] == "failed" for side in ("before", "after"))
+    assert not list((tmp_path / "evidence").rglob("process-*.json"))
+    for path in (tmp_path / "evidence").rglob("*.json"):
+        assert "controlled-private-input-never-log" not in path.read_text()
+
+
+@pytest.mark.parametrize("child_failure", [False, True])
+def test_process_evidence_write_loss_is_fatal_even_under_original_child_error(
+    tmp_path, context, cases, monkeypatch, child_failure
+):
+    case = first_case(cases, language="java")
+    child = subprocess.CalledProcessError(
+        9, ["/opt/joern/joern-parse"], output=b"child-out", stderr=b"child-err"
+    )
+    backend = SharedFrontendBackend(
+        cases, monkeypatch, failure=("parse", child) if child_failure else None
+    )
+    original_open = Path.open
+    failed_paths = []
+
+    def fail_one_write(path, mode="r", *args, **kwargs):
+        if mode == "xb" and path.name.endswith(".stdout.bin") and not failed_paths:
+            failed_paths.append(path)
+            raise OSError("controlled evidence disk failure")
+        return original_open(path, mode, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", fail_one_write)
+    expected = subprocess.CalledProcessError if child_failure else campaign.EvidenceStoreError
+    with pytest.raises(expected) as raised:
+        run(tmp_path, context, cases, {case["case_id"]}, backend=backend)
+    assert campaign._has_evidence_store_error(raised.value)
+    if child_failure:
+        assert raised.value is child
+        assert isinstance(child.__cause__, campaign.EvidenceStoreError)
+        assert child.stdout == b"child-out" and child.stderr == b"child-err"
+    assert len(backend.calls) == 1  # Infrastructure failure aborts the campaign.
+    assert len(failed_paths) == 1  # A later successful write must not mask the first loss.
+    assert not (tmp_path / "evidence/report.json").exists()
+    assert not (tmp_path / "evidence/gates.json").exists()
+    assert (tmp_path / "evidence/checkpoints/0000.json").is_file()
+
+
+def test_evidence_serialization_and_exception_cycles_are_fail_closed(tmp_path):
+    store = campaign.EvidenceStore(tmp_path / "evidence")
+    with pytest.raises(campaign.EvidenceStoreError):
+        store.json("invalid.json", {"number": float("nan")})
+    first, second = RuntimeError("first"), RuntimeError("second")
+    first.__cause__, second.__context__ = second, first
+    assert not campaign._has_evidence_store_error(first)
+    second.__cause__ = campaign.EvidenceStoreError("lost evidence")
+    assert campaign._has_evidence_store_error(first)
+    grouped = RuntimeError("child with multiple failures")
+    grouped.__cause__ = ExceptionGroup("failures", [ValueError("parse"), second])
+    assert campaign._has_evidence_store_error(grouped)
+
+
+@pytest.mark.parametrize("child_failure", [False, True])
+@pytest.mark.parametrize(
+    ("filename", "operation"),
+    [("cpg_export.json", "read_bytes"), ("cpg.bin", "read_bytes"), ("cpg.bin", "stat")],
+)
+def test_existing_output_observation_failure_is_fatal_and_preserves_child(
+    tmp_path, context, cases, monkeypatch, child_failure, filename, operation
+):
+    case = first_case(cases, language="java")
+    child = subprocess.CalledProcessError(9, ["/opt/joern/joern"], stderr=b"export failed")
+    backend = SharedFrontendBackend(
+        cases, monkeypatch, failure=("export", child) if child_failure else None
+    )
+    original = getattr(Path, operation)
+    failed_paths = []
+
+    def fail_observation(path, *args, **kwargs):
+        if (
+            len(backend.process_calls) == 2
+            and path.name == filename
+            and path.is_relative_to(tmp_path / "work")
+        ):
+            failed_paths.append(path)
+            raise PermissionError("controlled output observation failure")
+        return original(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, operation, fail_observation)
+    expected = subprocess.CalledProcessError if child_failure else campaign.EvidenceStoreError
+    with pytest.raises(expected) as raised:
+        run(tmp_path, context, cases, {case["case_id"]}, backend=backend)
+    assert campaign._has_evidence_store_error(raised.value)
+    if child_failure:
+        assert raised.value is child
+        assert isinstance(child.__cause__, campaign.EvidenceStoreError)
+        assert child.stderr == b"export failed"
+    assert len(backend.calls) == 1
+    assert failed_paths
+    assert not (tmp_path / "evidence/report.json").exists()
+    assert not (tmp_path / "evidence/gates.json").exists()
+
+
+@pytest.mark.parametrize("kind", ["directory", "symlink"])
+def test_output_retention_rejects_existing_nonregular_output(tmp_path, kind):
+    work = tmp_path / "work"
+    work.mkdir()
+    output = work / "cpg.bin"
+    if kind == "directory":
+        output.mkdir()
+    else:
+        output.symlink_to(tmp_path / "missing")
+    with pytest.raises(campaign.EvidenceStoreError, match="required Joern output evidence"):
+        campaign._retain_parse_outputs(
+            work, "case", campaign.EvidenceStore(tmp_path / "evidence"), []
+        )
+
+
+@pytest.mark.parametrize("error_type", [OSError, ValueError])
+def test_cli_preserves_evidence_failure_chain(tmp_path, monkeypatch, error_type):
+    child = error_type("controlled frontend failure")
+    evidence = campaign.EvidenceStoreError("controlled required evidence loss")
+
+    def fail(**kwargs):
+        raise child from evidence
+
+    monkeypatch.setattr(campaign, "run_campaign", fail)
+    monkeypatch.setattr(campaign, "read_json", lambda path: {})
+    with pytest.raises(error_type) as raised:
+        campaign.main(
+            [
+                "--execute",
+                "--output",
+                str(tmp_path / "evidence"),
+                "--work",
+                str(tmp_path / "work"),
+                "--context",
+                str(tmp_path / "context.json"),
+            ]
+        )
+    assert raised.value is child and child.__cause__ is evidence
+
+
+def test_child_observer_and_output_read_failures_all_survive(tmp_path, context, cases, monkeypatch):
+    case = first_case(cases, language="java")
+    child = subprocess.CalledProcessError(9, ["/opt/joern/joern-parse"], stderr=b"parse failed")
+    backend = SharedFrontendBackend(cases, monkeypatch, failure=("parse", child))
+    original_open, original_read = Path.open, Path.read_bytes
+
+    def fail_write(path, mode="r", *args, **kwargs):
+        if mode == "xb" and path.name.endswith(".stdout.bin"):
+            raise OSError("controlled process-evidence failure")
+        return original_open(path, mode, *args, **kwargs)
+
+    def fail_read(path):
+        if path.name == "cpg.bin" and path.is_relative_to(tmp_path / "work"):
+            raise PermissionError("controlled binary-evidence failure")
+        return original_read(path)
+
+    monkeypatch.setattr(Path, "open", fail_write)
+    monkeypatch.setattr(Path, "read_bytes", fail_read)
+    with pytest.raises(subprocess.CalledProcessError) as raised:
+        run(tmp_path, context, cases, {case["case_id"]}, backend=backend)
+    assert raised.value is child
+    assert isinstance(child.__cause__, ExceptionGroup)
+    assert len(child.__cause__.exceptions) == 2
+    assert all(
+        isinstance(error, campaign.EvidenceStoreError) for error in child.__cause__.exceptions
+    )
+    assert campaign._has_evidence_store_error(child)
+    assert child.stderr == b"parse failed"
+    assert not (tmp_path / "evidence/report.json").exists()
+
+
+def test_runtime_rejects_missing_java_safety_code_binding(context):
+    del context["code_files"]["tools/worker/joern_java_safety.py"]
+    with pytest.raises(ValueError, match="omitted a required production collaborator"):
+        campaign.runtime_observation(context, require_tools=False)
 
 
 @pytest.mark.parametrize("kind", ["finding_removal", "analysis_failure"])
@@ -358,7 +646,7 @@ def test_frontend_observer_preserves_actual_secure_run_results(tmp_path, monkeyp
     events = []
     commands = []
 
-    def fake_run(tool, argv, *, timeout_s, env, cwd):
+    def fake_run(tool, argv, *, timeout_s, env, cwd, environment_profile=None):
         commands.append((tool, argv, timeout_s, env, cwd))
         if tool == "joern":
             Path(env[frontend.ENV_EXPORT_JSON_PATH]).write_text('{"nodes":[],"edges":[]}')

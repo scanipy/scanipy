@@ -1,87 +1,98 @@
-# Evidence — refactor-invariance of `slice_fingerprint` on real CPGs (2026-08-31)
+# Recovered historical refactor report — labeled 2026-08-31
 
-**First empirical run of Algorithm 3 (`analysis/fingerprint.py`) against real Joern-parsed CPGs.**
-Harness: `scripts/validate_refactor_fingerprints.py` (Tier-2 track E).
-Corpus: `CMP-CORP-REFAC-01` v0.1.0, digest `sha256:0750651a…`.
-Scope: `--limit 8` → **56 pairs, 8 seeds** — the corpus is round-robined from **8 base templates**, so
-these 8 seeds cover **every distinct topology in the corpus**. Running all 50 seeds repeats the same
-8 topologies ~6× and adds no new topological evidence (see `CLAR-CORP-17`).
+Recovery note authored 2026-09-25. This is **historical evidence**, not a new
+Joern execution, corrected-corpus G0, or passing acceptance gate. The recovered
+raw outputs are preserved byte-for-byte in
+[the historical bundle](evidence/historical/2026-08-31/README.md).
 
-All 52 evaluated pairs were `strong`/`strong` (no `weak` fallbacks), so every verdict below **is**
-invariance evidence under INV-5.
+Main's historical PR #358 (`ac1575e`) independently contains those same original
+JSON, text summary, and authored write-up bytes. Reconciliation retains its
+original `docs/evidence/` report paths and this annotated interpretation; the
+unchanged original write-up remains in the historical bundle. This confirms
+another repository copy, not the missing runtime metadata or claim validity.
 
-## Result by refactor × language
+## What the artifacts actually report
 
-| Refactor | Expected | Java | Python | Verdict |
-|---|---|---|---|---|
-| `alpha-rename-local` | stay | **4/4 stayed** | **4/4 stayed** | ✅ **HOLDS (8/8)** |
-| `pdg-only-formatting` | stay | **4/4 stayed** | **4/4 stayed** | ✅ **HOLDS (8/8)** |
-| `fqn-move-package-rename` | stay | 0/4 — **all flipped** | 4/4 stayed | ❌ **FAILS in Java** |
-| `independent-reordering` | stay | 4/4 stayed ⚠️ | 0/4 — **all flipped** | ❌ **FAILS in Python** |
-| `pure-extract` | stay | 4/4 stayed ⚠️ | 1/4 stayed, **3 flipped** | ❌ **FAILS in Python** |
-| `genuine-fix` | flip | 3/4 flipped, **1 stayed** (seed-007) | 4/4 flipped | ⚠️ **7/8 — one missed fix** |
-| `aliasing-changing-extract` | flip | 4/4 **unevaluated** | 4/4 flipped | ⚠️ corpus defect (below) |
+The [machine report](evidence/historical/2026-08-31/refactor-invariance-topo8-2026-08-31.json)
+declares `RealFingerprinter(joern+algorithm-3)` against `CMP-CORP-REFAC-01`
+v0.1.0, digest
+`sha256:0750651a2d915dbdb672993b2a41d644f893f5e7407d260e5e28054b3f4e50f6`.
+It considers the first eight seeds, **56 pairs**, not all 350 pairs on record.
+The corpus declares eight base topologies repeated across 50 seeds.
 
-Totals: 40 as-expected · **12 contrary** · 4 unevaluated.
+The following table recounts per-pair fields from that original JSON. It agrees
+with the historical write-up's numeric table, but replaces its public-claim
+verdicts with observations only. Expected labels are historical corpus labels,
+not newly validated ground truth.
 
-## What may be claimed publicly
+| Historical refactor label | Expected | Java observations (4 pairs) | Python observations (4 pairs) |
+|---|---|---|---|
+| `alpha-rename-local` | stay | 4 stayed | 4 stayed |
+| `pdg-only-formatting` | stay | 4 stayed | 4 stayed |
+| `fqn-move-package-rename` | stay | 4 flipped | 4 stayed |
+| `independent-reordering` | stay | 4 stayed | 4 flipped |
+| `pure-extract` | stay | 4 stayed | 1 stayed, 3 flipped |
+| `genuine-fix` | flip | 3 flipped, 1 stayed (`seed-007`) | 4 flipped |
+| `aliasing-changing-extract` | flip | 4 unevaluated | 4 flipped |
 
-**Defensible (8/8, both languages):**
-- invariance under **local α-renaming**
-- invariance under **formatting-only changes**
+Recomputed totals: **40 as expected, 12 contrary, 4 unevaluated**; 30 stayed
+and 22 flipped among 52 evaluated pairs. All 52 evaluated comparisons are
+*labeled* strong/strong in the report. Four Java aliasing-change cases have
+`no-fingerprint-after`; those are neither computed flips nor proof of removal.
+The original emitted text summary agrees with these counts.
 
-**NOT defensible — do not claim:**
-- **file-move / package-rename** (fails in every Java topology)
-- **independent-statement reordering** (fails in every Python topology)
-- **extract-method** (fails in 3 of 4 Python topologies)
+## What recovery verifies, and what it does not
 
-**"A genuine fix flips the fingerprint" is 7/8, not absolute.** Java `seed-007`'s genuine fix left the
-fingerprint unchanged — a real false-negative: in that topology a fixed finding keeps the identity of
-the vulnerable one.
+Recovery checked source/destination SHA-256 and byte equality, unique case
+inventory, hash-comparison consistency, totals, and the language/refactor table.
+[recovery.yaml](evidence/historical/2026-08-31/recovery.yaml) records the transfer
+and unknown metadata. These checks establish that the preserved report is
+internally consistent and unchanged from the recovered files. They do not
+authenticate its original execution or validate its ground truth.
 
-## Two caveats that make the picture *worse*, not better
+The report does not bind an exact execution timestamp, executed code revision,
+resolved image digest, `S_version`, or cache/parse-count record. The historical
+date comes from artifact names and the original write-up. Current workspace
+revision or currently tagged image contents must not be substituted for the
+missing original values. Raw Joern exports and execution logs are not included
+in this bundle.
 
-1. **The Java "stayed" cells for `independent-reordering` and `pure-extract` are suspect.** Track E
-   found the corpus's `_inject_after_first_body` places statements at **class-body level** in Java,
-   which is not valid Java. Those "refactors" may be inert or unparsed rather than genuinely applied,
-   so their 4/4 "stayed" is plausibly **vacuous** — it should not be read as a pass.
-2. **`aliasing-changing-extract` is 4/4 unevaluated in Java** (`no-fingerprint-after`) for the same
-   reason. Reported, never counted as a result.
+## Current limitations superseding the old interpretation
 
-Taken together: only **α-rename** and **formatting** survive scrutiny in both languages.
+The [original authored write-up](evidence/historical/2026-08-31/original-writeup.md)
+is archived unchanged, including its old claim guidance. Its prose is not a
+current acceptance decision. In particular:
 
-## Why the failures are actionable
+- R03 in the [review backlog](REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md)
+  identifies invalid Java insertion, an inserted statement mislabeled as
+  reordering, unused helpers mislabeled as extraction, a Python comment
+  mislabeled as a module move, and alias modifications not feeding the sink.
+  Equal or different hashes on those fixtures do not establish the named
+  transformations' behavior.
+- R18 records an isomorphic-graph counterexample whose results are all labeled
+  `strong` but not invariant. A `strong` label alone cannot validate the
+  historical write-up's assertion that every evaluated result is canonical
+  invariance evidence.
+- The `seed-007` genuine-fix result is a historical unchanged fingerprint.
+  Establishing a security-correct fix and its expected result still requires
+  the R03 fixture audit; the old prose's unconditional false-negative diagnosis
+  is not re-certified here.
+- Eight repeated base topologies do not establish behavior on unseen programs
+  or satisfy the unresolved sourced-diversity bar in `CLAR-CORP-17`.
 
-The failures are **systematic per (refactor × language)**, not random — each maps to a normalisation
-pass that `analysis/fingerprint.py` documents as a **no-op**:
+Local-rename and formatting equality counts remain recorded observations, not
+newly approved public guarantees. All submitted claims need the corrected
+fixtures, canonicality work, and appropriate current acceptance evidence.
 
-| Failing case | Owning pass (currently a no-op) |
-|---|---|
-| Java FQN/package move | FQN normalisation — evidently does not normalise Java package qualifiers |
-| Python statement reorder | canonical topological reordering |
-| Python extract-method | summary-inlining normalisation |
+## Follow-up and reproduction status
 
-Implementing those three passes is a concrete, bounded path to widening the claim. Until then the
-honest claim set is the two that hold.
+Use the [evidence conventions](evidence/README.md) for all new runs. R03 must
+produce validated versioned fixtures, R04 must enforce report contents, R05
+must verify pinned reproduction commands, and the shared G0 gate must record
+the corrected baseline. R18/R20 and relevant integration gates remain required
+before full-submission conclusions.
 
-## Reproduce
-
-```bash
-# The snapshot image lacks PyYAML; add it once:
-#   FROM scanipy-snapshot:localtest
-#   RUN pip install --no-cache-dir pyyaml        # -> scanipy-t2run:latest
-docker run --rm --network none --entrypoint python \
-  -v "$PWD":/app:ro -v "$OUT":/job -e PYTHONPATH=/app -e HOME=/job -w /job \
-  scanipy-t2run:latest /app/scripts/validate_refactor_fingerprints.py \
-  --corpus-dir /app/tests/corpora/refactor --out /job/topo8.json \
-  --summary-out /job/topo8.txt --limit 8
-```
-
-~60–75 s per Joern parse; the 8-seed run is 64 parses. A full 50-seed run is ~400 parses (hours) and
-adds no new topologies.
-
-## Honest-labeling status
-
-These are **[EMPIRICAL]** measurements over a topology-thin corpus (8 distinct topologies), not a
-theorem. They constrain what Algorithm 3's per-refactor invariance claim may assert today; they do
-not establish behaviour on unseen topologies.
+The archived command uses mutable image tags and an unpinned PyYAML addition;
+it is an historical command record, not a verified recipe for the current
+workspace. No Joern command was executed to create this recovery note. No
+remediation task, submission claim, or release gate is marked complete here.
