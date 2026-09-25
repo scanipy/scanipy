@@ -48,6 +48,11 @@ Docker build, Joern process or scanned fixture was executed.
 
 From the reviewed checkout, with the verified uv executable already available:
 
+Use a trusted checkout with no concurrent modification during generation or
+verification. Path validation and later reads/writes are not atomic defenses
+against a hostile process replacing files between operations. Untrusted
+concurrent filesystem mutation requires a separate descriptor-based design.
+
 ```sh
 python3.11 workers/build/compile_snapshot_lock.py --uv /path/to/verified/uv
 python3.11 workers/build/compile_snapshot_lock.py --uv /path/to/verified/uv --check
