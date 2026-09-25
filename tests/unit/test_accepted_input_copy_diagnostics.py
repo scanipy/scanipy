@@ -1,4 +1,4 @@
-"""Copy-failure diagnostics only; never construct or launch the verifier runtime."""
+"""Bounded inert fixture copies/diagnostics; never build or launch a verifier runtime."""
 
 import os
 
@@ -11,12 +11,15 @@ pytestmark = pytest.mark.unit
 
 @pytest.fixture(autouse=True)
 def no_runtime_or_copy(monkeypatch):
+    original_copy = copying._copy_regular
+
     def forbidden(*args, **kwargs):
         raise AssertionError("diagnostics must not copy or launch a runtime")
 
     monkeypatch.setattr(copying, "_copy_regular", forbidden)
     monkeypatch.setattr(copying.transport, "run_bounded_process", forbidden)
     assert copying._DIAGNOSTIC_RUNTIME is None
+    return original_copy
 
 
 @pytest.mark.parametrize(
@@ -147,3 +150,279 @@ def test_copy_diagnostic_preserves_exact_admission_and_default_caps(monkeypatch)
         defaults.max_total_bytes,
         defaults.wall_seconds,
     ) == (10_000, 20_000, 64, 4096, 32 * 1024 * 1024, 128 * 1024 * 1024, 30.0)
+
+
+@pytest.fixture
+def static_archive_tree(tmp_path, monkeypatch, no_runtime_or_copy):
+    source = tmp_path / "stdlib"
+    config = source / "config-3.11-x86_64-linux-gnu"
+    config.mkdir(parents=True)
+    archive = config / "libpython3.11.a"
+    archive.write_bytes(b"four")
+    metadata = {"LIBPL": str(config), "LIBRARY": archive.name}
+    queried = []
+
+    def config_var(name):
+        queried.append(name)
+        return metadata[name]
+
+    monkeypatch.setattr(copying.sysconfig, "get_config_var", config_var)
+    # This fixture alone permits copying small inert bytes. Child launch remains poisoned.
+    monkeypatch.setattr(copying, "_copy_regular", no_runtime_or_copy)
+    return source, archive, metadata, queried
+
+
+def test_static_archive_exact_regular_omission_preserves_neighbors_and_accounting(
+    tmp_path, static_archive_tree, monkeypatch
+):
+    source, archive, _, queried = static_archive_tree
+    neighbors = {"Makefile": b"mk", "neighbor.a": b"ar", "core.py": b"py"}
+    for name, raw in neighbors.items():
+        (archive.parent / name).write_bytes(raw)
+    destination = tmp_path / "copy"
+    budget = copying._CopyBudget(max_file_bytes=2, max_total_bytes=6, max_files=3)
+    observed = []
+    original_observe = budget.observe
+
+    def observe(path, depth):
+        observed.append((path, depth))
+        return original_observe(path, depth)
+
+    monkeypatch.setattr(budget, "observe", observe)
+    copying._private_copy_tree(source, destination, budget, stdlib_root=True)
+    assert queried == ["LIBPL", "LIBRARY"]
+    assert (archive, 2) in observed
+    assert budget.entries == len(observed) == len(source.parents) + 6
+    assert (budget.files, budget.total_bytes) == (3, 6)
+    copied_config = destination / archive.parent.name
+    assert sorted(path.name for path in copied_config.iterdir()) == sorted(neighbors)
+    for name, raw in neighbors.items():
+        assert (copied_config / name).read_bytes() == raw
+    assert not (copied_config / archive.name).exists()
+
+
+def test_static_archive_observed_ci_size_is_not_read_or_copied(
+    tmp_path, static_archive_tree, monkeypatch
+):
+    source, archive, _, _ = static_archive_tree
+    # Sparse inert fixture: repeat the observed CI length without allocating or
+    # reading that payload. This does not reproduce the hosted Python distribution.
+    os.truncate(archive, 48_157_564)
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("the exact static archive must not be opened/copied")
+
+    monkeypatch.setattr(copying, "_copy_regular", forbidden)
+    budget = copying._CopyBudget(max_files=0, max_total_bytes=0)
+    copying._private_copy_tree(source, tmp_path / "copy", budget, stdlib_root=True)
+    assert (budget.files, budget.total_bytes) == (0, 0)
+    assert list((tmp_path / "copy" / archive.parent.name).iterdir()) == []
+
+
+def test_static_archive_candidate_selection_is_lexical_only(static_archive_tree, monkeypatch):
+    source, archive, _, _ = static_archive_tree
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("candidate selection must not resolve/read/stat metadata paths")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(copying.Path, "resolve", forbidden)
+        patch.setattr(copying.Path, "stat", forbidden)
+        patch.setattr(copying.Path, "read_bytes", forbidden)
+        patch.setattr(copying.os, "open", forbidden)
+        candidate = copying._stdlib_static_archive(source, copying._CopyBudget())
+    assert candidate == archive.relative_to(source)
+
+
+@pytest.mark.parametrize("kind", ["same-basename", "unrelated-large-file"])
+def test_static_archive_omission_does_not_exempt_other_large_files(
+    tmp_path, static_archive_tree, kind
+):
+    source, archive, _, _ = static_archive_tree
+    other = source / archive.name if kind == "same-basename" else archive.parent / "unrelated.a"
+    other.write_bytes(b"other")
+    destination = tmp_path / "copy"
+    with pytest.raises(ValueError, match=r"^diagnostic-copy-limit ") as caught:
+        copying._private_copy_tree(
+            source, destination, copying._CopyBudget(max_file_bytes=3), stdlib_root=True
+        )
+    assert f"relative={str(other.relative_to(source))!a}" in str(caught.value)
+    assert "exceeded_file_bytes=true" in str(caught.value)
+    assert not destination.exists()
+
+
+@pytest.mark.parametrize("phase", ["tree", "application", "dependency"])
+def test_static_archive_omission_never_applies_to_other_copy_phases(
+    tmp_path, static_archive_tree, phase
+):
+    source, archive, _, queried = static_archive_tree
+    destination = tmp_path / "copy"
+    with pytest.raises(ValueError, match=r"^diagnostic-copy-limit ") as caught:
+        copying._private_copy_tree(
+            source, destination, copying._CopyBudget(max_file_bytes=3), copy_phase=phase
+        )
+    assert queried == []
+    assert f"phase={phase} relative={str(archive.relative_to(source))!a}" in str(caught.value)
+    assert not destination.exists()
+
+
+def test_static_archive_direct_file_copy_has_no_exemption(tmp_path, static_archive_tree):
+    _, archive, _, queried = static_archive_tree
+    with pytest.raises(ValueError, match=r"^diagnostic-copy-limit "):
+        copying._private_copy_file(
+            archive, tmp_path / "copy", copying._CopyBudget(max_file_bytes=3)
+        )
+    assert queried == []
+    assert not (tmp_path / "copy").exists()
+
+
+@pytest.mark.parametrize("limits", [{"max_files": 0}, {"max_total_bytes": 1}])
+def test_static_archive_omission_preserves_copied_file_and_total_limits(
+    tmp_path, static_archive_tree, limits
+):
+    source, archive, _, _ = static_archive_tree
+    (archive.parent / "Makefile").write_bytes(b"mk")
+    budget = copying._CopyBudget(max_file_bytes=2, **limits)
+    with pytest.raises(ValueError, match=r"^diagnostic-copy-limit ") as caught:
+        copying._private_copy_tree(source, tmp_path / "copy", budget, stdlib_root=True)
+    assert "Makefile'" in str(caught.value)
+    assert (budget.files, budget.total_bytes) == (1, 2)
+    assert not (tmp_path / "copy").exists()
+
+
+@pytest.mark.parametrize("kind", ["symlink", "directory", "fifo", "ancestor"])
+def test_static_archive_candidate_and_ancestors_must_remain_non_symlink_regular_leaf(
+    tmp_path, static_archive_tree, kind
+):
+    source, archive, metadata, _ = static_archive_tree
+    archive.unlink()
+    if kind == "symlink":
+        target = tmp_path / "outside"
+        target.write_bytes(b"outside")
+        archive.symlink_to(target)
+    elif kind == "directory":
+        archive.mkdir()
+    elif kind == "fifo":
+        os.mkfifo(archive)
+    else:
+        actual = source / "actual-config"
+        archive.parent.rename(actual)
+        (actual / archive.name).write_bytes(b"four")
+        archive.parent.symlink_to(actual, target_is_directory=True)
+        assert metadata["LIBPL"] == str(archive.parent)
+    with pytest.raises(ValueError, match="diagnostic-copy-nonregular"):
+        copying._private_copy_tree(
+            source, tmp_path / "copy", copying._CopyBudget(), stdlib_root=True
+        )
+    assert not (tmp_path / "copy").exists()
+
+
+def test_static_archive_missing_leaf_does_not_hide_neighbors(tmp_path, static_archive_tree):
+    source, archive, _, _ = static_archive_tree
+    archive.unlink()
+    (archive.parent / "Makefile").write_bytes(b"mk")
+    copying._private_copy_tree(
+        source, tmp_path / "copy", copying._CopyBudget(max_total_bytes=2), stdlib_root=True
+    )
+    assert (tmp_path / "copy" / archive.parent.name / "Makefile").read_bytes() == b"mk"
+
+
+@pytest.mark.parametrize(
+    ("field", "bad_value"),
+    [
+        ("LIBPL", None),
+        ("LIBPL", 3),
+        ("LIBPL", "relative/config"),
+        ("LIBPL", "/outside/config"),
+        ("LIBPL", "/stdlib/../config"),
+        ("LIBPL", "/" + "x" * 4096),
+        ("LIBPL", "/bad\x00config"),
+        ("LIBPL", "/bad\udcffconfig"),
+        ("LIBRARY", None),
+        ("LIBRARY", 3),
+        ("LIBRARY", ""),
+        ("LIBRARY", ".."),
+        ("LIBRARY", "../libpython3.11.a"),
+        ("LIBRARY", "/libpython3.11.a"),
+        ("LIBRARY", "libpython3.11.so"),
+        ("LIBRARY", "x" * 4096 + ".a"),
+        ("LIBRARY", "bad\x00.a"),
+        ("LIBRARY", "bad\\name.a"),
+        ("LIBRARY", "bad\udcff.a"),
+    ],
+    ids=[
+        "directory-none",
+        "directory-number",
+        "directory-relative",
+        "directory-outside",
+        "directory-traversal",
+        "directory-long",
+        "directory-nul",
+        "directory-surrogate",
+        "library-none",
+        "library-number",
+        "library-empty",
+        "library-parent",
+        "library-traversal",
+        "library-absolute",
+        "library-shared",
+        "library-long",
+        "library-nul",
+        "library-backslash",
+        "library-surrogate",
+    ],
+)
+def test_static_archive_invalid_metadata_grants_no_exemption(
+    tmp_path, static_archive_tree, field, bad_value
+):
+    source, _, metadata, _ = static_archive_tree
+    metadata[field] = bad_value
+    with pytest.raises(ValueError, match=r"^diagnostic-copy-limit "):
+        copying._private_copy_tree(
+            source, tmp_path / "copy", copying._CopyBudget(max_file_bytes=3), stdlib_root=True
+        )
+    assert not (tmp_path / "copy").exists()
+
+
+@pytest.mark.parametrize("spelling", ["dot", "parent", "double-slash", "trailing-slash"])
+def test_static_archive_non_normalized_metadata_does_not_alias_exact_leaf(
+    tmp_path, static_archive_tree, spelling
+):
+    source, archive, metadata, _ = static_archive_tree
+    metadata["LIBPL"] = {
+        "dot": str(source) + "/./" + archive.parent.name,
+        "parent": str(archive.parent) + "/../" + archive.parent.name,
+        "double-slash": str(source) + "//" + archive.parent.name,
+        "trailing-slash": str(archive.parent) + "/",
+    }[spelling]
+    with pytest.raises(ValueError, match=r"^diagnostic-copy-limit "):
+        copying._private_copy_tree(
+            source, tmp_path / "copy", copying._CopyBudget(max_file_bytes=3), stdlib_root=True
+        )
+    assert not (tmp_path / "copy").exists()
+
+
+@pytest.mark.parametrize("limit", ["entries", "depth", "path", "deadline"])
+def test_static_archive_still_observed_before_omission(
+    tmp_path, static_archive_tree, monkeypatch, limit
+):
+    source, archive, _, _ = static_archive_tree
+    budget = copying._CopyBudget()
+    if limit == "entries":
+        budget.max_entries = len(source.parents) + 2
+    elif limit == "depth":
+        budget.max_depth = 1
+    elif limit == "path":
+        budget.max_path_bytes = len(str(archive)) - 1
+    else:
+        original_observe = budget.observe
+
+        def observe(path, depth):
+            if path == archive:
+                budget.started -= budget.wall_seconds
+            return original_observe(path, depth)
+
+        monkeypatch.setattr(budget, "observe", observe)
+    with pytest.raises(ValueError, match=r"^diagnostic-copy-(limit|deadline)"):
+        copying._private_copy_tree(source, tmp_path / "copy", budget, stdlib_root=True)
+    assert not (tmp_path / "copy").exists()

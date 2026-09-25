@@ -169,14 +169,49 @@ def _copy_regular(source, destination, observed, budget, *, executable=False):
     budget.check()
 
 
+def _stdlib_static_archive(source, budget):
+    # Interpreter-owned metadata selects one development archive, not a generic
+    # config-directory or *.a exclusion. Selection is lexical: never resolve links.
+    directory = sysconfig.get_config_var("LIBPL")
+    library = sysconfig.get_config_var("LIBRARY")
+    for value in (directory, library):
+        if type(value) is not str or not value or len(value) > budget.max_path_bytes:
+            return None
+        try:
+            if len(value.encode("utf-8")) > budget.max_path_bytes:
+                return None
+        except UnicodeEncodeError:
+            return None
+        if any(ord(char) < 32 or ord(char) == 127 for char in value) or "\\" in value:
+            return None
+    parent = Path(directory)
+    if not parent.is_absolute() or str(parent) != directory or ".." in parent.parts:
+        return None
+    if library != Path(library).name or not library.endswith(".a") or library == ".a":
+        return None
+    try:
+        relative = parent.relative_to(source) / library
+    except ValueError:
+        return None
+    if len(str(relative).encode("utf-8")) > budget.max_path_bytes:
+        return None
+    return relative
+
+
 def _private_copy_tree(source, destination, budget, *, stdlib_root=False, copy_phase="tree"):
     # Only fixed trusted fixture roots. Reject source symlinks; omit caches to
     # create a fresh diagnostic distribution, not a complete installed inventory.
     records = []
     _copy_source_ancestors(source, budget)
+    static_archive = _stdlib_static_archive(source, budget) if stdlib_root else None
 
     def preflight(path, relative, depth):
         observed = budget.observe(path, depth)
+        if relative == static_archive:
+            if not stat.S_ISREG(observed.st_mode):
+                raise ValueError("diagnostic-copy-nonregular")
+            # Observed entry/depth/path/time remain charged; no bytes are copied.
+            return
         if stat.S_ISREG(observed.st_mode):
             budget.reserve(
                 observed,
