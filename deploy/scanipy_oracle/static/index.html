@@ -1,270 +1,58 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Scanipy — self-hosted SAST</title>
-<style>
-  :root {
-    --bg: #0b0e14; --panel: #121722; --panel2: #171e2c;
-    --line: #232c3f; --text: #e6ebf4; --dim: #8a94a8;
-    --accent: #4f8ef7; --ok: #3fca8c; --oracle: #c48ef7;
-    --crit: #f7564f; --high: #f78e4f; --med: #f7c94f;
-    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  }
-  * { box-sizing: border-box; margin: 0; }
-  body {
-    background: var(--bg); color: var(--text);
-    font: 15px/1.55 -apple-system, "Segoe UI", Inter, Roboto, sans-serif;
-    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-    padding: 48px 20px 80px;
-  }
-  .wrap { width: 100%; max-width: 880px; }
-  header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 6px; }
-  .logo { font-size: 26px; font-weight: 700; letter-spacing: .5px; }
-  .logo span { color: var(--accent); }
-  .tag { color: var(--dim); font-size: 14px; }
-  .sub { color: var(--dim); margin: 4px 0 28px; font-size: 14px; }
-  .sub b { color: var(--oracle); font-weight: 600; }
-
-  .scanbar { display: flex; gap: 10px; }
-  .scanbar input {
-    flex: 1; background: var(--panel); border: 1px solid var(--line);
-    border-radius: 10px; padding: 14px 16px; color: var(--text);
-    font: 15px var(--mono); outline: none; transition: border-color .15s;
-  }
-  .scanbar input:focus { border-color: var(--accent); }
-  .scanbar button {
-    background: var(--accent); border: 0; border-radius: 10px;
-    color: #fff; font-size: 15px; font-weight: 600; padding: 0 26px;
-    cursor: pointer; transition: filter .15s;
-  }
-  .scanbar button:hover { filter: brightness(1.1); }
-  .scanbar button:disabled { filter: grayscale(.6); cursor: default; }
-  .hint { color: var(--dim); font-size: 12.5px; margin-top: 8px; }
-  .hint code { font-family: var(--mono); color: #aab6cc; cursor: pointer; }
-  .hint code:hover { color: var(--accent); }
-
-  .status { display: none; margin-top: 34px; align-items: center; gap: 14px; }
-  .spinner {
-    width: 20px; height: 20px; border-radius: 50%;
-    border: 2.5px solid var(--line); border-top-color: var(--accent);
-    animation: spin .8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .status .phase { font-size: 15px; }
-  .status .phase b { color: var(--accent); font-weight: 600; }
-  .steps { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
-  .step {
-    font-size: 12.5px; color: var(--dim); border: 1px solid var(--line);
-    border-radius: 999px; padding: 4px 12px; background: var(--panel);
-  }
-  .step.active { color: var(--accent); border-color: var(--accent); }
-  .step.done { color: var(--ok); border-color: var(--ok); }
-
-  .error {
-    display: none; margin-top: 30px; background: #2a1518;
-    border: 1px solid #5c2a2e; border-radius: 10px; padding: 14px 18px;
-    color: #f2b8bc; font-family: var(--mono); font-size: 13px;
-    white-space: pre-wrap; word-break: break-word;
-  }
-
-  .results { display: none; margin-top: 38px; }
-  .summary { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
-  .count { font-size: 22px; font-weight: 700; }
-  .count.bad { color: var(--crit); } .count.good { color: var(--ok); }
-  .stats { display: flex; gap: 20px; color: var(--dim); font-size: 13px; margin: 4px 0 22px; flex-wrap: wrap; }
-  .stats b { color: var(--text); font-weight: 600; }
-  .stats .mono { font-family: var(--mono); font-size: 11.5px; }
-
-  .finding {
-    background: var(--panel); border: 1px solid var(--line);
-    border-radius: 12px; padding: 18px 20px; margin-bottom: 14px;
-  }
-  .fhead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .sev {
-    font-size: 11.5px; font-weight: 700; letter-spacing: .8px;
-    border-radius: 6px; padding: 3px 9px; text-transform: uppercase; color: #0b0e14;
-  }
-  .sev.critical { background: var(--crit); } .sev.high { background: var(--high); }
-  .sev.medium { background: var(--med); } .sev.low { background: var(--dim); }
-  .rule { font-weight: 650; font-size: 15.5px; }
-  .cwe { font-family: var(--mono); font-size: 12px; color: var(--dim); }
-  .origin {
-    margin-left: auto; font-size: 11px; color: var(--oracle);
-    border: 1px solid var(--oracle); border-radius: 999px; padding: 2px 10px;
-    white-space: nowrap;
-  }
-  .loc { font-family: var(--mono); font-size: 13px; color: var(--accent); margin-top: 8px; }
-  .msg { color: var(--dim); font-size: 13.5px; margin-top: 6px; }
-  pre.snippet {
-    background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
-    margin-top: 12px; padding: 12px 14px; overflow-x: auto;
-    font: 12.5px/1.6 var(--mono); color: #dbe3f1;
-  }
-  pre.snippet .hl { background: rgba(247,86,79,.16); display: inline-block; width: 100%; }
-
-  footer { margin-top: 56px; color: #5b6478; font-size: 12.5px; text-align: center; max-width: 720px; }
-  footer b { color: var(--dim); }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scanipy — scanning unavailable</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0b0e14; color: #e6ebf4; line-height: 1.6; }
+    main { width: min(760px, 100%); margin: 56px auto; padding: 0 24px; }
+    h1 { margin-bottom: 4px; font-size: 28px; }
+    h1 span { color: #79a8ff; }
+    .subtitle, footer { color: #a1adbf; }
+    section { margin: 28px 0; padding: 24px; background: #121722;
+      border: 1px solid #3c4555; border-radius: 12px; }
+    h2 { margin-top: 0; font-size: 21px; color: #f4ce84; }
+    label { display: block; margin: 20px 0 8px; }
+    .scanbar { display: flex; gap: 12px; flex-wrap: wrap; }
+    input { flex: 1; min-width: 220px; }
+    input, button { padding: 12px; border: 1px solid #3c4555; border-radius: 8px;
+      background: #171e2c; color: #a1adbf; font: inherit; cursor: not-allowed; }
+    code { color: #b9cef3; overflow-wrap: anywhere; }
+    a { color: #9bbdff; }
+    footer { font-size: 14px; }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <header><div class="logo">scani<span>py</span></div><div class="tag">self-hosted SAST · one-command Docker</div></header>
-  <div class="sub">Paste a public GitHub repository. Scanipy scans it with established
-      analysis engines and returns findings labeled <b>oracle-passthrough</b>. The
-      deterministic-core (IFDS / code-property-graph) engine is in progress and not on this path yet.</div>
-
-  <div class="scanbar">
-    <input id="url" type="text" spellcheck="false"
-           placeholder="https://github.com/owner/repository">
-    <button id="go">Scan</button>
-  </div>
-  <div class="hint">Python repositories · try
-    <code id="example">https://github.com/michealkeines/Vulnerable-API</code></div>
-
-  <div class="status" id="status">
-    <div class="spinner"></div>
-    <div class="phase" id="phaseText"><b>Cloning</b> repository…</div>
-  </div>
-  <div class="steps" id="steps" style="display:none">
-    <div class="step" data-k="cloning">1 · Clone</div>
-    <div class="step" data-k="detecting">2 · Scan (Semgrep oracle)</div>
-    <div class="step" data-k="done">3 · Findings</div>
-  </div>
-
-  <div class="error" id="error"></div>
-
-  <div class="results" id="results">
-    <div class="summary"><div class="count" id="count"></div></div>
-    <div class="stats" id="stats"></div>
-    <div id="list"></div>
-  </div>
-
-  <footer>
-    Analysis runs inside the Scanipy container and the scanned code is never executed.
-    Findings on this path are <b>oracle-passthrough</b> (engine: Semgrep) and carry a
-    <b>weak</b> same-source fingerprint — a stable id, not a canonical-graph claim.
-    Byte-identical reproducibility and refactor-invariant identity are separate
-    guarantees delivered by the deterministic-core engine, which is staged.
-  </footer>
-</div>
-
-<script>
-const $ = id => document.getElementById(id);
-const PHASE_TEXT = {
-  queued:   "<b>Queued</b>…",
-  cloning:  "<b>Cloning</b> repository…",
-  detecting:"<b>Scanning</b> with the Semgrep oracle…",
-};
-const PHASE_ORDER = ["cloning","detecting","done"];
-let poll = null, polls = 0;
-
-$("example").onclick = () => { $("url").value = $("example").textContent; };
-$("url").addEventListener("keydown", e => { if (e.key === "Enter") start(); });
-$("go").onclick = start;
-
-async function start() {
-  const url = $("url").value.trim();
-  if (!url) return;
-  $("go").disabled = true;
-  $("results").style.display = "none";
-  $("error").style.display = "none";
-  $("status").style.display = "flex";
-  $("steps").style.display = "flex";
-  setPhase("queued");
-  try {
-    const r = await fetch("/api/scan", { method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({repo_url: url}) });
-    const j = await r.json();
-    if (!r.ok) throw new Error(j.error || "scan request failed");
-    polls = 0;
-    poll = setInterval(() => check(j.id), 1200);
-  } catch (e) { fail(e.message); }
-}
-
-const MAX_POLLS = 200;   // 200 × 1.2s ≈ 4 min before the client gives up
-
-async function check(id) {
-  let r, j;
-  try { r = await fetch("/api/scan/" + id); j = await r.json(); }
-  catch { if (++polls > MAX_POLLS) endPoll("scan timed out — no response from the server"); return; }
-  if (!r.ok) { endPoll(j.error || "scan not found"); return; }
-  if (j.status === "running") {
-    setPhase(j.phase);
-    if (++polls > MAX_POLLS) endPoll("scan is taking too long — giving up");
-    return;
-  }
-  clearInterval(poll);
-  $("go").disabled = false;
-  $("status").style.display = "none";
-  if (j.status === "error") { fail(j.error); return; }
-  setPhase("done");
-  render(j);
-}
-
-function endPoll(msg) { clearInterval(poll); $("go").disabled = false; $("status").style.display = "none"; fail(msg); }
-
-function setPhase(p) {
-  $("phaseText").innerHTML = PHASE_TEXT[p] || "<b>Working</b>…";
-  const idx = PHASE_ORDER.indexOf(p === "queued" ? "cloning" : p);
-  document.querySelectorAll(".step").forEach(el => {
-    const i = PHASE_ORDER.indexOf(el.dataset.k);
-    el.className = "step" + (i < idx ? " done" : i === idx ? (p === "done" ? " done" : " active") : "");
-  });
-}
-
-function fail(msg) {
-  clearInterval(poll);
-  $("go").disabled = false;
-  $("status").style.display = "none";
-  $("steps").style.display = "none";
-  $("error").textContent = msg;
-  $("error").style.display = "block";
-}
-
-function esc(s) { return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
-
-function render(j) {
-  const f = j.findings || [];
-  const s = j.stats || {};
-  if (!f.length && s.files === 0) {
-    $("count").textContent = "No Python files found — nothing was scanned";
-    $("count").className = "count good";
-  } else {
-    $("count").textContent = f.length ? `${f.length} finding${f.length === 1 ? "" : "s"}` : "No findings";
-    $("count").className = "count " + (f.length ? "bad" : "good");
-  }
-  $("stats").innerHTML =
-    (s.files    != null ? `<div><b>${s.files}</b> Python files scanned</div>` : "") +
-    (s.duration_s != null ? `<div><b>${s.duration_s}s</b> scan time</div>` : "") +
-    (j.commit_sha ? `<div class="mono">commit ${esc(String(j.commit_sha).slice(0,10))}</div>` : "") +
-    (j.env_digest ? `<div class="mono">env ${esc(String(j.env_digest).slice(0,19))}…</div>` : "");
-  $("list").innerHTML = f.map(x => `
-    <div class="finding">
-      <div class="fhead">
-        <span class="sev ${esc((x.severity || "high").toLowerCase())}">${esc(x.severity || "high")}</span>
-        <span class="rule">${esc(x.title || x.rule_id || "Finding")}</span>
-        ${x.cwe ? `<span class="cwe">${esc(x.cwe)}</span>` : ""}
-        <span class="origin">${esc(x.origin || "oracle-passthrough")}</span>
+  <main>
+    <h1>scani<span>py</span></h1>
+    <p class="subtitle">Legacy Docker application · historical read API</p>
+    <section aria-labelledby="availability">
+      <h2 id="availability">New scans are unavailable</h2>
+      <p>The legacy native scan path is disabled while the reviewed source-capture
+        and worker replacement is connected. No repository is submitted or scanned
+        from this page.</p>
+      <label for="url">Repository URL</label>
+      <div class="scanbar">
+        <input id="url" type="text" disabled aria-describedby="availability"
+          placeholder="Scanning is not available">
+        <button id="go" type="button" disabled>Scan unavailable</button>
       </div>
-      <div class="loc">${esc(x.file || "?")}:${esc(x.line ?? "?")}</div>
-      ${x.message ? `<div class="msg">${esc(x.message)}</div>` : ""}
-      ${x.snippet ? `<pre class="snippet">${snippetHtml(x)}</pre>` : ""}
-    </div>`).join("");
-  $("results").style.display = "block";
-}
-
-function snippetHtml(x) {
-  const lines = String(x.snippet).split("\n");
-  const first = x.snippet_start_line ?? x.line;
-  return lines.map((ln, i) => {
-    const n = first != null ? String(first + i).padStart(4) + "  " : "";
-    const row = esc(n + ln);
-    return (first != null && first + i === x.line) ? `<span class="hl">${row}</span>` : row;
-  }).join("\n");
-}
-</script>
+    </section>
+    <p>Existing stored scans remain available through
+      <code>GET /api/scan/{scan_id}</code>. Historical records retain their
+      original metadata; they are not upgraded to new identity or provenance
+      guarantees by this change.</p>
+    <p><a href="/healthz">Application liveness and capability status</a></p>
+    <footer>
+      <p>A live application does not mean scanning is ready. This containment is
+        not the completed Black Hat demo, a verified native analysis environment,
+        or evidence of refactor-invariant identity or reproducibility.</p>
+      <p>The legacy read API has no authentication. Keep access local or use your
+        own authenticated access boundary. Existing data is not deleted.</p>
+    </footer>
+  </main>
 </body>
 </html>

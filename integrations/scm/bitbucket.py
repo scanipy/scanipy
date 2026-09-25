@@ -42,6 +42,7 @@ from integrations.scm.base import (
     SCMTransientError,
     WebhookSubscription,
 )
+from integrations.scm.native_acquisition import refuse_native_git_acquisition
 
 __all__ = [
     "AsyncHTTPTransport",
@@ -87,22 +88,8 @@ GitRunner = Callable[[Sequence[str], Path], Awaitable[tuple[int, str, str]]]
 
 
 async def _default_git_runner(argv: Sequence[str], cwd: Path) -> tuple[int, str, str]:
-    """Default git runner: exec the pinned `git` binary via asyncio subprocess."""
-    import asyncio
-
-    proc = await asyncio.create_subprocess_exec(
-        "git",
-        *argv,
-        cwd=str(cwd),
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-    out, err = await proc.communicate()
-    return (
-        proc.returncode if proc.returncode is not None else -1,
-        out.decode("utf-8", "replace"),
-        err.decode("utf-8", "replace"),
-    )
+    """Unavailable default; direct calls also refuse before any native I/O."""
+    refuse_native_git_acquisition()
 
 
 class BitbucketConnector(SCMConnector):
@@ -124,6 +111,10 @@ class BitbucketConnector(SCMConnector):
         self._api_base_url = api_base_url.rstrip("/")
         self._retry_policy = retry_policy if retry_policy is not None else BITBUCKET_DEFAULT
         self._git_runner: GitRunner = git_runner if git_runner is not None else _default_git_runner
+        # Explicitly passing the disabled default is still the default route.
+        # Other injected Python runners are trusted collaborators, not a
+        # sanctioned production no-execution profile.
+        self._explicit_git_runner = git_runner is not None and git_runner is not _default_git_runner
 
     # ---- internal REST plumbing -------------------------------------------
 
@@ -250,6 +241,8 @@ class BitbucketConnector(SCMConnector):
         shallow: bool = True,
     ) -> CloneMetadata:
         """Materialise the working tree at `commit_sha` into `dest_dir` (DOC §3.2)."""
+        if not self._explicit_git_runner:
+            refuse_native_git_acquisition()
         dest_dir.mkdir(parents=True, exist_ok=True)
         authed_url = self._authed_clone_url(repo_ref.clone_url)
 

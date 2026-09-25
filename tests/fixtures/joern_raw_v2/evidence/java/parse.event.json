@@ -1,0 +1,20 @@
+{
+  "argv": [
+    "/opt/joern/joern-parse",
+    "--language",
+    "javasrc",
+    "--output",
+    "/job/java/cpg.bin",
+    "/repo/tests/fixtures/joern_raw_v2/java"
+  ],
+  "cwd": "/job/java",
+  "elapsed_seconds": 11.654362153727561,
+  "env": {
+    "JAVA_HOME": "/opt/temurin-jre",
+    "JAVA_TOOL_OPTIONS": "-Xmx1536m -XX:ActiveProcessorCount=2 -Duser.home=/job/java -Djava.io.tmpdir=/job/java/tmp",
+    "PATH": "/opt/joern:/opt/joern/bin:/opt/temurin-jre/bin:/usr/bin:/usr/local/bin",
+    "TMPDIR": "/job/java/tmp"
+  },
+  "returncode": 0,
+  "timeout_s": 120
+}
