@@ -458,6 +458,15 @@ def _stamp(info: os.stat_result) -> tuple[int, ...]:
     )
 
 
+def _ancestor_identity(chain: tuple[tuple[int, ...], ...]) -> tuple[tuple[int, ...], ...]:
+    """Keep ancestor identity/security, not unrelated sibling namespace metadata.
+
+    The original full stamps stay recorded. Measured root/descendant and
+    executable/worker leaf comparisons separately require all nine fields.
+    """
+    return tuple((stamp[0], stamp[1], stamp[2], stamp[7], stamp[8]) for stamp in chain)
+
+
 def _safe(info: os.stat_result, *, directory: bool, temporary_ancestor: bool = False) -> None:
     _require(stat.S_ISDIR(info.st_mode) if directory else stat.S_ISREG(info.st_mode), "unsafe-path")
     _require(info.st_uid in (0, os.geteuid()), "unsafe-path")
@@ -597,14 +606,22 @@ def _measure(doc: dict[str, Any], expected: RuntimeArtifactBindings, budget: _Bu
     for row, binding, previous in zip(doc["roots"], expected.roots, observed_roots, strict=True):
         with _directory(binding.path, budget) as (root, chain):
             current = _walk(root, row, budget, read=False)
-            _require((chain, current) == previous, "changed")
+            _require(
+                _ancestor_identity(chain) == _ancestor_identity(previous[0])
+                and current == previous[1],
+                "changed",
+            )
     for role, previous_runtime in zip(("executable", "worker"), runtime_observations, strict=True):
         path = getattr(expected, role).path
         with _directory(path.parent, budget) as (parent, chain):
             budget.entry()
             info = os.stat(path.name, dir_fd=parent, follow_symlinks=False)
             _safe(info, directory=False)
-            _require((chain, _stamp(info)) == previous_runtime, "changed")
+            _require(
+                _ancestor_identity(chain) == _ancestor_identity(previous_runtime[0])
+                and _stamp(info) == previous_runtime[1],
+                "changed",
+            )
 
 
 def require_installed_runtime_artifacts(
