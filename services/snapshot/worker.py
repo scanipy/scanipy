@@ -20,16 +20,17 @@ verified hermetically here:
    refuses to start, because INV-2 forbids running analysis against an unpinned
    ``Env`` (DOC §7 — "INV-2 absolutely requires a real digest").
 
-2. **Argv allowlist (``AC-SNAP-05a``).** Every pinned-tool (``joern`` / ``codeql``
-   / ``git``) invocation routes through :func:`tools.worker.secure_subprocess.secure_run`,
+2. **Argv allowlist (``AC-SNAP-05a``).** Every pinned-tool (``joern`` / ``codeql``)
+   invocation routes through :func:`tools.worker.secure_subprocess.secure_run`,
    re-exported here, which rejects any non-sanctioned flag fail-closed before a
    subprocess is spawned (``shell=False`` always).
 
-BOOTSTRAP EXECUTE LOOP (CLAR-SNAP-04 — first-real-scan plan, worktree wf-2):
-:func:`run_execute_loop` now runs the real DOC §6.2 sequence for a **first-ever
-(no-parent) snapshot only**: SQS dequeue → real ``git`` clone via
-:func:`tools.worker.secure_subprocess.secure_run` (argv-allowlisted) → real
-``CMP-SNAP-03`` :func:`services.snapshot.cw_detect.detect` → a bootstrap
+BOOTSTRAP EXECUTE LOOP (current #395 containment): default acquisition is
+unavailable and fails before staging. Native Git is also refused by the shared
+wrapper. See docs/bhmea/GIT-SOURCE-ACQUISITION.md. An explicitly injected trusted
+``SourceMaterializer`` permits controlled downstream tests, not production
+acquisition or source-custody approval. Their sequence is fixture materialization
+→ real ``CMP-SNAP-03`` :func:`services.snapshot.cw_detect.detect` → a bootstrap
 ``source -> analysis.ordering.CPG`` full parse → upload the four bootstrap-mode
 artifacts to S3 (``CMP-DEPLOY-01`` :class:`services.substrate.object_store.ObjectStore`)
 → an HMAC-bearer ``report_status`` callback. ``CMP-SNAP-02``
@@ -74,6 +75,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Final, Literal, Protocol, runtime_checkable
 
 from analysis.cpg_ingest.joern_frontend import parse_source as _real_parse_source
+from integrations.scm.native_acquisition import refuse_native_git_acquisition
 from services.scan.provenance import InvariantViolation
 from services.snapshot import cw_detect
 from services.substrate.cpg_tarball import serialize_cpg_tarball
@@ -216,9 +218,6 @@ def record_snapshot_job_completion(
     )
 
 
-_GIT_CLONE_TIMEOUT_S: Final[int] = 300
-_GIT_CHECKOUT_TIMEOUT_S: Final[int] = 60
-
 # Required SnapshotJob message-body keys (see :class:`SnapshotJob` docstring for
 # the ``clone_url`` gap note).
 _REQUIRED_JOB_FIELDS: Final[tuple[str, ...]] = (
@@ -331,6 +330,16 @@ def _parse_snapshot_job(body: Mapping[str, str]) -> SnapshotJob:
 # Typed ports (build-ahead seams, CLAR-PROC-01 condition (2) — same discipline
 # as ``services/scan/worker.py``'s ``OracleAdapter`` / ``SliceFingerprinter``).
 # ---------------------------------------------------------------------------
+
+
+class SourceMaterializer(Protocol):
+    """Trusted fixture writer, not a native profile or verified capture receipt.
+
+    The production entrypoint supplies none. There is deliberately no
+    environment/CLI/HTTP/queue selector for this internal Python collaborator.
+    """
+
+    def __call__(self, job: SnapshotJob, destination: Path) -> None: ...
 
 
 class ParseSourceFn(Protocol):
@@ -507,16 +516,6 @@ def _detect_language_mix(src_root: Path) -> tuple[tuple[str, ...], str]:
     return language_mix, primary_language
 
 
-def _git_env(home: Path) -> dict[str, str]:
-    """Minimal explicit env for the ``git`` child (the host env is NOT inherited).
-
-    ``GIT_TERMINAL_PROMPT=0`` prevents a hang on a credential prompt (this
-    bootstrap loop clones a PUBLIC repo, no PAT); ``HOME`` is scoped to the
-    ephemeral workdir so no host ``~/.gitconfig`` leaks into the clone.
-    """
-    return {"PATH": "/usr/bin:/bin", "GIT_TERMINAL_PROMPT": "0", "HOME": str(home)}
-
-
 def _default_parse_env() -> dict[str, str]:
     """Minimal explicit env threaded into ``parse_source`` (DOC §6.3 example shape).
 
@@ -588,6 +587,7 @@ def run_execute_loop(
     queue: SnapshotQueuePort | None = None,
     object_store: ObjectStore | None = None,
     parse_source: ParseSourceFn | None = None,
+    source_materializer: SourceMaterializer | None = None,
     report_status: ReportStatusPort | None = None,
     environ: Mapping[str, str] | None = None,
 ) -> None:
@@ -595,8 +595,7 @@ def run_execute_loop(
 
     One call processes AT MOST one dequeued message — mirroring the DOC §6.1
     lifecycle ("Execute -> Shutdown: Task exits after ACKing the SQS message";
-    one ECS Fargate task = one job attempt). Steps, matching DOC §6.2 verbatim
-    order (with CLAR-SNAP-04's CMP-SNAP-02 bypass):
+    one ECS Fargate task = one job attempt). Current containment sequence:
 
     1. ``queue.receive()``. Empty queue -> log + return (no completion metric:
        "exactly once per DEQUEUED message").
@@ -604,8 +603,8 @@ def run_execute_loop(
     3. INV-2 guard: ``job.env_digest`` must equal this worker's bound digest.
     4. CLAR-SNAP-04 guard: a non-empty ``parent_snapshot_id`` is refused
        (:class:`IncrementalSnapshotNotSupportedError`) — bootstrap-only in this loop.
-    5. ``git clone`` + ``git checkout <commit_sha>`` via the REAL argv-allowlisted
-       :func:`secure_run` (``tools/worker/secure_subprocess.py``).
+    5. Refuse default native acquisition before staging. Only an explicitly
+       injected trusted fixture materializer enables downstream controlled tests.
     6. Real ``CMP-SNAP-03`` :func:`services.snapshot.cw_detect.detect` (no
        parent snapshot — bootstrap has none to carry forward).
     7. ``parse_source(src_root, primary_language, env=..., workdir=...) -> CPG``
@@ -645,6 +644,9 @@ def run_execute_loop(
             ``analysis.cpg_ingest.joern_frontend.parse_source`` (CLAR-SNAP-03/05)
             — inject a fake matching the exact :data:`ParseSourceFn` signature
             in tests.
+        source_materializer: explicitly trusted internal fixture collaborator;
+            None refuses before any staging/store construction. Not a source
+            proof, native profile or public configuration option.
         report_status: the worker->API callback port; fails closed by default
             (the wire contract is unresolved — see :class:`ReportStatusPort`).
         environ: env mapping override for hermetic tests (defaults to
@@ -693,6 +695,9 @@ def run_execute_loop(
                 f"{job.parent_snapshot_id!r}; CMP-SNAP-02 is not wired (CLAR-SNAP-04)"
             )
 
+        if source_materializer is None:
+            refuse_native_git_acquisition()
+
         # Inside the try (unlike report_status/parse_source above): this is the
         # one collaborator whose default construction can itself raise (a
         # missing S3_BUCKET), and by this point active_report_status already
@@ -706,22 +711,7 @@ def run_execute_loop(
             src_root = tmp_root / "src"
             workdir = tmp_root / "work"
             workdir.mkdir()
-            git_env = _git_env(tmp_root)
-
-            secure_run(
-                "git",
-                ["clone", "--quiet", job.clone_url, str(src_root)],
-                timeout_s=_GIT_CLONE_TIMEOUT_S,
-                env=git_env,
-                cwd=str(tmp_root),
-            )
-            secure_run(
-                "git",
-                ["checkout", "--quiet", job.commit_sha],
-                timeout_s=_GIT_CHECKOUT_TIMEOUT_S,
-                env=git_env,
-                cwd=str(src_root),
-            )
+            source_materializer(job, src_root)
 
             language_mix, primary_language = _detect_language_mix(src_root)
 
@@ -875,6 +865,7 @@ __all__ = [
     "SnapshotJob",
     "SnapshotQueuePort",
     "SnapshotStatusReport",
+    "SourceMaterializer",
     "UnknownTool",
     "boot",
     "main",

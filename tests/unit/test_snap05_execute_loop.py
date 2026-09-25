@@ -1,11 +1,8 @@
 """CMP-SNAP-05 ``run_execute_loop`` — bootstrap (no-parent) execute-loop specs.
 
-Track 1B (first-real-scan plan): hermetic tests for
-``services.snapshot.worker.run_execute_loop``'s bootstrap sequence — SQS
-dequeue -> real ``git`` clone (via the REAL argv-allowlisted ``secure_run``,
-with only the underlying ``subprocess.run`` spawn faked, exactly like
-``tests/unit/test_snap_specs.py::test_snap_05a_argv_allowlist_rejects_non_sanctioned_flag``'s
-positive control) -> real ``CMP-SNAP-03`` ``cw_detect.detect`` -> an injected
+Controlled post-acquisition tests for ``run_execute_loop``: SQS dequeue ->
+explicitly injected trusted source-fixture materializer (NO native Git or
+source-custody proof) -> real ``CMP-SNAP-03`` ``cw_detect.detect`` -> an injected
 fake ``parse_source`` (satisfies the exact agreed signature the production
 default, ``analysis.cpg_ingest.joern_frontend.parse_source``, also
 implements — CLAR-SNAP-03/05 landed) -> upload to an ``ObjectStore``
@@ -31,7 +28,9 @@ import pytest
 
 from analysis.ordering import CPG
 from services.snapshot.worker import (
+    SnapshotJob,
     SnapshotStatusReport,
+    SourceMaterializer,
     run_execute_loop,
 )
 from services.substrate.cpg_tarball import deserialize_cpg_tarball
@@ -75,32 +74,21 @@ def _job_body(
     return body
 
 
-def _make_fake_git_subprocess_run(
+def _make_source_materializer(
     fixture_files: dict[str, str],
-) -> tuple[Callable[..., object], list[list[str]]]:
-    """A fake ``tools.worker.secure_subprocess.subprocess.run`` for ``git``.
+) -> tuple[SourceMaterializer, list[tuple[SnapshotJob, Path]]]:
+    """Write controlled fixture data; never open the native acquisition guard."""
+    calls: list[tuple[SnapshotJob, Path]] = []
 
-    Records every invoked argv (``calls``); on a ``clone`` call it materialises
-    ``fixture_files`` under the destination directory (the last positional
-    arg) so downstream CW-DETECT / ``parse_source`` have real files to read.
-    ``checkout`` is a no-op (the fake clone already "checked out" the content).
-    """
-    import subprocess
+    def materialize(job: SnapshotJob, destination: Path) -> None:
+        calls.append((job, destination))
+        destination.mkdir()
+        for rel_path, content in fixture_files.items():
+            target = destination / rel_path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content)
 
-    calls: list[list[str]] = []
-
-    def _fake_run(cmd: list[str], **kwargs: object) -> subprocess.CompletedProcess[bytes]:
-        calls.append(list(cmd))
-        if cmd[1] == "clone":
-            dest = Path(cmd[-1])
-            dest.mkdir(parents=True, exist_ok=True)
-            for rel_path, content in fixture_files.items():
-                target = dest / rel_path
-                target.parent.mkdir(parents=True, exist_ok=True)
-                target.write_text(content)
-        return subprocess.CompletedProcess(cmd, 0, b"", b"")
-
-    return _fake_run, calls
+    return materialize, calls
 
 
 def _fake_parse_source_factory(
@@ -157,25 +145,21 @@ def _key_builder(env_digest: str = _ENV_DIGEST) -> SnapshotKeyBuilder:
 
 
 @pytest.mark.unit
-def test_bootstrap_success_sequence_and_report_status(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The full bootstrap sequence runs in order and reports ``ready``.
+def test_bootstrap_success_sequence_and_report_status() -> None:
+    """The controlled post-acquisition sequence runs in order and reports ready.
 
-    Asserts: git ``clone`` THEN ``checkout`` (via the REAL ``secure_run`` argv
-    allowlist — only the underlying subprocess spawn is faked); ``parse_source``
-    invoked once with the language inferred from the cloned tree; exactly one
+    Asserts: explicit trusted fixture materialization precedes ``parse_source``
+    invoked once with the language inferred from that fixture; exactly one
     ``report_status`` call with ``state="ready"`` and the REAL CW-DETECT verdict
     as ``precondition_status``; the four bootstrap-mode artifacts (NOT
     ``delta_graph`` — a bootstrap snapshot has no parent) persisted at the
     deterministic ``SnapshotKeyBuilder`` keys; the SQS message acked (no
     redelivery, no DLQ).
     """
-    import tools.worker.secure_subprocess as ss
-
     vulnerable_source = (
         "def handler(username):\n    return f\"SELECT * FROM USERS WHERE X='{username}'\"\n"
     )
-    fake_run, git_calls = _make_fake_git_subprocess_run({"app.py": vulnerable_source})
-    monkeypatch.setattr(ss.subprocess, "run", fake_run)
+    materialize, materialize_calls = _make_source_materializer({"app.py": vulnerable_source})
 
     parse_calls: list[dict[str, object]] = []
     fake_parse_source = _fake_parse_source_factory(parse_calls)
@@ -190,13 +174,15 @@ def test_bootstrap_success_sequence_and_report_status(monkeypatch: pytest.Monkey
         queue=queue,
         object_store=object_store,
         parse_source=fake_parse_source,
+        source_materializer=materialize,
         report_status=report_status,
         environ={},
     )
 
-    # --- sequence: clone THEN checkout, via the real argv-allowlisted path ---
-    assert [c[1] for c in git_calls] == ["clone", "checkout"]
-    assert git_calls[0][2] == "--quiet"  # sanctioned flag actually used
+    # --- controlled fixture materialization, not native execution evidence ---
+    assert len(materialize_calls) == 1
+    assert materialize_calls[0][0].commit_sha == _COMMIT_SHA
+    assert materialize_calls[0][1] == parse_calls[0]["src_root"]
 
     # --- parse_source invoked once, with the language CW-DETECT/us inferred ---
     assert len(parse_calls) == 1
@@ -368,17 +354,12 @@ def test_malformed_job_missing_clone_url_fails_without_reporting() -> None:
 
 
 @pytest.mark.unit
-def test_parse_source_failure_reports_failed_and_redelivers(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_parse_source_failure_reports_failed_and_redelivers() -> None:
     """A ``parse_source`` failure (e.g. the real CLAR-SNAP-03 front end not
     landed yet) is caught, reported as ``state="failed"`` with the exception
     message threaded into ``error``, and the message is failed back to the
     queue (not silently dropped)."""
-    import tools.worker.secure_subprocess as ss
-
-    fake_run, git_calls = _make_fake_git_subprocess_run({"app.py": "print('hello')\n"})
-    monkeypatch.setattr(ss.subprocess, "run", fake_run)
+    materialize, materialize_calls = _make_source_materializer({"app.py": "print('hello')\n"})
 
     def _boom_parse_source(
         src_root: Path, language: str, *, env: Mapping[str, str], workdir: Path
@@ -394,12 +375,12 @@ def test_parse_source_failure_reports_failed_and_redelivers(
         queue=queue,
         object_store=InMemoryObjectStore(),
         parse_source=_boom_parse_source,
+        source_materializer=materialize,
         report_status=report_status,
         environ={},
     )
 
-    # the clone DID happen (parse_source runs after it) — one call each.
-    assert [c[1] for c in git_calls] == ["clone", "checkout"]
+    assert len(materialize_calls) == 1  # fixture materialization preceded parsing
 
     assert len(report_status.calls) == 1
     report = report_status.calls[0]
@@ -419,20 +400,16 @@ def test_parse_source_failure_reports_failed_and_redelivers(
 
 
 @pytest.mark.integration
-def test_bootstrap_uploads_survive_a_real_moto_s3_round_trip(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_bootstrap_uploads_survive_a_real_moto_s3_round_trip() -> None:
     """The four bootstrap artifacts round-trip through a REAL (moto-backed)
     ``S3ObjectStore`` — proving the loop's ``object_store.put`` calls are
     genuinely S3-shaped, not just compatible with the in-memory fake."""
     import boto3
     from moto import mock_aws
 
-    import tools.worker.secure_subprocess as ss
     from services.substrate.object_store import S3ObjectStore
 
-    fake_run, _git_calls = _make_fake_git_subprocess_run({"app.py": "print('hello')\n"})
-    monkeypatch.setattr(ss.subprocess, "run", fake_run)
+    materialize, _materialize_calls = _make_source_materializer({"app.py": "print('hello')\n"})
 
     parse_calls: list[dict[str, object]] = []
     fake_parse_source = _fake_parse_source_factory(parse_calls)
@@ -452,6 +429,7 @@ def test_bootstrap_uploads_survive_a_real_moto_s3_round_trip(
             queue=queue,
             object_store=store,
             parse_source=fake_parse_source,
+            source_materializer=materialize,
             report_status=report_status,
             environ={},
         )

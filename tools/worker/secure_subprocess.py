@@ -7,11 +7,15 @@ never constructs a ``Finding``), ``DOC-INV §4.5`` (the pinned-binary path is wh
 makes ``env_digest`` actually characterise ``Env``).
 
 This is the **operational discharge of ``AC-SNAP-05a``**: every ``joern`` /
-``codeql`` / ``git`` invocation in the snapshot worker MUST route through
+``codeql`` invocation in the snapshot worker MUST route through
 :func:`secure_run`, which rejects any flag not on that tool's static, sanctioned
 allowlist **fail-closed, before a subprocess is ever spawned**. The check is the
 first thing the wrapper does — a non-sanctioned flag never reaches
 ``subprocess.run`` and never resolves a binary.
+
+Git is unavailable through this generic, unbounded-output API, including for
+apparently benign commands. See docs/bhmea/GIT-SOURCE-ACQUISITION.md; a flag
+allowlist is not a native acquisition safety profile.
 
 Hardening invariants (DOC §3.3 "Invariants of ``secure_run``"):
 
@@ -50,8 +54,8 @@ from tools.worker.joern_java_safety import (
 # --- Per-tool static allowlists (sanctioned flags only) — DOC-CMP-SNAP-05 §3.3 ---
 # Verbatim from the contract. A flag is sanctioned iff its option name (the part
 # before any ``=``) is a member of the owning tool's frozenset. Subcommands and
-# positional verbs (``database``, ``create``, ``analyze``, ``clone`` …) are
-# allowed because they do not start with ``-``; only ``-``/``--`` flags are gated.
+# positional verbs (``database``, ``create``, ``analyze`` …) are allowed because
+# they do not start with ``-``; Git is separately refused before any traversal.
 JOERN_ARGV_ALLOWLIST: Final[frozenset[str]] = frozenset(
     {
         "--language",
@@ -114,28 +118,8 @@ CODEQL_ARGV_ALLOWLIST: Final[frozenset[str]] = frozenset(
         "--threads",
     }
 )
-GIT_ARGV_ALLOWLIST: Final[frozenset[str]] = frozenset(
-    # NOTE (review finding, PR #285 / deferred to the execute-loop phase): the
-    # allowlist gates flag TOKENS only — "-c" is admitted unconditionally, so a
-    # paired "key=value" override is not value-checked here, and the bare
-    # "core.sshCommand" entry never matches enforcement (non-flag token). A
-    # value-level check for "-c" pairs MUST land with the execute loop, where git
-    # is first actually spawned (run_execute_loop is NotImplementedError today).
-    {
-        "clone",
-        "checkout",
-        "fetch",
-        "log",
-        "diff",
-        "ls-files",
-        "--depth",
-        "--branch",
-        "--no-tags",
-        "--quiet",
-        "-c",
-        "core.sshCommand",
-    }
-)
+# Import compatibility only: neither flags nor bare Git tokens are permitted.
+GIT_ARGV_ALLOWLIST: Final[frozenset[str]] = frozenset()
 
 _ALLOWLISTS: Final[dict[str, frozenset[str]]] = {
     "joern": JOERN_ARGV_ALLOWLIST,
@@ -175,9 +159,8 @@ class ArgvAllowlistViolation(Exception):  # noqa: N818 — name fixed verbatim b
 class UnknownTool(Exception):  # noqa: N818 — paired with ArgvAllowlistViolation; fail-closed default-deny
     """``secure_run`` was asked to run a tool with no registered allowlist.
 
-    Fail-closed default-deny: only ``joern`` / ``joern-parse`` / ``codeql`` / ``git`` are
-    sanctioned (DOC-CMP-SNAP-05 §3.3). An unknown tool is refused rather than run
-    with an empty/permissive allowlist.
+    Unknown tools are refused rather than run with an empty/permissive
+    allowlist. Git is recognized for compatibility but always unavailable.
     """
 
 
@@ -191,6 +174,13 @@ def _enforce_allowlist(tool: str, argv: list[str]) -> frozenset[str]:
     "flag" iff it starts with ``-``; its option name is the part before any
     ``=`` (so ``--language=java`` is gated on ``--language``).
     """
+    if tool == "git":
+        # Before even argv traversal: no caller input can select a Git profile
+        # on this unbounded capture_output API, including the Java profile.
+        raise ArgvAllowlistViolation(
+            "Unprofiled Git is unavailable; a separately reviewed bounded "
+            "source-capture producer is required"
+        )
     try:
         allowlist = _ALLOWLISTS[tool]
     except KeyError:
@@ -240,7 +230,7 @@ def secure_run(
     (the host environment is not inherited).
 
     Args:
-        tool: one of ``joern`` / ``joern-parse`` / ``codeql`` / ``git``.
+        tool: ``joern`` / ``joern-parse`` / ``codeql``. Git always refuses.
         argv: the tool arguments (subcommands + sanctioned flags). Every ``-``/
             ``--`` flag must be on the per-tool allowlist.
         timeout_s: mandatory wall-clock timeout in seconds.
