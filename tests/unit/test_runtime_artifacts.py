@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import subprocess
+from contextlib import contextmanager
 from dataclasses import replace
 from pathlib import Path
 
@@ -683,3 +684,157 @@ def test_path_snapshot_copy_is_bounded_even_if_list_grows(tmp_path: Path) -> Non
     object.__setattr__(path, "_parts", ["/"] + ["x"] * 10000)
     with pytest.raises(runtime.RuntimeArtifactError):
         runtime._path(path, 10)
+
+
+@pytest.mark.parametrize("parent", ["outer", "installation", "runtime-parent"])
+@pytest.mark.parametrize("sibling_kind", ["file", "directory"])
+def test_unmeasured_sibling_namespace_changes_preserve_actual_measurement(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, parent: str, sibling_kind: str
+) -> None:
+    installation = tmp_path / "installation"
+    installation.mkdir(mode=0o700)
+    fixture = prepare(installation)
+    target = {
+        "outer": tmp_path,
+        "installation": installation,
+        "runtime-parent": installation / "bin",
+    }[parent]
+    original_read, original_directory = runtime._read, runtime._directory
+    original_walk = runtime._walk
+    chains: dict[str, list[tuple[tuple[int, ...], ...]]] = {}
+    roots: dict[str, list[dict[str, tuple[int, ...]]]] = {}
+    reads = 0
+
+    @contextmanager
+    def observe_chain(path, budget):
+        with original_directory(path, budget) as (descriptor, chain):
+            assert all(len(stamp) == 9 for stamp in chain)
+            chains.setdefault(str(path), []).append(chain)
+            yield descriptor, chain
+
+    def observe_root(descriptor, row, budget, *, read):
+        result = original_walk(descriptor, row, budget, read=read)
+        roots.setdefault(row["path"], []).append(result)
+        return result
+
+    def read_and_add_sibling(*args, **kwargs):
+        nonlocal reads
+        result = original_read(*args, **kwargs)
+        reads += 1
+        if reads == 5:
+            before = target.stat()
+            sibling = target / "not-in-measured-roots"
+            if sibling_kind == "file":
+                sibling.write_bytes(b"unmeasured inert sibling")
+                sibling.chmod(0o600)
+            else:
+                sibling.mkdir(mode=0o700)
+            # Ensure the volatile timestamp difference is deterministic even on
+            # a filesystem whose native timestamp resolution coalesces writes.
+            os.utime(target, ns=(before.st_atime_ns, before.st_mtime_ns + 1_000_000))
+        return result
+
+    monkeypatch.setattr(runtime, "_directory", observe_chain)
+    monkeypatch.setattr(runtime, "_walk", observe_root)
+    monkeypatch.setattr(runtime, "_read", read_and_add_sibling)
+    verified = verify(fixture)
+    assert verified.inventory_bytes == fixture[0].inventory_bytes
+    assert reads == 5
+    assert all(values[0] == values[1] for values in roots.values())
+    # Original diagnostics retain the volatile differences rather than hiding
+    # or rewriting them. Only the final identity comparison projects fields.
+    assert any(values[0] != values[-1] for values in chains.values())
+    assert all(
+        runtime._ancestor_identity(values[0]) == runtime._ancestor_identity(values[-1])
+        for values in chains.values()
+    )
+
+
+@pytest.mark.parametrize("field", [0, 1, 2, 7, 8], ids=["device", "inode", "mode", "uid", "gid"])
+def test_final_ancestor_identity_and_security_fields_still_fenced(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: int
+) -> None:
+    fixture = prepare(tmp_path)
+    original = runtime._directory
+    seen: dict[str, int] = {}
+
+    @contextmanager
+    def changed_chain(path, budget):
+        with original(path, budget) as (descriptor, chain):
+            key = str(path)
+            seen[key] = seen.get(key, 0) + 1
+            if seen[key] > 1:
+                # Controlled stat-observation fault, not a real chown/mount or
+                # a claim that runtime metadata can be forged by an input.
+                stamps = list(chain)
+                before = stamps[0]
+                after = list(before)
+                after[field] += 1
+                stamps[0] = tuple(after)
+                chain = tuple(stamps)
+            yield descriptor, chain
+
+    monkeypatch.setattr(runtime, "_directory", changed_chain)
+    with pytest.raises(runtime.RuntimeArtifactError, match="changed"):
+        verify(fixture)
+
+
+def test_safe_but_changed_actual_ancestor_mode_still_rejected(tmp_path, monkeypatch):
+    installation = tmp_path / "installation"
+    installation.mkdir(mode=0o700)
+    fixture = prepare(installation)
+    original = runtime._read
+    reads = 0
+
+    def change_mode(*args, **kwargs):
+        nonlocal reads
+        result = original(*args, **kwargs)
+        reads += 1
+        if reads == 5:
+            installation.chmod(0o755)  # Both modes satisfy _safe, but differ.
+        return result
+
+    monkeypatch.setattr(runtime, "_read", change_mode)
+    with pytest.raises(runtime.RuntimeArtifactError, match="changed"):
+        verify(fixture)
+
+
+@pytest.mark.parametrize(
+    "target", ["stdlib", "stdlib/empty", "stdlib/core.py", "bin/python", "application/worker.py"]
+)
+def test_measured_roots_descendants_and_runtime_leaves_keep_full_stamps(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, target: str
+) -> None:
+    fixture = prepare(tmp_path)
+    path = tmp_path / target
+    original = runtime._read
+    reads = 0
+
+    def touch_after_all_reads(*args, **kwargs):
+        nonlocal reads
+        result = original(*args, **kwargs)
+        reads += 1
+        if reads == 5:
+            before = path.stat()
+            os.utime(path, ns=(before.st_atime_ns, before.st_mtime_ns + 1_000_000))
+        return result
+
+    monkeypatch.setattr(runtime, "_read", touch_after_all_reads)
+    with pytest.raises(runtime.RuntimeArtifactError, match="changed"):
+        verify(fixture)
+
+
+@pytest.mark.parametrize(
+    "field",
+    range(9),
+    ids=["device", "inode", "mode", "nlink", "size", "mtime", "ctime", "uid", "gid"],
+)
+def test_ancestor_projection_changes_only_the_four_declared_metadata_fields(field):
+    # Closed internal nine-field stamp layout; this is not a public input codec.
+    before = ((1, 2, 0o40700, 3, 4096, 100, 200, 1000, 1000),)
+    changed = list(before[0])
+    changed[field] += 1
+    after = (tuple(changed),)
+    assert (runtime._ancestor_identity(before) == runtime._ancestor_identity(after)) is (
+        field in (3, 4, 5, 6)
+    )
