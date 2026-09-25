@@ -4,8 +4,8 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 9 — 2026-09-25 confirmed stage machine, merged continuity/Java/raw foundations and explicit remaining runtime/producer work |
-| Status | Execution started; no remediation task or submitted claim is yet accepted as complete |
+| Revision | 10 — 2026-09-25 reviewed Git/app containment and Semgrep parser merges, current local producer/runtime checks and preserved unresolved acceptance |
+| Status | Execution started; no full R01–R20 task or submitted claim is yet accepted as complete |
 | Initial review code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
 ## 0. Current instructions — read before executing this backlog
@@ -46,11 +46,13 @@ All unchecked acceptance items below remain required unless explicitly
 classified optional. An adopted design, recovered historical report, or one
 successful Joern parse does not complete a task or verify a submitted claim.
 
-Reviewed foundations have now landed through main `e79dc54`: independent
+Reviewed foundations have now landed through main `6ae30df`: independent
 artifact metadata, typed report checking, corrected corpus and dependency
 locks, board/fail-closed hook tooling, the occurrence/decision contract, and
 the bounded canonical identity/budget foundation, Java static invocation
-safety, opt-in raw Joern transport and the pure continuity module. Occurrence storage, source
+safety, opt-in raw Joern transport, the pure continuity module, stage/handoff
+documentation, fail-closed legacy Git/application containment and bounded
+Semgrep observation parsing. Occurrence storage, source
 custody and integrated observation producers remain separate pending scopes;
 none is accepted merely because its
 design or local tests pass. See the
@@ -68,19 +70,31 @@ not satisfy that gate. Continue safe, assigned local work without merging until
 the exact-head review actually completes successfully. Do not weaken feature
 acceptance or retry an exhausted service continuously.
 
-Local-only storage, source custody, typed CPG, Semgrep parsing and legacy
-containment checkpoints now have scoped tests and independent review. They
-remain unmerged; tests from one branch do not validate the combined deployment.
-In particular, refusing unsafe scans is a containment correction, not delivery
+Local-only storage, source custody and typed CPG checkpoints
+have scoped tests and independent review but remain separate from merged
+acceptance. Git containment #402, application containment #403 and Semgrep parser
+#404 are now merged; only their narrow issues #395/#396/#394 are Done. Tests from
+one branch do not validate the combined deployment. Refusing unsafe scans is containment, not delivery
 of the promised scan workflow. The next source/authority/semantic contracts
 must bind exact verified capture bytes, accepted rule/model bytes, current
 durable authorization and actual native observations before a real core/oracle
 run can support G1. No caller boolean, fixture signature, graph label or local
 test count satisfies those producer obligations. Shared bounded process
-transport and actual runtime-file verification now have reviewed local code;
-source-syntax parsing, offline Git capture and signature verification have
-reviewed local implementations with separately bounded evidence. Their missing Docker controller, trusted installation
-loader, real operator authority and API/UI integration remain mandatory TODOs.
+transport, runtime-file verification and a pin-relative low-level profile loader
+now have reviewed local code; the pure Docker create renderer has three
+independent/author runs of the same 288 checks, not 864 distinct tests.
+Source-syntax parsing, offline Git capture and signature verification have
+reviewed local implementations with separately bounded evidence. The actual
+Docker controller, trusted current-anchor factory, durable journal/admission,
+kernel enforcement, real operator authority and API/UI integration remain TODOs.
+The source-bound projection review reproduced 13 failing negative controls, then
+eight additional closure/wrapper failures after the first correction. A later
+368-pass controlled run was followed by four reproduced scope-multiplicity/order
+failures. The final correction has root and independent corpus approval after
+387 selected checks, 206 independently rerun projection checks and root's same
+four negatives passing. The configured full suite passed 2,469 tests with 51
+existing optional skips. Normal commit/current-main/remote gates remain; no native fidelity, solver
+or full feature acceptance follows. Preserve the contrary results and remaining work.
 All unchecked TODOs below
 remain required; the handoff records exact checkpoints and remaining work.
 
