@@ -579,6 +579,9 @@ not wait for R08's final integration to establish its library/corpus milestone.
 Evidence: E06, E15, E19, E20; C08. Scope: finding storage/migrations, lifecycle
 service, API/UI, and integration tests.
 
+Current implementation contract: [occurrence/decision lifecycle](bhmea/OCCURRENCE-DECISION-CONTRACT.md)
+under #378. Contract review does not establish runtime acceptance.
+
 TODO:
 
 - [ ] Separate immutable scan-occurrence identity from a finding's persistent
@@ -591,6 +594,15 @@ TODO:
   and attached reference metadata against the appropriate durable entity.
 - [ ] Define ambiguity handling for multiple identical slices or several findings
   at the same sink. Never merge unrelated decisions solely because a hash matches.
+- [ ] Seal comparison groups before filtering eligible identities. A strong pair
+  plus a weak/failed potential competitor is not a unique match. Bind group
+  coverage independently of fingerprint value, class and processing status.
+- [ ] Preserve separate human verdict (including false-positive), suppression
+  and machine lifecycle dimensions; revoking suppression must not erase verdict
+  or reference history. Prevent both database and API-mediated LLM write access.
+- [ ] Support trusted policy revocation and re-evaluate effective inherited
+  decisions. Validate lineage, decision and active-policy revisions atomically
+  so a concurrent human revocation cannot be overwritten by stale inheritance.
 - [ ] Integrate the existing weak-suppression rule into the actual matching path.
   Pending, weak, ambiguous, and unresolved findings must not inherit a decision
   on an unsupported cross-refactor match.
@@ -641,6 +653,10 @@ TODO:
   from identity attempts and completed, identity-bearing finding/provenance
   projections. A later timeout must leave the occurrence visible with its
   original origin and `identity_failed`, not disappear or become an oracle.
+- [ ] Separate raw detection from whole-graph canonicalization too: the current
+  worker computes ordering before detector dispatch. Persist raw detections
+  before all identity operations; a wrapper around `run_detector` is insufficient.
+  Test a global canonicalization failure as well as a later slice failure.
 - [ ] Preserve the completed-record constraints of R09 through that staged
   boundary. Do not manufacture strong metadata or silently relax signed-final
   record guarantees to represent pending work. Test failure on a later finding
@@ -655,6 +671,8 @@ TODO:
   strong because the whole graph had a strong ordering verdict.
 - [ ] Make worker claims and writes retry-safe. A worker restart must not produce
   duplicate findings, lose triage links, or leave the UI waiting indefinitely.
+- [ ] Fence source cleanup against new consumers using an atomic retiring state,
+  not an unlocked no-active-lease check followed by deletion.
 - [ ] Give the worker appropriate database/migration dependencies, pinned build
   arguments, health reporting, resource limits, and source-volume permissions.
 - [ ] Test the full workflow on real engine output and actual refactored checkouts,

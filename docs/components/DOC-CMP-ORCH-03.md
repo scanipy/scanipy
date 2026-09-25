@@ -425,3 +425,15 @@ No new `CLAR-ORCH-*` items are filed by this document; the per-finding setter pa
 ---
 
 *Document end. Status: ACTIVE. Per `AC-DOC-04`, this file plus the cross-cutting refs above is sufficient for an implementation agent to produce a passing `CMP-ORCH-03`. The per-finding `origin` setter (§3.3) is the INV-1 anchor of the pipeline; deviations in the setter pattern are a hard contract break.*
+
+## Current Black Hat pre-identity retention extension
+
+Under [DECISION-BHMEA-01](../DECISION-BHMEA-01-current-execution-authority-2026-09-25.md),
+the [R07/R08 occurrence contract](../bhmea/OCCURRENCE-DECISION-CONTRACT.md)
+extends the historical all-final-results flow above: persist engine-originated
+detections before identity work and schedule fenced attempts durably. Preserve
+the per-finding origin setter and completed R09 finding/provenance constraints;
+pending/failed processing belongs to separate occurrence/attempt records, not
+manufactured final hashes or oracle relabeling. Real worker/API/Compose wiring
+and failure/restart tests remain implementation prerequisites, not completed
+acceptance established by this documentation.

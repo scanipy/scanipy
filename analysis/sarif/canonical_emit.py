@@ -44,6 +44,14 @@ from dataclasses import dataclass
 from typing import Final, Literal, Protocol, runtime_checkable
 from uuid import UUID
 
+from analysis.artifact_identity import (
+    GRAPH_V2,
+    SLICE_V2,
+    has_strong_v2_artifact_identities,
+    identities_from_finding,
+    identity_metadata,
+    validate_identity_metadata,
+)
 from analysis.ordering import CPG_ORDER_HASH_ANNOTATION
 
 # ---------------------------------------------------------------------------
@@ -126,7 +134,9 @@ class WorkerFinding(Protocol):
     FND-01 is a pure projection onto SARIF; it reads these attributes and never
     mutates them. ``origin`` / ``S_version`` / ``env_digest`` are threaded
     verbatim (FND-01 never re-derives them). ``cpg_order_hash`` /
-    ``slice_fingerprint`` are hex strings (64 lowercase hex chars).
+    ``slice_fingerprint`` are hex strings (64 lowercase hex chars), or explicit
+    nulls for unavailable v2 oracle artifacts. Read-only properties allow legacy
+    string-only producers to satisfy this additive optional-output contract.
 
     The annotation field on the worker record is intentionally NOT read here: the
     one INV-5 literal emitted is always the
@@ -143,9 +153,17 @@ class WorkerFinding(Protocol):
     S_version: str
     env_digest: str
     # --- INV-5 (conditional canonicality) ---
-    cpg_order_hash: str  # hex
     fingerprint_class: str  # "strong" | "weak"
-    slice_fingerprint: str  # hex
+
+    @property
+    def cpg_order_hash(self) -> str | None: ...
+
+    @property
+    def slice_fingerprint(self) -> str | None: ...
+
+    @property
+    def precondition_status(self) -> str | None: ...
+
     # --- detection content ---
     rule_id: str
     message: str
@@ -157,7 +175,6 @@ class WorkerFinding(Protocol):
     severity: str
     class_: str
     status: str
-    precondition_status: str
     # --- optional ---
     witness_blob_uri: str | None
     spec_provenance: str | None
@@ -196,6 +213,13 @@ class _Finding:
     precondition_status: str
     witness_blob_uri: str | None = None
     spec_provenance: str | None = None
+    identity_schema_version: int = 1
+    cpg_order_class: str | None = None
+    slice_fingerprint_class: str | None = None
+    cpg_order_status: str = "legacy-ambiguous"
+    slice_status: str = "legacy-ambiguous"
+    cpg_order_namespace: str | None = None
+    slice_namespace: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -302,19 +326,36 @@ def _validate_finding(f: WorkerFinding) -> None:
     _require_nonempty_str(f.S_version, "S_version", code="invariant_inv2_violation")
     _require_nonempty_str(f.env_digest, "env_digest", code="invariant_inv2_violation")
 
-    # INV-5 — cpg_order_hash present; fingerprint_class in domain.
-    _require_nonempty_str(f.cpg_order_hash, "cpg_order_hash", code="invariant_inv5_violation")
-    fp = _require_nonempty_str(
-        f.fingerprint_class, "fingerprint_class", code="invariant_inv5_violation"
-    )
-    if fp not in _FP_CLASSES:
+    identity_version = getattr(f, "identity_schema_version", 1)
+    if type(identity_version) is not int or identity_version not in (1, 2):
         raise InvariantViolation(
-            f"finding.fingerprint_class={fp!r} must be 'strong' or 'weak'",
-            code="invariant_inv5_violation",
+            "unsupported identity schema version", code="invariant_inv5_violation"
         )
+    if identity_version == 1:
+        # Preserve legacy validation/encoding exactly for historical callers.
+        _require_nonempty_str(f.cpg_order_hash, "cpg_order_hash", code="invariant_inv5_violation")
+        fp = _require_nonempty_str(
+            f.fingerprint_class, "fingerprint_class", code="invariant_inv5_violation"
+        )
+        if fp not in _FP_CLASSES:
+            raise InvariantViolation(
+                f"finding.fingerprint_class={fp!r} must be 'strong' or 'weak'",
+                code="invariant_inv5_violation",
+            )
+        _require_nonempty_str(
+            f.slice_fingerprint, "slice_fingerprint", code="invariant_inv5_violation"
+        )
+    else:
+        try:
+            graph, sliced = identities_from_finding(f)
+            if origin == "deterministic-core" and (
+                graph.status != "completed" or sliced.status != "completed"
+            ):
+                raise ValueError("core findings require computed graph and slice evidence")
+        except (ValueError, TypeError) as exc:
+            raise InvariantViolation(str(exc), code="invariant_inv5_violation") from exc
 
     # Remaining mandatory Result properties (DOC-SARIF §6).
-    _require_nonempty_str(f.slice_fingerprint, "slice_fingerprint", code="invariant_inv5_violation")
     _require_nonempty_str(f.rule_id, "rule_id", code="invariant_inv1_violation")
     severity = _require_nonempty_str(f.severity, "severity", code="invariant_inv1_violation")
     if severity not in _SEVERITIES:
@@ -329,10 +370,10 @@ def _validate_finding(f: WorkerFinding) -> None:
             f"finding.status={status!r} must be one of {sorted(_STATUSES)}",
             code="invariant_inv1_violation",
         )
-    pc = _require_nonempty_str(
-        f.precondition_status, "precondition_status", code="invariant_inv1_violation"
-    )
-    if pc not in _PRECONDITIONS:
+    pc = f.precondition_status
+    if pc not in _PRECONDITIONS and not (
+        identity_version == 2 and origin == "oracle-passthrough" and not pc
+    ):
         raise InvariantViolation(
             f"finding.precondition_status={pc!r} must be one of {sorted(_PRECONDITIONS)}",
             code="invariant_inv1_violation",
@@ -385,6 +426,41 @@ def _to_result(f: WorkerFinding) -> dict[str, object]:
         properties["scanipy.spec_provenance"] = f.spec_provenance
     if f.witness_blob_uri:
         properties["scanipy.witness_blob_uri"] = f.witness_blob_uri
+    oracle_fingerprint = getattr(f, "oracle_fingerprint", None)
+    if oracle_fingerprint:
+        properties["scanipy.oracle_native_identity"] = {
+            "digest": oracle_fingerprint,
+            "namespace": "scanipy-oracle-content/1",
+            "scope": "same-source-only",
+        }
+
+    fingerprints: dict[str, object] = {
+        "scanipy.cpg_order_hash/v1": f.cpg_order_hash,
+        "scanipy.slice_fingerprint/v1": f.slice_fingerprint,
+    }
+    if getattr(f, "identity_schema_version", 1) == 2:
+        graph, sliced = identities_from_finding(f)
+        properties.pop("scanipy.fingerprint_class")
+        properties.pop("scanipy.cpg_order_hash_annotation")
+        properties.update(
+            {
+                "scanipy.identity": identity_metadata(f),
+                "scanipy.cpg_order_hash": graph.digest,
+                "scanipy.cpg_order_class": graph.fingerprint_class,
+                "scanipy.slice_fingerprint": sliced.digest,
+                "scanipy.slice_fingerprint_class": sliced.fingerprint_class,
+                "scanipy.precondition_status": f.precondition_status or None,
+                "scanipy.precondition_applicability": "computed"
+                if f.precondition_status
+                else "not-applicable",
+            }
+        )
+        fingerprints = {}
+        if has_strong_v2_artifact_identities(f):
+            fingerprints = {
+                "scanipy.cpg_order_hash/v2": graph.digest,
+                "scanipy.slice_fingerprint/v2": sliced.digest,
+            }
 
     return {
         "ruleId": f.rule_id,
@@ -403,10 +479,7 @@ def _to_result(f: WorkerFinding) -> dict[str, object]:
                 },
             }
         ],
-        "fingerprints": {
-            "scanipy.cpg_order_hash/v1": f.cpg_order_hash,
-            "scanipy.slice_fingerprint/v1": f.slice_fingerprint,
-        },
+        "fingerprints": fingerprints,
         "properties": properties,
     }
 
@@ -446,7 +519,7 @@ def _build_run(
     commit_sha: str,
     S_version: str,  # noqa: N803  (INV-2 provenance field name — normative)
     env_digest: str,
-    precondition_status: str,
+    precondition_status: str | None,
     llm_triage_flag: bool,
 ) -> dict[str, object]:
     """Build one SARIF Run object (DOC-SARIF §5) for an already-sorted result list.
@@ -459,7 +532,7 @@ def _build_run(
     """
     rule_ids = sorted({str(r["ruleId"]) for r in results})
     rules = [{"id": rid, "name": rid} for rid in rule_ids]
-    return {
+    run: dict[str, object] = {
         "tool": {
             "driver": {
                 "name": TOOL_NAME,
@@ -481,6 +554,11 @@ def _build_run(
         },
         "results": results,
     }
+    if precondition_status is None:
+        properties = run["properties"]
+        assert isinstance(properties, dict)
+        properties["scanipy.precondition_applicability"] = "not-applicable"
+    return run
 
 
 # ---------------------------------------------------------------------------
@@ -538,20 +616,22 @@ def _validate_result_shape(result: object, run_idx: int, res_idx: int) -> list[s
         if not isinstance(artifact.get("uri"), str) or not artifact.get("uri"):
             errors.append(f"{where}.artifactLocation.uri: missing or not a string")
 
-    # SARIF-native fingerprints (DOC-SARIF §6.1).
+    properties = result.get("properties")
+    v2 = isinstance(properties, dict) and "scanipy.identity" in properties
+    # V1 remains readable without reinterpretation. V2 native keys are emitted
+    # only for proven, correctly namespaced strong graph AND slice identities.
     fingerprints = result.get("fingerprints")
     if not isinstance(fingerprints, dict):
         errors.append(f"{where}.fingerprints: missing")
-    else:
+    elif not v2:
         for fp_key in ("scanipy.cpg_order_hash/v1", "scanipy.slice_fingerprint/v1"):
             if not isinstance(fingerprints.get(fp_key), str) or not fingerprints.get(fp_key):
                 errors.append(f"{where}.fingerprints[{fp_key!r}]: missing or not a string")
 
     # Scanipy extension — every mandatory Result property (DOC-SARIF §6 / §11).
-    properties = result.get("properties")
     if not isinstance(properties, dict):
         return [*errors, f"{where}.properties: missing"]
-    required = (
+    required: tuple[str, ...] = (
         "scanipy.origin",
         "scanipy.S_version",
         "scanipy.env_digest",
@@ -566,12 +646,74 @@ def _validate_result_shape(result: object, run_idx: int, res_idx: int) -> list[s
         "scanipy.severity",
         "scanipy.status",
     )
+    if v2:
+        required = tuple(
+            key
+            for key in required
+            if key
+            not in {
+                "scanipy.cpg_order_hash",
+                "scanipy.cpg_order_hash_annotation",
+                "scanipy.fingerprint_class",
+                "scanipy.slice_fingerprint",
+                "scanipy.precondition_status",
+            }
+        )
+        try:
+            graph, sliced = validate_identity_metadata(properties["scanipy.identity"])
+            for key, expected in (
+                ("scanipy.cpg_order_hash", graph.digest),
+                ("scanipy.cpg_order_class", graph.fingerprint_class),
+                ("scanipy.slice_fingerprint", sliced.digest),
+                ("scanipy.slice_fingerprint_class", sliced.fingerprint_class),
+            ):
+                if key not in properties or properties[key] != expected:
+                    errors.append(f"{where}.{key}: disagrees with its artifact descriptor")
+            if "scanipy.fingerprint_class" in properties:
+                errors.append(f"{where}: v2 must not publish an ambiguous shared class")
+            strong_v2 = (
+                graph.fingerprint_class == sliced.fingerprint_class == "strong"
+                and graph.namespace == GRAPH_V2
+                and sliced.namespace == SLICE_V2
+            )
+            expected_fingerprints = (
+                {
+                    "scanipy.cpg_order_hash/v2": graph.digest,
+                    "scanipy.slice_fingerprint/v2": sliced.digest,
+                }
+                if strong_v2
+                else {}
+            )
+            if fingerprints != expected_fingerprints:
+                errors.append(
+                    f"{where}.fingerprints: invalid native identity namespace or strength"
+                )
+            pc = properties.get("scanipy.precondition_status")
+            if pc is None:
+                if (
+                    properties.get("scanipy.origin") != "oracle-passthrough"
+                    or properties.get("scanipy.precondition_applicability") != "not-applicable"
+                ):
+                    errors.append(
+                        f"{where}: absent precondition requires explicit oracle applicability"
+                    )
+            elif (
+                pc not in _PRECONDITIONS
+                or properties.get("scanipy.precondition_applicability") != "computed"
+            ):
+                errors.append(f"{where}: invalid computed precondition")
+            if properties.get("scanipy.origin") == "deterministic-core" and (
+                graph.status != "completed" or sliced.status != "completed"
+            ):
+                errors.append(f"{where}: core result is missing computed artifact evidence")
+        except (ValueError, TypeError) as exc:
+            errors.append(f"{where}.identity: {exc}")
     for key in required:
         val = properties.get(key)
         if not isinstance(val, str) or val == "":
             errors.append(f"{where}.properties[{key!r}]: missing or empty (RULE-6/INV-1/2/5)")
     # The INV-5 annotation literal MUST be the exact constant (DOC-SARIF §11 const).
-    if properties.get("scanipy.cpg_order_hash_annotation") != CPG_ORDER_HASH_ANNOTATION:
+    if not v2 and properties.get("scanipy.cpg_order_hash_annotation") != CPG_ORDER_HASH_ANNOTATION:
         errors.append(
             f"{where}.properties['scanipy.cpg_order_hash_annotation']: "
             f"not the literal {CPG_ORDER_HASH_ANNOTATION!r} (INV-5)"
@@ -613,6 +755,12 @@ def _validate_run_shape(run: object, run_idx: int, expected_partition: str) -> l
             "scanipy.env_digest",
             "scanipy.precondition_status",
         ):
+            if (
+                key == "scanipy.precondition_status"
+                and properties.get(key) is None
+                and properties.get("scanipy.precondition_applicability") == "not-applicable"
+            ):
+                continue
             val = properties.get(key)
             if not isinstance(val, str) or val == "":
                 errors.append(f"{where}.properties[{key!r}]: missing or empty (INV-2/RULE-6)")
@@ -708,7 +856,7 @@ def normalize(
     commit_sha: str,
     S_version: str,  # noqa: N803  (INV-2 provenance field name — normative)
     env_digest: str,
-    precondition_status: PreconditionStatus,
+    precondition_status: PreconditionStatus | None,
     llm_triage_flag: bool,
 ) -> SARIFLog:
     """Normative emitter (DOC-SARIF §4): returns ONE SARIFLog containing TWO Runs
@@ -800,7 +948,7 @@ def normalize_split(
     commit_sha: str,
     S_version: str,  # noqa: N803
     env_digest: str,
-    precondition_status: PreconditionStatus,
+    precondition_status: PreconditionStatus | None,
     llm_triage_flag: bool,
 ) -> tuple[SARIFRun, SARIFRun]:
     """Alternate emitter producing the two partitions as separate single-Run
