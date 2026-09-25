@@ -1,5 +1,27 @@
 # DOC-CMP-SNAP-05 — Snapshot worker + environment pinning
 
+> **Current #395 containment (2026-09-25):** native default Git acquisition is
+> unavailable before staging. The shared process wrapper refuses all Git calls;
+> the snapshot worker and all four provider default clone paths fail explicitly.
+> Trusted injected Python fixture collaborators preserve controlled tests, not
+> production acquisition or no-execution approval. See the current
+> [containment and mandatory replacement contract](../bhmea/GIT-SOURCE-ACQUISITION.md).
+> Historical runnable clone examples below do not override this boundary; the
+> real bounded object-to-capture producer remains required. Other APIs/ACs remain.
+
+## Current Black Hat Java safety extension
+
+Under [DECISION-BHMEA-01](../DECISION-BHMEA-01-current-execution-authority-2026-09-25.md),
+corrective #386 uses the exact [Java static invocation/environment contract](../bhmea/JAVA-STATIC-INVOCATION.md).
+The shared Java path requires a value-checked no-Delombok suffix, exact no-fetch
+and a closed versioned child environment for both parser and fixed v1 exporter.
+Unknown JVM/loader hooks and unsafe runtime paths fail before spawn. The old
+Java invocation/opaque-env examples below remain historical, not the current
+Java permission surface. Existing other-language behavior and v1 wire stay
+unchanged. This does not establish full source coverage, complete sandboxing,
+type/call-flow fidelity, or safety for unprofiled direct scripts. Required
+tests and independent/canonical review remain acceptance gates.
+
 **Status:** ACTIVE (Phase 0 per-component deliverable)
 **Source-of-truth lineage:**
 
