@@ -1,7 +1,7 @@
 # September 25 — reviewed foundation corrections
 
 Scope: repository correction evidence, not Black Hat feature acceptance.
-Snapshot main: `2709177afff1c78f06532e0298dd5ee4d608237f` on 2026-09-25.
+Snapshot main: `02933f1a08587a7f9f266d47320f5d614ade57ba` on 2026-09-25 at 14:06 UTC.
 Owner: root engineering coordinator, umbrella #362.
 
 Every merged row below had the required tests and canonical `claude-review`
@@ -25,6 +25,8 @@ R17 obligations. No full R-task, C01–C18 claim, or shared gate is accepted her
 | [#387](https://github.com/scanipy/scanipy/pull/387), fail-closed developer hooks | `9d5f8574f83e9d238951aa62592c3a5409d0d2dc` | `022365123d0a14127e2039dc005606a7401bc358` | [CI](https://github.com/scanipy/scanipy/actions/runs/36123526095), [APPROVE](https://github.com/scanipy/scanipy/actions/runs/36123526023) |
 | [#369](https://github.com/scanipy/scanipy/pull/369), bounded canonical identity/budget foundation | `2cfbd32b45aae5ce98b6d000a77a8ac9959016ce` | `bcce692fa4377ab3cc21ff100370a7a7cb13a409` | [CI](https://github.com/scanipy/scanipy/actions/runs/36124379740), [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36124379755), [APPROVE](https://github.com/scanipy/scanipy/actions/runs/36124379760) |
 | [#388](https://github.com/scanipy/scanipy/pull/388), progress documentation/ledger | `7d085043a65275187e2e9b1cf62669245086b355` | `2709177afff1c78f06532e0298dd5ee4d608237f` | [CI](https://github.com/scanipy/scanipy/actions/runs/36124763427), [APPROVE](https://github.com/scanipy/scanipy/actions/runs/36124763511) |
+| [#390](https://github.com/scanipy/scanipy/pull/390), Java static invocation safety | `16252b21db172b967f13a815ca9bd8fe3078dd19` | `8d38c06addc49f382b36d17fee4125fdf4628b3d` | [CI](https://github.com/scanipy/scanipy/actions/runs/36126058316), [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36126058265), [successful APPROVE](https://github.com/scanipy/scanipy/actions/runs/36142432527) |
+| [#382](https://github.com/scanipy/scanipy/pull/382), opt-in raw Joern transport | `2f0ebef5db636c14051efb3aa20980667b982a13` | `02933f1a08587a7f9f266d47320f5d614ade57ba` | [CI](https://github.com/scanipy/scanipy/actions/runs/36144380242), [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36144380239), [successful APPROVE](https://github.com/scanipy/scanipy/actions/runs/36144557544) |
 
 ### What this establishes—and does not
 
@@ -67,16 +69,16 @@ R17 obligations. No full R-task, C01–C18 claim, or shared gate is accepted her
 - #388 is documentation-only. Its historical cutoff at #387 is updated here;
   neither snapshot accepts a feature merely because a local branch has tests.
 
-Narrow issues #365/#367/#363/#377/#381/#384/#364 and the earlier #370 are closed after
-their reviewed corrections. #361/#362/#366/#374/#376/#378 remain open for their
+Narrow issues #365/#367/#363/#377/#381/#384/#364/#386/#376 and the earlier #370 are closed after
+their reviewed corrections. #361/#362/#366/#374/#378 remain open for their
 larger scope. GitHub auto-closed #378 when it parsed a closing keyword inside
 a negated sentence in #385; root removed that wording, reopened #378 and
 restored In Progress. This accidental closure is not acceptance evidence.
 
 ## Review-capacity checkpoint — not acceptance
 
-Read-only GitHub checks on September 25 confirmed #382, #389 and #390 remain
-open at the exact heads below. All seven test checks succeeded; the separate
+Earlier read-only GitHub checks on September 25 found #382, #389 and #390
+open at the exact historical heads below. All seven test checks succeeded; the separate
 canonical actions failed because the reviewer reported a session limit.
 
 | Candidate head | CI / supplemental checks | Failed canonical action |
@@ -85,10 +87,17 @@ canonical actions failed because the reviewer reported a session limit.
 | #389 `2fd67cb58f2850dd0d0e8c0a4966ad1ee70fdbc0` | [CI](https://github.com/scanipy/scanipy/actions/runs/36126133600), [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36126133376) | [Review failure](https://github.com/scanipy/scanipy/actions/runs/36126638167) |
 | #390 `16252b21db172b967f13a815ca9bd8fe3078dd19` | [CI](https://github.com/scanipy/scanipy/actions/runs/36126058316), [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36126058265) | [Review failure](https://github.com/scanipy/scanipy/actions/runs/36126622985) |
 
-The reported reset was 13:40 UTC on September 25, not an observed recovery.
-The #390 comment includes APPROVE text but also a failed-action error; it is
-not sufficient approval. Retry serially after recovery, preserve exact-head
-testing, and require a successful action plus completed canonical verdict.
+The earlier reported reset at 13:40 UTC was not itself recovery evidence.
+The failed #390 comment's APPROVE word was not accepted. Later #390 action
+36142432527 succeeded at 13:46:10 UTC with final APPROVE; merge followed at
+13:48:29 UTC. #382 was combined with that reviewed main, retested (1,429 passed /
+51 existing skips), pushed through normal gates, and independently reviewed in
+successful action 36144557544 at 14:04:55 UTC; merge followed at 14:06:30 UTC.
+Both squash trees were verified identical to their tested PR heads. Root read
+the completed canonical verdicts and verified all seven checks before merging.
+The #382 review's dependency table conflates #368 and #390; they are separate
+merged PRs, both present. This factual note does not rewrite its verdict.
+Continue #389 and remaining candidates serially with their own exact-head gates.
 Local source/core/typed-CPG/Semgrep/store work is indexed in the current handoff,
 not counted as merged evidence. No local test count fills a shared-gate PASS.
 
@@ -121,10 +130,8 @@ execution was launched to investigate these findings.
    generated members. Sources: [Java defaults](https://github.com/joernio/joern/blob/v4.0.554/joern-cli/frontends/javasrc2cpg/src/main/scala/io/joern/javasrc2cpg/JavaSrc2Cpg.scala#L44),
    [AST omissions](https://github.com/joernio/joern/blob/v4.0.554/joern-cli/frontends/javasrc2cpg/src/main/scala/io/joern/javasrc2cpg/passes/AstCreationPass.scala#L66).
 
-Current worker/R05 callers construct explicit environments, so dependency
-fetching currently defaults off; the legacy arbitrary environment input and
-implicit Delombok behavior still need correction. #386 owns a closed versioned
-Java profile and value-aware invocation grammar. Both parse and export must use
+The now-merged #390 supplies #386's closed versioned Java profile and
+value-aware invocation grammar for the shared worker/R05 route. Both parse and export must use
 it. An explicit profile parameter is validation context, not authentication;
 unprofiled direct scripts and other frontends remain outside that narrow proof.
 
@@ -132,7 +139,8 @@ Required follow-up: hermetic unsafe-override negatives; reviewed bounded real
 scanner-only sentinel/process observations; descendant cancellation; file
 coverage/error evidence; final Compose restrictions. Never execute an unsafe
 target-build positive control. Missing generated/type/binding semantics remain
-R19 fidelity work. R16 is not complete.
+R19 fidelity work. Historical raw-v2 probes remain outside this new shared
+profile guarantee and were not rerun or retroactively certified. R16 is not complete.
 
 ## Other active falsifiers and next actions
 
@@ -197,12 +205,13 @@ R19 fidelity work. R16 is not complete.
 - #369 (merged): preserve actual four-class producers, explicit legacy-default
   rejection and deadline failures while adding richer graph semantics. New
   labels/roles require a separately versioned identity contract and evidence.
-- #380/#382: integrate reviewed current main and obtain canonical approval.
-  Raw transport is not semantic mapping, call binding, matched returns or
+- #380: integrate reviewed current main and obtain canonical approval.
+  #382 is now merged, but raw transport is not semantic mapping, call binding, matched returns or
   purity. R05 reports unavailable semantic observations honestly; it may not
   copy expected corpus labels into observed success fields.
 - Before a corrected image or real campaign, recheck host resources and run
   bounded sequential startup/Java/Python probes. Source parser safety and
   packaging must be reviewed first; full 844-side evidence follows readiness.
-- Preserve all remaining R01–R20 TODOs and exact submission scope. Actual stage
-  hardware/date and separate release/image/video authority remain future inputs.
+- Preserve all remaining R01–R20 TODOs and exact submission scope. Stage-machine
+  identity is confirmed; actual measured budgets/rehearsals, exact presentation
+  date and separate release/image/video authority remain future inputs.
