@@ -390,7 +390,9 @@ def test_existing_home_file_and_output_hardlink_are_preserved(tmp_path):
 def test_profile_cannot_select_other_tool_or_script(job, monkeypatch, tool, argv):
     _, work, env, _ = job
     prohibit_spawn(monkeypatch)
-    with pytest.raises(JavaStaticEnvironmentError, match="mismatch"):
+    expected = spawn.ArgvAllowlistViolation if tool == "git" else JavaStaticEnvironmentError
+    message = "Unprofiled Git" if tool == "git" else "mismatch"
+    with pytest.raises(expected, match=message):
         spawn.secure_run(
             tool, argv=argv, timeout_s=1, env=env, cwd=str(work), environment_profile=PROFILE
         )
