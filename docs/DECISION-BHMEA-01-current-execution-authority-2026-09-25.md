@@ -74,9 +74,10 @@ empirical claims. Those require their own real evidence.
 
 ## Operational consequences
 
-- Describe historical hierarchy text as historical baseline context, and link
-  this current decision from `CLAUDE.md` and affected component contracts.
-  Do not make a derived file appear to grant itself new authority.
+- Link this scope-specific current decision from `CLAUDE.md` and affected
+  component contracts without globally relabeling the repository hierarchy.
+  Preserve active general instructions for unrelated work. The owner's current
+  directions, not a derived file granting itself authority, define this task.
 - Use narrow corrective issues and independent worktrees. Board status must
   reflect actual ownership; if API synchronization fails, record that failure
   and exclusive local assignment rather than inventing Done or duplicate work.
