@@ -74,12 +74,19 @@ echo "pre-push [2/4]: ruff format --check"
 ruff format --check .
 
 echo "pre-push [3/4]: mypy --strict"
-# Mirror the scaffold-phase guard from .github/workflows/ci.yml: if
-# there's no Python source yet, mypy has nothing to check and would
-# error otherwise.
-if find analysis detectors integrations services workers -name "*.py" 2>/dev/null | grep -q .; then
-  mypy --config-file pyproject.toml analysis/ detectors/ integrations/ services/ workers/ 2>/dev/null || \
-    mypy --config-file pyproject.toml $(find analysis detectors integrations services workers -name "*.py" 2>/dev/null | head -n 1 | xargs -n1 dirname | sort -u | tr '\n' ' ')
+# Select every populated source directory before the single mypy invocation.
+# A failed full check must not be replaced by a successful partial retry.
+# Discovery failure is fatal under set -e, not an empty-scaffold exemption.
+set --
+for source_dir in analysis detectors integrations services workers; do
+  [ -d "$source_dir" ] || continue
+  first_python=$(find "$source_dir" -name "*.py" -print -quit)
+  if [ -n "$first_python" ]; then
+    set -- "$@" "$source_dir"
+  fi
+done
+if [ "$#" -gt 0 ]; then
+  mypy --config-file pyproject.toml "$@"
 else
   echo "  no Python source yet — mypy skipped (scaffold phase)"
 fi
