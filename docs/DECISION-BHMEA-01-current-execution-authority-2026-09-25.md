@@ -16,8 +16,12 @@ that review end-to-end the current goal. The owner then clarified:
   the presentation will be December 2 or 3, 2026.
 - `PLAN.md`, `WBS.md` and `SDD.md` are very old and may contain the old
   architecture; the target is completing the tool for Black Hat.
-- The live demonstration will run locally using Docker. Actual presentation
-  hardware and the exact presentation date are not yet specified.
+- The live demonstration will run locally using Docker on the current
+  development machine: the owner answered “This machine.” Its observed
+  Ubuntu/x86_64 VMware guest and Docker capacity are recorded in the
+  [stage-machine observation](evidence/2026-09-25-stage-machine/README.md).
+  The exact presentation date and measured acceptance budgets remain open;
+  identifying the machine does not establish offline or performance readiness.
 - Corrective repository issues/PRs are authorized; merge only after required
   review and tests. Release/image publication and external messages require
   separate authority.

@@ -77,8 +77,38 @@ def _argv(value: object) -> tuple[str, ...]:
 
 
 def _path(value: object) -> PosixPath:
+    """Copy bounded primitive path storage, never caller caches or callbacks."""
     _require(type(value) is PosixPath)
-    path = cast(PosixPath, value)
+    parsed = False
+    try:
+        parts = object.__getattribute__(value, "_raw_paths")  # CPython 3.12+ layout.
+    except AttributeError:
+        try:
+            parts = object.__getattribute__(value, "_parts")  # CPython 3.11 layout.
+        except AttributeError as error:
+            raise ProcessValidationError("unsupported bounded process path") from error
+        parsed = True
+    _require(type(parts) is list and 1 <= len(parts) <= 4096)
+    # Bound the built-in slice before copying even if an accidental writer grows
+    # the caller's list. Unknown storage and custom containers fail closed.
+    snapshot = tuple(parts[:4097])
+    _require(1 <= len(snapshot) <= 4096)
+    size = 0
+    for member in snapshot:
+        part = _text(member, 4096)
+        size += len(part.encode("utf-8"))
+        _require(size <= 4096)
+    if parsed:
+        try:
+            drive = object.__getattribute__(value, "_drv")
+            root = object.__getattribute__(value, "_root")
+        except AttributeError as error:
+            raise ProcessValidationError("unsupported bounded process path") from error
+        _require(type(drive) is str and type(root) is str and drive == "" and root == "/")
+        _require(snapshot[0] == "/")
+        _require(all("/" not in part and part not in ("", ".", "..") for part in snapshot[1:]))
+    # Formatting/properties below belong only to this fresh private instance.
+    path = PosixPath(*snapshot)
     _text(str(path), 4096, empty=False)
     _require(path.anchor == "/" and len(path.parts) > 1 and ".." not in path.parts)
     return path
@@ -219,7 +249,7 @@ class SpoolOutput:
 
     def __post_init__(self) -> None:
         _require(type(self) is SpoolOutput and type(self.evidence) is StreamEvidence)
-        _path(self.path)
+        object.__setattr__(self, "path", _path(self.path))
 
 
 Output = MemoryOutput | SpoolOutput

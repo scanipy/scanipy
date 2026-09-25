@@ -12,6 +12,7 @@ an acceptance criterion. Use the claim ledger and gates in
 | [2026-08-31 refactor report](historical/2026-08-31/README.md) | Historical recovery on 2026-09-25 | Original report bytes, declared scope, and internally consistent counts; not a new run, corrected G0, or feature acceptance |
 | [2026-09-25 frontend readiness](2026-09-25-r05-readiness/README.md) | One bounded real Python parse/export/map | Production frontend and mapper succeeded in an isolated Docker container on reference hardware; not detection, refactor, G0, or stage acceptance |
 | [2026-09-25 execution-ledger checks](2026-09-25-execution-ledger/README.md) | Planning-tool tests and retained-artifact hash checks | Ledger inventory/DAG/negative controls; not semantic report or feature acceptance |
+| [2026-09-25 presentation machine](2026-09-25-stage-machine/README.md) | Owner confirmation and selected read-only host observations | Actual demo machine identified; transient capacity and resource pressure, not measured budgets or offline stage acceptance |
 
 No corrected-corpus G0 or final full-submission acceptance bundle is recorded
 by this inventory. Add future bundles explicitly; do not reuse the historical

@@ -4,9 +4,9 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 4 — 2026-09-25 reviewed foundations and newly identified safety/lifecycle gaps |
-| Status | Execution started; no remediation task or submitted claim is yet accepted as complete |
-| Reviewed code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
+| Revision | 12 — 2026-09-25 19:00 UTC implementation/review snapshot; earlier cutoffs preserved, full acceptance unresolved |
+| Status | Execution started; no full R01–R20 task or submitted claim is yet accepted as complete |
+| Initial review code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
 ## 0. Current instructions — read before executing this backlog
 
@@ -23,9 +23,13 @@ plan and this review's historical observations:
   architecture. Preserve them as historical references; do not let their
   obsolete architecture or approval gates veto the current goal. Existing
   contracts still explain compatibility obligations and useful tests.
-- The live demo will run **locally using Docker**. OS, CPU, RAM, and available
-  disk for the actual presentation machine are not yet confirmed. Measurements
-  on the current development host are reference measurements only.
+- The live demo will run **locally using Docker on this development machine**,
+  as confirmed by the owner. The [stage-machine record](evidence/2026-09-25-stage-machine/README.md)
+  captures Ubuntu 22.04.5/x86_64, 32 VMware-exposed CPUs, about 62.75 GiB total
+  RAM and 101.91 GiB shared free disk. Only about 7.37 GiB RAM was available in
+  the latest recorded sample and swap was nearly full. Recheck resources and
+  measure actual demo budgets; no offline/performance readiness is established.
+  Earlier reference-only diagnostics retain their original limited scope.
 - Corrective issues and pull requests in `scanipy/scanipy` are authorized;
   merge only after required review and tests pass. This does not authorize
   publishing releases, sending external messages, new spending, or reducing
@@ -42,13 +46,142 @@ All unchecked acceptance items below remain required unless explicitly
 classified optional. An adopted design, recovered historical report, or one
 successful Joern parse does not complete a task or verify a submitted claim.
 
-Reviewed foundations have now landed through main `0223651`: independent
+Reviewed foundations have now landed through main `6f1ebc8`: independent
 artifact metadata, typed report checking, corrected corpus and dependency
-locks, board/fail-closed hook tooling, and the occurrence/decision contract. See the
+locks, board/fail-closed hook tooling, the occurrence/decision contract, and
+the bounded canonical identity/budget foundation, Java static invocation
+safety, opt-in raw Joern transport, the pure continuity module, stage/handoff
+documentation, fail-closed legacy Git/application containment and bounded
+Semgrep observation parsing, Revision 10 documentation (#405), the R05 campaign
+producer (#380) and bounded local source custody (#406). The accepted source
+head `b005eaa` and merge `6f1ebc8` have the same tree. Narrow #392 is Done;
+filesystem custody is not actual Git acquisition, a database seal, runtime
+authority or a delivered scan. Occurrence storage and integrated producers
+remain pending. See the
 [bounded merge/evidence record](evidence/2026-09-25-foundation-merges/README.md)
 for exact heads, checks and limitations. Initial defect observations below
 remain historical evidence; do not assume every described defect is still
 present, or mistake a narrow repair for full R-task acceptance.
+
+The handoff preserves the earlier external canonical-review session limit and
+the observed successful recovery: #390, #382 and #389 now have successful exact-head
+canonical APPROVE actions and are merged. Remaining candidates still need their
+own successful review.
+Successful unit/CI checks or an APPROVE word inside a failed review action do
+not satisfy that gate. Continue safe, assigned local work without merging until
+the exact-head review actually completes successfully. Do not weaken feature
+acceptance or retry an exhausted service continuously.
+
+This revision's local evidence cutoff is **17:29 UTC on 2026-09-25**. Later
+checks or publication require a separate update, not silent promotion of this
+snapshot. The merged R05 producer passed 1,894 tests with 51 existing optional
+skips at `9be0579`; source custody passed 1,958/51 at `b005eaa`. Both have
+successful exact-head canonical APPROVE actions. The first #406 procedural
+REQUEST-CHANGES remains recorded: only title/body scope, actual CI links and
+prep-test mapping changed before approval, not the three reviewed files.
+No gate was bypassed and no historical component AC was declared complete.
+
+Local-only occurrence storage and typed CPG checkpoints remain separate from
+merged acceptance. Git containment #402, application containment #403 and
+Semgrep parser #404 are merged; their narrow issues #395/#396/#394 are Done.
+Tests from one branch do not validate the combined deployment. Refusing unsafe scans is containment, not delivery
+of the promised scan workflow. The next source/authority/semantic contracts
+must bind exact verified capture bytes, accepted rule/model bytes, current
+durable authorization and actual native observations before a real core/oracle
+run can support G1. No caller boolean, fixture signature, graph label or local
+test count satisfies those producer obligations. Shared bounded process
+transport, runtime-file verification and a pin-relative low-level profile loader
+now have reviewed local code; the pure Docker create renderer has three
+independent/author runs of the same 288 checks, not 864 distinct tests.
+Source-syntax parsing, offline Git capture and signature verification have
+reviewed local implementations with separately bounded evidence. Typed CPG
+head `83b9ec6` passed 2,103/51 after incorporating accepted main; its actual
+push was running and no PR existed at the cutoff. Offline Git head `7dccd5e`
+preserves all ten authored files after the same integration; its fresh full
+run was pending, and the prior 2,211/51 belongs only to `c2c2078`.
+Runtime checkpoint `d51c5f3` includes a reviewed pure process-evidence codec
+and a 2,971/51 full run. The overlapping root/author 483-case and corpus
+480-case selections are not additive. Its earlier path and loss-accounting
+failures remain preserved. The corrected 1,477-line runtime-store design has
+scoped wire/replay approval, but its exact pure-journal API is still being
+specified and no store implementation exists. Physical capacity, filesystem
+installation, database orphan barriers and operational authority are not
+accepted. The actual Docker controller, trusted current-anchor factory,
+durable journal/admission, kernel enforcement, real operator authority and
+API/UI integration remain TODOs.
+The source-bound projection review reproduced 13 failing negative controls, then
+eight additional closure/wrapper failures after the first correction. A later
+368-pass controlled run was followed by four reproduced scope-multiplicity/order
+failures. The final correction has root and independent corpus approval after
+387 selected checks, 206 independently rerun projection checks and root's same
+four negatives passing. The configured full suite passed 2,469 tests with 51
+existing optional skips on that earlier projection tree. The later seven-file
+compiler/declaration/raw-solver slice is frozen but uncommitted atop `e6c4a2e`.
+Its compiler/declaration files have scoped approval. Six genuine raw binding
+UUID-coercion negatives were corrected; root's 126-case run and the independent
+128-case run pass with scoped raw-solver approval. The earlier 500-case and
+2,469/51 results do not validate this newer slice; no new whole-suite run or
+commit exists at the cutoff. Complete current-tree tests, normal gates and
+remote review, then actual source/native/model/authority/durable integration.
+No native fidelity, full Java/Python semantics or G1 acceptance follows from
+these controlled checks. Preserve the contrary results and remaining work.
+All unchecked TODOs below
+remain required; the handoff records exact checkpoints and remaining work.
+
+**Later update — 17:45 UTC:** the earlier 17:29 local snapshot above is retained
+as history. Typed transport #407 is now merged at `1b29100` from exact reviewed
+`83b9ec6`, with identical tree, all seven remote test checks and successful
+canonical APPROVE; only narrow #393 is Done. The scalar seven-file slice was
+normally committed at `c4f85c5`, then accepted main was integrated at `f6903cf`;
+its new full run is in progress, not yet a passing result. Offline Git `7dccd5e`
+passed 2,265/51; its subsequent typed-main integration `3abf021` still needs
+fresh affected checks and publication gates. The pure journal API was approved
+after correcting authorization-domain versus raw-hash linkage and accounting;
+only its two pure source/test files are now allocated and in progress. No
+filesystem store, trusted authority, Docker controller or native acceptance is
+established. Use the handoff's latest update for immediate next actions.
+
+**Revision 12 — 19:00 UTC snapshot:** Revision 11 documentation is accepted in
+main `d4ad0c0` through #408. The earlier 17:29/17:45 statements above remain
+historical; this snapshot supersedes their corresponding pending statuses,
+not the acceptance criteria or any task/claim/gate state.
+
+| Work | Observed checkpoint | Required next action |
+|---|---|---|
+| Offline Git capture / #409 | Corrected `acbd9d6`: full 2,437 passed /51 existing skips; normal push and all five exact-head CI jobs passed. Canonical re-review `36176791343` is running; its initial REQUEST-CHANGES is retained. | Obtain successful final canonical APPROVE before merge; then integrate the source seal/runtime/online path. Online acquisition remains unavailable. |
+| Occurrence store / #411 | `2fec34d` full 2,287/51 includes 89 actual isolated PostgreSQL cases without skips; all eight remote test checks passed. Initial canonical review requested a formal bridge clarification and completed CI checklist. Local `e08ac41` adds only the OPEN CLAR and explicit pending-finalization documentation. | Push/retest/re-review the corrected combined head; integrate actual producers, final Finding/R09 bridge, durable decisions and API/UI. |
+| Rule/model decoder | `6ae81ad`: 192 focused tests and full 2,269/51 passed; no PR yet. | Complete current combined/remote gates; structural rule validity is not model acceptance or a producer. |
+| Runtime inventory | `980c5ef`: independent 107 focused controls and full 2,202/51 passed. A controlled unrelated-sibling failure justified narrowing only ancestor equality; full measured-root/file checks remain. | Preserve original unlocalized and controlled failures separately; complete remote gates and actual installation/controller integration. |
+| CodeQL observations / #410 | Independent 440 focused controls passed after two genuine path-validation corrections. `93ae0aa` includes reviewed Git dependencies for its first full suite, still running at this cutoff. | Finish combined/remote gates, then implement a real import/invocation entrypoint and known-positive mapping. Parsing supplied test SARIF does not fulfill R13. |
+| Pure runtime journal | Final 331-case selection passes on Python 3.11 and 3.12; `0dbee6e` incorporates current main and the inventory correction, with 434 affected checks passing. | Complete combined/remote gates and physical store, capacity, current authority, database barriers and actual Docker lifecycle. Results remain structural-only. |
+| Accepted-input ledger command codec | Two frozen files pass 286 tests on each Python version; independent full-source review is in progress at the cutoff. | Finish review/gates and actual seven-command database/authority integration. No signature/currentness/permission follows from decoding input. |
+| Scalar source-bound producer | `c8fb75c` retains the full-tested `f6903cf` tree: 3,365 passed /140 existing optional/environment skips. | Finish dependency/current-head/remote gates and real source/native/accepted-model/durable integration; no Java/full-fidelity or G1 result follows. |
+
+The authority-ledger design and amendment have scoped approval, not installed
+authority or a database implementation. Physical-store planning found a real
+publication-ID recovery gap after retiring the sole intent, and an unresolved
+delegated hash-work allowance for the full reader. Record and resolve those
+before allocating the affected implementation; do not silently retain more
+metadata, widen quotas or infer a previous acknowledgment from visible bytes.
+Real operator/current-admission/independent restore choices remain open.
+
+Continue the full R01–R20 TODOs below. These library checks, local branches,
+designs and review corrections do not accept any C01–C18 claim or G0–G3 gate.
+The user application/database, original submission and historical evidence are
+unchanged; no target code, native engine, image/release or external message was
+executed/published by these preparation steps. Exact links and limitations are
+in the handoff and foundation evidence record.
+
+**Later update — 19:05 UTC:** Git-capture PR #409 is merged at `595484b`
+from exact reviewed `acbd9d6`, with identical tree. Canonical action
+`36176791343` completed SUCCESS/final APPROVE; all five corrected-head CI jobs
+were green before merge. Only this offline/transport slice is accepted:
+#398/#362, online acquisition, DB sealing and runtime integration remain open.
+After the 19:00 cutoff, CodeQL's `93ae0aa` full suite passed 2,864/51, and
+independent AL-02 review passed 291 controls and approved the exact two files;
+normal commit `66607b9` passed applicable hooks. Neither has remote acceptance
+or real CodeQL/current-authority execution. These later observations do not
+rewrite the cutoff table or promote any full R-task, claim or shared gate.
 
 ## 1. Objective and document boundaries
 
