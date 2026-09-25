@@ -65,7 +65,9 @@ repos:
   # Python — mypy (type checking)
   # ---------------------------------------------------------------------------
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.10.0
+    # Match the supported checker used by project/CI verification. The old
+    # 1.10 hook cannot consume current dependency stubs used by the worker.
+    rev: v2.3.1
     hooks:
       - id: mypy
         args: [--config-file, pyproject.toml]
@@ -73,7 +75,8 @@ repos:
           - types-PyYAML
           - types-requests
           - types-psycopg2
-          - sqlalchemy>=2.0
+          - sqlalchemy>=2.0,<2.1
+          - cryptography>=42
         # Scope to the same source dirs CI type-checks (ci.yml runs
         # `mypy analysis/ detectors/ integrations/ services/`). Tests are
         # not type-checked in CI; running mypy on them here only fails on
