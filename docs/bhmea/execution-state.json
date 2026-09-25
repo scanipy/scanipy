@@ -17,7 +17,20 @@
     "october_demo_lock": null,
     "acceptance_confirmed": true,
     "execution": "local_docker",
-    "stage_hardware": null
+    "stage_hardware": {
+      "owner_confirmed": true,
+      "owner_reply": "This machine",
+      "machine": "current_development_machine",
+      "observation_path": "docs/evidence/2026-09-25-stage-machine/observation.json",
+      "readiness_actions_path": "docs/evidence/2026-09-25-stage-machine/README.md",
+      "os": "Ubuntu 22.04.5 LTS",
+      "architecture": "x86_64",
+      "hypervisor": "VMware",
+      "exposed_cpus": 32,
+      "memory_total_bytes": 67379802112,
+      "docker_server_version": "29.1.3",
+      "acceptance_budgets_measured": false
+    }
   },
   "authorization": {
     "corrective_issues_and_prs": true,
@@ -36,7 +49,8 @@
     "R07 lifecycle-generation and R16 implicit Java execution/coverage gaps are explicit follow-ups; no production continuity policy or corrected G0 exists.",
     "At the September 25 checkpoint, #382/#389/#390 have seven passing test checks but failed canonical actions due to an external session limit. Reported reset 13:40 UTC is not observed recovery; retry serially only after recovery and require successful exact-head review before merge.",
     "Local-only #378 and #391–#396 checkpoints are not merged acceptance evidence; #395 includes a tested packaging correction but no image build. See the handoff for exact code/test boundaries, not additive test counts.",
-    "Design-only #397/#398/#399 cover source-bound scalar semantics, shared bounded transport/raw Git acquisition and exact accepted-byte authority. Missing producers, operational trust and real worker integration cannot be replaced by caller assertions, fixture keys or passing pure tests."
+    "Local #397 scalar implementation has started; #398 shared transport is under independent review while raw Git domain work remains design-only; #399 exact verifier protocol is reviewed with bounded local implementation authorized. Missing producers, operational trust and real worker integration cannot be replaced by caller assertions, fixture keys or passing pure tests.",
+    "The owner confirmed this development machine for the Docker presentation. Selected 13:21 UTC host observations identify capacity and current resource pressure only; no stage budget or G3_STAGE criterion is accepted by that confirmation."
   ],
   "tasks": [
     {
@@ -268,9 +282,10 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R15",
       "evidence_paths": [
-        "docs/EVIDENCE-BHMEA-DEPENDENCY-COMPATIBILITY-2026-09-25.md"
+        "docs/EVIDENCE-BHMEA-DEPENDENCY-COMPATIBILITY-2026-09-25.md",
+        "docs/evidence/2026-09-25-stage-machine/README.md"
       ],
-      "next_action": "Runtime #373, snapshot lock #383 and hook #387 merged. #395 locally fixes/tests a missing integrations Docker COPY but is not merged or built. After resource/safety review verify actual install/startup; obtain stage hardware, measure budgets and rehearse offline twice."
+      "next_action": "Runtime #373, snapshot lock #383 and hook #387 merged. #395 locally fixes/tests a missing integrations Docker COPY but is not merged or built. Stage machine is owner-confirmed and measured, not ready. After resource/safety review verify actual install/startup, recheck shared RAM/swap/disk, measure budgets and rehearse offline twice with recovery/fallback."
     },
     {
       "id": "R16",
@@ -1983,11 +1998,15 @@
       "path": "docs/evidence/2026-09-25-r05-readiness/README.md",
       "kind": "real_frontend_readiness_diagnostic",
       "acceptance": false
+    },
+    {
+      "path": "docs/evidence/2026-09-25-stage-machine/README.md",
+      "kind": "owner_confirmation_and_selected_host_observation",
+      "acceptance": false
     }
   ],
   "pending_owner_input": [
     "Exact presentation date when scheduled.",
-    "Actual stage OS/CPU/RAM/free disk/Docker architecture before resource acceptance.",
     "Actual accepting operator, persistent trust-root/publisher scope and independent admission/restore administrator/checkpoint policy before operational accepted-input publication; test keys and design approval are not that authority.",
     "Separate release/image publication and video/external-material authorization when ready."
   ]

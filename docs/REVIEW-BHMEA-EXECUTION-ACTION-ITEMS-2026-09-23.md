@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 6 — 2026-09-25 local containment/store checkpoints and explicit source/authority/semantic producer gaps |
+| Revision | 7 — 2026-09-25 owner-confirmed stage machine; measured capacity, resource pressure and explicit readiness TODOs |
 | Status | Execution started; no remediation task or submitted claim is yet accepted as complete |
 | Reviewed code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
@@ -23,9 +23,13 @@ plan and this review's historical observations:
   architecture. Preserve them as historical references; do not let their
   obsolete architecture or approval gates veto the current goal. Existing
   contracts still explain compatibility obligations and useful tests.
-- The live demo will run **locally using Docker**. OS, CPU, RAM, and available
-  disk for the actual presentation machine are not yet confirmed. Measurements
-  on the current development host are reference measurements only.
+- The live demo will run **locally using Docker on this development machine**,
+  as confirmed by the owner. The [stage-machine record](evidence/2026-09-25-stage-machine/README.md)
+  captures Ubuntu 22.04.5/x86_64, 32 VMware-exposed CPUs, about 62.75 GiB total
+  RAM and 101.91 GiB shared free disk. Only about 7.37 GiB RAM was available in
+  the latest recorded sample and swap was nearly full. Recheck resources and
+  measure actual demo budgets; no offline/performance readiness is established.
+  Earlier reference-only diagnostics retain their original limited scope.
 - Corrective issues and pull requests in `scanipy/scanipy` are authorized;
   merge only after required review and tests pass. This does not authorize
   publishing releases, sending external messages, new spending, or reducing

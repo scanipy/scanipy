@@ -6,7 +6,7 @@
 | Target | FULL_SUBMISSION; all C01–C18 claims and applicable R01–R20 acceptance items |
 | Tracking | [Umbrella issue #362](https://github.com/scanipy/scanipy/issues/362) |
 | Presentation | December 2 or 3, 2026; exact date unconfirmed |
-| Demo | Local Docker; actual presentation hardware not yet specified |
+| Demo | Local Docker on this development machine, confirmed by owner; capacity recorded, readiness unverified |
 | Technical acceptance | NOT VERIFIED; no shared gate has passed |
 | Release / stage readiness | NOT VERIFIED / NOT VERIFIED |
 
@@ -43,8 +43,10 @@ artifacts and checking public access are not publication approval.
 
 Never execute scanned source, target build hooks/tests, or commands supplied by
 scanned repositories. Keep the existing development app/DB intact; use isolated projects,
-containers, temporary directories, and test databases for diagnostics. Do not
-infer that the current host is the presentation machine.
+containers, temporary directories, and test databases for diagnostics. The owner
+has confirmed the current host as the presentation machine. Use the
+[measured stage profile and remaining checks](evidence/2026-09-25-stage-machine/README.md);
+do not infer dedicated capacity, safe parallel native runs or offline readiness.
 
 ## 2. Decisions and remaining design work
 
@@ -140,9 +142,9 @@ handoff; do not cherry-pick or overwrite another agent's in-flight edits.
 | R08/R11 Semgrep observations | Root; [#394](https://github.com/scanipy/scanipy/issues/394) | Independently reviewed bounded parser checkpoint with 194 focused checks; no legacy adapter changes | Obtain CI/canonical review, then implement closed native runner, coverage and durable source-bound projection. Parser output always has unverified coverage |
 | R16 legacy Git containment | Corpus agent; [#395](https://github.com/scanipy/scanipy/issues/395) | Generic Git refusal, snapshot/default SCM route containment and tested snapshot package-copy correction; local checkpoint | Obtain exact-head review/CI after #390 dependency. This disables unsafe paths; it does not implement safe acquisition or certify a rebuilt image |
 | R08/R16 legacy demo containment | Root; [#396](https://github.com/scanipy/scanipy/issues/396) | Seven-file local checkpoint: constant scan-unavailable API, truthful health/UI, preserved historical reads, focused tests and narrow hook prerequisites | Obtain CI/canonical review; leave user's running containers untouched. Re-enable only through the reviewed actual capture/authority/worker/store path |
-| R19 source-bound scalar producer | Canonical agent; [#397](https://github.com/scanipy/scanipy/issues/397) | Design-only Python-first source syntax, exact rule/model and matched-return IFDS contract; separate future Java extension | Close worker/result codecs and shared transport dependency, then implement a real nonempty raw witness path. Rule isolation/coverage/model acceptance and actual native fidelity are separate obligations |
-| R16 raw Git producer and process transport | Corpus agent; [#398](https://github.com/scanipy/scanipy/issues/398) | Design for one shared bounded process transport and no-checkout raw-object verification/capture | Review complete profile/limits and enforceable outer isolation before implementation. Hashes, caller flags and process-group kill alone do not authenticate SCM provenance or OS egress |
-| R08/R09 accepted input authority | Schema agent; [#399](https://github.com/scanipy/scanipy/issues/399) | Design-only exact-byte/trust verifier; later immutable registry, publisher, restore admission and per-attempt authorization | Close exact worker/descriptor codecs; implement bounded verifier with test-only keys. Actual owner-installed trust, durable publication and live execution authorization remain separate |
+| R19 source-bound scalar producer | Canonical agent; [#397](https://github.com/scanipy/scanipy/issues/397) | Python-first contract/codecs reviewed; bounded local implementation started; Java remains a required extension | Implement/test real nonempty raw witnesses and actual shared dependencies. Reject local calls into any selected entry in the initial profile. Rule isolation, model acceptance and actual native fidelity remain separate obligations |
+| R16 raw Git producer and process transport | Corpus agent; [#398](https://github.com/scanipy/scanipy/issues/398) | Shared bounded transport implemented locally and under independent review; raw Git producer remains design work | Finish transport tests/review and review the complete Git profile plus enforceable outer isolation before domain implementation. Hashes, caller flags and process-group kill alone do not authenticate SCM provenance or OS egress |
+| R08/R09 accepted input authority | Schema agent; [#399](https://github.com/scanipy/scanipy/issues/399) | Exact verifier contract/codecs reviewed; local implementation authorized with private bytecode-cache isolation; later durable registry and per-attempt authorization remain open | Implement bounded verifier with test-only keys and actual shared types/transport. Actual owner-installed trust, durable publication and live execution authorization remain separate |
 | R16 Java invocation safety | Schema agent; [#386](https://github.com/scanipy/scanipy/issues/386) | #390 shared subprocess grammar/profile and coordinated frontend/observer hunk, frozen for canonical review | Obtain successful exact-head review before new real Java probes; no-fetch/no-delombok controls alone do not prove source coverage |
 | Repository workflow prerequisite | Root; narrow [#377](https://github.com/scanipy/scanipy/issues/377) closed | Bounded board helper merged in #379 | Continue serialized exact-item state changes; never infer ownership or Todo from failure |
 | R15 dependency prerequisite | Root; [#366](https://github.com/scanipy/scanipy/issues/366); narrow #370/#381 closed | Runtime declarations (#373) and snapshot lock/gate (#383) merged | Verify actual image installation/startup only after resource review; no build, publication or active environment promotion yet |
@@ -206,9 +208,9 @@ Local build-ahead is intentionally separate from the remote merge queue:
 | [#394](https://github.com/scanipy/scanipy/issues/394), Semgrep observations | `5f47b07dc59e46bf39b2aed03be59921c3991773`; 194 focused checks, full run 1,443 passed/51 skipped; normal hooks and independent production-code review passed | Native execution, accepted rules, coverage, durable binding, measured rate and signed provenance remain unimplemented in this slice |
 | [#395](https://github.com/scanipy/scanipy/issues/395), legacy Git containment | `9b9091faf1f22b216aca74c87e7711da33d40390`; 60 focused checks, fresh full run 1,403 passed/51 skipped, normal hooks and independent review passed; root independently reran both packaging controls | Includes the missing integrations Docker COPY correction. Isolated package-import testing cannot certify third-party image installation or safe acquisition; reviewed #390 base and exact-head CI/review remain required |
 | [#396](https://github.com/scanipy/scanipy/issues/396), legacy demo containment | `5fd2000c6298afebfa78cb2fa5e5a5326898930b`; 27 focused checks, full run 1,276 passed/51 skipped; normal commit/pre-push and independent seven-file review passed | Constant 503 for new scans; historical schema/GETs preserved. User app/DB untouched. Review/merge then implement the actual cutover, not an unsafe enablement flag |
-| [#397](https://github.com/scanipy/scanipy/issues/397), source-bound scalar semantics | Design only; rule isolation, selector/model closure and complete-capture/query distinction reviewed; worker/result codecs and process dependency still being closed | No implementation, real witness, accepted operational model or fresh native run yet. The Python-first subset does not reduce the full Java/Python/corpus obligations |
-| [#398](https://github.com/scanipy/scanipy/issues/398), raw Git acquisition | Assigned design; shared transport/API/profile and offline/online proof boundaries under review | No native invocation, image build or producer code yet. Online egress enforcement and trusted SCM-to-capture evidence must be real, not a boolean |
-| [#399](https://github.com/scanipy/scanipy/issues/399), accepted-byte authority verifier | Design only; append-only authority events and independent restore admission reviewed; exact bounded worker/descriptor protocol remains pre-code work | Pure signature checks cannot prove durable publication or authorize a process. Actual publisher/root/operator/admission installation and registry/launcher integration remain open |
+| [#397](https://github.com/scanipy/scanipy/issues/397), source-bound scalar semantics | Contract and worker/projection/result codecs reviewed; local implementation started, without a reviewed implementation checkpoint yet | No accepted real witness, operational model or fresh native run. The Python-first subset does not reduce the full Java/Python/corpus obligations |
+| [#398](https://github.com/scanipy/scanipy/issues/398), raw Git acquisition | Shared transport code and controlled Python-child tests are local and under independent review; Git domain companion is still design work | No native Git invocation, image build or raw Git producer code. Online egress enforcement and trusted SCM-to-capture evidence must be real, not a boolean |
+| [#399](https://github.com/scanipy/scanipy/issues/399), accepted-byte authority verifier | Exact verifier/runtime protocol reviewed and bounded local implementation authorized; no reviewed implementation checkpoint yet | Pure signature checks cannot prove durable publication or authorize a process. Actual publisher/root/operator/admission installation and registry/launcher integration remain open |
 
 At approximately 10:59 UTC on September 25 the canonical reviewer reported a
 session limit, with a reported reset at **13:40 UTC / 18:40 Asia/Karachi**. This
@@ -255,7 +257,7 @@ presentation, December 2. There is no invented hard internal lock. Reforecast
 after the first corrected G0 and G1: record measured durations, resource limits,
 remaining critical-path tasks, and contingency time. Current reference parsing
 cost is not an end-to-end estimate. Raise forecast risk early without dropping
-claims or claiming that unspecified hardware meets budgets.
+claims or assuming confirmed hardware meets unmeasured budgets.
 
 ## 5. Current evidence and limitations
 
@@ -286,11 +288,19 @@ Follow [evidence conventions](evidence/README.md). Preserve contrary results,
 exact invocations, code/source/tool identities and raw bytes. Every PASS needs
 its actual scope and artifact references. No G0/G1/G2/G3 PASS is recorded yet.
 
-On the reference host at 10:12 UTC, approximately 6.5 GiB RAM was available
+On the then-reference host at 10:12 UTC, approximately 6.5 GiB RAM was available
 and the 2 GiB swap was fully used; disk had 107 GiB free. This is a transient
 resource check, not a stage budget. Do not launch parallel image builds or
 Java/Python campaigns on that observation. Recheck resources and use bounded
 sequential probes only after the relevant safety/packaging changes are reviewed.
+
+The owner subsequently confirmed this host as the actual presentation machine.
+The [13:21 UTC stage observation](evidence/2026-09-25-stage-machine/README.md)
+records Ubuntu 22.04.5/x86_64, 32 VMware-exposed CPUs, 62.75 GiB total RAM,
+7.37 GiB currently available, nearly full swap and 101.91 GiB free on the shared
+workspace/tmp/Docker filesystem. These transient values do not establish a safe
+worker allocation or stage budget. Earlier diagnostic results keep their
+original scope; do not promote them to offline or feature acceptance.
 
 ## 6. Non-negotiable acceptance and remaining owner input
 
@@ -302,8 +312,10 @@ is progress, not end-to-end completion.
 
 Ask only when needed; do not repeatedly ask settled questions:
 
-- Confirm presentation date when scheduled and collect actual stage OS, CPU,
-  RAM, free disk and Docker architecture before assigning acceptance budgets.
+- Confirm the exact presentation date when scheduled. Machine identity is
+  settled: do not ask for the same hardware choice again. Recheck resources,
+  measure fresh/warm latency and peak use on this machine, then assign budgets
+  and complete the two offline rehearsals and recovery/fallback checks.
 - Ask separately before publishing a release/image or replacing submitted
   video/external material, incurring new costs, or contacting organizers.
 - A technically narrower scope requires an explicit owner decision and remains

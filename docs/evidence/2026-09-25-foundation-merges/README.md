@@ -154,7 +154,7 @@ R19 fidelity work. R16 is not complete.
   app/database were not modified. Narrow isolated-mypy dependency and public
   default-password baseline corrections were reviewed; changed-password
   falsifiers still fail the actual secret hook. Containment is not cutover.
-- #397/#398/#399 are design work, not implemented producers: source-bound scalar
+- #397/#398/#399 started as design work, not accepted producers: source-bound scalar
   value flow and per-rule isolation; bounded transport and verified no-checkout
   Git objects; immutable accepted bytes and durable current authority. Operational
   model adoption, independently installed trust and restore admission cannot be
