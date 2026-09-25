@@ -1,5 +1,14 @@
 # DOC-CMP-SCM-03 — GitLab / Bitbucket / Azure DevOps connectors
 
+> **Current #395 containment (2026-09-25):** native default Git acquisition is
+> unavailable before staging. The shared process wrapper refuses all Git calls;
+> the snapshot worker and all four provider default clone paths fail explicitly.
+> Trusted injected Python fixture collaborators preserve controlled tests, not
+> production acquisition or no-execution approval. See the current
+> [containment and mandatory replacement contract](../bhmea/GIT-SOURCE-ACQUISITION.md).
+> Historical runnable clone examples below do not override this boundary; the
+> real bounded object-to-capture producer remains required. Other APIs/ACs remain.
+
 > **Source-of-truth:** `SDD.md §3 CMP-SCM-03`. Where this document diverges from `SDD.md` / `PLAN.md`, the upstream document wins; correct this file rather than the upstream.
 > **Status contract:** This doc satisfies `AC-DOC-04` — a code-writing agent reading only this file plus the cross-cutting refs and [`DOC-CMP-SCM-01`](./DOC-CMP-SCM-01.md), [`DOC-CMP-SCM-05`](./DOC-CMP-SCM-05.md) can implement `CMP-SCM-03` without re-reading the SDD.
 
@@ -101,7 +110,7 @@ The canonical scheme reference is [`DOC-API §2.4`](../cross-cutting/DOC-API.md#
 |---|---|---|---|
 | GitLab | `X-Gitlab-Token` | plain shared-secret equality (provider-native) | Constant-time compare via `hmac.compare_digest`. |
 | Bitbucket | `X-Hub-Signature` | HMAC-SHA-256 over raw body, key = registered secret; header value prefix `sha256=` | Compare constant-time. |
-| Azure DevOps | _(none — Basic-auth credential, not a signature header)_ | shared-secret equality on the `basicAuthPassword` consumer input (constant-time compare) | Native ADO service-hooks emit **no body HMAC and no signature header** — only HTTP Basic auth (`basicAuthUsername`/`basicAuthPassword`); `X-Vss-Activityid` is a correlation id, not a signature (CLAR-SCM-02, RESOLVED 2026-06-03). `register_webhook` already sets `consumerInputs.basicAuthPassword = secret`; `verify_webhook` checks constant-time equality of the echoed Basic-auth secret (the GitLab `X-Gitlab-Token` pattern). |
+| Azure DevOps | _(none — Basic-auth credential, not a signature header)_ | shared-secret equality on the `basicAuthPassword` consumer input (constant-time compare) | Native ADO service-hooks emit **no body HMAC and no signature header** — only HTTP Basic auth (`basicAuthUsername`/`basicAuthPassword`); `X-Vss-Activityid` is a correlation id, not a signature (CLAR-SCM-02, RESOLVED 2026-06-03). `register_webhook` already sets the `consumerInputs.basicAuthPassword` field from its `secret` parameter; `verify_webhook` checks constant-time equality of the echoed Basic-auth secret (the GitLab `X-Gitlab-Token` pattern). |
 
 The GitHub row of `DOC-API §2.4` is the responsibility of `CMP-SCM-02`, not this component.
 

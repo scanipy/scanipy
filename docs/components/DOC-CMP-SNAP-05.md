@@ -1,5 +1,14 @@
 # DOC-CMP-SNAP-05 — Snapshot worker + environment pinning
 
+> **Current #395 containment (2026-09-25):** native default Git acquisition is
+> unavailable before staging. The shared process wrapper refuses all Git calls;
+> the snapshot worker and all four provider default clone paths fail explicitly.
+> Trusted injected Python fixture collaborators preserve controlled tests, not
+> production acquisition or no-execution approval. See the current
+> [containment and mandatory replacement contract](../bhmea/GIT-SOURCE-ACQUISITION.md).
+> Historical runnable clone examples below do not override this boundary; the
+> real bounded object-to-capture producer remains required. Other APIs/ACs remain.
+
 ## Current Black Hat Java safety extension
 
 Under [DECISION-BHMEA-01](../DECISION-BHMEA-01-current-execution-authority-2026-09-25.md),
