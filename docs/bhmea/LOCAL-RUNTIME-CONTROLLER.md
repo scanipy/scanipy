@@ -1,8 +1,9 @@
 # Local analysis runtime controller — design under review
 
 Owner: root coordinator. Tracking: [#400](https://github.com/scanipy/scanipy/issues/400),
-part of #362/R08/R15/R16. Status: proposed architecture, not implementation,
-runtime permission, canonical approval or parent-task acceptance.
+part of #362/R08/R15/R16. Status: independently reviewed architecture with the
+clarifications below; exact implementation contract still pending. This is not
+implementation, runtime permission, canonical approval or parent-task acceptance.
 
 This closes a specific missing boundary: the shared process transport can bound
 its own pipes and process group, but cannot enforce a Docker resource envelope,
@@ -116,13 +117,51 @@ No privileged/mount-capability fallback is permitted if the chosen storage
 limit cannot be enforced.
 [Docker tmpfs reference](https://github.com/docker/docs/blob/d511fb5636cfc41591a48365fde5126037ea66d6/content/manuals/engine/storage/tmpfs.md).
 
+### 3.1 Initial runtime path namespace and prerequisites
+
+Runtime-inventory v1 includes ABSOLUTE paths in its root-group and program
+digests. The initial controller therefore uses exact identity-mapped readonly
+runtime binds: each installed host path equals its container destination.
+Inspect the actual source, destination, read-only state and complete mount set;
+reject overlays, unexpected anonymous volumes and hidden writable submounts.
+All metadata/control directories remain outside every inventoried runtime root.
+Installation must make the selected non-root container UID able to read the
+exact private metadata under the existing domain worker's ownership/mode rules;
+do not relax those rules or make metadata world-readable to fix a mismatch.
+
+This is an initial engineering choice, not a claim that runtime files are
+already installed or mounted. Image-native relocated runtimes require a separately
+reviewed dual-namespace mapping or trusted pre-input measurement in the container
+namespace. Never rename an inventory and retain its old identity. Identical
+interpreter bytes can still load different image-native libraries: retain the
+observed image config ID separately and do not call file measurement a complete
+ELF-loader or image attestation. Writable scratch paths have their explicitly
+declared container namespace; they are not inventoried host runtime paths.
+
+Launch prerequisites are profile/mode-specific, avoiding verifier circularity:
+
+- Verifier publication-preflight: authenticated operator, installed verifier
+  trust/runtime and current publication/admission expectations. It cannot require
+  a published bundle, detector-run or capture lease that does not exist yet.
+- Verifier historical: authenticated auditor and installed verifier trust/runtime,
+  with exact retained historical material. Revocation must not make historical
+  audit impossible; successful historical verification grants no current launch.
+- Verifier execution: exact live work/fence/capture-lease reads and the verifier
+  trust/runtime. Do not require this same verifier's successful cryptographic
+  result as a prerequisite for invoking it.
+- Parser/native detector execution: the actual accepted-input authorization,
+  immutable source/lease and current work/fence checks required by its domain.
+
+These checks belong to installed trusted adapters, never request-supplied
+callbacks or booleans. Missing real adapters still block operational launch.
+
 ## 4. Proposed gated launch and output retention
 
 The lifecycle must preserve the shared transport's finite-input/no-callback
 contract while verifying the container before it consumes untrusted input:
 
 1. Validate/freeze installed profile and exact bounded request. Obtain actual
-   authority/source-lease checks from their owning adapters; missing production
+   mode-specific authority/source-lease checks from their owning adapters; missing production
    integration refuses launch. Allocate an exclusive controller-owned attempt.
    Durably journal its reserved exact unique container name and intended
    configuration BEFORE asking Docker to create anything. Recovery must handle
@@ -144,14 +183,23 @@ contract while verifying the container before it consumes untrusted input:
    publishes the exact release record on the private readonly-to-worker control
    mount. The source/API cannot write that directory. Define this schema before
    code; a request-provided file or bare boolean is not a release record. Bind
-   unique attempt and actual container IDs, profile, input and current authority
-   digests plus expiry; publish exclusively and reject stale/reused releases.
+   unique attempt and actual full container IDs, exact inner protocol/argv/env,
+   profile/inventory/program and input identities, plus the mode-specific current
+   authority, epoch/fence and expiry. The bootstrap compares a fixed schema with
+   trusted launch metadata, never expectations supplied by the scanned source.
+   Bind the CONTROL DIRECTORY read-only, so exclusive atomic release publication
+   is visible; a bind of a replaceable individual file is insufficient. Journal
+   release intent and outcome, publish exclusively and reject stale/reused releases.
+   Ambiguous start/release acknowledgement means possibly executed: stop and
+   reconcile the attempt; do not replay its release or pretend it never ran.
    Revocation or lease expiry between inspection and release blocks the job.
 6. Capture exact bounded stdout/stderr and transport failure evidence. Do not
    allow Docker's logging driver to write an unbounded second copy. Correlate
    process outcomes with the actual container's exit/OOM state and profile.
 7. On every terminal/error/cancel path, stop only this owned container, verify
-   actual termination/descendant disposal and retain final evidence. Killing
+   actual termination/descendant disposal, including the exact owned cgroup's
+   empty/termination evidence, and retain it before releasing source/authority
+   leases. Unknown cleanup remains durable orphan quarantine. Killing
    the Docker client alone does not prove the container stopped.
 8. Only after complete output validation, kernel/container checks, authority
    recheck and cleanup may the domain adapter admit the result. A successful
@@ -211,8 +259,11 @@ descendants inside the actual container without running target source as a test.
 
 ## 6. Next actions and proposed ownership
 
-- [ ] Independent review of this architecture and its contract seams, including
-  whether the enforced parent boundary suffices without a new channel protocol.
+- [x] Independent schema/security review accepted the trusted-parent architecture
+  within its stated threat model, without a second signing/channel hierarchy.
+  Root incorporated the required mode-specific verifier prerequisites, exact
+  path-namespace, directory-release and ambiguous-launch/cleanup clarifications.
+  This is architecture review only, not a claim that any control has been tested.
 - [ ] Specify exact profile/request/release/evidence/result/failure schemas and
   count/byte/time limits, actual Docker/kernel observations, lifecycle/recovery
   transitions and the initial exact file allocation before implementation.
@@ -228,7 +279,10 @@ descendants inside the actual container without running target source as a test.
 - [ ] Pass required exact-head CI and successful canonical APPROVE before merge,
   then re-test the merged artifact and the real Compose/worker path.
 
-Root owns this new document only at present. No Dockerfiles, shared transport,
-domain worker code, DB schema or running system is changed by this draft. Further
-file allocation and runtime activation require explicit reviewed engineering
-decisions; release publication and external actions retain owner authority.
+Root owns this controller design and the adjacent shared runtime-file inventory
+slice. The latter is separately implemented at local commit `9b8ec51f` with 73
+focused checks and scoped peer review; it is not a controller or installation
+loader. No Dockerfile, domain worker, DB schema or running system is changed by
+this controller draft. Further controller file allocation and runtime activation
+require explicit reviewed engineering contracts; release publication and external
+actions retain owner authority.
