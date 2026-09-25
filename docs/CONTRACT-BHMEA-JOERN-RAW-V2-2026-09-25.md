@@ -93,7 +93,10 @@ Producer has exactly `schema_version`, `image`, `tools`, `script`, `input_cpg`,
   agree. A registry-manifest digest is not substituted for a different image ID.
 - `tools`: exact role/version/path/sha256 records for the actual Joern CLI,
   selected Java/Python frontend, CPG-domain and flatgraph-core jars. Versions
-  come from the loaded runtime artifacts and must match the supported pin.
+  come from the pinned on-disk JAR manifests and must match the supported pin;
+  digests bind those on-disk bytes. This is not independent JVM class-loader or
+  loaded-class code-source attestation. Actual process/image evidence is still
+  required, and alternate classpaths must not inherit this proof automatically.
 - `script` and `input_cpg`: `{path,sha256}`, computed from actual trusted exporter
   script and supplied binary bytes. Paths locate evidence; digests bind content.
 - `source`: `{root,tree_namespace,tree_sha256,files}`. The immutable input source
@@ -102,6 +105,10 @@ Producer has exactly `schema_version`, `image`, `tools`, `script`, `input_cpg`,
   is SHA256 over `scanipy-source-tree/1\0`, then for each UTF-8-byte-sorted path:
   big-endian u64 path length, path bytes, big-endian u64 size, 32 digest bytes.
   Empty directories are not parser inputs. No file is executed to obtain this.
+  This `scanipy-source-tree/1` algorithm hashes the file-digest manifest. It is
+  distinct from R03/R05's `TREE_ALGORITHM` over raw framed source bytes. Future
+  R19-B or weak-identity consumers must bind the exact typed algorithm/namespace;
+  they must not compare or substitute the two digests as if interchangeable.
   Sizes above `2^53-1` fail because the pinned Scala JSON library cannot encode
   them as exact integers. Native graph IntType properties remain signed 32-bit.
 - `frontend`: `javasrc` or `pythonsrc`, checked against graph metadata language;
