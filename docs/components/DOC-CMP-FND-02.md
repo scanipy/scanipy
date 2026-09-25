@@ -371,3 +371,15 @@ The matrix is also propagated to `provenance_records`, `attestations`, `triage_s
 - `DOC-DEPLOY-DECISIONS` (CLAR-DEPLOY-03 RDS, CLAR-DEPLOY-15 retention, CLAR-DEPLOY-16 RLS).
 - `.claude/rules/01-invariants.md` (INV-1, INV-2, INV-3, INV-5).
 - `.claude/rules/02-provenance.md` (provenance threading).
+
+## Current Black Hat occurrence/decision extension
+
+[DECISION-BHMEA-01](../DECISION-BHMEA-01-current-execution-authority-2026-09-25.md)
+authorizes the R07/R08 correction. Its
+[occurrence/decision contract](../bhmea/OCCURRENCE-DECISION-CONTRACT.md)
+separates immutable detections, identity attempts, completed R09 projections,
+durable entities and human decisions. It preserves the weak/oracle suppression
+fence, tenancy constraints, signed-final record guarantees and LLM write fence.
+The existing index-shape test is not behavioral lifecycle acceptance. New
+additive schema, persistence/matching tests and real integration remain TODOs;
+neither this section nor a `strong` label marks AC-FND-02a or R07 complete.
