@@ -5,6 +5,12 @@ Joern execution, corrected-corpus G0, or passing acceptance gate. The recovered
 raw outputs are preserved byte-for-byte in
 [the historical bundle](evidence/historical/2026-08-31/README.md).
 
+Main's historical PR #358 (`ac1575e`) independently contains those same original
+JSON, text summary, and authored write-up bytes. Reconciliation retains its
+original `docs/evidence/` report paths and this annotated interpretation; the
+unchanged original write-up remains in the historical bundle. This confirms
+another repository copy, not the missing runtime metadata or claim validity.
+
 ## What the artifacts actually report
 
 The [machine report](evidence/historical/2026-08-31/refactor-invariance-topo8-2026-08-31.json)
