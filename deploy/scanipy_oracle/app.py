@@ -1,40 +1,23 @@
-"""FastAPI oracle-scan service for the one-command Docker deployment (DOCKER-01).
+"""Legacy Docker API: historical reads and explicit native-scan unavailability.
 
-Launch: ``uvicorn deploy.scanipy_oracle.app:app`` (the entrypoint does this after
-running Alembic migrations against the same Postgres). NO AWS: detection is the
-Semgrep binary baked into the image; persistence is the compose Postgres.
-
-Routes:
-  GET  /                     → the scan UI (static/index.html)
-  GET  /healthz              → liveness
-  POST /api/scan {repo_url}  → start an oracle scan, returns {id}
-  GET  /api/scan/{id}        → status + findings (polled by the UI)
-
-Honesty contract: every finding is ``origin = oracle-passthrough`` (engine
-``semgrep``), ``fingerprint_class = weak`` (a same-source content id, never a
-canonical-CPG claim). Results live in the ``oracle`` schema, kept separate from
-the tenanted deterministic-core ``findings`` table (which the staged CPG pipeline
-owns).
+The unsafe in-process Git/Semgrep route is removed under #396. The current
+contract is docs/bhmea/LEGACY-APP-CUTOVER.md. This is containment, not the
+completed Black Hat deployment: the capture/accepted-input/worker cutover is
+still required. Existing database schema and historical response fields are
+not upgraded to new structural or provenance guarantees.
 """
 
 from __future__ import annotations
 
-import hashlib
-import json
 import logging
 import os
-import re
-import shutil
-import subprocess
-import tempfile
-import uuid
-from concurrent.futures import ThreadPoolExecutor
-from datetime import UTC, datetime
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Final
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
-from pydantic import BaseModel
 from sqlalchemy import (
     BigInteger,
     Column,
@@ -46,42 +29,26 @@ from sqlalchemy import (
     Table,
     Text,
     create_engine,
-    func,
-    insert,
     select,
     text,
     update,
 )
 
-# ---------------------------------------------------------------------------
-# Configuration (all env-driven; safe defaults for docker-compose)
-# ---------------------------------------------------------------------------
 HERE = Path(__file__).resolve().parent
 STATIC = HERE / "static"
-RULES_DIR = Path(os.environ.get("SCANIPY_RULES_DIR", "/app/deploy/rules"))
-SEMGREP_BIN = os.environ.get("SEMGREP_BIN", "semgrep")
-GIT = shutil.which("git") or "/usr/bin/git"  # resolved full path (avoids partial-exec)
 DATABASE_URL = os.environ.get(
     "SCANIPY_DATABASE_URL", "postgresql://scanipy:scanipy_dev@localhost:5432/scanipy_dev"
 )
 S_VERSION = os.environ.get("SCANIPY_S_VERSION", "oracle-2026.08")
-
-GITHUB_URL_RE = re.compile(r"^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
-CLONE_TIMEOUT_S = 120
-SCAN_TIMEOUT_S = 600
-# Semgrep severity → display band. ERROR = high-signal (SQLi/SSTI/eval/pickle);
-# WARNING = medium; INFO = low-confidence heuristics (non-literal open/URL) — so a
-# repo of heuristic findings renders as low, not a wall of HIGH false positives.
-_SEV_BAND = {"ERROR": "critical", "WARNING": "medium", "INFO": "low"}
+NATIVE_SCAN_ERROR: Final = (
+    "Native scanning is unavailable pending the reviewed capture and worker cutover."
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("scanipy.oracle")
 
 _engine = create_engine(DATABASE_URL, pool_pre_ping=True, future=True)
 _meta = MetaData(schema="oracle")
-_MAX_WORKERS = 4
-_MAX_INFLIGHT = 8  # queued+running cap; excess is rejected with 429 (crude DoS backstop)
-_pool = ThreadPoolExecutor(max_workers=_MAX_WORKERS)
 
 scan_tbl = Table(
     "scan",
@@ -118,29 +85,14 @@ finding_tbl = Table(
     Column("fingerprint_class", String(8), nullable=False),  # weak (never strong here)
 )
 
-_ENV_DIGEST = "sha256:" + "0" * 64  # replaced at startup with a real analysis-env digest
 
-
-def _now() -> datetime:
-    return datetime.now(UTC)
+class NativeScanUnavailableError(RuntimeError):
+    """The legacy native route has no reviewed execution profile."""
 
 
 def _compute_env_digest() -> str:
-    """A real, reproducible digest of the analysis environment: the Semgrep
-    version + the ruleset content. This is the honest env_digest for the oracle
-    path (INV-2) — the identity that a re-run must match to be comparable."""
-    try:
-        ver = subprocess.run(
-            [SEMGREP_BIN, "--version"], capture_output=True, text=True, timeout=30
-        ).stdout.strip()
-    except Exception:
-        ver = "unknown"
-    h = hashlib.sha256()
-    h.update(f"semgrep={ver}\n".encode())
-    for p in sorted(RULES_DIR.glob("*.y*ml")):
-        h.update(p.name.encode())
-        h.update(p.read_bytes())
-    return "sha256:" + h.hexdigest()
+    """Compatibility refusal: no version/rule probe or fabricated digest."""
+    raise NativeScanUnavailableError(NATIVE_SCAN_ERROR)
 
 
 def _init_db() -> None:
@@ -149,166 +101,48 @@ def _init_db() -> None:
     _meta.create_all(_engine)
 
 
-def _snippet(path: Path, line: int, context: int = 2) -> tuple[str | None, int | None]:
-    try:
-        lines = path.read_text(errors="replace").splitlines()
-    except OSError:
-        return None, None
-    start = max(1, line - context)
-    end = min(len(lines), line + context)
-    return "\n".join(lines[start - 1 : end]), start
-
-
-def _run_semgrep(src: Path) -> dict:
-    proc = subprocess.run(
-        [
-            SEMGREP_BIN,
-            "scan",
-            "--config",
-            str(RULES_DIR),
-            "--json",
-            "--quiet",
-            "--no-git-ignore",
-            "--metrics=off",
-            "--disable-version-check",
-            str(src),
-        ],
-        capture_output=True,
-        timeout=SCAN_TIMEOUT_S,
-        env={**os.environ, "SEMGREP_SEND_METRICS": "off"},
-    )
-    try:
-        return json.loads(proc.stdout)
-    except ValueError as exc:
-        raise RuntimeError(
-            "semgrep produced no parseable output: " + proc.stderr.decode(errors="replace")[-1000:]
-        ) from exc
-
-
-def _map_findings(data: dict, src: Path, commit_sha: str) -> list[dict]:
-    out: list[dict] = []
-    for r in data.get("results", []):
-        rel = r["path"]
-        rel = rel[len(str(src)) + 1 :] if rel.startswith(str(src)) else Path(rel).name
-        meta = r["extra"].get("metadata", {})
-        line = r["start"]["line"]
-        snip, snip_start = _snippet(src / rel, line)
-        title = meta.get("title") or r["check_id"].split(".")[-1].replace("-", " ").title()
-        # weak same-source fingerprint: a stable id for this finding, NOT a
-        # canonical-CPG claim (fingerprint_class = weak makes that explicit).
-        fp = hashlib.sha256(f"{commit_sha}|{r['check_id']}|{rel}|{line}".encode()).hexdigest()
-        out.append(
-            {
-                "origin": "oracle-passthrough",
-                "engine": "semgrep",
-                "cwe": meta.get("cwe", ""),
-                "rule_id": r["check_id"],
-                "severity": _SEV_BAND.get(r["extra"].get("severity", "WARNING"), "medium"),
-                "title": title,
-                "message": (r["extra"].get("message") or "").strip(),
-                "file": rel,
-                "line": line,
-                "snippet": snip,
-                "snippet_start_line": snip_start,
-                "slice_fingerprint": fp,
-                "fingerprint_class": "weak",
-            }
-        )
-    out.sort(key=lambda f: (f["file"], f["line"], f["rule_id"]))
-    return out
-
-
-def _set_scan(scan_id: str, **kv: object) -> None:
-    with _engine.begin() as conn:
-        conn.execute(update(scan_tbl).where(scan_tbl.c.id == scan_id).values(**kv))
+def _run_semgrep(src: Path) -> dict[str, object]:
+    """Compatibility refusal before even inspecting a supplied source path."""
+    raise NativeScanUnavailableError(NATIVE_SCAN_ERROR)
 
 
 def _run_scan(scan_id: str, repo_url: str) -> None:
-    workdir = Path(tempfile.mkdtemp(prefix="scanipy-oracle-"))
-    src = workdir / "src"
-    started = _now()
-    try:
-        _set_scan(scan_id, phase="cloning")
-        subprocess.run(
-            [GIT, "clone", "--depth", "1", repo_url, str(src)],
-            check=True,
-            capture_output=True,
-            timeout=CLONE_TIMEOUT_S,
-        )
-        commit_sha = subprocess.run(
-            [GIT, "-C", str(src), "rev-parse", "HEAD"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        ).stdout.strip() or ("0" * 40)
-        shutil.rmtree(src / ".git", ignore_errors=True)
-        py_files = sum(1 for _ in src.rglob("*.py"))
-
-        _set_scan(scan_id, phase="detecting", commit_sha=commit_sha)
-        findings = _map_findings(_run_semgrep(src), src, commit_sha)
-
-        with _engine.begin() as conn:
-            if findings:
-                conn.execute(
-                    insert(finding_tbl),
-                    [{"scan_id": scan_id, **f} for f in findings],
-                )
-            dur = round((_now() - started).total_seconds(), 1)
-            conn.execute(
-                update(scan_tbl)
-                .where(scan_tbl.c.id == scan_id)
-                .values(status="done", phase="done", files=py_files, duration_s=dur)
-            )
-        logger.info(
-            "scan %s done: %d finding(s) over %d file(s) in %.1fs",
-            scan_id,
-            len(findings),
-            py_files,
-            dur,
-        )
-    except subprocess.CalledProcessError as exc:
-        err = (exc.stderr or b"").decode(errors="replace")[-400:]
-        _set_scan(scan_id, status="error", phase="done", error=f"clone failed: {err}")
-        logger.warning("scan %s: clone failed: %s", scan_id, err)
-    except subprocess.TimeoutExpired:
-        _set_scan(scan_id, status="error", phase="done", error="clone or analysis timed out")
-        logger.warning("scan %s: timed out", scan_id)
-    except Exception as exc:
-        _set_scan(scan_id, status="error", phase="done", error=str(exc)[:1200])
-        logger.exception("scan %s failed", scan_id)
-    finally:
-        shutil.rmtree(workdir, ignore_errors=True)
+    """Compatibility refusal before ID/URL handling, staging or persistence."""
+    raise NativeScanUnavailableError(NATIVE_SCAN_ERROR)
 
 
-# ---------------------------------------------------------------------------
-# HTTP surface
-# ---------------------------------------------------------------------------
-app = FastAPI(title="Scanipy — self-host oracle scan (DOCKER-01)")
-
-
-class ScanRequest(BaseModel):
-    repo_url: str
-
-
-@app.on_event("startup")
 def _startup() -> None:
-    global _ENV_DIGEST
     _init_db()
-    _ENV_DIGEST = _compute_env_digest()
-    # Reap scans orphaned by a restart: their in-process worker thread did not
-    # survive, so a `running` row would otherwise leave the UI polling forever.
+    # Preserve legacy restart handling; this is not durable queue recovery.
     with _engine.begin() as conn:
         reaped = conn.execute(
             update(scan_tbl)
             .where(scan_tbl.c.status == "running")
             .values(status="error", phase="done", error="interrupted by a restart")
         ).rowcount
-    logger.info("startup complete; env_digest=%s; reaped %s orphaned scan(s)", _ENV_DIGEST, reaped)
+    logger.info("startup complete; native scans unavailable; reaped %s orphaned scan(s)", reaped)
+
+
+@asynccontextmanager
+async def _lifespan(application: FastAPI) -> AsyncIterator[None]:
+    _startup()
+    yield
+
+
+app = FastAPI(title="Scanipy — legacy read API (DOCKER-01)", lifespan=_lifespan)
 
 
 @app.get("/healthz")
-def healthz() -> dict:
-    return {"status": "ok", "env_digest": _ENV_DIGEST, "s_version": S_VERSION}
+def healthz() -> dict[str, object]:
+    return {
+        "status": "ok",
+        "env_digest": None,
+        "env_digest_status": "not-observed",
+        "s_version": S_VERSION,
+        "s_version_status": "configured-only",
+        "capabilities": {"native_scan": "unavailable", "historical_read": "legacy"},
+        "unavailable_reason": NATIVE_SCAN_ERROR,
+    }
 
 
 @app.get("/")
@@ -317,36 +151,13 @@ def index() -> FileResponse:
 
 
 @app.post("/api/scan")
-def post_scan(req: ScanRequest) -> JSONResponse:
-    url = req.repo_url.strip().rstrip("/")
-    if not GITHUB_URL_RE.match(url):
-        return JSONResponse(
-            {"error": "expected a public GitHub repo URL like https://github.com/owner/repo"},
-            status_code=400,
-        )
-    scan_id = str(uuid.uuid4())
-    with _engine.begin() as conn:
-        inflight = conn.execute(
-            select(func.count()).select_from(scan_tbl).where(scan_tbl.c.status == "running")
-        ).scalar_one()
-        if inflight >= _MAX_INFLIGHT:
-            return JSONResponse(
-                {"error": "too many scans in progress — try again shortly"}, status_code=429
-            )
-        conn.execute(
-            insert(scan_tbl).values(
-                id=scan_id,
-                repo_url=url,
-                status="running",
-                phase="queued",
-                s_version=S_VERSION,
-                env_digest=_ENV_DIGEST,
-                created_at=_now(),
-            )
-        )
-    _pool.submit(_run_scan, scan_id, url)
-    logger.info("scan %s queued for %s", scan_id, url)
-    return JSONResponse({"id": scan_id}, status_code=202)
+def post_scan() -> JSONResponse:
+    """No request-model parsing or background work while this route is disabled."""
+    return JSONResponse(
+        {"code": "native_scan_unavailable", "error": NATIVE_SCAN_ERROR, "retryable": False},
+        status_code=503,
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @app.get("/api/scan/{scan_id}")
