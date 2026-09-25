@@ -1,0 +1,23 @@
+{
+  "argv": [
+    "/opt/joern/joern",
+    "--script",
+    "/repo/workers/snapshot/joern-scripts/export_cpg_v2.sc"
+  ],
+  "cwd": "/job/python",
+  "elapsed_seconds": 27.870227918960154,
+  "env": {
+    "JAVA_HOME": "/opt/temurin-jre",
+    "JAVA_TOOL_OPTIONS": "-Xmx1536m -XX:ActiveProcessorCount=2 -Duser.home=/job/python -Djava.io.tmpdir=/job/python/tmp",
+    "PATH": "/opt/joern:/opt/joern/bin:/opt/temurin-jre/bin:/usr/bin:/usr/local/bin",
+    "SCANIPY_CPG_BIN_PATH": "/job/python/cpg.bin",
+    "SCANIPY_EXPORT_V2_FRONTEND": "pythonsrc",
+    "SCANIPY_EXPORT_V2_IMAGE_ID": "sha256:911e6f836fcf5e183a0c559e04e1868ba9d1838c35263728fe85dc1e9cce987b",
+    "SCANIPY_EXPORT_V2_JSON_PATH": "/job/python/export.json",
+    "SCANIPY_EXPORT_V2_SCRIPT_PATH": "/repo/workers/snapshot/joern-scripts/export_cpg_v2.sc",
+    "SCANIPY_EXPORT_V2_SOURCE_ROOT": "/repo/tests/fixtures/joern_raw_v2/python",
+    "TMPDIR": "/job/python/tmp"
+  },
+  "returncode": 0,
+  "timeout_s": 120
+}

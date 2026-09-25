@@ -1,0 +1,59 @@
+Parsing code at: /repo/tests/fixtures/joern_raw_v2/java - language: `javasrc`
+[+] Running language frontend
+=======================================================================================================
+Invoking CPG generator in a separate process. Note that the new process will consume additional memory.
+If you are importing a large codebase (and/or running into memory issues), please try the following:
+1) exit joern
+2) invoke the frontend: /opt/joern/javasrc2cpg -J-Xmx1536m /repo/tests/fixtures/joern_raw_v2/java --output /job/java/cpg.bin
+3) start joern, import the cpg: `importCpg("path/to/cpg")`
+=======================================================================================================
+
+ERROR StatusConsoleListener Could not determine local host name
+ java.net.UnknownHostException: eea070774053: eea070774053: Temporary failure in name resolution
+	at java.base/java.net.InetAddress.getLocalHost(Unknown Source)
+	at org.apache.logging.log4j.core.util.NetUtils.getLocalHostname(NetUtils.java:56)
+	at org.apache.logging.log4j.core.LoggerContext.lambda$setConfiguration$0(LoggerContext.java:615)
+	at java.base/java.util.concurrent.ConcurrentHashMap.computeIfAbsent(Unknown Source)
+	at org.apache.logging.log4j.core.LoggerContext.setConfiguration(LoggerContext.java:615)
+	at org.apache.logging.log4j.core.LoggerContext.reconfigure(LoggerContext.java:694)
+	at org.apache.logging.log4j.core.LoggerContext.reconfigure(LoggerContext.java:711)
+	at org.apache.logging.log4j.core.LoggerContext.start(LoggerContext.java:253)
+	at org.apache.logging.log4j.core.impl.Log4jContextFactory.getContext(Log4jContextFactory.java:155)
+	at org.apache.logging.log4j.core.impl.Log4jContextFactory.getContext(Log4jContextFactory.java:47)
+	at org.apache.logging.log4j.LogManager.getContext(LogManager.java:196)
+	at org.apache.logging.log4j.spi.AbstractLoggerAdapter.getContext(AbstractLoggerAdapter.java:137)
+	at org.apache.logging.slf4j.Log4jLoggerFactory.getContext(Log4jLoggerFactory.java:61)
+	at org.apache.logging.log4j.spi.AbstractLoggerAdapter.getLogger(AbstractLoggerAdapter.java:47)
+	at org.apache.logging.slf4j.Log4jLoggerFactory.getLogger(Log4jLoggerFactory.java:33)
+	at org.slf4j.LoggerFactory.getLogger(LoggerFactory.java:447)
+	at org.slf4j.LoggerFactory.getLogger(LoggerFactory.java:472)
+	at io.shiftleft.semanticcpg.utils.ExternalCommand$.<clinit>(ExternalCommand.scala:16)
+	at io.joern.console.cpgcreation.CpgGenerator.runShellCommand$$anonfun$1(CpgGenerator.scala:46)
+	at io.joern.console.cpgcreation.CpgGenerator.runShellCommand$$anonfun$adapted$1(CpgGenerator.scala:47)
+	at scala.util.Try$.apply(Try.scala:217)
+	at io.joern.console.cpgcreation.CpgGenerator.runShellCommand(CpgGenerator.scala:47)
+	at io.joern.console.cpgcreation.JavaSrcCpgGenerator.generate(JavaSrcCpgGenerator.scala:23)
+	at io.joern.joerncli.JoernParse$.generateCpg$$anonfun$2(JoernParse.scala:143)
+	at scala.util.Success.flatMap(Try.scala:266)
+	at io.joern.joerncli.JoernParse$.generateCpg(JoernParse.scala:140)
+	at io.joern.joerncli.JoernParse$.run$$anonfun$2$$anonfun$1(JoernParse.scala:89)
+	at scala.util.Success.flatMap(Try.scala:266)
+	at io.joern.joerncli.JoernParse$.run$$anonfun$2(JoernParse.scala:88)
+	at scala.util.Success.flatMap(Try.scala:266)
+	at io.joern.joerncli.JoernParse$.run(JoernParse.scala:87)
+	at io.joern.joerncli.JoernParse$.run$$anonfun$1(JoernParse.scala:77)
+	at scala.util.Success.flatMap(Try.scala:266)
+	at io.joern.joerncli.JoernParse$.run(JoernParse.scala:73)
+	at io.joern.joerncli.JoernParse$.main(JoernParse.scala:19)
+	at io.joern.joerncli.JoernParse.main(JoernParse.scala)
+Caused by: java.net.UnknownHostException: eea070774053: Temporary failure in name resolution
+	at java.base/java.net.Inet6AddressImpl.lookupAllHostAddr(Native Method)
+	at java.base/java.net.Inet6AddressImpl.lookupAllHostAddr(Unknown Source)
+	at java.base/java.net.InetAddress$PlatformResolver.lookupByName(Unknown Source)
+	at java.base/java.net.InetAddress.getAddressesFromNameService(Unknown Source)
+	at java.base/java.net.InetAddress$NameServiceAddresses.get(Unknown Source)
+	at java.base/java.net.InetAddress.getAllByName0(Unknown Source)
+	... 36 more
+[+] Applying default overlays
+Successfully wrote graph to: /job/java/cpg.bin
+To load the graph, type `joern /job/java/cpg.bin`
