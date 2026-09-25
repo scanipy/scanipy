@@ -24,6 +24,14 @@ from pathlib import Path
 from time import monotonic
 from typing import Any, Protocol
 
+from analysis.cpg_ingest.joern_frontend import (
+    EXPORT_SCRIPT_PATH,
+    JoernProcessEvent,
+    parse_source,
+)
+from analysis.cpg_ingest.mapper import SourceLocation, map_export_with_locations
+from analysis.fingerprint import SliceFingerprintResult, compute_slice_fingerprint_v2
+from analysis.ordering import CPG, DEFAULT_B, DEFAULT_T, Duration, NodeId, Sha256
 from scripts.check_refactor_report import (
     ReportError,
     check_files,
@@ -36,15 +44,6 @@ from scripts.check_refactor_report import (
     validate_policy,
     validate_report,
 )
-
-from analysis.cpg_ingest.joern_frontend import (
-    EXPORT_SCRIPT_PATH,
-    JoernProcessEvent,
-    parse_source,
-)
-from analysis.cpg_ingest.mapper import SourceLocation, map_export_with_locations
-from analysis.fingerprint import SliceFingerprintResult, compute_slice_fingerprint_v2
-from analysis.ordering import CPG, DEFAULT_B, DEFAULT_T, Duration, NodeId, Sha256
 from tools.worker.secure_subprocess import resolve_pinned_binary
 
 REPO = Path(__file__).resolve().parents[1]
@@ -662,12 +661,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             output=args.output,
             work=args.work,
             context=read_json(args.context),
-            command=[
-                sys.executable,
-                "-m",
-                "scripts.run_refactor_campaign",
-                *(sys.argv[1:] if argv is None else argv),
-            ],
+            command=(
+                sys.orig_argv
+                if argv is None
+                else [sys.executable, "-m", "scripts.run_refactor_campaign", *argv]
+            ),
             selected=set(args.case_id) if args.case_id else None,
             states=args.states,
             seconds=args.seconds,

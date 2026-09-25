@@ -223,12 +223,7 @@ def run_container(
         {
             "create_command": command,
             "host_resources": resources,
-            "controller_command": [
-                sys.executable,
-                "-m",
-                "scripts.run_refactor_campaign_container",
-                *sys.argv[1:],
-            ],
+            "controller_command": list(sys.orig_argv),
             "maximum_seconds": maximum_seconds,
         }
     )
