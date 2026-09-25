@@ -8,17 +8,13 @@
 > and execution state. This file summarizes that decision; it does not grant
 > itself authority or claim completed acceptance.
 
-**Historical baseline context below:** the original PLAN/SDD/WBS-derived
-hierarchy and component inventory are retained for compatible contracts and
-traceability. Apply DECISION-BHMEA-01 to the current Black Hat task; retain the
-baseline hierarchy for work not covered by that decision.
-
-The original baseline instruction was: "When this file conflicts with any of
-those three, the upstream document wins. Correct this file, never the upstream."
+> **Read this file first.** It is derivative of PLAN.md, SDD.md, and WBS.md.
+> When this file conflicts with any of those three, the upstream document wins.
+> Correct this file, never the upstream.
 
 ---
 
-## 1. Historical baseline source-of-truth hierarchy
+## 1. Source-of-truth hierarchy
 
 ```
 PLAN.md   (architecture)        ── highest authority; wins all conflicts

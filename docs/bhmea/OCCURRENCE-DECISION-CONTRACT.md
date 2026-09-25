@@ -11,8 +11,10 @@ and submitted C08. Preserve compatible FND-02, ORCH-03, TRI-01 and R09 contracts
 The current `services/scan/worker.py` computes a slice before appending a core
 Finding. A later identity exception can discard the solver's already detected
 results. It also canonicalizes the whole graph before detector dispatch, so a
-global identity failure prevents detection entirely. The new path requires a
-raw-detection seam; wrapping the existing `run_detector` is insufficient.
+global identity failure prevents detection entirely. Both `solve()` and
+`incremental_solve()` in `analysis/ifds/solver.py` also canonicalize before
+tabulation. The new path requires a raw-detection/solver seam; wrapping the
+existing `run_detector` or default solver is insufficient.
 `deploy/scanipy_oracle/app.py` runs work in a process-local executor,
 stores location/commit identities, and removes its checkout in `finally`.
 Neither path supplies durable identity attempts or cross-scan human decisions.
@@ -272,6 +274,10 @@ No checkbox is complete merely because this contract exists.
 - [ ] Review exact schema/roles and composite scope invariants before migration.
 - [ ] Implement source-capture/request/occurrence storage and transactional
   scheduling; prove result retention before the first identity invocation.
+- [ ] Decouple raw solver detection/solution evidence from canonical-order and
+  identity-bearing final result construction. Retain actual witnesses without
+  fake canonical hashes, and verify stable final witness/solution serialization
+  separately after successful identity processing.
 - [ ] Implement fenced attempts/finalization with idempotent restart recovery.
 - [ ] Implement strict policy-driven unique matching and ordered lifecycle.
 - [ ] Implement append-only scoped human decisions and inert references.
