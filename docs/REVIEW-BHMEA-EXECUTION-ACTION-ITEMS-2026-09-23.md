@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 5 — 2026-09-25 merged canonical foundation and explicit pending producer/storage work |
+| Revision | 6 — 2026-09-25 local containment/store checkpoints and explicit source/authority/semantic producer gaps |
 | Status | Execution started; no remediation task or submitted claim is yet accepted as complete |
 | Reviewed code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
@@ -59,6 +59,17 @@ Successful unit/CI checks or an APPROVE word inside a failed review action do
 not satisfy that gate. Continue safe, assigned local work without merging until
 the exact-head review actually completes successfully. Do not weaken feature
 acceptance or retry an exhausted service continuously.
+
+Local-only storage, source custody, typed CPG, Semgrep parsing and legacy
+containment checkpoints now have scoped tests and independent review. They
+remain unmerged; tests from one branch do not validate the combined deployment.
+In particular, refusing unsafe scans is a containment correction, not delivery
+of the promised scan workflow. The next source/authority/semantic contracts
+must bind exact verified capture bytes, accepted rule/model bytes, current
+durable authorization and actual native observations before a real core/oracle
+run can support G1. No caller boolean, fixture signature, graph label or local
+test count satisfies those producer obligations. All unchecked TODOs below
+remain required; the handoff records exact checkpoints and remaining work.
 
 ## 1. Objective and document boundaries
 

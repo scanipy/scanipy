@@ -35,7 +35,8 @@
     "Reviewed foundations through main 2709177, including bounded canonical foundation #369, are indexed in docs/evidence/2026-09-25-foundation-merges/README.md; narrow issue closure is not full task or submission acceptance.",
     "R07 lifecycle-generation and R16 implicit Java execution/coverage gaps are explicit follow-ups; no production continuity policy or corrected G0 exists.",
     "At the September 25 checkpoint, #382/#389/#390 have seven passing test checks but failed canonical actions due to an external session limit. Reported reset 13:40 UTC is not observed recovery; retry serially only after recovery and require successful exact-head review before merge.",
-    "Local-only #391/#392 checkpoints and in-progress #378/#393/#394 are not merged acceptance evidence. See the current handoff for exact scope, test counts, remaining producer/semantic integration and review conditions."
+    "Local-only #378 and #391–#396 checkpoints are not merged acceptance evidence; #395 includes a tested packaging correction but no image build. See the handoff for exact code/test boundaries, not additive test counts.",
+    "Design-only #397/#398/#399 cover source-bound scalar semantics, shared bounded transport/raw Git acquisition and exact accepted-byte authority. Missing producers, operational trust and real worker integration cannot be replaced by caller assertions, fixture keys or passing pure tests."
   ],
   "tasks": [
     {
@@ -145,7 +146,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R07",
       "evidence_paths": [],
-      "next_action": "Contract #385 merged; #389 pure matcher awaits successful canonical review. #378 occurrence store is undergoing restricted-role PostgreSQL/concurrency audit. Complete durable decision history/CAS and API/UI after that separate persistence boundary; production policy registry stays empty."
+      "next_action": "Contract #385 merged; #389 pure matcher awaits successful canonical review. #378 occurrence store has a local checkpoint with 89 passing dedicated PostgreSQL checks but remains unmerged. Complete durable decision history/CAS and API/UI after persistence integration; production policy registry stays empty."
     },
     {
       "id": "R08",
@@ -160,7 +161,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R08",
       "evidence_paths": [],
-      "next_action": "Review/merge #378 occurrence storage, #391 raw core, #392 source custody and #394 Semgrep observations; none is integrated yet. Bind safe SCM/native producers, persist observations before all identity work, then wire Compose worker, fenced retries, durable decisions and truthful API/UI states."
+      "next_action": "Review/merge local #378/#391/#392/#394 and containment #395/#396; none is integrated yet. Complete #397 source-bound core, #398 verified SCM/shared transport and #399 accepted authority, persist actual observations before identity, then wire Compose, fenced retries, durable decisions and truthful API/UI. Disabled legacy scanning is not feature delivery."
     },
     {
       "id": "R09",
@@ -191,7 +192,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R10",
       "evidence_paths": [],
-      "next_action": "Local #391 raw CFG/CALL kernel is independently reviewed but unmerged and rejects ordinary real mapper graphs. Complete typed semantic producer/bindings before nonempty actual-source core runs, fresh reruns and retained canonical-byte comparison. No G1 evidence yet."
+      "next_action": "Local #391 kernel and #393 typed observed transport are independently reviewed but unmerged; neither provides real-source scalar value flow. Implement #397 source-bound qualified-rule semantics after exact worker/model contracts and dependencies, then verify nonempty witnesses, negative controls and fresh canonical reruns. No G1 evidence yet."
     },
     {
       "id": "R11",
@@ -206,7 +207,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R11",
       "evidence_paths": [],
-      "next_action": "#394 parser work preserves raw Semgrep observations only, always with unverified coverage. Implement reviewed native/rule/source/coverage producers and independent real Semgrep/CodeQL reruns, then persist and expose per-engine empirical rates."
+      "next_action": "#394 local parser checkpoint has 194 focused checks and preserves raw Semgrep observations only, always with unverified coverage. Implement reviewed native/rule/source/coverage producers and independent real Semgrep/CodeQL reruns, then persist and expose per-engine empirical rates."
     },
     {
       "id": "R12",
@@ -269,7 +270,7 @@
       "evidence_paths": [
         "docs/EVIDENCE-BHMEA-DEPENDENCY-COMPATIBILITY-2026-09-25.md"
       ],
-      "next_action": "Runtime #373, snapshot lock #383 and hook correction #387 merged. After resource/safety review, verify real image install/startup and clean Docker install; obtain actual stage hardware, measure budgets and rehearse offline twice."
+      "next_action": "Runtime #373, snapshot lock #383 and hook #387 merged. #395 locally fixes/tests a missing integrations Docker COPY but is not merged or built. After resource/safety review verify actual install/startup; obtain stage hardware, measure budgets and rehearse offline twice."
     },
     {
       "id": "R16",
@@ -285,7 +286,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R16",
       "evidence_paths": [],
-      "next_action": "#390 Java safety awaits successful canonical review/merge before native probes. Correct newly confirmed live Git flag-only/-c/URL/environment gaps and implement safe data-only SCM capture before enabling the new workflow. Verify coverage, descendants/sentinels, other engines and final Compose restrictions."
+      "next_action": "#390 Java safety awaits canonical success/merge. Review local #395/#396 legacy Git/demo containment, then implement #398 bounded no-checkout raw-object capture with real outer isolation. Verify coverage, helpers, descendants/sentinels, other engines and final Compose restrictions before enabling scans."
     },
     {
       "id": "R17",
@@ -331,7 +332,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R19",
       "evidence_paths": [],
-      "next_action": "R19-A #382 awaits successful canonical review. R19-B #393 is implementing lossless typed observed-only transport on that pending base; native CALL candidates may be wrong or ambiguous. Then deliver source-verified versioned semantic mapping, precise call bindings, access paths, matched returns and summary fixpoint; verify meaningful Java/Python traces."
+      "next_action": "R19-A #382 awaits canonical success. R19-B #393 has an independently reviewed local observed-only checkpoint; native CALL candidates may still be wrong or ambiguous. Implement #397 source-bound scalar flow with isolated rules, exact models and matched returns; later full Java/Python access-path/heap/fixpoint and fidelity obligations remain."
     },
     {
       "id": "R20",
@@ -1987,6 +1988,7 @@
   "pending_owner_input": [
     "Exact presentation date when scheduled.",
     "Actual stage OS/CPU/RAM/free disk/Docker architecture before resource acceptance.",
+    "Actual accepting operator, persistent trust-root/publisher scope and independent admission/restore administrator/checkpoint policy before operational accepted-input publication; test keys and design approval are not that authority.",
     "Separate release/image publication and video/external-material authorization when ready."
   ]
 }

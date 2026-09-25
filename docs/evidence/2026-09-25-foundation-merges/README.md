@@ -136,6 +136,41 @@ R19 fidelity work. R16 is not complete.
 
 ## Other active falsifiers and next actions
 
+- Local-only checkpoint details are in the current handoff. #378's final
+  dedicated PostgreSQL suite passed 89 checks with zero skips; #393/#394 and
+  #391/#392 have scoped tested checkpoints. No count here certifies production
+  source, accepted rule authority or a deployed scan. Optional skips remain
+  explicit and suites from different branches are not summed into coverage.
+- #395 contains legacy Git routes, but its first local checkpoint omitted the
+  newly imported integrations package from the snapshot Docker COPY inventory.
+  Read-only import-closure review caught this before publication. The corrected
+  local checkpoint tests an assembled package without repository-path leakage;
+  root independently reran its positive/missing-copy pair. The fresh suite
+  passed 1,403 tests/51 existing skips; the older 1,401-test result is not
+  substituted for it. Neither result is new-image evidence; no image was built.
+- #396 local checkpoint passed 27 focused and 1,276 full-suite tests (51 optional
+  skips), normal hooks and independent review. It makes new legacy scan requests
+  explicitly unavailable while preserving historical schema/GETs. The user's
+  app/database were not modified. Narrow isolated-mypy dependency and public
+  default-password baseline corrections were reviewed; changed-password
+  falsifiers still fail the actual secret hook. Containment is not cutover.
+- #397/#398/#399 are design work, not implemented producers: source-bound scalar
+  value flow and per-rule isolation; bounded transport and verified no-checkout
+  Git objects; immutable accepted bytes and durable current authority. Operational
+  model adoption, independently installed trust and restore admission cannot be
+  supplied by fixture keys or an agent's design approval. Fresh native evidence
+  and final persistence/worker integration remain required.
+- R11 native coverage follow-up: pinned Semgrep 1.175.0 source inspection shows
+  core `scanned` includes targets that raise timeout/memory/parse errors. Its
+  ordinary flag uses a nonempty applicable-rule list, not proof that every rule
+  completed. Its core JSON writer omits skipped-path detail, and separate
+  fixpoint-timeout evidence is inside optional profiling. Therefore a later
+  adapter must validate actual intended rule/file accounting, all error and
+  fixpoint-timeout channels, and exact supported profile behavior. Neither
+  `scanned`, a progress counter, zero findings nor exit status alone certifies
+  coverage. These are primary-source observations, not a native runtime test:
+  [pinned scan handling](https://github.com/semgrep/semgrep/blob/7963c5a2d7e784ab24d0c14e29c63c6d53751336/src/core_scan/Core_scan.ml#L713),
+  [pinned JSON output](https://github.com/semgrep/semgrep/blob/7963c5a2d7e784ab24d0c14e29c63c6d53751336/src/reporting/Core_json_output.ml#L749).
 - R16 Git custody, newly confirmed by read-only code/guard inspection: the
   existing `tools/worker/secure_subprocess.py` Git allowlist checks only flag
   tokens, permitting arbitrary `-c` values and unlisted bare subcommands/URL
