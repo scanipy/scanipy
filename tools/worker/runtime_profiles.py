@@ -719,6 +719,7 @@ class _Files:
         self.budget = budget
         self.owned: list[int] = []
         self.held: dict[PosixPath, _Held] = {}
+        self.metadata_parents: set[PosixPath] = set()
 
     def _acquire(self, path: PosixPath, parent: int | None, name: str, *, directory: bool) -> _Held:
         self.budget.observe()
@@ -769,6 +770,7 @@ class _Files:
             and parent.st_gid == self.anchor.metadata_owner_gid,
             "unsafe-path",
         )
+        self.metadata_parents.add(current.path)
         _require(path not in self.held, "unsafe-path")
         return self._acquire(path, current.descriptor, path.name, directory=False)
 
@@ -811,12 +813,20 @@ class _Files:
             ctime,
         )
 
+    def _unchanged(self, held: _Held, info: os.stat_result) -> bool:
+        current = _stamp(info)
+        if stat.S_ISDIR(held.stamp[2]) and held.path not in self.metadata_parents:
+            # Unmeasured ancestors retain identity/security, not unrelated
+            # namespace activity. Metadata files/direct parents keep all fields.
+            return all(current[index] == held.stamp[index] for index in (0, 1, 2, 5, 6))
+        return current == held.stamp
+
     def recheck_one(self, held: _Held) -> None:
         self.budget.observe()
-        _require(_stamp(os.fstat(held.descriptor)) == held.stamp, "metadata-invalid")
+        _require(self._unchanged(held, os.fstat(held.descriptor)), "metadata-invalid")
         self.budget.observe()
         _require(
-            _stamp(os.stat(held.name, dir_fd=held.parent, follow_symlinks=False)) == held.stamp,
+            self._unchanged(held, os.stat(held.name, dir_fd=held.parent, follow_symlinks=False)),
             "metadata-invalid",
         )
 
