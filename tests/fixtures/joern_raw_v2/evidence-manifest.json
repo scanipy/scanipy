@@ -1,0 +1,193 @@
+{
+  "format": "scanipy-joern-raw-probe-evidence",
+  "version": 1,
+  "issue": 376,
+  "scope": "R19-A raw observations only; no solver, purity, canonical or complete-dispatch acceptance",
+  "producer_image_id": "sha256:911e6f836fcf5e183a0c559e04e1868ba9d1838c35263728fe85dc1e9cce987b",
+  "source_execution": false,
+  "network": "none",
+  "files": [
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/java/container-inspect.json",
+      "sha256": "e9b731d71b8242309acb6a569e2083a7813ef231781ff8eb0c105e4a1d913925"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/java/container.log",
+      "sha256": "f44d3285da856a848b1eb76be74c0d8af3402b1e3fcc9a41582a51b81449ed86"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/java/export.event.json",
+      "sha256": "daf91468070fc4a440a0b3a537871d415f0dede86a4df591c4cde09fb2b8ea6b"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/java/export.stderr",
+      "sha256": "b830f2fb6cecea9392a26f7ffed459966753ea5a6745c38d798a540b45eefddb"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/java/export.stdout",
+      "sha256": "01fcf72d8f89e3fe6472709da1113d1a426b6066c03e8dd5fdad670beb9be9a2"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/java/parse.event.json",
+      "sha256": "086590449b53e57fadf9d8409e3c73d4b41c6e9da2a343d295385f147c35bcc3"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/java/parse.stderr",
+      "sha256": "d9e41fc9bc0a5677397483aacc78437a7176cca92fb227f030f5b0eaada343c3"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/java/parse.stdout",
+      "sha256": "bd59462be094e9e9371c4e1a668b3026c44003c568770801cce4f92159ad568d"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/negative/container-inspect.json",
+      "sha256": "41d7869fd987ff10bea7fe79fefda55916538eaa78f35934277496b6bd6ca81c"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/negative/container.log",
+      "sha256": "eb8ce2d2ceea62fb3fedd0639d14103819f68db31dbbfe13bc317f01c1de2aa1"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/negative/existing_output.event.json",
+      "sha256": "45c3c8bab0ffe90b1ab1fd40173e79a9180b68bf087cf1239102723a79cc3af7"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/negative/existing_output.stderr.json",
+      "sha256": "4650ea6e47117885eba64dbd8c32f7003bed37887794be0fd0ddcfe6de837f36"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/negative/existing_output.stdout",
+      "sha256": "f79d1132b4aa39ee20d5c827f689260341d5179b4a6e262c4ccb47b812748fe7"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/negative/outcomes.json",
+      "sha256": "44c57981582917b5935a59b30404d73019c62f9d3e24c368a5d8a7d29f0886fb"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/negative/symlink_source.event.json",
+      "sha256": "98a269dcd4f9b6652644c7a353d4be981390993aed7632ce96695983b06cdb8d"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/negative/symlink_source.stderr.json",
+      "sha256": "b9a48ba3a67f29b2ec26d20948ed6dcb44c44ccf4bb9393726004c495523265b"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/negative/symlink_source.stdout",
+      "sha256": "915e099dc14fd5236dc6bf805197d832858a3034bc588895788876bad222d7dc"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/negative/wrong_frontend.event.json",
+      "sha256": "440f035c2c3a99f54b4b567ced3b2fa77074181279c5c0853f488080a3ced4c0"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/negative/wrong_frontend.json",
+      "sha256": "2d882abcb1d613937c81ac4b56023221c566e34ca31cee983062dc2f808f50f2"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/negative/wrong_frontend.stderr.json",
+      "sha256": "df955bfff6fde96e074bd88e3e0cd3ac21bf03077c9cfadca6ab714f47903804"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/negative/wrong_frontend.stdout",
+      "sha256": "953a523f3772da648238a046d7d6264b54490a9e700ffabe9450877bb159ede3"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/python/container-inspect.json",
+      "sha256": "d129e5c8981ebde4ec0319a2c317f739fb90f083cd2cb0bbf642144bdc81afe6"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/python/container.log",
+      "sha256": "1debeeebc1f982d744c5ac7012e287360c6e38715d818ec0bad2a87e7c1e34e7"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/python/export.event.json",
+      "sha256": "f5e2696c35d905e3626b6166e50d23b3e44f6baba84895a2c28a6ab21711acdd"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/python/export.stderr",
+      "sha256": "5baa038dfe2dc0a60238fcb865f296d81e5417c17121b6f4a997bcf3acea87f4"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/python/export.stdout",
+      "sha256": "6a354c9dcb05ff9eeb17846f032813338ab122ef891238a92eb92f04b92e2eaf"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/python/parse.event.json",
+      "sha256": "b02d1becce904e18c429f4008c969bcf3b1df0d3e39ced534edb17ff6a59424b"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/python/parse.stderr",
+      "sha256": "d6176f9b3a29193028caed25fc7ea4979ae3f01be7b6062baa0031f05e1ed0af"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/python/parse.stdout",
+      "sha256": "8a78321f710d158a847ef09c9bc51938b9278183a8c05dcb7fd61b25f0f3f494"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/schema/container-inspect.json",
+      "sha256": "f0d8c9c62d8421b8909eb9d8f483c36088e48a93b410d2ccb920e88d1a02ac94"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/evidence/schema/container.log",
+      "sha256": "fe5869378fa8572cd9a1c830d48b8e351cc24b15aa27330667cc818dd8d55d1c"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/exports/java.json",
+      "sha256": "3bf30c5029da656d5bc1ee9d3f27c97305bb5d88e6c82899d7116ebac4455df0"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/exports/python.json",
+      "sha256": "124888b8b260589228e11f124f31f8915d3e9c43fdc32aa75755dd2a0a7f7c0b"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/java/Flow.java",
+      "sha256": "99d2762fd45cd2afe38a990220247a2adda37c11f03d6b3f00d7a5e679d567f1"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/python/flow.py",
+      "sha256": "527304123aaca03c700e466320bb7611fa9be581084668fbc3c71b4c9e15d0ee"
+    },
+    {
+      "path": "tests/fixtures/joern_raw_v2/schema-catalog.json",
+      "sha256": "80120f4a03505b65eda6eac6fa8970b7757b4e75317e318a08bbda75e60fadf8"
+    },
+    {
+      "path": "tests/probes/joern_raw_v2.py",
+      "sha256": "7fb9e2c76105e53751a88ec0818e4727b9f3f3dc533b23054a3e8c230846653d"
+    },
+    {
+      "path": "tests/probes/joern_raw_v2_negative.py",
+      "sha256": "066988710f9debce9fcea7f17ad439fa44e6025dd753074f341888ab86da7dd7"
+    },
+    {
+      "path": "tests/probes/joern_schema_catalog.sc",
+      "sha256": "be87ed248bf9b907c31a7ed227fa47c7226714b0a0c5ec2aaaac186f2fa4d677"
+    },
+    {
+      "path": "workers/snapshot/joern-scripts/export_cpg_v2.sc",
+      "sha256": "aeccaa48fa2d6fcec84a6d56efee24a0795af5f85e03accbc69010cf72f8136f"
+    }
+  ],
+  "local_binary_evidence": [
+    {
+      "language": "python",
+      "path": "/tmp/scanipy-r19-final-evidence-nO3lQFvB/python/cpg.bin",
+      "sha256": "19cf5992fe409773c3dd76fdb31b92079b6775bdd8da9fa3ab8ed87c98293faf",
+      "retained_in_git": false
+    },
+    {
+      "language": "java",
+      "path": "/tmp/scanipy-r19-final-evidence-nO3lQFvB/java/cpg.bin",
+      "sha256": "8fb45bebfad2202ffc83d57717d7b7ff6fe84eb9fc15537940a0363236bb9b92",
+      "retained_in_git": false
+    }
+  ],
+  "limitations": [
+    "Image identity is caller-observed Docker image ID, not independent attestation.",
+    "The binary CPGs are retained locally, not committed; reproducible parsing requires the exact locally available tool image.",
+    "Schema native propertiesMap is sparse: missing_properties preserves absences, including omitted defaults.",
+    "Java unresolved overload/vararg/type and Python dynamic/default/star binding limitations are deliberately retained.",
+    "Initial diagnostic Python export failed strict validation before missing_properties was added; it is not used as final acceptance evidence and remains in /tmp/scanipy-r19-raw-evidence-fP7JePdW.",
+    "Negative stderr uses explicit lossless base64 wrappers; inventory hashes stored wrapper bytes, while each wrapper separately binds the decoded raw length/SHA256."
+  ]
+}

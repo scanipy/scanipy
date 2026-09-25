@@ -1,0 +1,1610 @@
+{
+  "domain_version": "1.7.65",
+  "nodes": {
+    "ANNOTATION": {
+      "ARGUMENT_INDEX": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "ARGUMENT_LABEL": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "ARGUMENT_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      }
+    },
+    "ANNOTATION_LITERAL": {
+      "ARGUMENT_INDEX": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "ARGUMENT_LABEL": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "ARGUMENT_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      }
+    },
+    "ANNOTATION_PARAMETER": {
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      }
+    },
+    "ANNOTATION_PARAMETER_ASSIGN": {
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      }
+    },
+    "ARRAY_INITIALIZER": {
+      "ARGUMENT_INDEX": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "ARGUMENT_LABEL": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "ARGUMENT_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      }
+    },
+    "BINDING": {
+      "METHOD_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "SIGNATURE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "BLOCK": {
+      "ARGUMENT_INDEX": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "ARGUMENT_LABEL": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "ARGUMENT_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "DYNAMIC_TYPE_HINT_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "POSSIBLE_TYPES": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "TYPE_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "CALL": {
+      "ARGUMENT_INDEX": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "ARGUMENT_LABEL": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "ARGUMENT_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "DISPATCH_TYPE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "DYNAMIC_TYPE_HINT_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "METHOD_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "POSSIBLE_TYPES": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "SIGNATURE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "STATIC_RECEIVER": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "TYPE_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "CLOSURE_BINDING": {
+      "CLOSURE_BINDING_ID": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "EVALUATION_STRATEGY": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "COMMENT": {
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "FILENAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      }
+    },
+    "CONFIG_FILE": {
+      "CONTENT": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "CONTROL_STRUCTURE": {
+      "ARGUMENT_INDEX": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "ARGUMENT_LABEL": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "ARGUMENT_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "CONTROL_STRUCTURE_TYPE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "PARSER_TYPE_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "DEPENDENCY": {
+      "DEPENDENCY_GROUP_ID": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "VERSION": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "FIELD_IDENTIFIER": {
+      "ARGUMENT_INDEX": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "ARGUMENT_LABEL": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "ARGUMENT_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "CANONICAL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      }
+    },
+    "FILE": {
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "CONTENT": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "HASH": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      }
+    },
+    "FINDING": {
+      "EVIDENCE_DESCRIPTION": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      }
+    },
+    "IDENTIFIER": {
+      "ARGUMENT_INDEX": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "ARGUMENT_LABEL": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "ARGUMENT_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "DYNAMIC_TYPE_HINT_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "POSSIBLE_TYPES": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "TYPE_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "IMPORT": {
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "EXPLICIT_AS": {
+        "type": "BoolType",
+        "quantity": "QtyOption"
+      },
+      "IMPORTED_AS": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "IMPORTED_ENTITY": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "IS_EXPLICIT": {
+        "type": "BoolType",
+        "quantity": "QtyOption"
+      },
+      "IS_MODULE_IMPORT": {
+        "type": "BoolType",
+        "quantity": "QtyOption"
+      },
+      "IS_WILDCARD": {
+        "type": "BoolType",
+        "quantity": "QtyOption"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      }
+    },
+    "JUMP_LABEL": {
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "PARSER_TYPE_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "JUMP_TARGET": {
+      "ARGUMENT_INDEX": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "PARSER_TYPE_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "KEY_VALUE_PAIR": {
+      "KEY": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "VALUE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "LITERAL": {
+      "ARGUMENT_INDEX": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "ARGUMENT_LABEL": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "ARGUMENT_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "DYNAMIC_TYPE_HINT_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "POSSIBLE_TYPES": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "TYPE_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "LOCAL": {
+      "CLOSURE_BINDING_ID": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "DYNAMIC_TYPE_HINT_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "GENERIC_SIGNATURE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "POSSIBLE_TYPES": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "TYPE_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "MEMBER": {
+      "AST_PARENT_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "AST_PARENT_TYPE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "DYNAMIC_TYPE_HINT_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "GENERIC_SIGNATURE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "POSSIBLE_TYPES": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "TYPE_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "META_DATA": {
+      "HASH": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "LANGUAGE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OVERLAYS": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "ROOT": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "VERSION": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "METHOD": {
+      "AST_PARENT_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "AST_PARENT_TYPE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "COLUMN_NUMBER_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "FILENAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "GENERIC_SIGNATURE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "HASH": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "IS_EXTERNAL": {
+        "type": "BoolType",
+        "quantity": "QtyOne"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "LINE_NUMBER_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "SIGNATURE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "METHOD_PARAMETER_IN": {
+      "CLOSURE_BINDING_ID": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "DYNAMIC_TYPE_HINT_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "EVALUATION_STRATEGY": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "INDEX": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "IS_VARIADIC": {
+        "type": "BoolType",
+        "quantity": "QtyOne"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "POSSIBLE_TYPES": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "TYPE_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "METHOD_PARAMETER_OUT": {
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "EVALUATION_STRATEGY": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "INDEX": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "IS_VARIADIC": {
+        "type": "BoolType",
+        "quantity": "QtyOne"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "TYPE_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "METHOD_REF": {
+      "ARGUMENT_INDEX": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "ARGUMENT_LABEL": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "ARGUMENT_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "DYNAMIC_TYPE_HINT_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "METHOD_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "POSSIBLE_TYPES": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "TYPE_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "METHOD_RETURN": {
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "DYNAMIC_TYPE_HINT_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "EVALUATION_STRATEGY": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "POSSIBLE_TYPES": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "TYPE_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "MODIFIER": {
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "MODIFIER_TYPE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      }
+    },
+    "NAMESPACE": {
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      }
+    },
+    "NAMESPACE_BLOCK": {
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "FILENAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      }
+    },
+    "RETURN": {
+      "ARGUMENT_INDEX": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "ARGUMENT_LABEL": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "ARGUMENT_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      }
+    },
+    "TAG": {
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "VALUE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "TAG_NODE_PAIR": {},
+    "TEMPLATE_DOM": {
+      "ARGUMENT_INDEX": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "ARGUMENT_LABEL": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "ARGUMENT_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      }
+    },
+    "TYPE": {
+      "FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "TYPE_DECL_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "TYPE_ARGUMENT": {
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      }
+    },
+    "TYPE_DECL": {
+      "ALIAS_TYPE_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "AST_PARENT_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "AST_PARENT_TYPE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "FILENAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "GENERIC_SIGNATURE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "INHERITS_FROM_TYPE_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "IS_EXTERNAL": {
+        "type": "BoolType",
+        "quantity": "QtyOne"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      }
+    },
+    "TYPE_PARAMETER": {
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      }
+    },
+    "TYPE_REF": {
+      "ARGUMENT_INDEX": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "ARGUMENT_LABEL": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "ARGUMENT_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "DYNAMIC_TYPE_HINT_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "POSSIBLE_TYPES": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "TYPE_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    },
+    "UNKNOWN": {
+      "ARGUMENT_INDEX": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "ARGUMENT_LABEL": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "ARGUMENT_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOption"
+      },
+      "CODE": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "COLUMN_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "CONTAINED_REF": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "DYNAMIC_TYPE_HINT_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "LINE_NUMBER": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "OFFSET_END": {
+        "type": "IntType",
+        "quantity": "QtyOption"
+      },
+      "ORDER": {
+        "type": "IntType",
+        "quantity": "QtyOne"
+      },
+      "PARSER_TYPE_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      },
+      "POSSIBLE_TYPES": {
+        "type": "StringType",
+        "quantity": "QtyMulti"
+      },
+      "TYPE_FULL_NAME": {
+        "type": "StringType",
+        "quantity": "QtyOne"
+      }
+    }
+  },
+  "edges": {
+    "ALIAS_OF": null,
+    "ARGUMENT": null,
+    "AST": null,
+    "BINDS": null,
+    "BINDS_TO": null,
+    "CALL": null,
+    "CAPTURE": null,
+    "CAPTURED_BY": null,
+    "CATCH_BODY": null,
+    "CDG": null,
+    "CFG": null,
+    "CONDITION": null,
+    "CONTAINS": null,
+    "DOMINATE": null,
+    "DO_BODY": null,
+    "EVAL_TYPE": null,
+    "FALSE_BODY": null,
+    "FINALLY_BODY": null,
+    "FOR_BODY": null,
+    "FOR_INIT": null,
+    "FOR_UPDATE": null,
+    "IMPORTS": null,
+    "INHERITS_FROM": null,
+    "IS_CALL_FOR_IMPORT": null,
+    "JUMP_ARGUMENT": null,
+    "PARAMETER_LINK": null,
+    "POST_DOMINATE": null,
+    "REACHING_DEF": "VARIABLE",
+    "RECEIVER": null,
+    "REF": null,
+    "SOURCE_FILE": null,
+    "TAGGED_BY": null,
+    "TRUE_BODY": null,
+    "TRY_BODY": null
+  }
+}
