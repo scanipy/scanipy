@@ -2,6 +2,53 @@
 
 > **Status:** ACTIVE (Phase 0 deliverable). Satisfies `AC-DOC-04`: an Implementation Agent given only this document plus the cross-cutting refs (`DOC-INV`, `DOC-GLOSSARY`, `DOC-ALGS`, `DOC-PROVENANCE`, `DOC-SARIF`, `DOC-DB`) can produce a passing implementation without re-reading `SDD.md`.
 
+## Current Black Hat extension — R18/R20 foundations
+
+For the current Black Hat work, the owner-backed
+[DECISION-BHMEA-01](../DECISION-BHMEA-01-current-execution-authority-2026-09-25.md)
+and [versioned canonical/budget design](../PROPOSAL-BHMEA-CANONICAL-BUDGET-2026-09-25.md)
+govern the corrections below. The historical sections that follow remain
+traceability records, not evidence that all named normalizations are implemented.
+
+- The current slice hashes framed content of its normalized reverse witness
+  cone, using direction-aware **1-WL** and complete bounded
+  individualization/refinement. `strong` certifies that implemented normal form,
+  not real-language binding, purity, alias, call/return or refactor coverage.
+  The witness-cone traversal includes every reverse-reachable predecessor even
+  when that predecessor is also a witness seed.
+- One shared deterministic `B` search-state counter includes nested alpha-order
+  and final canonical searches. Work exhaustion produces a weak fallback;
+  incomplete nested search cannot be promoted to strong. `T` expiry instead
+  raises `CanonicalizationDeadlineExceeded`, including expiry at the final
+  check. It never selects a different successful weak identity. `elapsed_ms`
+  is telemetry, excluded from deterministic semantic/replay bytes. Cooperative
+  deadline checks are not an operating-system preemption guarantee.
+- Completed strong output uses `scanipy-slice-normal-form/2`. Old source-less
+  weak callers retain `scanipy-witness-edge-sequence/1` explicitly. The typed
+  `compute_slice_fingerprint_v2` request requires a real producer-supplied
+  source-tree digest for `scanipy-source-witness/2`; no digest is synthesized
+  from a graph, witness, placeholder or absent snapshot input. Old positional
+  `SliceFingerprintResult` constructors retain their legacy default namespace
+  even when their supplied class says `strong`.
+- R09 consumers persist this slice class separately from the whole-graph class,
+  each with its own namespace, processing status and exact conditional annotation.
+  Both strong v2 artifact descriptors are necessary, not sufficient, for a
+  continuity/suppression policy: see the
+  [occurrence/decision contract](../bhmea/OCCURRENCE-DECISION-CONTRACT.md).
+- Current worker timeouts propagate as failed attempts: direct job calls raise;
+  the queue handler fails/redelivers the message without successful-empty output,
+  finding rows or signatures. Slice timeout may happen after raw solver detection.
+  Persisting those raw occurrences independently of identity success is still
+  the separate R07/R08 requirement; this library repair does not deliver it.
+
+Remaining R06/R19 obligations include binding-aware local normalization (the
+current pass numbers identifier occurrences), meaningful formatting projection,
+purity/alias/effect-aware extract/inline and structural declaration identity
+instead of terminal-name reduction. Tests of the implemented canonical encoding
+do not discharge `TST-AC-CORE-02a/b`, the 422-case real-Joern campaign, or full
+submission acceptance. Future graph semantic roles must extend/version the
+encoder before they can be labeled canonical; unknown fields fail closed.
+
 ---
 
 ## 1. Component identity
