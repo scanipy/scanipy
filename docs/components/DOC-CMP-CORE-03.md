@@ -2,6 +2,56 @@
 
 > **Status:** ACTIVE (Phase 0 deliverable). Satisfies `AC-DOC-04`: an Implementation Agent given only this document plus the cross-cutting refs (`DOC-INV`, `DOC-GLOSSARY`, `DOC-ALGS`, `DOC-PROVENANCE`, `DOC-SARIF`, `DOC-DB`, `DOC-PARTITION`) can produce a passing implementation without re-reading `SDD.md`.
 
+## Current Black Hat extension — R18/R20 foundations
+
+The owner-backed
+[DECISION-BHMEA-01](../DECISION-BHMEA-01-current-execution-authority-2026-09-25.md)
+authorizes the current corrective implementation. Its exact versioned encoding,
+search and compatibility design is in the
+[canonical/budget proposal](../PROPOSAL-BHMEA-CANONICAL-BUDGET-2026-09-25.md).
+The historical sections below are preserved; their raw-ID hash, 2-WL and
+time-dependent weak-fallback descriptions do not govern this implementation.
+
+- `scanipy-canonical-graph/2` binds framed node labels (`kind`,
+  `operator_or_literal`, `resolved_fqn`, `enclosing_decl_fqn`) and directed typed
+  edge multiplicities. Lookup IDs and source structural paths are not strong
+  identity. Encoding uses canonical ranks, not a hash of original node IDs;
+  even the empty graph hashes its versioned encoding, not empty bytes.
+- Exact direction-aware **1-WL** signatures refine partitions; complete bounded
+  individualization/refinement selects the minimum reachable leaf certificate.
+  Only directly checked swap automorphisms preserving labels, markers/cells and
+  all typed directed edge counts may prune a sibling. Uncertified branches
+  remain explored. Finishing one branch is not finishing the search. The
+  permutation-equivariant search and sound orbit pruning justify canonicality;
+  finite exhaustive small-graph tests are regression evidence, not a universal
+  proof or proof of front-end semantic fidelity.
+- `B` counts entered search states including roots; requesting state `B+1`
+  triggers deterministic same-source weak fallback. `T` is a separate
+  cooperative operational deadline covering validation, search, encoding,
+  fallback and a final explicit check. Expiry raises
+  `CanonicalizationDeadlineExceeded`, never a time-dependent successful weak
+  result. `elapsed_ms` is nonraising telemetry outside deterministic semantic
+  payloads. A worker watchdog is still needed for hard preemption.
+- The supported minimal `scanipy-cpg/1` model is checked exactly, including
+  graph-level attributes. Unknown graph/node/edge semantics or model versions
+  fail closed rather than disappearing from a purportedly strong hash. New
+  binding/call/return/effect roles require deliberate versioned encoding work.
+- Whole-graph and slice classes remain independent in R09 records, SARIF and
+  signatures. Legacy manual result constructors remain explicitly legacy.
+  Strong graph identity does not certify strong slice identity, real-language
+  purity, full source coverage or permission to inherit a human decision.
+- The current worker computes graph identity before detector dispatch. A graph
+  deadline therefore raises before detection; the real queue handler returns
+  failure/redelivery without ack, finding inserts or signatures. No successful
+  empty result is fabricated. This does not implement R08's independent raw
+  detection/identity pipeline or R07's retained occurrence history.
+
+Dedicated exact-encoding, exhaustive small-graph, symmetry, budget-boundary and
+real producer/consumer tests cover these scoped foundations. They do not claim
+`TST-AC-CORE-03b` weak-rate/performance acceptance on the real corpus, the full
+named-refactor ACs, or a completed R18/R20 workflow. Those measured milestones
+remain in the [full review](../REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md).
+
 ---
 
 ## 1. Component identity
