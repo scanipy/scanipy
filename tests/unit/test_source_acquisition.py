@@ -739,3 +739,154 @@ def test_replay_and_wire_public_boundaries_snapshot_ids(tmp_path: Path, target: 
             acq.encode_receipt(result.receipt)
         else:
             verify(roots, result)
+
+
+@pytest.mark.parametrize("mode", [0o700, 0o755, 0o555])
+def test_receipt_parent_mode_comes_only_from_held_descriptor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mode: int
+) -> None:
+    expected = capture(fixtures(tmp_path)).receipt
+    parent = tmp_path / "trusted-receipt"
+    parent.mkdir(mode=0o700)
+    path = parent / "expected.json"
+    path.write_bytes(acq.encode_receipt(expected))
+    path.chmod(0o444)
+    parent.chmod(mode)
+
+    def forbidden(*_args: object, **_kwargs: object) -> None:
+        pytest.fail("receipt parent metadata must come from the held no-follow FD")
+
+    with monkeypatch.context() as patched:
+        patched.setattr(Path, "stat", forbidden)
+        patched.setattr(Path, "lstat", forbidden)
+        assert acq.read_expected_receipt(path) == expected
+
+
+@pytest.mark.parametrize(
+    "kind,reason",
+    [
+        ("missing-parent", "storage"),
+        ("parent-symlink", "storage"),
+        ("ancestor-symlink", "storage"),
+        ("leaf-symlink", "storage"),
+        ("unsafe-parent", "invalid-input"),
+        ("leaf-directory", "invalid-input"),
+        ("leaf-hardlink", "invalid-input"),
+    ],
+)
+def test_expected_receipt_path_refusals_are_fixed_and_do_not_decode(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str, reason: str
+) -> None:
+    parent = tmp_path / "private-receipt-parent"
+    parent.mkdir(mode=0o700)
+    path = parent / "expected.json"
+    path.write_bytes(b"not decoded")
+    path.chmod(0o444)
+    if kind == "missing-parent":
+        path = tmp_path / "private-missing" / "expected.json"
+    elif kind in ("parent-symlink", "ancestor-symlink"):
+        alias = tmp_path / "private-alias"
+        alias.symlink_to(parent if kind == "parent-symlink" else tmp_path, target_is_directory=True)
+        path = alias / path.name if kind == "parent-symlink" else alias / parent.name / path.name
+    elif kind == "leaf-symlink":
+        alias = parent / "alias.json"
+        alias.symlink_to(path)
+        path = alias
+    elif kind == "unsafe-parent":
+        parent.chmod(0o770)
+    elif kind == "leaf-directory":
+        path = parent / "directory.json"
+        path.mkdir(mode=0o700)
+    else:
+        os.link(path, parent / "extra-link.json")
+
+    def forbidden(*_args: object, **_kwargs: object) -> None:
+        pytest.fail("invalid path reached receipt decoding")
+
+    monkeypatch.setattr(acq, "decode_receipt", forbidden)
+    with pytest.raises(acq.GitCaptureError) as caught:
+        acq.read_expected_receipt(path)
+    assert caught.value.reason == str(caught.value) == reason
+
+
+def test_expected_receipt_rejects_parent_link_replacement_before_open(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    parent = tmp_path / "receipt-parent"
+    parent.mkdir(mode=0o700)
+    replacement = tmp_path / "replacement"
+    replacement.mkdir(mode=0o700)
+    real_open = os.open
+    swapped = False
+
+    def raced_open(path: object, flags: int, *args: object, **kwargs: object) -> int:
+        nonlocal swapped
+        if path == parent.name and flags == git.DIRECTORY_FLAGS and not swapped:
+            swapped = True
+            parent.rename(tmp_path / "retained-original")
+            parent.symlink_to(replacement, target_is_directory=True)
+        return real_open(path, flags, *args, **kwargs)
+
+    def forbidden(*_args: object, **_kwargs: object) -> None:
+        pytest.fail("receipt decoder reached after symlink substitution")
+
+    monkeypatch.setattr(os, "open", raced_open)
+    monkeypatch.setattr(acq, "decode_receipt", forbidden)
+    with pytest.raises(acq.GitCaptureError, match="storage"):
+        acq.read_expected_receipt(parent / "expected.json")
+    assert swapped
+
+
+@pytest.mark.parametrize("kind", ["interrupt", "exit", "close-only"])
+def test_receipt_leaf_cleanup_preserves_primary_and_closes_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
+) -> None:
+    tmp_path.chmod(0o700)
+    path = tmp_path / "expected.json"
+    path.write_bytes(b"{}")
+    path.chmod(0o600)
+    real_open, real_read, real_close = os.open, os.read, os.close
+    primary = KeyboardInterrupt() if kind == "interrupt" else SystemExit(17)
+    cleanup = OSError("private leaf cleanup failure")
+    leaf: int | None = None
+    close_calls = 0
+
+    def observed_open(name: object, flags: int, *args: object, **kwargs: object) -> int:
+        nonlocal leaf
+        descriptor = real_open(name, flags, *args, **kwargs)
+        if name == path.name and kwargs.get("dir_fd") is not None:
+            leaf = descriptor
+        return descriptor
+
+    def interrupted_read(descriptor: int, count: int) -> bytes:
+        if descriptor == leaf and kind != "close-only":
+            raise primary
+        return real_read(descriptor, count)
+
+    def failed_close(descriptor: int) -> None:
+        nonlocal close_calls
+        if descriptor == leaf:
+            close_calls += 1
+            real_close(descriptor)
+            raise cleanup
+        real_close(descriptor)
+
+    def forbidden(*_args: object, **_kwargs: object) -> None:
+        pytest.fail("receipt was decoded after a cleanup failure")
+
+    with monkeypatch.context() as patched:
+        patched.setattr(os, "open", observed_open)
+        patched.setattr(os, "read", interrupted_read)
+        patched.setattr(os, "close", failed_close)
+        patched.setattr(acq, "decode_receipt", forbidden)
+        with pytest.raises(
+            acq.GitCaptureError if kind == "close-only" else type(primary)
+        ) as caught:
+            acq.read_expected_receipt(path)
+    assert close_calls == 1
+    if kind == "close-only":
+        assert str(caught.value) == "storage" and caught.value.__cause__ is cleanup
+    else:
+        assert caught.value is primary
+        assert isinstance(primary.__cause__, BaseExceptionGroup)
+        assert primary.__cause__.exceptions == (cleanup,)

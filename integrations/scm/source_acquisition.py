@@ -377,26 +377,28 @@ def decode_receipt(data: bytes) -> custody.CaptureReceipt:
 
 def read_expected_receipt(path: Path) -> custody.CaptureReceipt:
     """Read the explicitly trusted operator input, never discover/adopt a receipt."""
-    path = git.check_absolute(path)
-    # Parent is a trusted explicit operator path, but every component still
-    # receives no-follow handling. No pathname from receipt JSON is opened.
-    parent_mode = stat.S_IMODE(path.parent.stat().st_mode)
-    _require(parent_mode in (0o700, 0o755, 0o555))
-    with git.open_directory(path.parent, mode=parent_mode) as parent:
-        descriptor = os.open(path.name, git.FILE_FLAGS, dir_fd=parent)
-        try:
-            before = git.check_regular(descriptor, maximum=2 * 1024**2, private=False)
-            raw = bytearray()
-            while block := os.read(descriptor, min(git.CHUNK, before.st_size - len(raw) + 1)):
-                raw.extend(block)
-                _require(len(raw) <= before.st_size, "changed-input")
-            _require(
-                len(raw) == before.st_size
-                and git.file_stamp(os.fstat(descriptor)) == git.file_stamp(before),
-                "changed-input",
-            )
-        finally:
-            os.close(descriptor)
+    try:
+        path = git.check_absolute(path)
+        # Mode and ownership come from the SAME held no-follow parent FD used
+        # to open the fixed leaf. No receipt JSON pathname is ever opened.
+        with git.open_directory(path.parent, mode=(0o700, 0o755, 0o555)) as parent:
+            with git.owned_descriptors() as owned:
+                descriptor = os.open(path.name, git.FILE_FLAGS, dir_fd=parent)
+                owned.append(descriptor)
+                before = git.check_regular(descriptor, maximum=2 * 1024**2, private=False)
+                raw = bytearray()
+                while block := os.read(descriptor, min(git.CHUNK, before.st_size - len(raw) + 1)):
+                    raw.extend(block)
+                    _require(len(raw) <= before.st_size, "changed-input")
+                _require(
+                    len(raw) == before.st_size
+                    and git.file_stamp(os.fstat(descriptor)) == git.file_stamp(before),
+                    "changed-input",
+                )
+    except git.GitObjectError as error:
+        raise GitCaptureError(str(error)) from error
+    except OSError as error:
+        raise GitCaptureError("storage") from error
     return decode_receipt(bytes(raw))
 
 

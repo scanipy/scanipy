@@ -68,6 +68,33 @@ The controller's later files are NOT silently part of these ten. No new Python
 dependency is needed for the offline subset. All source/object input is data;
 never import Python from an input, capture or evidence directory.
 
+Canonical-review follow-up for PR #409 (2026-09-25): root additionally
+authorizes the single `CLAR-BHMEA-01` append in `WBS.md` section 17. It records
+the formal historical acceptance-test mapping gap; it does not rewrite old
+architecture, resolve that gap or mark any full component Done. The ten-file
+implementation boundary above is otherwise unchanged. Actual scoped controls
+are mapped by their real test names in the PR, with full #398 and #362 open.
+
+Receipt-input correction in that follow-up: the trusted receipt's parent mode
+and UID are checked on the same held no-follow descriptor used to open its
+fixed leaf; no preliminary pathname `stat`/`lstat` selects a mode. The shared
+directory helper retains its single-mode default `0700`, and also accepts an
+exact tuple of one to three distinct exact integer mode values in `0..07777`;
+invalid policy shapes fail before opening anything. Only the receipt reader
+selects `(0700,0755,0555)`. Its filesystem errors become fixed `storage`
+refusals, and raw-object validation errors retain their fixed category through
+`GitCaptureError`; private causes and genuine interruptions remain available.
+The CLI's existing category/exit mappings do not change. Stable or raced
+symlinks were already rejected by the final no-follow walk; this removes an
+unnecessary metadata-following lookup, not a demonstrated receipt-read bypass.
+Same-owner/mount administrators and concurrent mutation of trusted operator
+inputs remain outside the exclusive-input assumption. A receipt alone still
+does not replace the separately trusted proof digest or current authority.
+The receipt leaf uses the existing owned-descriptor cleanup helper as well:
+an uncertain close is attempted once, and a secondary close error cannot
+replace a primary interruption. Secondary cleanup evidence remains its cause;
+close-only failures still prevent success and use the fixed storage category.
+
 ## 3. Raw object input format and exact verification
 
 `objects_dir` is an existing private owner-controlled real directory. It contains

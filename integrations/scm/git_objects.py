@@ -232,8 +232,16 @@ def owned_descriptors() -> Iterator[list[int]]:
 
 
 @contextmanager
-def open_directory(path: Path, *, mode: int = 0o700) -> Iterator[int]:
+def open_directory(path: Path, *, mode: int | tuple[int, ...] = 0o700) -> Iterator[int]:
     """Walk ALL path components without following links; validate owned leaf."""
+    modes = (mode,) if type(mode) is int else mode
+    if (
+        type(modes) is not tuple
+        or not 1 <= len(modes) <= 3
+        or any(type(item) is not int or not 0 <= item <= 0o7777 for item in modes)
+        or len(set(modes)) != len(modes)
+    ):
+        raise GitObjectError("invalid-input")
     path = check_absolute(path)
     with owned_descriptors() as owned:
         descriptor = os.open("/", DIRECTORY_FLAGS)
@@ -245,7 +253,7 @@ def open_directory(path: Path, *, mode: int = 0o700) -> Iterator[int]:
             os.close(descriptor)
             descriptor = child
         info = os.fstat(descriptor)
-        if info.st_uid != os.geteuid() or stat.S_IMODE(info.st_mode) != mode:
+        if info.st_uid != os.geteuid() or stat.S_IMODE(info.st_mode) not in modes:
             raise GitObjectError("invalid-input")
         yield descriptor
 

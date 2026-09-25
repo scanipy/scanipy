@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import stat
 from dataclasses import replace
 from pathlib import Path
 
@@ -475,6 +476,35 @@ def test_final_close_failure_preserves_primary(
     assert caught.value is primary
     assert isinstance(primary.__cause__, BaseExceptionGroup)
     assert primary.__cause__.exceptions == (prior, cleanup)
+
+
+@pytest.mark.parametrize("mode", [0o700, 0o755, 0o555])
+def test_allowed_directory_modes_check_actual_owned_descriptor(tmp_path: Path, mode: int) -> None:
+    root = tmp_path / "directory"
+    root.mkdir(mode=0o700)
+    root.chmod(mode)
+    with git.open_directory(root, mode=(0o700, 0o755, 0o555)) as descriptor:
+        assert stat.S_IMODE(os.fstat(descriptor).st_mode) == mode
+    if mode != 0o700:
+        with pytest.raises(git.GitObjectError, match="invalid-input"):
+            with git.open_directory(root):
+                pytest.fail("default private-directory policy was relaxed")
+
+
+@pytest.mark.parametrize(
+    "mode", [None, True, [], (), (True,), (0o700, 0o700), (0o700,) * 4, (0o700, "448"), -1, 0o10000]
+)
+def test_invalid_directory_mode_policy_refuses_before_open(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mode: object
+) -> None:
+    def forbidden(*_args: object, **_kwargs: object) -> None:
+        pytest.fail("invalid mode policy opened a path")
+
+    with monkeypatch.context() as patched:
+        patched.setattr(os, "open", forbidden)
+        with pytest.raises(git.GitObjectError, match="invalid-input"):
+            with git.open_directory(tmp_path, mode=mode):
+                pytest.fail("invalid mode policy accepted")
 
 
 def test_metadata_size_checked_before_preimage_concatenation(
