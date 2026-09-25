@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 12 — 2026-09-25 19:00 UTC implementation/review snapshot; earlier cutoffs preserved, full acceptance unresolved |
+| Revision | 13 — 2026-09-25 20:51 UTC observed snapshot plus explicit 20:54 update; full acceptance unresolved |
 | Status | Execution started; no full R01–R20 task or submitted claim is yet accepted as complete |
 | Initial review code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
@@ -27,7 +27,7 @@ plan and this review's historical observations:
   as confirmed by the owner. The [stage-machine record](evidence/2026-09-25-stage-machine/README.md)
   captures Ubuntu 22.04.5/x86_64, 32 VMware-exposed CPUs, about 62.75 GiB total
   RAM and 101.91 GiB shared free disk. Only about 7.37 GiB RAM was available in
-  the latest recorded sample and swap was nearly full. Recheck resources and
+  that 13:21 UTC sample and swap was nearly full. Recheck resources and
   measure actual demo budgets; no offline/performance readiness is established.
   Earlier reference-only diagnostics retain their original limited scope.
 - Corrective issues and pull requests in `scanipy/scanipy` are authorized;
@@ -46,7 +46,7 @@ All unchecked acceptance items below remain required unless explicitly
 classified optional. An adopted design, recovered historical report, or one
 successful Joern parse does not complete a task or verify a submitted claim.
 
-Reviewed foundations have now landed through main `6f1ebc8`: independent
+The earlier 17:29 UTC checkpoint recorded foundations through main `6f1ebc8`: independent
 artifact metadata, typed report checking, corrected corpus and dependency
 locks, board/fail-closed hook tooling, the occurrence/decision contract, and
 the bounded canonical identity/budget foundation, Java static invocation
@@ -72,7 +72,7 @@ not satisfy that gate. Continue safe, assigned local work without merging until
 the exact-head review actually completes successfully. Do not weaken feature
 acceptance or retry an exhausted service continuously.
 
-This revision's local evidence cutoff is **17:29 UTC on 2026-09-25**. Later
+The preserved Revision 11 local evidence cutoff is **17:29 UTC on 2026-09-25**. Later
 checks or publication require a separate update, not silent promotion of this
 snapshot. The merged R05 producer passed 1,894 tests with 51 existing optional
 skips at `9be0579`; source custody passed 1,958/51 at `b005eaa`. Both have
@@ -182,6 +182,49 @@ independent AL-02 review passed 291 controls and approved the exact two files;
 normal commit `66607b9` passed applicable hooks. Neither has remote acceptance
 or real CodeQL/current-authority execution. These later observations do not
 rewrite the cutoff table or promote any full R-task, claim or shared gate.
+
+**Revision 13 — observed 20:51 UTC on September 25:** accepted main is
+`075f92fe9d6aa1afb0a16494769e9cc96ba0df16`, tree
+`7bce9471a3d858d39871e20631eaa5655b02b202`. This update supersedes only
+earlier pending-status statements, not the retained evidence or acceptance
+requirements. The cutoff uses an actual clock observation, not an anticipated
+completion time. See the [current evidence index](evidence/2026-09-25-foundation-merges/README.md#revision-13--observed-2051-utc-september-25)
+for exact checks, failed reviews and local artifact paths.
+
+| Scope | Current evidence | Still required |
+|---|---|---|
+| CodeQL observations / #413 | Merged at `5118c93` at 20:08:11, identical to reviewed `4be0c28`; seven test checks and final canonical SUCCESS/APPROVE. Three actual NFD/NFC controls passed; initial Unicode/pending-CI review is retained. | Actual bounded import/native adapter, accepted query/rule/source mapping, truthful coverage/origin/CWE, reproduction and incumbent comparisons. A supplied-data parser is not R13/G2. |
+| Occurrence store / #411 | Merged at `075f92f` at 20:33:41, identical to reviewed `1c2f3b7`; eight test checks including 89 actual isolated PostgreSQL cases without skips, canonical SUCCESS/APPROVE. | Real producer/accepted-authority/source-seal binding, final Finding/R09 bridge, durable decisions and API/UI. #378/#362 and all full claims stay open. |
+| Packet/controller integration | Local `a9e8011` and controller `ccaf7e5` share tree `7976bbd4`; configured full **5,662 passed /51 skipped**, zero failures/errors, 483.365s, including 89 actual occurrence-store PostgreSQL tests without skips. | Current-head publication gates and operational factory/kernel/Docker/authority integration. These tests do not execute the promised scan workflow. |
+| Runtime ancestor correction | Reviewed `5c57897`: 117 independent /664 combined focused checks; keep full nine-field file/direct-parent checks, five-field ancestor identity/security comparison. | Preserve the earlier **3,772 passed /51 skipped /one failure** and separately controlled sibling diagnostic. The earlier changed object remains unknown. |
+| Rule/inventory foundations | Current `2f1b3f7` / `d59c427` have 714 /647 focused passes; local, no PR at cutoff. Earlier full 2,603/51 and 2,536/51 belong to earlier heads. | Finish normal/current-head remote gates without borrowing old full results. |
+| Accepted ledger / runtime evidence | AL-02 is locally committed/reviewed; AL-03 draft shapes/facade have 56 controls. WORK02 logical accounting was approved at 20:49, before affected helper code. RES non-event core has 110 controls on each Python version and is frozen for independent review. | Incorporate approved accounting first; prove SQL/owner bridges and current authority. Finish RES review, qualified installation/capacity, event/spool/full-reader and DB orphan barriers. No operational constructor is enabled. |
+
+Pure packet checks are 760 owned plus 16 independent cases (776 on each of
+Python 3.11/3.12), not additive cross-version coverage. Its combined focused
+selection was 1,946. RES retains both genuine draft failures and their exact
+corrections. WORK02 bounds logical raw/image/history/canonical work; they are
+not measured RSS or full-workload capacity. A newly allocated detector run is
+RUNNING, not an invented pending state; the designed initial denial is atomic,
+not proof that the authority SQL or a live admission path already works.
+
+Root coordinates the remaining publication queue. Specialists must preserve
+the merged parser/store bytes while integrating real source, accepted inputs,
+runtime custody and raw detections before identity. Physical store tests do
+not install a runtime; supplied records do not grant current authority.
+The confirmed presentation machine had about 8.3 GiB RAM available, full swap
+and 96 GiB free on the shared filesystem at 20:32 UTC. Recheck before any
+separately approved bounded native work. No installation, release, user-app/DB
+change or native campaign occurred in this update. All R/C states and
+G0/G1/G2/G3 remain unchanged; December 2 or 3 and no October lock still apply.
+
+**Later update — 20:54 UTC:** inventory `d59c427` passed normal push and is
+now PR #414; its CI/canonical actions are running, not accepted. Rule `2f1b3f7`
+normal push is running. Root reproduced a genuine RES double-begin thread race
+on the frozen `2fd1297a` source (one failed control); its narrow lifetime
+correction has interim 111 passing checks plus five additional focused controls.
+Final review/fault coverage and gates remain pending. The earlier 110-pass
+results keep their original source attribution and do not erase this failure.
 
 ## 1. Objective and document boundaries
 
