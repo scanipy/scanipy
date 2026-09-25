@@ -1,15 +1,19 @@
 """Controlled codec checks; no fixture establishes accepted model authority."""
 
+import hashlib
 import json
-from dataclasses import asdict, fields, replace
+from dataclasses import FrozenInstanceError, asdict, fields, replace
+from pathlib import Path
 
 import pytest
 
 from analysis.ifds.bound_rules import (
+    BoundRule,
     BoundRuleError,
     QualifiedRuleKey,
     ScalarLimits,
     checked_limits,
+    decode_bound_rule,
     decode_bounded_json,
     decode_qualified_rule_key,
     encode_qualified_rule_key,
@@ -238,3 +242,361 @@ def test_frozen_limits_are_revalidated():
         checked_limits(limits)
     with pytest.raises(BoundRuleError):
         checked_limits(None)
+
+
+_FIXTURE = Path(__file__).parents[1] / "fixtures" / "semantic_g1"
+
+
+def _documents():
+    return (
+        json.loads((_FIXTURE / "rules.json").read_bytes()),
+        json.loads((_FIXTURE / "operation_models.json").read_bytes()),
+    )
+
+
+def _rebound(key, rule, models):
+    model_bytes = json.dumps(models, indent=2).encode()
+    model_hash = hashlib.sha256(model_bytes).hexdigest()
+    rule["model_artifact_digest"] = model_hash
+    rule_bytes = json.dumps(rule, indent=2).encode()
+    return (
+        rule_bytes,
+        model_bytes,
+        replace(
+            key,
+            rule_id=rule["spec_id"],
+            rule_raw_sha256=hashlib.sha256(rule_bytes).hexdigest(),
+            model_raw_sha256=model_hash,
+        ),
+    )
+
+
+def test_bound_rule_preserves_actual_fixture_bytes(rule_key):
+    rules = (_FIXTURE / "rules.json").read_bytes()
+    models = (_FIXTURE / "operation_models.json").read_bytes()
+    key = replace(
+        rule_key,
+        rule_id="semantic-g1-injection",
+        rule_raw_sha256=hashlib.sha256(rules).hexdigest(),
+        model_raw_sha256=hashlib.sha256(models).hexdigest(),
+    )
+    bound = decode_bound_rule(rules, models, key=key, language="python", limits=ScalarLimits())
+    assert bound.rule_bytes is rules and bound.model_bytes is models
+    assert bound.key == key and bound.language == "python"
+    assert bound.rule_document.get("class_id") == "injection"
+    assert bound.rule_document.get("languages").values == ("python", "java")
+    assert len(bound.rule_document.get("clauses").values) == 4
+    assert len(bound.model_document.get("models").values) == 4
+
+
+@pytest.mark.parametrize(
+    "path,value",
+    [
+        (("schema",), "scanipy-operation-models/2"),
+        (("models", 0, "signature", "receiver"), None),
+        (("models", 2, "preconditions", 2, "evidence_kind"), "checked"),
+        (("models", 2, "normal", "effects"), []),
+        (("models", 2, "exceptional", "effects"), []),
+        (("models", 2, "symbol", "owner"), "custom.os"),
+        (("models", 3, "transfer_authorization", "propagation", 1, "from", "index"), True),
+        (("models", 3, "signature", "parameters"), ["python.exact-str"]),
+        (("models", 3, "model_id"), "custom.concat/1"),
+        (("models", 3, "preconditions"), []),
+    ],
+)
+def test_changed_model_meaning_fails_even_with_rebound_hashes(rule_key, path, value):
+    rule, models = _documents()
+    target = models
+    for component in path[:-1]:
+        target = target[component]
+    target[path[-1]] = value
+    rule_bytes, model_bytes, key = _rebound(rule_key, rule, models)
+    with pytest.raises(BoundRuleError):
+        decode_bound_rule(
+            rule_bytes, model_bytes, key=key, language="python", limits=ScalarLimits()
+        )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "unknown",
+        "missing",
+        "duplicate-model",
+        "model-order",
+        "empty-models",
+        "unused-profile",
+        "clauses-empty",
+        "source-missing",
+        "sink-missing",
+        "source-bool",
+        "source-path",
+        "source-name",
+        "source-parameter-types",
+        "model-language",
+        "sink-position",
+        "sink-bool",
+        "sink-context",
+        "unknown-primitive",
+        "language-missing",
+        "duplicate-language",
+        "engine",
+        "class",
+        "unknown-rule-schema",
+        "unknown-selector",
+    ],
+)
+def test_closed_rules_and_all_model_members_are_validated(rule_key, mutation):
+    rule, models = _documents()
+    if mutation == "unknown":
+        rule["accepted"] = True
+    elif mutation == "missing":
+        del rule["semantics"]
+    elif mutation == "duplicate-model":
+        models["models"].append(models["models"][0])
+    elif mutation == "model-order":
+        models["models"].reverse()
+    elif mutation == "empty-models":
+        models["models"] = []
+    elif mutation == "unused-profile":
+        models["models"] = models["models"][2:]
+    elif mutation == "clauses-empty":
+        rule["clauses"] = []
+    elif mutation == "source-missing":
+        rule["clauses"] = rule["clauses"][1:]
+    elif mutation == "sink-missing":
+        del rule["clauses"][1]
+    elif mutation == "source-bool":
+        rule["clauses"][0]["selector"]["formal_index"] = True
+    elif mutation == "source-path":
+        rule["clauses"][0]["selector"]["source_file"] = "../source.py"
+    elif mutation == "source-name":
+        rule["clauses"][0]["selector"]["declaration"] = ["雪"]
+    elif mutation == "source-parameter-types":
+        rule["clauses"][0]["selector"]["parameter_types"] = []
+    elif mutation == "model-language":
+        rule["clauses"][1]["selector"]["language"] = "java"
+    elif mutation == "sink-position":
+        rule["clauses"][1]["position"]["index"] = 1
+    elif mutation == "sink-bool":
+        rule["clauses"][1]["position"]["index"] = False
+    elif mutation == "sink-context":
+        rule["clauses"][1]["context_id"] = "sql-query-text"
+    elif mutation == "unknown-primitive":
+        rule["clauses"][0]["primitive"] = "execute"
+    elif mutation == "language-missing":
+        rule["languages"] = ["java"]
+    elif mutation == "duplicate-language":
+        rule["languages"] = ["python", "python"]
+    elif mutation == "engine":
+        rule["engine"] = "ide"
+    elif mutation == "class":
+        rule["class_id"] = "memory-safety"
+    elif mutation == "unknown-rule-schema":
+        rule["schema"] = "scanipy-bound-rule-set/2"
+    elif mutation == "unknown-selector":
+        rule["clauses"][0]["selector"]["callback"] = "eval"
+    rules, model_bytes, key = _rebound(rule_key, rule, models)
+    with pytest.raises(BoundRuleError):
+        decode_bound_rule(rules, model_bytes, key=key, language="python", limits=ScalarLimits())
+
+
+def test_duplicate_source_clauses_preserve_original_ordinals(rule_key):
+    rule, models = _documents()
+    rule["clauses"].append(rule["clauses"][0])
+    rules, model_bytes, key = _rebound(rule_key, rule, models)
+    bound = decode_bound_rule(rules, model_bytes, key=key, language="python", limits=ScalarLimits())
+    clauses = bound.rule_document.get("clauses").values
+    assert len(clauses) == 5 and clauses[0] == clauses[4]
+
+
+@pytest.mark.parametrize("primitive", ["propagate", "sanitize"])
+def test_unauthorized_transfers_fail_without_requiring_a_matching_site(rule_key, primitive):
+    rule, models = _documents()
+    clause = {
+        "primitive": primitive,
+        "selector": {"kind": "model", "language": "python", "model_id": "python.os-system/1"},
+    }
+    if primitive == "propagate":
+        clause.update(
+            {"from": {"kind": "argument", "index": 0}, "to": {"kind": "result", "index": 0}}
+        )
+    else:
+        clause.update(
+            {"position": {"kind": "result", "index": 0}, "context_id": "posix-shell-command"}
+        )
+    rule["clauses"].append(clause)
+    rules, model_bytes, key = _rebound(rule_key, rule, models)
+    with pytest.raises(BoundRuleError):
+        decode_bound_rule(rules, model_bytes, key=key, language="python", limits=ScalarLimits())
+
+
+def test_rule_and_model_hashes_bind_actual_raw_bytes(rule_key):
+    rule, models = _documents()
+    rules, model_bytes, key = _rebound(rule_key, rule, models)
+    for altered_rules, altered_models in ((rules + b" ", model_bytes), (rules, model_bytes + b" ")):
+        with pytest.raises(BoundRuleError):
+            decode_bound_rule(
+                altered_rules, altered_models, key=key, language="python", limits=ScalarLimits()
+            )
+
+
+def test_bound_rule_does_not_retain_mutable_input_aliases(rule_key):
+    rule, models = _documents()
+    rules, model_bytes, key = _rebound(rule_key, rule, models)
+    bound = decode_bound_rule(rules, model_bytes, key=key, language="python", limits=ScalarLimits())
+    rule["class_id"] = "secrets"
+    models["models"].clear()
+    assert bound.rule_document.get("class_id") == "injection"
+    assert len(bound.model_document.get("models").values) == 4
+
+
+def test_positional_signatures_and_declaration_components_may_repeat(rule_key):
+    rule, models = _documents()
+    rule["clauses"][2]["selector"]["declaration"] = ["same", "same", "run"]
+    rule["clauses"][2]["selector"]["parameter_types"] = ["java.lang.String"] * 2
+    rules, model_bytes, key = _rebound(rule_key, rule, models)
+    bound = decode_bound_rule(rules, model_bytes, key=key, language="java", limits=ScalarLimits())
+    assert bound.language == "java"  # Decoding is not Java execution permission.
+    concat = bound.model_document.get("models").values[3]
+    assert concat.get("signature").get("parameters").values == ("python.exact-str",) * 2
+    assert bound.rule_document.get("clauses").values[2].get("selector").get(
+        "declaration"
+    ).values == ("same", "same", "run")
+
+
+@pytest.mark.parametrize("index", [0, 1])
+def test_only_exact_authorized_concat_propagation_decodes(rule_key, index):
+    rule, models = _documents()
+    rule["clauses"].append(
+        {
+            "primitive": "propagate",
+            "selector": {
+                "kind": "model",
+                "language": "python",
+                "model_id": "python.string-concat/1",
+            },
+            "from": {"kind": "argument", "index": index},
+            "to": {"kind": "result", "index": 0},
+        }
+    )
+    rules, model_bytes, key = _rebound(rule_key, rule, models)
+    bound = decode_bound_rule(rules, model_bytes, key=key, language="python", limits=ScalarLimits())
+    assert len(bound.rule_document.get("clauses").values) == 5
+
+
+@pytest.mark.parametrize(
+    "limit,value",
+    [
+        ("max_rule_bytes", 1),
+        ("max_model_bytes", 1),
+        ("max_accepted_bytes", 1),
+        ("max_clauses", 3),
+        ("max_models", 3),
+        ("max_rule_json_depth", 1),
+        ("max_rule_json_values", 5),
+        ("max_rule_string_bytes", 8),
+        ("max_path_bytes", 4),
+    ],
+)
+def test_decoder_enforces_lowered_trusted_limits(rule_key, limit, value):
+    rule, models = _documents()
+    rules, model_bytes, key = _rebound(rule_key, rule, models)
+    with pytest.raises(BoundRuleError):
+        decode_bound_rule(
+            rules,
+            model_bytes,
+            key=key,
+            language="python",
+            limits=replace(ScalarLimits(), **{limit: value}),
+        )
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/a.py",
+        "a//b.py",
+        "./a.py",
+        "a/../b.py",
+        "a\\b.py",
+        "a\tb.py",
+        "a\x7fb.py",
+        "a\x85b.py",
+        "a.py/",
+        "a.java",
+    ],
+)
+def test_source_selectors_reject_unsafe_or_non_python_paths(rule_key, path):
+    rule, models = _documents()
+    rule["clauses"][0]["selector"]["source_file"] = path
+    rules, model_bytes, key = _rebound(rule_key, rule, models)
+    with pytest.raises(BoundRuleError):
+        decode_bound_rule(rules, model_bytes, key=key, language="python", limits=ScalarLimits())
+
+
+@pytest.mark.parametrize("mutation", ["key", "rule-type", "model-type", "language", "limits"])
+def test_bound_rule_constructor_repeats_validation(rule_key, mutation):
+    rule, models = _documents()
+    rules, model_bytes, key = _rebound(rule_key, rule, models)
+    arguments = {
+        "key": key,
+        "rule_bytes": rules,
+        "model_bytes": model_bytes,
+        "language": "python",
+        "limits": ScalarLimits(),
+    }
+    if mutation == "key":
+        arguments["key"] = replace(key, rule_id="other-rule")
+    elif mutation == "rule-type":
+        arguments["rule_bytes"] = bytearray(rules)
+    elif mutation == "model-type":
+        arguments["model_bytes"] = bytearray(model_bytes)
+    elif mutation == "language":
+        arguments["language"] = "javascript"
+    else:
+        arguments["limits"] = object()
+    with pytest.raises(BoundRuleError):
+        BoundRule(**arguments)
+
+
+def test_qualified_rule_isolation_is_not_collapsed_by_identical_site_and_ordinal(rule_key):
+    rule, models = _documents()
+    rules, model_bytes, key = _rebound(rule_key, rule, models)
+    first = decode_bound_rule(rules, model_bytes, key=key, language="python", limits=ScalarLimits())
+    other_key = replace(key, detector_id="different-detector", rule_artifact_id="other-member")
+    second = decode_bound_rule(
+        rules, model_bytes, key=other_key, language="python", limits=ScalarLimits()
+    )
+    assert (
+        first.rule_document.get("clauses").values[0]
+        == second.rule_document.get("clauses").values[0]
+    )
+    assert first.key != second.key
+    assert first != second
+    with pytest.raises(FrozenInstanceError):
+        first.key = second.key
+
+
+@pytest.mark.parametrize("artifact", ["rule", "model"])
+@pytest.mark.parametrize("malformation", ["duplicate", "unknown", "floating", "trailing"])
+def test_actual_artifact_decoder_rejects_malformed_rebound_json(rule_key, artifact, malformation):
+    rule, models = _documents()
+    rules, model_bytes, key = _rebound(rule_key, rule, models)
+    raw = rules if artifact == "rule" else model_bytes
+    if malformation == "duplicate":
+        raw = b'{"schema":"duplicate",' + raw[1:]
+    elif malformation == "unknown":
+        raw = b'{"unexpected":null,' + raw[1:]
+    elif malformation == "floating":
+        raw = b'{"unexpected":1.0,' + raw[1:]
+    else:
+        raw += b"{}"
+    if artifact == "rule":
+        rules = raw
+        key = replace(key, rule_raw_sha256=hashlib.sha256(raw).hexdigest())
+    else:
+        model_bytes = raw
+        key = replace(key, model_raw_sha256=hashlib.sha256(raw).hexdigest())
+    with pytest.raises(BoundRuleError):
+        decode_bound_rule(rules, model_bytes, key=key, language="python", limits=ScalarLimits())
