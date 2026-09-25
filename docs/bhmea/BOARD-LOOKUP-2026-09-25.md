@@ -27,6 +27,8 @@ retry loop, fallback credential or project-wide item listing:
 Both connections must have `hasNextPage=false` and `totalCount` equal to the
 returned inventory size. Null, missing, duplicate, ambiguous, truncated, wrong
 repository/project/content and GraphQL partial-error responses fail closed.
+Each response must contain exactly one JSON document, and an errors field, if
+present, must be an empty array. Only the literal `Todo` may authorize work.
 Closed projects and archived target items are rejected. No first-match shortcut
 or implicit `Todo` is used. Exactly one single-select Status field must exist,
 with uniquely identified `Todo`, `In Progress` and `Done` options; its selected

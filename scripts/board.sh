@@ -88,11 +88,12 @@ items_json=$(gh api graphql \
     }
   }') || die "cannot read issue $REPOSITORY#$issue project membership (gh auth/quota?)"
 
-item_json=$(jq -ce --arg repo "$REPOSITORY" --arg owner "$OWNER" \
+item_json=$(jq -cse --arg repo "$REPOSITORY" --arg owner "$OWNER" \
   --argjson issue "$issue" --argjson project "$PROJECT_NUMBER" '
   def need($condition; $message): if $condition then . else error($message) end;
   def text: type == "string" and test("^[^[:cntrl:][:space:]]+$");
-  need(type == "object" and ((.errors // []) == []); "GraphQL errors")
+  need(length == 1; "expected one JSON response") | .[0]
+  | need(type == "object" and ((has("errors") | not) or .errors == []); "GraphQL errors")
   | .data.repository
   | need((.nameWithOwner | ascii_downcase) == ($repo | ascii_downcase); "wrong repository")
   | .issue
@@ -141,11 +142,12 @@ field_json=$(gh api graphql -f id="$project_id" -f query='
     }
   }') || die "cannot read fields for selected project #$PROJECT_NUMBER"
 
-metadata=$(jq -ce --arg id "$project_id" --arg owner "$OWNER" \
+metadata=$(jq -cse --arg id "$project_id" --arg owner "$OWNER" \
   --argjson project "$PROJECT_NUMBER" --argjson item "$item_json" '
   def need($condition; $message): if $condition then . else error($message) end;
   def text: type == "string" and test("^[^[:cntrl:][:space:]]+$");
-  need(type == "object" and ((.errors // []) == []); "GraphQL errors")
+  need(length == 1; "expected one JSON response") | .[0]
+  | need(type == "object" and ((has("errors") | not) or .errors == []); "GraphQL errors")
   | .data.node
   | need(.__typename == "ProjectV2" and .id == $id and .number == $project
       and .owner.__typename == $item.project.owner.__typename
@@ -199,9 +201,10 @@ case "$cmd" in
         echo "BLOCKED: #$issue is already Done. Do NOT re-implement."
         exit 3
         ;;
-      *)
+      "Todo")
         echo "OK to start. On first edit run:  scripts/board.sh set $issue \"In Progress\""
         ;;
+      *) die "unexpected Status; refusing to authorize work" ;;
     esac
     ;;
 

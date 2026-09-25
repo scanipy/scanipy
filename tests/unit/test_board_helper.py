@@ -309,6 +309,10 @@ def test_explicit_repository_and_project_overrides(board: dict[str, Any], kind: 
         "malformed-fields-json",
         "missing-status-definition",
         "wrong-status-definition",
+        "wrong-errors-type",
+        "wrong-fields-errors-type",
+        "multiple-issue-json",
+        "multiple-fields-json",
     ],
 )
 def test_malformed_or_ambiguous_evidence_fails_closed_without_mutation(
@@ -413,12 +417,31 @@ def test_malformed_or_ambiguous_evidence_fails_closed_without_mutation(
         project.pop("statusField")
     elif defect == "wrong-status-definition":
         project["statusField"] = dict(field, id="other-field")
+    elif defect == "wrong-errors-type":
+        board["issue"]["errors"] = False
+    elif defect == "wrong-fields-errors-type":
+        board["fields"]["errors"] = False
+    elif defect == "multiple-issue-json":
+        board["raw"] = {"issue": json.dumps(board["issue"]) * 2}
+    elif defect == "multiple-fields-json":
+        board["raw"] = {"fields": json.dumps(board["fields"]) * 2}
     else:
         raise AssertionError(defect)
     result, calls = _run(board, "set", "377", "In Progress")
     assert result.returncode == 2, (defect, result.stdout, result.stderr)
     assert "→" not in result.stdout and "OK to start" not in result.stdout
     assert all(call[:2] == ["api", "graphql"] for call in calls)
+
+
+def test_multiple_json_documents_cannot_create_multiline_start_authorization(
+    board: dict[str, Any],
+) -> None:
+    board["raw"] = {"fields": json.dumps(board["fields"]) * 2}
+    result, calls = _run(board, "check", "377")
+    assert result.returncode == 2
+    assert "expected one JSON response" in result.stderr
+    assert "OK to start" not in result.stdout
+    assert len(calls) == 2
 
 
 @pytest.mark.parametrize("failure, count", [("issue", 1), ("fields", 2), ("mutation", 3)])
