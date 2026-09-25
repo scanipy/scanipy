@@ -1,5 +1,13 @@
 # Scanipy v3.2 — Agent Context
 
+> **Current Black Hat work:** start with
+> [DECISION-BHMEA-01](docs/DECISION-BHMEA-01-current-execution-authority-2026-09-25.md).
+> It records the owner's current goal, the engineering extensions needed for
+> it, preserved compatibility obligations and required review/test merge gates.
+> [The active handoff](docs/PLAN-BHMEA-EXECUTION-2026-09-25.md) contains ownership
+> and execution state. This file summarizes that decision; it does not grant
+> itself authority or claim completed acceptance.
+
 > **Read this file first.** It is derivative of PLAN.md, SDD.md, and WBS.md.
 > When this file conflicts with any of those three, the upstream document wins.
 > Correct this file, never the upstream.
