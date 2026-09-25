@@ -19,7 +19,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.4",
+    # AnyIO 4.14's pytest plugin uses an alias removed/deprecated in pytest 9.2.
+    # Update this with the pinned HTTP/AnyIO stack, not independently.
+    "pytest>=7.4,<9.2",
     "pytest-cov>=4.1",
     # Pin the linter/type-checker to the versions the tree was formatted against.
     # ruff's `format` changed in 0.16 (it now rewrites aligned inline comments),
@@ -33,7 +35,9 @@ dev = [
     "types-requests",
     "psycopg2-binary>=2.9",
     "alembic>=1.13",
-    "sqlalchemy>=2.0",
+    # SQLAlchemy 2.1 changes bare postgresql:// to psycopg3; this runtime ships
+    # psycopg2. Deliberately migrate driver/URLs before allowing that minor.
+    "sqlalchemy>=2.0,<2.1",
     "pre-commit>=3.7",
     # CLAR-DEPLOY-21: CI-side AWS emulation — moto is an in-process pip dep (no
     # docker service). It emulates API mechanics ONLY; it does NOT evaluate IAM
@@ -56,6 +60,9 @@ dev = [
 http = [
     "fastapi==0.138.2",
     "starlette==1.3.1",
+    # Starlette 1.3.1 imports an AnyIO alias deprecated by the 4.15 lazy-loader
+    # change. Preserve warnings-as-errors and pin the compatible stack (#366).
+    "anyio==4.14.2",
     "pydantic==2.13.4",
     "uvicorn==0.51.0",
 ]
@@ -66,9 +73,10 @@ http = [
 oracle = [
     "fastapi==0.138.2",
     "starlette==1.3.1",
+    "anyio==4.14.2",
     "pydantic==2.13.4",
     "uvicorn==0.51.0",
-    "sqlalchemy>=2.0",
+    "sqlalchemy>=2.0,<2.1",
     "psycopg2-binary>=2.9",
     "alembic>=1.13",
 ]
