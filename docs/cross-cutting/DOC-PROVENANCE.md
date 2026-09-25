@@ -2,6 +2,12 @@
 
 **Owner:** Documentation Manager Agent
 **Status:** ACTIVE (Phase 0 cross-cutting deliverable)
+
+**BHMEA compatibility note (2026-09-25):** §§1–11 retain the historical record
+contract. §12 defines the explicit signed-record v2 extension under the current
+BHMEA D-CLASS/D-PRODUCERS engineering direction. Original v1 bytes and historical
+records remain unchanged; the extension is not a retrospective rewrite.
+
 **Source-of-truth lineage:**
 
 - `PLAN.md §"Context and the objective"` (property (c): `source commit → snapshot digest → S_version → env_digest → cpg_order_hash (canonical iff strong) → taint witness → rule/spec id → SARIF hash → per-finding origin`)
@@ -350,6 +356,56 @@ This subsumes the table in `.claude/rules/02-provenance.md §"Per-component thre
 - `DOC-SARIF` — SARIF `properties` block carrying the conditional annotation.
 - `DOC-INV` — INV-1/2/5 owner cross-reference.
 - `DOC-RUNBOOK` (forthcoming sibling) — labelling-correction window SLA and re-partition incident procedure.
+
+---
+
+## 12. Independent artifact identity and signed-record v2 (BHMEA R09)
+
+The [current execution handoff](../PLAN-BHMEA-EXECUTION-2026-09-25.md) authorizes
+the atomic worker/SARIF/schema/signature correction. This section changes only
+the explicitly versioned contract; it does not resolve historical CLARs or
+claim full provenance workflow acceptance.
+
+`record_schema_version = 1` remains the default for historical records. Its
+canonical signing input excludes the newly introduced `record_schema_version`
+and `artifact_identity` fields, preserving original bytes and signature
+verification. A v1 record cannot carry unsigned artifact metadata. Migration
+retains the historical shared `fingerprint_class` exactly and leaves both new
+artifact classes null with status `legacy-ambiguous`; it must not copy the
+historical class into either independent field.
+
+For `record_schema_version = 2`, `artifact_identity` is included in canonical
+signing input and follows the strict descriptor shape in
+[DOC-SARIF §11.1](DOC-SARIF.md#111-artifact-identity-v2-compatibility-extension-bhmea-r09).
+Its `cpg_order.digest` and `slice.digest` must equal the respective record
+digests. The shared `fingerprint_class` must be null. Both independent classes,
+statuses, namespaces, and exact scoped annotations are signed; changing them
+must fail verification. Unknown record/descriptor versions fail closed.
+
+Core v2 records require completed graph and slice evidence plus a real
+precondition verdict. CPG-less oracle v2 records may retain null graph/slice
+digests and precondition status with explicit not-applicable descriptors.
+Origin, `S_version`, and `env_digest` are not optional. Allowing absent artifacts
+must never fabricate those artifacts or promote oracle evidence to core.
+
+V2 auditor exports include `record_schema_version` and `artifact_identity` and
+omit the old shared `fingerprint_class` and top-level graph annotation. The exact
+annotation is adjacent to its own digest/class inside each descriptor. V1 export
+shape is unchanged. Readers/UI must dispatch on version and render both classes
+independently rather than expecting a v1 annotation key on a v2 export.
+
+Migration `20260925_0003` enforces these conditional finding/record constraints.
+Downgrading is refused while v2 records exist because converting them to the
+shared v1 class would lose signed evidence. Historical records/signatures must
+not be re-signed, mutated or deleted to force a downgrade.
+
+Tests in `tests/unit/test_artifact_identity.py` and
+`tests/integration/test_artifact_identity.py` verify v1 checksum preservation,
+four class combinations, descriptor/digest binding, signature tampering, and
+database constraints. These are component checks, not proof of real source-only
+snapshot production, complete downloadable nine-link bundles, lifecycle
+suppression safety, or the full R12 scan-to-export workflow. Those remain tracked
+under the full BHMEA delivery issue #362.
 
 ---
 

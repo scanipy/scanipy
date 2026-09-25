@@ -267,23 +267,20 @@ def test_mapping_is_pure_and_path_relative() -> None:
     first = map_semgrep_report(TWO_FINDINGS, source_dir=SOURCE_DIR, provenance=_provenance())
     second = map_semgrep_report(TWO_FINDINGS, source_dir=SOURCE_DIR, provenance=_provenance())
 
-    assert {f.slice_fingerprint for f in first} == {f.slice_fingerprint for f in second}
+    first_ids = {f.oracle_fingerprint for f in first}
+    assert first_ids == {f.oracle_fingerprint for f in second}
+    assert len(first_ids) == 2 and all(len(value) == 64 for value in first_ids)
+    assert all(f.slice_fingerprint is None for f in first)
     assert sorted(f.uri for f in first) == ["app/db.py", "app/util.py"]
 
 
 # ---------------------------------------------------------------------------
-# Fail-closed specs — the blocking integration constraint
+# Fail-closed specs — reject malformed producer metadata
 # ---------------------------------------------------------------------------
 
 
-def test_missing_cpg_order_hash_fails_closed_with_the_named_producer() -> None:
-    """No CPG => no ``cpg_order_hash`` => refuse to emit. Never a fabricated hash.
-
-    CMP-FND-01 requires ``cpg_order_hash`` NOT NULL on EVERY finding, oracle
-    included, but a Semgrep-only scan builds no CPG. The adapter names
-    CMP-CORE-03 as the sole legitimate producer and stops, rather than hashing
-    the source tree into something that would read as a canonical-order digest.
-    """
+def test_malformed_cpg_order_hash_fails_closed_with_the_named_producer() -> None:
+    """Explicit None is supported; blank and malformed graph hashes are rejected."""
     for bad in ("", "not-a-hash", "A" * 64, "0" * 63):
         with pytest.raises(OracleProvenanceUnavailable, match="cpg_order_hash"):
             _provenance(cpg_order_hash=bad)
@@ -293,6 +290,19 @@ def test_missing_precondition_status_fails_closed() -> None:
     """CW-DETECT (CMP-SNAP-03) never runs on a Semgrep scan; no default is invented."""
     with pytest.raises(OracleProvenanceUnavailable, match="precondition_status"):
         _provenance(precondition_status="unknown")
+
+
+@pytest.mark.parametrize(
+    "fields",
+    [
+        {"cpg_order_hash": None, "cpg_order_class": "strong", "cpg_order_namespace": "graph/2"},
+        {"cpg_order_class": "strong"},
+        {"cpg_order_class": "pending", "cpg_order_namespace": "graph/2"},
+    ],
+)
+def test_incomplete_graph_producer_metadata_has_typed_failure(fields) -> None:
+    with pytest.raises(OracleProvenanceUnavailable, match="graph producer metadata"):
+        _provenance(**fields)
 
 
 def test_unmapped_rule_class_fails_closed() -> None:

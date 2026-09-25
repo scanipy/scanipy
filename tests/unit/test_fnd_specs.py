@@ -363,8 +363,9 @@ def test_inv_5_fnd_02_cpg_order_hash_annotation_persisted_at_schema() -> None:
     )
     # The model constant equals the literal (the same string the DDL pins).
     assert CPG_ORDER_HASH_ANNOTATION == _ANNOTATION
-    # cpg_order_hash itself is NOT NULL with a 32-byte length CHECK.
-    assert not table.columns["cpg_order_hash"].nullable
+    # R09 permits explicit CPG-less oracle v2 records; conditional constraints
+    # retain required graph evidence for legacy and core rows.
+    assert table.columns["cpg_order_hash"].nullable
     assert "octet_length(cpg_order_hash) = 32" in _check_sqltext(
         table, "findings_cpg_order_hash_len_chk"
     )
