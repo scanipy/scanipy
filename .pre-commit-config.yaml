@@ -77,6 +77,12 @@ repos:
           - types-psycopg2
           - sqlalchemy>=2.0,<2.1
           - cryptography>=42
+          # The legacy HTTP app is checked by this isolated hook too. Match
+          # the existing project HTTP pins; do not hide missing imports.
+          - fastapi==0.138.2
+          - starlette==1.3.1
+          - anyio==4.14.2
+          - pydantic==2.13.4
         # Scope to the same source dirs CI type-checks (ci.yml runs
         # `mypy analysis/ detectors/ integrations/ services/`). Tests are
         # not type-checked in CI; running mypy on them here only fails on

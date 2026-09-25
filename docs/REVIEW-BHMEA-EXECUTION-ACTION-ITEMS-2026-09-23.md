@@ -4,9 +4,9 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 4 — 2026-09-25 reviewed foundations and newly identified safety/lifecycle gaps |
-| Status | Execution started; no remediation task or submitted claim is yet accepted as complete |
-| Reviewed code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
+| Revision | 10 — 2026-09-25 reviewed Git/app containment and Semgrep parser merges, current local producer/runtime checks and preserved unresolved acceptance |
+| Status | Execution started; no full R01–R20 task or submitted claim is yet accepted as complete |
+| Initial review code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
 ## 0. Current instructions — read before executing this backlog
 
@@ -23,9 +23,13 @@ plan and this review's historical observations:
   architecture. Preserve them as historical references; do not let their
   obsolete architecture or approval gates veto the current goal. Existing
   contracts still explain compatibility obligations and useful tests.
-- The live demo will run **locally using Docker**. OS, CPU, RAM, and available
-  disk for the actual presentation machine are not yet confirmed. Measurements
-  on the current development host are reference measurements only.
+- The live demo will run **locally using Docker on this development machine**,
+  as confirmed by the owner. The [stage-machine record](evidence/2026-09-25-stage-machine/README.md)
+  captures Ubuntu 22.04.5/x86_64, 32 VMware-exposed CPUs, about 62.75 GiB total
+  RAM and 101.91 GiB shared free disk. Only about 7.37 GiB RAM was available in
+  the latest recorded sample and swap was nearly full. Recheck resources and
+  measure actual demo budgets; no offline/performance readiness is established.
+  Earlier reference-only diagnostics retain their original limited scope.
 - Corrective issues and pull requests in `scanipy/scanipy` are authorized;
   merge only after required review and tests pass. This does not authorize
   publishing releases, sending external messages, new spending, or reducing
@@ -42,13 +46,57 @@ All unchecked acceptance items below remain required unless explicitly
 classified optional. An adopted design, recovered historical report, or one
 successful Joern parse does not complete a task or verify a submitted claim.
 
-Reviewed foundations have now landed through main `0223651`: independent
+Reviewed foundations have now landed through main `6ae30df`: independent
 artifact metadata, typed report checking, corrected corpus and dependency
-locks, board/fail-closed hook tooling, and the occurrence/decision contract. See the
+locks, board/fail-closed hook tooling, the occurrence/decision contract, and
+the bounded canonical identity/budget foundation, Java static invocation
+safety, opt-in raw Joern transport, the pure continuity module, stage/handoff
+documentation, fail-closed legacy Git/application containment and bounded
+Semgrep observation parsing. Occurrence storage, source
+custody and integrated observation producers remain separate pending scopes;
+none is accepted merely because its
+design or local tests pass. See the
 [bounded merge/evidence record](evidence/2026-09-25-foundation-merges/README.md)
 for exact heads, checks and limitations. Initial defect observations below
 remain historical evidence; do not assume every described defect is still
 present, or mistake a narrow repair for full R-task acceptance.
+
+The handoff preserves the earlier external canonical-review session limit and
+the observed successful recovery: #390, #382 and #389 now have successful exact-head
+canonical APPROVE actions and are merged. Remaining candidates still need their
+own successful review.
+Successful unit/CI checks or an APPROVE word inside a failed review action do
+not satisfy that gate. Continue safe, assigned local work without merging until
+the exact-head review actually completes successfully. Do not weaken feature
+acceptance or retry an exhausted service continuously.
+
+Local-only storage, source custody and typed CPG checkpoints
+have scoped tests and independent review but remain separate from merged
+acceptance. Git containment #402, application containment #403 and Semgrep parser
+#404 are now merged; only their narrow issues #395/#396/#394 are Done. Tests from
+one branch do not validate the combined deployment. Refusing unsafe scans is containment, not delivery
+of the promised scan workflow. The next source/authority/semantic contracts
+must bind exact verified capture bytes, accepted rule/model bytes, current
+durable authorization and actual native observations before a real core/oracle
+run can support G1. No caller boolean, fixture signature, graph label or local
+test count satisfies those producer obligations. Shared bounded process
+transport, runtime-file verification and a pin-relative low-level profile loader
+now have reviewed local code; the pure Docker create renderer has three
+independent/author runs of the same 288 checks, not 864 distinct tests.
+Source-syntax parsing, offline Git capture and signature verification have
+reviewed local implementations with separately bounded evidence. The actual
+Docker controller, trusted current-anchor factory, durable journal/admission,
+kernel enforcement, real operator authority and API/UI integration remain TODOs.
+The source-bound projection review reproduced 13 failing negative controls, then
+eight additional closure/wrapper failures after the first correction. A later
+368-pass controlled run was followed by four reproduced scope-multiplicity/order
+failures. The final correction has root and independent corpus approval after
+387 selected checks, 206 independently rerun projection checks and root's same
+four negatives passing. The configured full suite passed 2,469 tests with 51
+existing optional skips. Normal commit/current-main/remote gates remain; no native fidelity, solver
+or full feature acceptance follows. Preserve the contrary results and remaining work.
+All unchecked TODOs below
+remain required; the handoff records exact checkpoints and remaining work.
 
 ## 1. Objective and document boundaries
 
