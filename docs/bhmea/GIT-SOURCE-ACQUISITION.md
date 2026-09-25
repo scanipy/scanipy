@@ -1,7 +1,8 @@
 # R16 — Native Git containment and source-capture replacement
 
-Status: root-approved containment implemented and independently reviewed locally;
-local test/hook checks passed. Merged-base and publication gates remain open.
+Status: root-approved containment and packaging correction implemented and
+independently reviewed locally; local test/hook checks passed. Merged-base and
+publication gates remain open.
 Issue: [#395](https://github.com/scanipy/scanipy/issues/395).
 Owner: corpus/tooling agent; root owns review, project status and merge.
 Date: 2026-09-25. Local dependency base:
@@ -37,7 +38,7 @@ must close these named default paths, not just rename the shared flag allowlist.
 `deploy/scanipy_oracle/app.py:_run_scan` directly invokes Git clone/rev-parse
 outside these wrappers, uses a mutable checkout and can substitute a zero SHA.
 Its startup and scanner also run Semgrep with an ambient runtime. Root owns a
-separate app containment/cutover design; that file is outside this 15-file scope.
+separate app containment/cutover design; that file is outside this 16-file scope.
 This change therefore does not contain every live acquisition/scanner route or
 establish system-wide no-execution safety. The user's running app/container is
 untouched. Do not use #395 approval as authority to claim that legacy app safe.
@@ -51,6 +52,7 @@ approval, the exact intended implementation scope is:
 |---|---|
 | `docs/bhmea/GIT-SOURCE-ACQUISITION.md` | This contract and actual scoped verification record. |
 | `tools/worker/secure_subprocess.py` | Refuse every Git request before argument inspection, binary lookup or process creation; correct obsolete Git safety claims. |
+| `workers/snapshot/Dockerfile` | Root-approved 16th-file correction: copy the SCM package required by the new refusal import; no tool/dependency/base-pin or launcher change. |
 | `services/snapshot/worker.py` | Refuse default acquisition before staging; remove native clone/checkout calls; preserve downstream behavior through an explicitly injected trusted fixture materializer. |
 | `integrations/scm/native_acquisition.py` | New small typed, constant-message native-acquisition refusal shared by snapshot/provider callers. |
 | `integrations/scm/github.py` | Guard default clone before destination/credential staging; replace default runner body with explicit refusal; preserve other APIs. |
@@ -70,7 +72,8 @@ Java observer tests are verification targets, not planned edit targets. Java
 safety tests have only the narrowly approved Git-row compatibility change above.
 If a change outside this list becomes necessary, stop and obtain root's scoped
 approval. Do not change the frozen #390 or R05 worktrees, accepted corpus,
-Dockerfiles, dependency pins, database, user app configuration, PLAN/SDD/WBS,
+Dockerfiles except the approved snapshot package COPY above, dependency pins,
+database, user app configuration, PLAN/SDD/WBS,
 release state or remote project state.
 
 ## 3. Shared process boundary
@@ -229,7 +232,7 @@ in 4.50 seconds. This is not the canonical merge review.
 The supported declared development environment was Python 3.11.16, pytest 9.1.1,
 Ruff 0.15.22, mypy 2.3.1 and yamllint 1.35.1. Every source import was bound to
 this worktree with explicit `PYTHONPATH`, not the environment's installed wheel.
-The 58 new containment cases are unit-marked and run in the normal selection.
+The initial 58 containment cases are unit-marked and run in the normal selection.
 No native Git, Joern, Semgrep, app/container or live database probe was used.
 
 The first complete `pytest tests/` run had **1,400 passed, 51 existing skipped,
@@ -281,6 +284,44 @@ not a remote push. The broader explicit 94-file mypy invocation above additional
 covered `tools/`. No native target command was used as a positive control.
 The #390 merged-base rerun, exact-head CI and successful canonical review remain
 separate outstanding requirements before publication/merge.
+
+### Packaging correction after the initial local checkpoint
+
+The initial local commit is `5c6208ec0d1c788b156aa964374e16d115dbf47a`.
+A subsequent read-only producer audit found that the snapshot Dockerfile omitted
+`integrations`, although the new worker imports its typed refusal. A rebuilt
+image from that recipe would fail at import before idle/failure reporting.
+Checkout imports did not establish packaged import closure; no image was built
+or run to discover this gap.
+
+Root approved one additional file and the correction
+`COPY integrations /app/integrations`, preserving all existing tool/base/lock
+pins and commands. The existing containment test now assembles the Dockerfile's
+literal local `/app` directory copies and starts a fresh isolated trusted Python
+interpreter. An import finder confines every first-party module to that assembled
+tree, so neither deliberately poisoned checkout `PYTHONPATH` nor an installed
+Scanipy wheel can repair a missing package. The positive checks the actual worker
+import, idle path and typed refusal; omitting only the integrations copy is a
+required failing control. Native/job entry points are poisoned in the child.
+Third-party packages come from the declared development environment: this checks
+first-party packaging, not the worker lock's resolved/runtime dependency closure.
+
+The first added tests hit an error while trying to shell-tokenize unrelated
+Dockerfile continuation lines; restricting parsing to COPY instructions corrected
+only the test assembler. The rerun passed **60 containment tests** in 9.54 seconds,
+including both packaging controls. The fresh full configured suite passed
+**1,403 tests with 51 existing skips, zero failures/errors** (1,454 collected)
+in 152.015 seconds. Its JUnit record is
+`/tmp/scanipy-395-packaging-full.xml`; the focused record is
+`/tmp/scanipy-395-packaging-unit.xml`. These remain task-local diagnostics.
+The normal local pre-push hook passed repository Ruff, format checking (203
+files), its full 84-source-file mypy selection and configured unit/invariant
+tests. Root independently reviewed the complete three-file packaging delta
+and approved its limited implementation; no canonical merge verdict is implied.
+The new local commit must pass the unchanged pre-commit/commit-msg hooks.
+Any future recipe build has a new measured image
+identity; this source edit does not establish that identity or authorize a build,
+native probe, image publication or production acquisition.
 
 ## 7. Separate mandatory replacement scope (not implemented here)
 

@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import shlex
+import shutil
 import subprocess
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -32,6 +35,66 @@ _PROVIDERS = (
     (bitbucket, bitbucket.BitbucketConnector, "bitbucket"),
     (ado, ado.AzureDevOpsConnector, "azure-devops"),
 )
+
+_ASSEMBLED_IMPORT_CHECK = r"""
+import importlib.abc
+import importlib.machinery
+import os
+from pathlib import Path
+import subprocess
+import sys
+from types import SimpleNamespace
+
+assembled = Path(sys.argv[1]).resolve()
+checkout = Path(sys.argv[2]).resolve()
+assert sys.flags.isolated and sys.flags.dont_write_bytecode
+assert str(checkout) not in sys.path
+first_party = {'analysis', 'db', 'detectors', 'integrations', 'services', 'tools', 'workers', 'web'}
+
+class AssembledOnly(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname.split('.')[0] not in first_party:
+            return None
+        # Restrict first-party top-level lookup to the assembled COPY tree.
+        # Installed wheels may still supply third-party dependencies, but must
+        # never repair a missing project package or namespace directory.
+        search = [str(assembled)] if path is None else list(path)
+        spec = importlib.machinery.PathFinder.find_spec(fullname, search)
+        if spec is None:
+            raise ModuleNotFoundError('missing assembled module: ' + fullname)
+        origins = list(spec.submodule_search_locations or ())
+        if spec.origin is not None:
+            origins.append(spec.origin)
+        assert origins and all(Path(p).resolve().is_relative_to(assembled) for p in origins)
+        return spec
+
+def forbidden(*args, **kwargs):
+    raise AssertionError('assembled import/idle must not invoke native tools or job work')
+
+sys.meta_path.insert(0, AssembledOnly())
+subprocess.run = subprocess.Popen = os.system = forbidden
+from services.snapshot import worker
+from integrations.scm.base import SCMError
+from integrations.scm.native_acquisition import NativeGitAcquisitionUnavailable
+
+assert Path(worker.__file__).resolve().is_relative_to(assembled)
+for name in ('_default_object_store', '_fail_closed_report_status_port',
+             '_real_parse_source', 'record_snapshot_job_completion'):
+    setattr(worker, name, forbidden)
+worker.tempfile.TemporaryDirectory = forbidden
+worker.run_execute_loop('sha256:' + 'a' * 64,
+                        queue=SimpleNamespace(receive=lambda: None), environ={})
+try:
+    worker.refuse_native_git_acquisition()
+except NativeGitAcquisitionUnavailable as error:
+    assert isinstance(error, SCMError)
+else:
+    raise AssertionError('acquisition refusal missing')
+for name, module in tuple(sys.modules.items()):
+    if name.split('.')[0] in first_party and getattr(module, '__file__', None):
+        assert Path(module.__file__).resolve().is_relative_to(assembled)
+print('assembled worker import and idle/refusal passed')
+"""
 
 
 class PoisonInput:
@@ -276,3 +339,66 @@ def test_entrypoint_never_supplies_materializer_from_cli_or_environment(monkeypa
     monkeypatch.setenv("SOURCE_MATERIALIZER", _PRIVATE_INPUT)
     assert worker.main(["--enable-git", _PRIVATE_INPUT]) == 0
     execute.assert_called_once_with(_ENV_DIGEST)
+
+
+@pytest.mark.parametrize("omit_integrations", [False, True], ids=["recipe", "missing-copy"])
+def test_snapshot_docker_package_copy_closure_imports_without_checkout_fallback(
+    tmp_path, omit_integrations
+):
+    """Assemble trusted local COPY inputs, not an image/native-tool smoke test."""
+    checkout = Path(__file__).resolve().parents[2]
+    assembled = tmp_path / "app"
+    assembled.mkdir()
+    copied = []
+    for line in (checkout / "workers/snapshot/Dockerfile").read_text().splitlines():
+        heading = line.split(maxsplit=1)
+        if not heading or heading[0].upper() != "COPY":
+            continue
+        fields = shlex.split(line, comments=True)
+        assert len(fields) >= 3
+        if fields[1].startswith("--"):
+            continue
+        assert len(fields) == 3, "review new COPY syntax before changing the assembly test"
+        source, target = fields[1:]
+        if not target.startswith("/app/"):
+            continue
+        source_path = checkout / source
+        target_path = assembled / target.removeprefix("/app/")
+        assert source_path.resolve().is_relative_to(checkout)
+        assert target_path.resolve().is_relative_to(assembled)
+        assert source_path.is_dir()
+        if omit_integrations and source == "integrations":
+            continue
+        shutil.copytree(
+            source_path, target_path, ignore=shutil.ignore_patterns("__pycache__", "*.pyc")
+        )
+        copied.append(source)
+    assert ("integrations" in copied) is not omit_integrations
+    # Deliberately poison PYTHONPATH with the checkout. -I plus the first-party
+    # finder above rejects both that leakage and an installed Scanipy wheel.
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-B",
+            "-X",
+            f"pycache_prefix={tmp_path / 'private-pycache'}",
+            "-c",
+            _ASSEMBLED_IMPORT_CHECK,
+            str(assembled),
+            str(checkout),
+        ],
+        cwd=tmp_path,
+        env={"LANG": "C.UTF-8", "LC_ALL": "C.UTF-8", "PYTHONPATH": str(checkout)},
+        stdin=subprocess.DEVNULL,
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
+    if omit_integrations:
+        assert completed.returncode != 0
+        assert "missing assembled module: integrations" in completed.stderr
+    else:
+        assert completed.returncode == 0, completed.stderr
+        assert "assembled worker import and idle/refusal passed" in completed.stdout

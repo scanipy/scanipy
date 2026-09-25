@@ -105,6 +105,9 @@ RUN pip install --no-cache-dir --require-hashes -r /tmp/requirements.txt
 # (CMP-SNAP-05 reads it and refuses to start if empty).
 COPY services/snapshot    /app/services/snapshot
 COPY tools/worker         /app/tools/worker
+# #395: worker imports the typed SCM acquisition refusal before idle/job handling.
+# Keep its package/base/conformance import closure available in the actual image.
+COPY integrations         /app/integrations
 
 # services.substrate (S3ObjectStore/SQSQueue), services.scan (worker.py imports
 # services.scan.provenance.InvariantViolation), and tools.observability
