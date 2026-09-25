@@ -60,6 +60,43 @@ def test_slow_clock_never_returns_different_successful_output(label: str) -> Non
         canonical_order(graph)
 
 
+def test_elapsed_telemetry_is_nonraising_and_deadline_check_is_explicit() -> None:
+    clock = Clock(0)
+    with patch.object(ordering, "time", clock):
+        budget = ordering.CanonicalizationBudget.start()
+        clock.value = 0.250
+        assert budget.elapsed_ms() == 250.0
+        with pytest.raises(CanonicalizationDeadlineExceeded):
+            budget.check()
+
+
+@pytest.mark.parametrize("artifact", ["graph", "slice"])
+def test_final_explicit_check_rejects_expiry_during_telemetry(artifact: str) -> None:
+    graph, request = _graph()
+    clock = Clock(0)
+    original = ordering.CanonicalizationBudget.elapsed_ms
+    calls = 0
+
+    def late_telemetry(budget: ordering.CanonicalizationBudget) -> float:
+        nonlocal calls
+        elapsed = original(budget)
+        calls += 1
+        # A slice has one internal graph result before its own final telemetry.
+        if calls == (1 if artifact == "graph" else 2):
+            clock.value = 1.0
+        return elapsed
+
+    with (
+        patch.object(ordering, "time", clock),
+        patch.object(ordering.CanonicalizationBudget, "elapsed_ms", late_telemetry),
+        pytest.raises(CanonicalizationDeadlineExceeded),
+    ):
+        if artifact == "graph":
+            canonical_order(graph)
+        else:
+            compute_slice_fingerprint(request, graph)
+
+
 def test_exact_work_boundary_and_partial_search_never_strong() -> None:
     graph, _ = _graph()
     complete = canonical_order(graph, T=Duration(10))

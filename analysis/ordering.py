@@ -5,6 +5,12 @@ directly certified swap automorphisms prune siblings. A completed search yields
 canonical encoded structure, not a hash of raw IDs. B exhaustion yields a
 deterministic same-source weak result; T exhaustion raises instead of choosing
 another successful identity. Elapsed telemetry is not claimed to be pure.
+
+Active contract: docs/PROPOSAL-BHMEA-CANONICAL-BUDGET-2026-09-25.md and the
+Black Hat remediation R18/R20. Compatibility/history references:
+DOC-CMP-CORE-03, DOC-ALGS section 6, DOC-PROVENANCE section 2.1, and
+.claude/rules/01-invariants.md (INV-5). Obsolete raw-ID/time-fallback semantics
+in those historical contracts are replaced by the versioned active contract.
 """
 
 from __future__ import annotations
@@ -80,10 +86,8 @@ class CanonicalizationBudget:
         self.search_states += 1
 
     def elapsed_ms(self) -> float:
-        elapsed = self.clock() - self.started_at
-        if elapsed >= self.duration:
-            raise CanonicalizationDeadlineExceeded("canonicalization deadline exceeded")
-        return elapsed * 1000.0
+        """Telemetry only; successful result paths explicitly check before return."""
+        return (self.clock() - self.started_at) * 1000.0
 
 
 @dataclass(frozen=True)
@@ -406,13 +410,15 @@ def canonical_order(
         encoded = encode_graph(cpg, order, budget=budget)
     domain = b"SCANIPY-CPG-STRONG/2\n" if klass == "strong" else b"SCANIPY-CPG-WEAK/2\n"
     digest = Sha256(hashlib.sha256(domain + encoded).digest())
+    elapsed_ms = budget.elapsed_ms()
+    budget.check()  # Total invocation deadline, including final encoding/hash/telemetry.
     return CanonicalOrderResult(
         order,
         digest,
         klass,
         CPG_ORDER_HASH_ANNOTATION,
         klass == "weak",
-        budget.elapsed_ms(),
+        elapsed_ms,
         GRAPH_IDENTITY_NAMESPACE,
         BUDGET_POLICY,
         budget.search_states,
