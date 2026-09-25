@@ -45,11 +45,11 @@
     "The DAG expresses milestone acceptance prerequisites; explicitly assigned hermetic build-ahead may proceed with unmet verification dependencies, without claiming them satisfied.",
     "Evidence targets are planned locations; only evidence_paths records retained actual evidence.",
     "No full task, claim or shared gate has passed. Corrective board ownership was reconciled on 2026-09-25 after transient GraphQL failures.",
-    "Reviewed foundations through main 02933f1, including bounded canonical #369, Java safety #390 and opt-in raw Joern #382, are indexed in docs/evidence/2026-09-25-foundation-merges/README.md; narrow issue closure is not full task or submission acceptance.",
+    "Reviewed foundations through main e79dc54, including bounded canonical #369, Java safety #390, opt-in raw Joern #382 and pure continuity #389, are indexed in docs/evidence/2026-09-25-foundation-merges/README.md; narrow issue closure is not full task or submission acceptance.",
     "R07 lifecycle-generation and R16 implicit Java execution/coverage gaps are explicit follow-ups; no production continuity policy or corrected G0 exists.",
-    "The earlier canonical session-limit failures are preserved. Recovery was observed: #390 and #382 subsequently had successful exact-head APPROVE actions and merged. #389 and remaining candidates still require combined-head tests and their own successful canonical review; no failed action is accepted.",
+    "The earlier canonical session-limit failures are preserved. Recovery was observed: #390, #382 and #389 subsequently had successful exact-head APPROVE actions and merged. Remaining candidates still require combined-head tests and their own successful canonical review; no failed action is accepted.",
     "Local-only #378 and #391–#396 checkpoints are not merged acceptance evidence; #395 includes a tested packaging correction but no image build. See the handoff for exact code/test boundaries, not additive test counts.",
-    "Local #397 has reviewed bound-rule/model and source-syntax worker code; #398 has committed reviewed transport and an offline producer undergoing final boundary hardening; #399 has test-key crypto/diagnostic implementation but refuses operational launch. #400 has a reviewed committed runtime-file verifier, not a Docker controller or trusted installation loader. Missing production trust/integration cannot be replaced by assertions, fixture keys or pure tests.",
+    "Local #397 has reviewed rule/model, syntax-worker and pure-codec implementations; #398 has a committed offline producer and a separately reviewed transport path correction under final gates; #399 has a committed test-key crypto/diagnostic verifier and refuses operational launch. #400 has a reviewed committed runtime-file verifier, not a Docker controller or trusted installation loader. Missing production trust/integration cannot be replaced by assertions, fixture keys or pure tests.",
     "The owner confirmed this development machine for the Docker presentation. Selected 13:21 UTC host observations identify capacity and current resource pressure only; no stage budget or G3_STAGE criterion is accepted by that confirmation."
   ],
   "tasks": [
@@ -160,7 +160,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R07",
       "evidence_paths": [],
-      "next_action": "Contract #385 merged; #389 pure matcher awaits successful canonical review. #378 occurrence store has a local checkpoint with 89 passing dedicated PostgreSQL checks but remains unmerged. Complete durable decision history/CAS and API/UI after persistence integration; production policy registry stays empty."
+      "next_action": "Contract #385 and pure matcher #389 are merged. #378 occurrence store has a local checkpoint with 89 passing dedicated PostgreSQL checks but remains unmerged. Complete durable decision history/CAS and API/UI after persistence integration; map pure tests to current acceptance IDs and validate proposals at adapter boundaries. Production policy registry stays empty."
     },
     {
       "id": "R08",

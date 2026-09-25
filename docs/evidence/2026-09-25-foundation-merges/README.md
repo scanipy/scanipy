@@ -1,7 +1,7 @@
 # September 25 — reviewed foundation corrections
 
 Scope: repository correction evidence, not Black Hat feature acceptance.
-Snapshot main: `02933f1a08587a7f9f266d47320f5d614ade57ba` on 2026-09-25 at 14:06 UTC.
+Snapshot main: `e79dc54d56a740ae49015b598e21074cc0beb2ac` on 2026-09-25 at 14:29:55 UTC.
 Owner: root engineering coordinator, umbrella #362.
 
 Every merged row below had the required tests and canonical `claude-review`
@@ -27,6 +27,7 @@ R17 obligations. No full R-task, C01–C18 claim, or shared gate is accepted her
 | [#388](https://github.com/scanipy/scanipy/pull/388), progress documentation/ledger | `7d085043a65275187e2e9b1cf62669245086b355` | `2709177afff1c78f06532e0298dd5ee4d608237f` | [CI](https://github.com/scanipy/scanipy/actions/runs/36124763427), [APPROVE](https://github.com/scanipy/scanipy/actions/runs/36124763511) |
 | [#390](https://github.com/scanipy/scanipy/pull/390), Java static invocation safety | `16252b21db172b967f13a815ca9bd8fe3078dd19` | `8d38c06addc49f382b36d17fee4125fdf4628b3d` | [CI](https://github.com/scanipy/scanipy/actions/runs/36126058316), [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36126058265), [successful APPROVE](https://github.com/scanipy/scanipy/actions/runs/36142432527) |
 | [#382](https://github.com/scanipy/scanipy/pull/382), opt-in raw Joern transport | `2f0ebef5db636c14051efb3aa20980667b982a13` | `02933f1a08587a7f9f266d47320f5d614ade57ba` | [CI](https://github.com/scanipy/scanipy/actions/runs/36144380242), [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36144380239), [successful APPROVE](https://github.com/scanipy/scanipy/actions/runs/36144557544) |
+| [#389](https://github.com/scanipy/scanipy/pull/389), pure continuity/policy module | `4b5b5149f306b81a66b696b792a902fcf8aa6a4e` | `e79dc54d56a740ae49015b598e21074cc0beb2ac` | [CI](https://github.com/scanipy/scanipy/actions/runs/36146742685), [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36146742856), [successful APPROVE](https://github.com/scanipy/scanipy/actions/runs/36147217350) |
 
 ### What this establishes—and does not
 
@@ -54,9 +55,10 @@ R17 obligations. No full R-task, C01–C18 claim, or shared gate is accepted her
   project metadata and status transitions. It is bounded/fail-closed, not an
   atomic ownership lock. The root coordinator still serializes changes.
 - #385 is a design-only contract, not schema/API/worker implementation. The
-  pure matcher candidate #389 at `2fd67cb` has 130 controlled tests and a lifecycle
-  generation repair; it is not merged or production-enabled in this snapshot.
-  Its production policy registry remains empty.
+  pure module #389 is now merged after 130 controlled continuity tests, the
+  combined configured suite (1,559 passed / 51 existing skips), normal hooks,
+  all seven remote test checks and successful canonical APPROVE. Its production
+  policy registry remains empty; no durable store/API workflow is enabled.
 - #387 fixes both masked hook failures and declares yamllint 1.35.1. It has
   33 focused tests and a fresh declared full run of 1,180 passed / 48 skipped.
   The actual changed commit/push hooks passed; runtime image and full release
@@ -97,7 +99,14 @@ Both squash trees were verified identical to their tested PR heads. Root read
 the completed canonical verdicts and verified all seven checks before merging.
 The #382 review's dependency table conflates #368 and #390; they are separate
 merged PRs, both present. This factual note does not rewrite its verdict.
-Continue #389 and remaining candidates serially with their own exact-head gates.
+#389 then merged reviewed main without source conflicts. Its new head `4b5b514`
+passed the configured full suite and all required checks; canonical action
+36147217350 completed successfully at 14:28:11 UTC with final APPROVE, and merge
+followed at 14:29:55 UTC. Root verified the squash tree equals the tested head.
+#378 remains open/In Progress. The review's nonblocking acceptance-ID mapping,
+future output-boundary validation and optional type-only assertion hygiene are
+tracked in the handoff; they are not represented as implemented by this merge.
+Continue remaining candidates serially with their own exact-head gates.
 Local source/core/typed-CPG/Semgrep/store work is indexed in the current handoff,
 not counted as merged evidence. No local test count fills a shared-gate PASS.
 

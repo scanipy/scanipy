@@ -4,9 +4,9 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 8 — 2026-09-25 confirmed stage machine, reviewed Java/raw foundations and explicit remaining runtime/producer work |
+| Revision | 9 — 2026-09-25 confirmed stage machine, merged continuity/Java/raw foundations and explicit remaining runtime/producer work |
 | Status | Execution started; no remediation task or submitted claim is yet accepted as complete |
-| Reviewed code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
+| Initial review code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
 ## 0. Current instructions — read before executing this backlog
 
@@ -46,11 +46,11 @@ All unchecked acceptance items below remain required unless explicitly
 classified optional. An adopted design, recovered historical report, or one
 successful Joern parse does not complete a task or verify a submitted claim.
 
-Reviewed foundations have now landed through main `02933f1`: independent
+Reviewed foundations have now landed through main `e79dc54`: independent
 artifact metadata, typed report checking, corrected corpus and dependency
 locks, board/fail-closed hook tooling, the occurrence/decision contract, and
 the bounded canonical identity/budget foundation, Java static invocation
-safety and opt-in raw Joern transport. Continuity, occurrence storage, source
+safety, opt-in raw Joern transport and the pure continuity module. Occurrence storage, source
 custody and integrated observation producers remain separate pending scopes;
 none is accepted merely because its
 design or local tests pass. See the
@@ -60,7 +60,7 @@ remain historical evidence; do not assume every described defect is still
 present, or mistake a narrow repair for full R-task acceptance.
 
 The handoff preserves the earlier external canonical-review session limit and
-the observed successful recovery: #390 and #382 now have successful exact-head
+the observed successful recovery: #390, #382 and #389 now have successful exact-head
 canonical APPROVE actions and are merged. Remaining candidates still need their
 own successful review.
 Successful unit/CI checks or an APPROVE word inside a failed review action do
@@ -78,8 +78,8 @@ durable authorization and actual native observations before a real core/oracle
 run can support G1. No caller boolean, fixture signature, graph label or local
 test count satisfies those producer obligations. Shared bounded process
 transport and actual runtime-file verification now have reviewed local code;
-source-syntax parsing, offline Git capture and signature verification are in
-implementation/testing. Their missing Docker controller, trusted installation
+source-syntax parsing, offline Git capture and signature verification have
+reviewed local implementations with separately bounded evidence. Their missing Docker controller, trusted installation
 loader, real operator authority and API/UI integration remain mandatory TODOs.
 All unchecked TODOs below
 remain required; the handoff records exact checkpoints and remaining work.
