@@ -448,7 +448,11 @@ string. [Pinned config loader](https://github.com/docker/cli/blob/v29.1.3/cli/co
 
 `host_work_root` and `evidence_root` are never mounted writable into a worker.
 Only the per-attempt control **directory** and the exact domain-profile file
-are mounted readonly, at identity-mapped absolute paths. Runtime roots/files
+are mounted readonly. The domain-profile file remains identity-mapped. The
+control directory is not part of the measured runtime inventory and maps to
+the fixed container destination `/run/scanipy-control`, as explicitly specified
+in the [Docker policy contract](LOCAL-RUNTIME-DOCKER-POLICY.md); launch/release
+paths and their overlap checks use that destination. Runtime roots/files
 are also identity-mapped readonly; derive the minimal exact binding cover from
 the trusted roots/executable/worker, preserving nested-view measurement without
 inventing duplicate writable submounts. Reject overlap with control/metadata,
