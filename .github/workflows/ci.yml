@@ -294,3 +294,75 @@ jobs:
           else
             echo "Scaffold phase — no integration tests in tests/integration/ yet. Job will enforce once tests land."
           fi
+
+  # Reserved execution roles are cluster-global. Never share this service with
+  # legacy integration tests or discover an application database URL.
+  occurrence-store-tests:
+    name: Occurrence store — restricted roles and concurrency
+    runs-on: ubuntu-latest
+    needs: lint
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    services:
+      occurrence-postgres:
+        image: postgres:16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
+        env:
+          POSTGRES_DB: occurrence_bootstrap
+          POSTGRES_USER: occurrence_admin
+          # Public, disposable CI fixture password; never a deployed credential.
+          POSTGRES_PASSWORD: occurrence_test # pragma: allowlist secret
+        ports:
+          - "127.0.0.1:5432:5432"
+        options: >-
+          --health-cmd "pg_isready -U occurrence_admin -d occurrence_bootstrap"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+          --memory 1536m
+          --memory-swap 1536m
+          --cpus 2
+          --pids-limit 256
+          --shm-size 128m
+          --tmpfs /var/lib/postgresql/data:rw,size=1073741824,mode=0700
+    env:
+      # Explicit disposable-test opt-in, not SCANIPY_DATABASE_URL.
+      SCANIPY_OCCURRENCE_TEST_URL: postgresql://occurrence_admin:occurrence_test@localhost:5432/occurrence_bootstrap # pragma: allowlist secret
+      SCANIPY_OCCURRENCE_TEST_REQUIRED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e ".[dev,http]"
+
+      - name: Run real PostgreSQL occurrence-store tests
+        run: >-
+          pytest tests/integration/test_occurrence_store.py -m integration
+          -q --tb=short --junitxml=occurrence-store-junit.xml
+
+      - name: Require actual execution without skips
+        run: |
+          python - <<'PY'
+          from xml.etree import ElementTree
+
+          root = ElementTree.parse("occurrence-store-junit.xml").getroot()
+          cases = root.findall(".//testcase")
+          if not cases or any(case.find(tag) is not None
+                              for case in cases
+                              for tag in ("skipped", "failure", "error")):
+              raise SystemExit("Occurrence-store acceptance requires passing, non-skipped tests")
+          print(f"Verified {len(cases)} executed occurrence-store test cases; no skips")
+          PY
+
+      - name: Retain database-test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: occurrence-store-junit
+          path: occurrence-store-junit.xml
+          if-no-files-found: error
