@@ -1,16 +1,16 @@
 # R16 — Native Git containment and source-capture replacement
 
 Status: root-approved containment and packaging correction implemented and
-independently reviewed locally; local test/hook checks passed at the earlier
-checkpoint. Reviewed main is now incorporated for combined verification;
-publication gates remain open.
+independently reviewed locally. Reviewed main is incorporated; combined local
+tests and pre-push gates passed. Publication gates remain open.
 Issue: [#395](https://github.com/scanipy/scanipy/issues/395).
 Owner: corpus/tooling agent; root owns review, project status and merge.
 Date: 2026-09-25. Initial local dependency base:
 `16252b21db172b967f13a815ca9bd8fe3078dd19` (then-pending PR #390).
 That exact head subsequently passed all required checks and successful canonical
 review, merging at `8d38c06addc49f382b36d17fee4125fdf4628b3d`. This branch now
-incorporates reviewed main `e79dc54d56a740ae49015b598e21074cc0beb2ac`.
+incorporates reviewed main `69f7f480e2bb04febec103b04d2b753924d3090a`, including
+the later reviewed documentation reconciliation #401.
 
 Authority: [DECISION-BHMEA-01](../DECISION-BHMEA-01-current-execution-authority-2026-09-25.md).
 This is an explicitly unavailable acquisition route until its replacement is
@@ -21,10 +21,10 @@ or its still-missing operational acquisition replacement.
 
 ## 1. Observed defects and immediate objective
 
-The shared `secure_run` wrapper currently checks Git flag names but accepts
-arbitrary `-c` values and bare subcommands. Its comment says the execute loop is
-unimplemented, but the legacy snapshot worker actually clones and checks out a
-repository. That worker's job parser checks field presence, not a closed URL,
+At initial inspection, the shared `secure_run` wrapper checked Git flag names
+but accepted arbitrary `-c` values and bare subcommands. Its comment said the
+execute loop was unimplemented, but the legacy snapshot worker actually cloned
+and checked out a repository. That worker's job parser checked field presence, not a closed URL,
 commit or invocation profile; its explicit environment still permits system
 Git configuration. `shell=False` alone does not prevent Git from invoking
 configured aliases, hooks, filters, credential commands or remote helpers.
@@ -214,9 +214,9 @@ hook, alias, helper, smudge filter, repository command or remote clone.
 - [x] Incorporate approved main after #390's reviewed merge, preserving the
   existing containment banner and Git-only exception precedence across the
   two mechanical merge conflicts.
-- [ ] Rerun combined checks and obtain exact-head CI and successful canonical
-  APPROVE before merge. A local dependency merge or review comment alone is
-  not that gate.
+- [x] Rerun combined local checks after both reviewed-main merges.
+- [ ] Obtain exact-head CI and successful canonical APPROVE before merge.
+  A local dependency merge or review comment alone is not that gate.
 
 Root has already verified #395 Project 5 Todo -> check -> In Progress. The
 assigned agent must not duplicate board mutations. No native run, push or PR
@@ -290,8 +290,10 @@ repository options confirmed **1,367 selected / 85 deselected** cases.
 Empty stdin means local verification,
 not a remote push. The broader explicit 94-file mypy invocation above additionally
 covered `tools/`. No native target command was used as a positive control.
-The #390 merged-base rerun, exact-head CI and successful canonical review remain
-separate outstanding requirements before publication/merge.
+At that initial checkpoint, the #390 merged-base rerun, exact-head CI and
+successful canonical review remained separate outstanding requirements before
+publication/merge. The later combined-main record below supersedes only the
+local merged-base verification status.
 
 ### Packaging correction after the initial local checkpoint
 
@@ -326,10 +328,35 @@ The normal local pre-push hook passed repository Ruff, format checking (203
 files), its full 84-source-file mypy selection and configured unit/invariant
 tests. Root independently reviewed the complete three-file packaging delta
 and approved its limited implementation; no canonical merge verdict is implied.
-The new local commit must pass the unchanged pre-commit/commit-msg hooks.
+Packaging checkpoint `9b9091faf1f22b216aca74c87e7711da33d40390` subsequently
+passed the unchanged pre-commit/commit-msg hooks.
 Any future recipe build has a new measured image
 identity; this source edit does not establish that identity or authorize a build,
 native probe, image publication or production acquisition.
+
+### Reviewed-main integration record
+
+The branch incorporated reviewed main `e79dc54` through normal local merge
+checkpoint `8b193f3`, preserving the existing containment banner and Git-only
+test exception in the two mechanical conflicts. The subsequent documentation
+merge incorporates reviewed main `69f7f480e2bb04febec103b04d2b753924d3090a`.
+All incoming raw-v2 evidence, baseline and continuity/stage documentation are
+preserved. Against packaging checkpoint `9b9091f`, the 15 authored production,
+test, component-document and Dockerfile bytes are unchanged; only this authored
+contract's current dependency/status/evidence prose changes.
+
+The seven-file focused suite passed **278 tests with four existing skips** in
+9.90 seconds (`/tmp/scanipy-395-main-refresh-focused.xml`). The final configured
+`pytest tests/` run on the combined main69f7 tree passed **1,619 tests with
+51 existing skips, zero failures/errors**, 1,670 total, in 146.86 seconds
+(`/tmp/scanipy-395-reviewed-main-full.xml`). Repository Ruff/format checks
+passed (212 files), and broader strict mypy passed all 97 source files.
+Normal local pre-push passed repository Ruff/format, the complete configured
+87-source-file mypy selection and unit/invariant tests. An independent read-only
+delta review found no new blocker and confirmed unchanged containment/Java
+behavior; it ran no tests. These results remain local scoped validation;
+remote exact-head gates are not claimed. No native command, rebuilt image or
+full submitted functionality is implied by this integration.
 
 ## 7. Separate mandatory replacement scope (not implemented here)
 

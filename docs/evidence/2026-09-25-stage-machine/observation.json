@@ -1,0 +1,111 @@
+{
+  "schema": "scanipy-stage-machine-observation/1",
+  "kind": "authored_selected_read_only_host_observation",
+  "owner_confirmation": {
+    "answer": "This machine",
+    "question": "Will you present on this development machine or a different machine? If different, please share its OS, CPU, RAM, and free disk space so I can verify the local Docker demo limits.",
+    "date": "2026-09-25",
+    "exact_reply_time_utc": null
+  },
+  "observation_window": {
+    "start_utc": "2026-09-25 13:21:07 UTC",
+    "finish_utc": "2026-09-25 13:21:09 UTC",
+    "per_command_utc_times_retained": false
+  },
+  "workspace": "/home/test/scanipy-v3.2",
+  "measurements": [
+    {
+      "name": "os.txt",
+      "cmd": "rg '^(NAME|VERSION|ID|VERSION_ID|PRETTY_NAME)=' /etc/os-release",
+      "output": "PRETTY_NAME=\"Ubuntu 22.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"22.04\"\nVERSION=\"22.04.5 LTS (Jammy Jellyfish)\"\nID=ubuntu\n"
+    },
+    {
+      "name": "cpu.json",
+      "cmd": "lscpu --json",
+      "selection": "Selected CPU identity and hypervisor fields; not a statement of physical host topology.",
+      "data": [
+        {
+          "field": "Architecture:",
+          "data": "x86_64"
+        },
+        {
+          "field": "CPU(s):",
+          "data": "32"
+        },
+        {
+          "field": "Model name:",
+          "data": "Intel(R) Xeon(R) CPU E5-2660 v4 @ 2.00GHz"
+        },
+        {
+          "field": "Thread(s) per core:",
+          "data": "1"
+        },
+        {
+          "field": "Core(s) per socket:",
+          "data": "4"
+        },
+        {
+          "field": "Socket(s):",
+          "data": "8"
+        },
+        {
+          "field": "Hypervisor vendor:",
+          "data": "VMware"
+        },
+        {
+          "field": "Virtualization type:",
+          "data": "full"
+        }
+      ]
+    },
+    {
+      "name": "docker.json",
+      "cmd": "docker info --format '{{json .}}'",
+      "selection": "Selected non-sensitive fields from docker info JSON; full daemon output is not retained.",
+      "data": {
+        "OperatingSystem": "Ubuntu 22.04.5 LTS",
+        "OSType": "linux",
+        "Architecture": "x86_64",
+        "NCPU": 32,
+        "MemTotal": 67379802112,
+        "ServerVersion": "29.1.3",
+        "DockerRootDir": "/var/lib/docker"
+      }
+    },
+    {
+      "name": "memory.txt",
+      "cmd": "free -b",
+      "output": "               total        used        free      shared  buff/cache   available\nMem:     67379802112 58637119488  2054586368   145768448  6688096256  7913250816\nSwap:     2147479552  2146119680     1359872\n"
+    },
+    {
+      "name": "disk.txt",
+      "cmd": "df -B1 /tmp /home/test/scanipy-v3.2 /var/lib/docker",
+      "output": "Filesystem        1B-blocks        Used    Available Use% Mounted on\n/dev/sda3      209708916736 89558224896 109423550464  46% /\n/dev/sda3      209708916736 89558224896 109423550464  46% /\n/dev/sda3      209708916736 89558224896 109423550464  46% /\n"
+    }
+  ],
+  "interpretation": {
+    "stage_machine_identity_confirmed": true,
+    "physical_cpu_topology_verified": false,
+    "shared_filesystem_paths": [
+      "/tmp",
+      "/home/test/scanipy-v3.2",
+      "/var/lib/docker"
+    ],
+    "free_space_is_not_additive": true,
+    "available_memory_bytes": 7913250816,
+    "swap_used_bytes": 2146119680,
+    "stage_readiness": "NOT_VERIFIED",
+    "acceptance_budgets_measured": false,
+    "native_analysis_executed": false,
+    "image_build_executed": false,
+    "containers_changed": false
+  },
+  "limitations": [
+    "This is an authored record of selected tool observations, not a full raw host or daemon dump, hardware attestation, benchmark or acceptance run.",
+    "UTC times bracket the whole observation batch; exact per-command timestamps and exact owner-reply timestamp are unknown.",
+    "CPU topology and model are exposed by a VMware guest; no physical CPU count or sustained CPU allocation is established.",
+    "Available RAM, swap and filesystem space are transient, shared with existing workloads, and must be measured again before each resource-intensive run.",
+    "The Docker daemon reports capacity, not an approved worker allocation or proof of network isolation, memory containment or offline readiness.",
+    "Earlier reference-only diagnostic records retain their original scope; machine confirmation does not promote them to stage acceptance."
+  ]
+}
