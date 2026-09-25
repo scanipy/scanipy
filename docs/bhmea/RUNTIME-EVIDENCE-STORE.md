@@ -2135,3 +2135,876 @@ configured combined full suite and normal hooks, then obtain exact-head remote
 tests and canonical `claude-review` SUCCESS/final APPROVE. All RES implementation
 and operational TODOs not actually implemented by this pure slice remain open;
 none of full R16, issue #400, C01–C18 or G0–G3 is accepted here.
+
+## 18. Current non-event byte-custody core contract — September 26
+
+Status: **root-approved implementation contract; source allocation recorded in 18.11.**
+Root approved the engineering design in the final 220-line non-event allocation
+at SHA256 `e06359aa738037ffd3e56cf0903314be6c9586bfc06567ce406753d0b5f0c107`;
+independent review confirmed its five corrections. This section consolidates
+that design and the compatible API01 wrapper/lifetime rules into the repository.
+It is the current contract for this narrow next slice, not evidence that it is
+implemented. Sections 1–17 remain preserved historical design/checkpoint text.
+
+The only intended source allocation is new `tools/worker/runtime_evidence.py`,
+new `tests/unit/test_runtime_evidence.py`, and this document, under root-owned
+#400/#362. Root approved this contract before allocating either source file.
+Do not change the actual journal, PE, transport, inventory or owner schemas to
+make the new core pass. Only trusted hermetic tests in fresh task-owned temporary
+directories are allowed; no real installation, native launch, database change,
+image operation or operational constructor is authorized here.
+
+### 18.1 Scope, owner types and explicit supersessions
+
+The useful initial slice publishes complete initial manifests/refusals and
+their required immutable members, with all four existing modes and existing
+byte ceilings. It is not a metadata-only or reduced-intent substitute. It uses
+the actual journal `ParsedJournalRecord`, `decode_journal_record` and
+`encode_journal_record`, and PE `EvidenceBlob`, `StoredObject` and public
+`decode_error_graph`. No private owner helper, copied wire validator, invented
+owner record or caller-selected validator is permitted.
+
+This section supersedes these earlier proposals for this slice only:
+
+- Generic `new_scope`, `publish_blob` and scope-only spool-registration
+  publication are replaced by immutable parent plans and closed selectors.
+- Completed publication intents are permanently retained, replacing section 6's
+  intent-retirement rule. Final bytes alone cannot identify an old publication
+  ID; deleting its only mapping contradicted exact-ID replay. No hidden index
+  or uncharged extra intent is introduced.
+- Initial plan counts are 12/13/16/17 below, not the obsolete generic
+  273-intent calculation. The 129-credit example is future-state accounting,
+  not a reachable initial same-scope acceptance case.
+- A single nonblocking writer-lock attempt replaces a lock retry loop.
+- Refusal finalization permits 24 bounded owner calls, not the proposed 16;
+  sixteen legitimate graph candidates plus journal checks require that change.
+
+Event/phase/history publication, full-history reading/replay, spool collection
+and registration publication remain unallocated. Registration needs its actual
+call/event owner and `intent_event_digest`; scope identity cannot replace them.
+No `RuntimeEvidenceRoot`, `AttemptReadback`, `JournalReceipt`, `Durable*`,
+capacity qualification or actual attempt-recovery authority is implemented by
+this slice. No HTTP/queue/CLI/environment/test switch enables its private
+diagnostic publisher as an operational fallback.
+
+### 18.2 New immutable wrappers and callable surface
+
+The new module, not an existing owner, owns these exact frozen/slotted,
+non-content-repr wrappers. They introduce no new wire format:
+
+```text
+RuntimeEvidenceInstallation(
+ deployment_id:UUID, store_id:UUID,
+ artifact_domain:Literal['operational','diagnostic'],
+ evidence_root:PosixPath, host_work_root:PosixPath,
+ owner_uid:int, owner_gid:int, root_record_sha256:bytes32)
+_ScopeKey(kind:Literal['attempt','refusal'], id:UUID)
+_PublicationKey(scope:_ScopeKey, publication_id:UUID)
+_FileStamp(device:int,inode:int,full_mode:int,uid:int,gid:int,nlink:int,
+ size:int,mtime_ns:int,ctime_ns:int)
+MemberSelector(kind:Literal['metadata','request','input','launch',
+ 'prerequisite','authority-inventory','parent-barrier','authority',
+ 'refusal-evidence'], ordinal:int)
+VisiblePublication(
+ visibility:Literal['verified-visible-file'], key:_PublicationKey,
+ intent:ParsedJournalRecord, file:EvidenceBlob,
+ record:ParsedJournalRecord|None, observation:_FileStamp)
+_PublicationAck(
+ completion:Literal['local-fsync-readback'], publication:VisiblePublication,
+ disposition:Literal['new','exact-recovery'])
+```
+
+`EvidenceBlob` remains the actual two-field `data:bytes, sha256:bytes` owner
+type. `record=None` denotes a raw blob; manifest/refusal/intent data uses the
+actual journal decoder result. `_FileStamp` contains actual `fstat` facts, not
+a second serialized FileObservation. A returned ack describes this completed
+local protocol only; it is not a cross-restart token, current permission or
+proof that the same operation was acknowledged before a crash. A reader never
+constructs an ack. Later consumption independently checks actual bytes again.
+
+Every entrypoint snapshots all consumed fields once through class-owned access
+before I/O, then uses only detached validated primitives. Exact types exclude
+subclasses, bool-as-int, custom Mapping/iterable and instance methods. UUIDs
+require their exact integer slot in `[0,2**128)`, then a fresh UUID. Paths use
+bounded exact primitive storage snapshots for the supported CPython 3.11/3.12
+layouts before formatting or cached strings, then a fresh normalized PosixPath
+within 4096 UTF-8 bytes. All integers use signed64 bounds and tighter listed
+caps; identities/sizes are nonnegative, inode/nlink positive, installation
+UID/GID are 1..2147483647, and bytes32 is exact bytes of length 32. No caller FD,
+opener, executor, clock, authority callback or forged receipt selects a name or
+substitutes for raw-byte validation.
+
+```text
+_open_diagnostic_publisher(installation:RuntimeEvidenceInstallation)
+ -> _DiagnosticPublisher
+_DiagnosticPublisher.begin_manifest(
+ key:_ScopeKey, publication_id:UUID, data:bytes) -> _PlannedScope
+_DiagnosticPublisher.begin_refusal(
+ key:_ScopeKey, publication_id:UUID, data:bytes) -> _PlannedScope
+_PlannedScope.publish_member(
+ publication_id:UUID, selector:MemberSelector, blob:EvidenceBlob)
+ -> _PublicationAck
+_PlannedScope.finalize() -> _PublicationAck
+_DiagnosticPublisher.recover_publication(key:_PublicationKey) -> _PublicationAck
+_DiagnosticPublisher.close() -> None
+_PlannedScope.close() -> None
+open_runtime_publication_reader(installation:RuntimeEvidenceInstallation)
+ -> RuntimePublicationReader
+RuntimePublicationReader.read_publication(key:_PublicationKey)
+ -> VisiblePublication
+RuntimePublicationReader.close() -> None
+```
+
+Both opening entrypoints require the diagnostic domain; an operational
+installation is rejected, not redirected. `begin_*` returns only a private
+same-root handle, never an ack. It creates a fresh fixed scope/parent plan
+exclusively or performs the exact complete-parent rebind in 18.5. No method
+accepts a role, destination, arbitrary relative path or arbitrary event.
+
+`RuntimePublicationError.reason` is exactly one of `invalid-input`,
+`unsafe-path`, `conflict`, `limit`, `deadline`, `storage`, `cleanup-incomplete`,
+`unsupported`. Messages/reprs are fixed and never format paths, bytes or an
+arbitrary exception. Preserve private original causes/contexts and cleanup
+failures. Original `KeyboardInterrupt`/`SystemExit` objects remain primary,
+including during cleanup; do not invoke exception truth/formatting callbacks.
+Never retry a close-failed numeric FD: it may already be closed and reused.
+An uncertain write/close/sync returns no ack and never claims rollback or
+failed-empty effects. Retention failure must not erase the earlier failure.
+
+If an operation fails after mutation or sync effects may have begun, invalidate
+that held writer for further operations except once-only owned close. A fresh
+diagnostic open must perform bounded read/sync-only reconciliation; it grants
+no repair/adoption or earlier acknowledgment. A pre-I/O argument rejection may
+leave the handle usable, but never refunds work, deadlines or retained credit.
+
+### 18.3 Installed root, fixed names and held-descriptor lifetime
+
+Open existing `root.json` through held nofollow/nonblocking descriptors and the
+actual journal `root` codec (4096 bytes). Its exact fields remain `schema`,
+`deployment_id`, `store_id`, `artifact_domain`, `owner_uid`, `owner_gid`,
+`evidence_root`, `host_work_root`, `format`; the literals are
+`scanipy-runtime-evidence-root/1` and `scanipy-runtime-journal/1`. Independently
+verify raw SHA256 and every installation field. Supplied pins establish equality
+only, not their provenance/currentness. No bootstrap, highest-record search,
+environment/home discovery, `resolve`, glob or adoption of an unknown store.
+
+Actual nonroot effective UID/GID must match installation. Evidence/work roots
+are disjoint owner UID/GID 0700. Walk nofollow directories with owned descriptors;
+allow root/owner ancestors without group/other write except literal root-owned
+sticky `/tmp`. Ancestors retain device/inode/full-mode/UID/GID security identity,
+not unrelated sibling timestamps; measured roots/descendants/leaves retain full
+stamps. Never chmod/chown an inherited object to make it pass.
+
+Hold evidence/work roots, fixed direct-parent directories and regular one-link
+owner 0600 `writer.lock` for publisher lifetime. Attempt exactly one exclusive
+nonblocking `flock`; a second writer fails without effects. A bounded internal
+thread lock serializes methods. At most one bound planned scope exists per
+publisher. Child descriptors are tracked before any fallible parent close,
+closed once, and invalidated on root close. Scope close/rebind does not reset
+root-owned cumulative scope counters, refund residues or release a DB hold.
+Work root is verified/held but no CLI/work/spool files are allocated here.
+
+The reader owns its own verified descriptors, takes no writer lock and writes
+nothing. It reads one exact final publication, its retained intent and fixed
+parent membership, with pre/post identity and full EOF/hash checks. A changing
+or ambiguous name yields no result. This is not full member/history closure or
+proof of the writer's earlier directory fsync; no verified-visible history
+report or `Durable*` acknowledgment is returned.
+
+The existing publication-intent codec owns exactly `schema`, `publication_id`,
+`store_id`, `scope_kind`, `scope_id`, `role`, `destination`, `size`, `sha256`,
+`expected_previous_event_digest`. Build its actual PE `StoredObject`, encode
+through the public owner, then independently decode retained raw bytes. Schema
+is `scanipy-runtime-publication-intent/1`; store/scope come from held bindings,
+size/hash from actual bytes, and predecessor is null in this non-event subset.
+Only these method-derived roles/destinations are enabled:
+
+| Role | Fixed destination | Actual record or member limit |
+|---|---|---|
+| manifest | `manifest.json` | journal manifest, 16384 bytes |
+| refusal | `refusal.json` | journal refusal, 16384 bytes |
+| blob | `blobs/<64-lowercase-hex raw hash>` | resolved selector limit below |
+
+Staging is exactly `staging/<publication UUID>.json` plus `.data`; no caller
+filename. Relative names are at most 128 ASCII bytes. Manifest deployment ID,
+store ID and artifact domain must equal held root, and attempt ID equals its
+attempt scope. Refusal ID equals its refusal scope; refusal has no domain field
+to invent. Initial scopes contain no event/registration/work payload. Reject
+such future or unexplained histories rather than ignoring them as safe input.
+
+### 18.4 Parent-owned selectors, linkage and logical role accounting
+
+The parent is retained immutable prospective manifest/refusal bytes, not an
+independently supplied ParsedJournalRecord, JSON pointer or content type.
+Snapshot `MemberSelector` before effects; its exact string/int pair is closed:
+
+| Kind / ordinal | Actual parent location | Logical class / maximum bytes |
+|---|---|---|
+| metadata / 0..3 | `manifest.metadata[i].blob`, exact named-role order | raw / 65536, 131072, 65536, 8388608 respectively |
+| request / 0 | `manifest.request` | metadata / 65536 |
+| input / 0 | `manifest.input` | raw / verifier 2621440, syntax 263244 |
+| launch / 0 | `manifest.launch` | metadata / 65536 |
+| prerequisite / 0 | `manifest.initial_prerequisite` | metadata / 16384 |
+| authority-inventory / 0 | `manifest.authority_inventory` | metadata / 16384 |
+| parent-barrier / 0 | `manifest.parent_barrier` | metadata / 16384; execution/syntax only |
+| authority / 0..5 | retained inventory's role-selected `objects` row | raw / combined 1048576 |
+| refusal-evidence / 0..15 | `refusal.available_evidence[i]` | actual owner classification below / each 8388608 |
+
+Metadata role order is exactly `installation`, `controller-profile`,
+`domain-profile`, `inventory`; the last one's opaque owner is runtime-inventory.
+Mode/action mappings are `verifier-historical`/`audit-historical`,
+`verifier-publication`/`publish-builtin-preflight`,
+`verifier-execution`/`verify-execution`, `python-syntax`/`parse-python`.
+The shorter mode names in the arithmetic table below denote these same modes.
+
+Authority ordinals mean authentication, scope, admission, execution-authorization,
+capture-lease, content-verification, not filtered-array positions. An absent
+role rejects. Decode retained prerequisite/inventory before authority members;
+require actual mode/action, required roles/order, and inventory's prerequisite
+reference equal to the manifest reference. After both exist, verify all actual
+raw-reference links and the supplied-data relation
+`prerequisite.observed_at <= manifest.created_at < prerequisite.valid_until`.
+This is not an actual-clock or current-authority check. Never equate a domain
+digest with a raw hash or invent an admission raw-digest field.
+
+Required inventory roles begin with authentication/scope, then admission only
+when the prerequisite's admission is nonnull, execution-authorization plus
+capture-lease only when its execution-authorization digest is nonnull, and
+content-verification only when its evidence raw hash is nonnull. Preserve that
+fixed order. Match authentication, scope, capture-lease and content-verification
+BlobRef hashes to their actual prerequisite `*_evidence_sha256` fields.
+Admission and execution-authorization semantic/domain linkage remains an
+explicit current-owner obligation, not a raw-hash equality invented here.
+
+Each selector resolves to an actual parent-owned BlobRef, with exact
+size/hash/role cap agreement. Logical `(scope,kind,ordinal)` differs from physical
+raw-hash destination. Exact selector replay adds no logical occurrence, but
+all reread/hash work is charged. Distinct actual roles sharing bytes incur both
+role charges while retaining one explained inode. No unreferenced raw member.
+Request/launch/barrier are conservatively metadata, not raw exemptions; installed
+inventory/input/authority packets remain raw even if their encoding is JSON.
+At begin reserve all direct planned lengths plus the 1MiB authority allowance;
+replace that allowance with the exact closed inventory total only after its
+durable readback. Dedup never erases logical role work.
+
+Before `begin_refusal` has effects, require unique `available_evidence` raw
+hashes, even with null primary error. Manifest cross-role dedup is unchanged.
+Finalization reads every member. With nonnull primary, feed every candidate
+of at most 8192 bytes to actual public `decode_error_graph`; require exactly
+one successfully decoded matching `error_id`, without stopping at the first
+match. That matching graph is metadata. Malformed/nonmatching/large members
+are opaque refusal-raw, following the actual owner. Null primary needs no graph
+match or graph decoder call. Reserve 8192 metadata until association is known.
+This validates bytes/association, never that an exception actually occurred.
+
+### 18.5 Durable staged parent, rebind and final publication
+
+Exactly one parent publication intent per scope is the plan; no new plan wire.
+Exclusively write its existing intent and paired parent data. For EACH inode:
+fsync, fchmod 0400, fsync again; fsync staging; independently read complete EOF
+and verify expected bytes/hash/identity before any child publication. No final
+parent name exists yet. The same parent data inode becomes final; no second copy.
+
+After bounded root reconciliation, `begin_*` may rebind ONLY a complete sealed
+parent+intent pair with the same scope, publication ID, raw bytes/hash, owned
+identities and fixed membership. Staged or already-final parent is allowed;
+independently verify both intent and parent. Return a private handle, no ack;
+it may complete remaining planned members. Missing/partial/unknown parent is
+unavailable to begin, member publication and recovery: no adoption or repair.
+Complete-parent recovery cannot bypass required child closure.
+
+Dependencies are manifest to prerequisite/inventory to authority members,
+manifest to its other direct members, and refusal to its evidence. Crosslink
+prerequisite/inventory after both are retained. Reject cycles among these
+documented references; BlobRef-looking opaque content does not create an edge.
+Installed inventory metadata remains opaque raw bytes, not another authority
+inventory. Private derived states are `PLAN_STAGED -> PARTIAL -> READY ->
+PARENT_PUBLISHED`; they are not a new persisted enum or phase event.
+
+`finalize` requires all referenced members, exact parent readback, all local
+links, unique refusal association and quotas before linking the parent. There
+is no reserved/runtime phase, domain acceptance or DB receipt. Recovery derives
+blob membership from retained parent references, never the generic intent role.
+Parent recovery has the same entire closure requirement as finalization.
+
+For every member/final parent use section 6's exclusive no-overwrite link
+protocol. Verify the two known staging/final names refer to the held inode;
+unlink only its validated owned staging-data name; fsync the still-held inode
+after link-count change and both containing directories. Require final 0400,
+regular one-link file, independently reopened full EOF/raw hash and stable
+pre/post stamps/membership. Preserve uncertain effects and original failures;
+never delete accepted bytes, repair foreign objects or infer rollback.
+
+Retain completed intent 0400 at its existing staging UUID.json name and fsync
+it/directory. One ID owns one destination; a new ID targeting an existing
+destination rejects even for equal bytes. Known hash reuse names the original
+mapping, not another dedup intent. Only after the entire owned sync/readback
+protocol return `_PublicationAck`; exact recovery repeats required checks/syncs
+and does not infer an earlier acknowledgment. Visible readers never ack.
+
+### 18.6 Permanent intent credit, cold reconciliation and mode feasibility
+
+Recomputable metadata accounting is:
+
+```text
+M = other logical metadata + actual completed-intent lengths
+    + 4096 * unresolved publications + planned unspent credits
+```
+
+Reserve 4096 before effects. Replace that credit with actual intent length only
+after the whole owned sync/readback protocol. Retained intent bytes, inodes and
+names remain charged permanently. Close/rebind gives no refund. At most 16
+pending residues; active/completed IDs share the plan's actual publication count,
+not that count plus 16 completed IDs. Keep 512KiB metadata, 32MiB retained and
+64MiB proposed transient ceilings, with 131072 cleanup-metadata and 65536
+terminal-metadata reserves partitioned inside them, not added capacity.
+The existing `cleanup_retained_bytes=2097152` partition also remains inside the
+32MiB retained ceiling; it is not extra storage or reclaimable ordinary payload.
+
+The `129 * 4096 = 528384` example remains a future/full-state accounting
+falsifier, NOT a reachable initial same-scope 17-intent positive. Cold
+reconciliation is READ/SYNC-ONLY before new-write admission: no create, link,
+unlink, chmod or ack. Fsync and independently verify exact final 0400/nlink1
+intent/final pairs before using completed-actual credit. Anything requiring
+repair retains 4096; quotas still gate later writes/repairs. Stable visible
+bytes never prove an earlier durable acknowledgment.
+
+All four required initial modes fit the following conservative upper bounds:
+all four metadata blobs, full 1MiB authority, maximum input, no dedup and
+522 actual bytes per completed intent. These are arithmetic plan positives,
+not an implemented filesystem test or future native-call planner proof.
+
+| Mode | Publications | Initial retained bytes | Metadata bytes |
+|---|---:|---:|---:|
+| historical | 12 | 12507256 | 186488 |
+| publication | 13 | 12507778 | 187010 |
+| execution | 16 | 12525728 | 204960 |
+| syntax | 17 | 10168054 | 205482 |
+
+Even `205482 + 196608 + 16*4096 = 467626 < 524288`. Refusal jointly limits all
+evidence, parent and permanent controls to 32MiB; sixteen times 8MiB is not
+admissible. Stage/final hardlinks share one inode but retain both name costs;
+separate or partial copies remain charged. These calculations do not prove the
+later 16-call/event/output planner, block/inode headroom or backing capacity.
+
+### 18.7 Work, delegated codecs and allocation budgets
+
+Preserve section 5's independent Read/Write/Hash ceilings exactly:
+
+| Scope | Read bytes | Write bytes | Hash bytes |
+|---|---:|---:|---:|
+| Steady publication/read/recovery | 134217728 | 67108864 | 268435456 |
+| Live scope cumulative normal/retry | 8589934592 | 268435456 | 17179869184 |
+| Root open/reconciliation | 17179869184 | 67108864 | 34359738368 |
+
+Use at most 64KiB chunks, 128 held FDs, 128-byte relative names and 4096-byte
+absolute paths; at most 256 scopes/16384 entries. Observation ceilings remain
+512 steady, 131072 root; 4096 whole-attempt reading remains deferred. Pure
+bounded argument checks precede internal monotonic start, which precedes all
+filesystem work. Steady deadline is 2s, root 35s, including cleanup/finalization;
+no retry/rebind/per-file reset or caller clock. The future controller must also
+enforce its remaining outer 30s allowance. Blocking kernel work still requires
+the separate outer supervisor; a large root may fail 35s and return no handle.
+
+Reserve the next work before its syscall/hash; charge actual transferred bytes,
+failed/retried work and EOF attempts. Fail on zero progress instead of spinning.
+Direct hashes count actual update bytes. Each actual non-event journal decode
+hashes `2*B + len(schema) + 1`; reserve `2*B + 128` before calling. Encode's
+internal decode counts too. No `replay_journal`, `validate_refusal`, full-history
+helper or arbitrary metering callback is hidden in this allowance.
+
+- Ordinary operations: at most 16 journal-owner calls: plan/inventory/prerequisite
+  at most 3, intent encode/readback/recovery at most 6, final rechecks at most 3,
+  spare at most 4. Spare is finite, not a retry loop.
+- Refusal finalization: at most 24 calls, every 16 possible PE candidates plus
+  at most 8 journal calls: parent before/after 2, intent before/after 2, recovery/
+  control encode/readback at most 4. This changes a proposed implementation
+  call bound only, not any existing RES byte/FD/observation/deadline cap.
+- Actual `decode_error_graph` hashes zero bytes. It admits at most 8192 bytes,
+  depth 8, 1024 values, 32 nodes, 96 edges, 32 arguments and cumulative encoded
+  arguments 2048 bytes. Its at most 32 mini-canonicalizations/base64 operations
+  remain real work, not additional public-owner calls or free copies.
+
+Process one decoder/candidate at a time and release intermediate trees before
+the next. Proposed conservative allocation reservations: 32768 delegate slots
+(`16*V+4096`, V at most 1024), 8192 active-plan slots and 16384 accounting
+slots; census is compact bytes. Sequential release stays below 262144 owned
+slots. Instrument source-derived temporary slots/copies before implementation
+acceptance; this is not total CPython heap/RSS or a caller memory callback.
+
+Read one raw file at a time into one exact-size assembly plus final immutable
+bytes, at most `2*N`, never repeated concatenation. Proposed 4MiB census,
+8MiB encoded-only cache and two chunks give 76.125MiB at N=32MiB, below a
+proposed 96MiB raw-buffer ceiling; initial members are at most 8MiB. Never
+cache all decoded scopes. Cache eviction retires no accounting or I/O work.
+
+Proposed steady cumulative byte-copy ceiling is 192MiB: conservatively reserve
+2MiB per owner call including UTF-8, canonical JSON, hash-prefix and PE argument/
+base64 copies. At 24 calls that is 48MiB; even `4*N` at N=32MiB plus 12MiB
+census/cache totals 188MiB. This is a conservative implementation reservation,
+not a measured allocator claim. Instrument actual copies and fail rather than
+increase limits. Root cumulative-copy reservation is separately
+`R + 2MiB*C + 16MiB`, R at most `8GiB+4096`, C at most 32768. RES had no root
+copy counter; this new bound does not raise any I/O/hash/peak allowance.
+
+### 18.8 Finite cold census, steady checks and exact-file reading
+
+Retain compact rows of at most 256 bytes/name (at most 4MiB), scope counters
+and bounded sorted indices. Enumerate with admission before each name, not an
+unbounded `list(scandir)`. Hold root/work/lock/direct parents plus ONE scope's
+directories, never every scope's descriptors. Fixed grammar selects expected
+type; nofollow/nonblocking open and fstat verify it, without a redundant
+DirEntry.stat-plus-open/stat census. Unknown names or linkages reject.
+
+Per scope there are at most 17 intents, 17 final names and 16 staged-data
+residues: 50 files. Known stage/final hardlinks share one content read; different
+inodes do not. No new-ID copies means partial planned data plus controls still
+fit reserved 32MiB unique bytes per scope, at most 8GiB across 256 scopes plus
+4096 root bytes. This is the initial non-event namespace, not future copied
+spools or a claim that all 64MiB transient states have that read bound.
+
+Proposed root application-OS-attempt schedule: file names F at most 12802,
+directories D at most 1284; body reads at most `ceil(8GiB/65536)+F`; at most
+7F for open/pre-post-fstat/EOF/fsync/membership/close, 7D for open/pre-post-stat/
+scandir/fsync/membership/close, 12288 ancestor-walk calls and 512 fixed calls.
+Total is at most 255276, below proposed 262144 attempts. Iterator yields count
+as name observations, not separate os.* calls; kernel batching/EINTR is not
+bounded by this application-call metric. Instrument actual API attempts.
+
+Use fixed-name priority: intents, parent, prerequisite/inventory, other members.
+Perform one content pass after required read/sync identity checks, not a second
+8GiB read. Root owner calls are at most 32768; discard each decoded tree/file.
+The cold pass is read/sync-only and grants no operation ack or launch permission.
+
+Steady methods validate affected names/held parent stamps against the held
+census, update only known own namespace effects, and invalidate on unexpected
+drift; do not perform a whole-root rescan under 512 observations. This is not
+global leaf-content proof or hostile same-UID/admin concurrency defense.
+Consumption/recovery independently rereads the actual leaf bytes. Proposed
+8192 steady OS-API attempts include finalization/cleanup, never a reset budget.
+
+Fixed final-file reader uses at most 16 owner calls and the steady budgets;
+it returns only `VisiblePublication`. Full history reading/replay remains
+unallocated: its permitted 512MiB delegated hash work is not automatically
+within RES's 256MiB whole-read allowance. An exact complete helper schedule or
+separately reviewed owner accounting seam must close that mismatch. Do not
+widen caps or infer actual helper work from a structural report.
+
+### 18.9 Required falsifiers and implementation/operational TODOs
+
+Before local implementation acceptance, require hermetic tests and actual
+instrumentation for all of the following; none is claimed passed by this draft:
+
+- Callback-free wrapper/UUID/Path/selector/blob snapshots; wrong exact types,
+  poisoned internals, missing roles, wrong order/size/hash and cross-scope IDs.
+- All four maximum initial modes, full-capacity member retention, distinct
+  roles sharing bytes without logical discounts, cycles and unreferenced bytes.
+- Refusal's 16 candidates, malformed/nonmatching graphs, exactly-one match,
+  duplicate raw hashes with null/non-null primary and no early candidate exit.
+- Exact complete sealed parent rebind after reconciliation; missing, partial,
+  changed, foreign or unknown parent/intent rejection; no parent-recovery
+  missing-child bypass; held-root deployment/store/domain and time mismatches.
+- Permanent-ID replay, new-ID/equal-destination conflict, retained actual
+  intent charges, pessimistic unresolved credits and no close/rebind refund.
+  Test future 129-credit accounting separately from initial-mode acceptance.
+- Every write/link/unlink/chmod/fsync/read/close boundary, original interruption
+  plus cleanup failure, uncertain descriptor reuse and no false acknowledgment.
+  Reader-visible versus writer-acknowledged files must remain distinct.
+- Maximum compact census/name/FD/observation/OS-attempt limits, actual owner
+  call/hash/copy/temporary-slot schedules, deadline/finalization exhaustion,
+  affected-name drift and no unsupported full-history acceptance.
+
+Keep full configured tests, normal hooks, independent review, exact-head remote
+tests and canonical SUCCESS/final APPROVE as later gates. A local arithmetic
+positive or stubbed fault test is not filesystem/power-loss qualification.
+
+Operational prerequisites remain hard, separate TODOs: qualified capacity and
+enforced evidence/work isolation; actual installed root/operator provenance;
+six-role current owner closure and fresh policy/lease decisions; AL/DB owner
+bridges, DB-BAR work exclusion/capture retirement/old-parent exclusion and
+claim-before-filesystem-reservation cleanup; full reader; event/call/registration/
+spool owners; actual controller/supervisor; native static-only/source/coverage
+evidence. AL command parsing or this primitive cannot manufacture any of them.
+The later real factory may reuse private owned-inode mechanisms only after
+those prerequisites. It must never promote a diagnostic handle/ack or install
+a diagnostic fallback. No full R-task, #400, C01–C18 or G0–G3 is accepted here.
+
+### 18.10 Integration checkpoint for this draft
+
+Isolated branch `bhmea/runtime-evidence-core` began at controller
+`0dbee6ef97409b9dda7fcc38545595edefc82348`. Normal conflict-free merges included
+accepted main `95fa5d1991cbb65b89569c399c51186ba44cae9e` as
+`53211d5d2a82b94da68274c81762a13289a4a465`, then reviewed inventory
+`40ba98afa353428e96add873cdecc52b84b6a0e1` as
+`573b0a5ea0551e98f9decac4f275a1071ff5dcf7`. The first merge's 12 incoming paths
+were byte-equal to accepted main; the second changed ancestry only. Both normal
+commit hooks completed, with merge-only file gates reporting no applicable
+changed/conflict files; these are not fresh broad-suite results. No baseline
+union or conflict resolution was necessary.
+
+Before this appendix, tree `9b61238f31d7eb102326ec196cb5f12a0a784c4d` exactly
+matched root's separately integrated tree. Existing first 2137 document lines
+retain SHA256 `284ef321dfda7f3d42cbade462e04fb0c9046917db4dfd63a328580c98f07e38`.
+Actual unchanged source pins are journal
+`51e56785a7ef0d19ad9fc67f677161a69a93729217cd98570cfecd5b152b705e`, PE
+`601fef04b641b28c6f7e3abe948490bd7507287c103194a42b2cc7f943ac0fe8`, inventory
+`8accd2e2e32cd12ef90f0bb29946ad8197cc1a56c895f848525a44f40e87d05a`.
+No source or tests changed. Root's separate equivalent-tree 638
+focused passes (309 journal, 99 inventory, 26 ledger, 204 Git; 31.83s,
+`/tmp/scanipy-runtime-journal-git-main-focused.xml`) are root's prior-tree
+observation, not a new test of this appendix or a complete acceptance suite.
+This is the preimplementation checkpoint; the subsequent scoped approval below
+does not relabel it as a test of implemented filesystem behavior.
+
+### 18.11 Root review and exact source allocation
+
+2026-09-26 PKT / September 25 UTC. Root read all 511 appended contract lines
+and independently verified the original 2137 lines unchanged. An independent
+reviewer read the entire addition against the complete approved 220-line
+allocation, API01 and actual journal/PE owner codecs, approving draft SHA256
+`08a15b0273f29622f15e3833563105f17dabae2cb3e7600d561a378bdcec9051`.
+Its nonblocking suggestion is incorporated above: explicitly repeat the existing
+2MiB cleanup-retention partition. No owner schema or budget is changed.
+
+Root allocates only the two named new source/test files and this append-only
+contract to the corpus implementation agent in this independent worktree.
+Implement the usable complete non-event custody core, not placeholder or
+metadata-only methods. Prove the real call/copy/slot/OS schedules in trusted
+unit tests and report any infeasible bound or unspecified behavior before
+changing scope, counters or owner APIs. Preserve all failure/recovery evidence.
+
+Tests may use isolated temporary roots and inert bytes, never the user's
+application/database/volumes or target program execution. Full suites, normal
+pre-push and remote actions remain root-coordinated; independent implementation
+review and all exact-head repository gates are still required. No diagnostic
+result enables the actual controller or supplies operational authority.
+
+### 18.12 First implementation review checkpoint — not operational acceptance
+
+The isolated implementation adds only `tools/worker/runtime_evidence.py` and
+`tests/unit/test_runtime_evidence.py`, plus this append-only contract. Source
+SHA256 is `2fd1297a3b664689f2219693ac0ee8524cf419119977b83bf42037e0d18340f0`;
+test SHA256 is `3a5093955dc8bab301cc652def4f10ff32f4a44399d810cf40b6a9869dbee16c`.
+Both are frozen for independent review, not committed or published. The first
+2137 document lines remain byte-exact at the hash recorded in 18.10.
+
+Actual configured focused results on that frozen pair:
+
+- CPython 3.11.16: 110 passed, zero failures/errors/skips, 12.934s;
+  `/tmp/scanipy-res-core-frozen-110-311.xml`.
+- CPython 3.12.14: the same 110 passed, zero failures/errors/skips, 12.391s;
+  `/tmp/scanipy-res-core-frozen-110-312.xml`.
+- Ruff check/format, strict source mypy and `git diff --check` pass. Every new
+  test is under the module's actual `pytest.mark.unit`; the configured
+  `-m 'unit or invariant'` collection selects exactly 110. No skip/gate changed.
+
+These are overlapping controls, not 220 different requirements. They exercise
+all four modes through publication/readback/rebind/recovery; maximum opaque
+metadata/input/authority sizes; all sixteen refusal graph candidates; exact
+identity/selector snapshots; logical-versus-physical duplicate accounting;
+permanent-ID and future-only 129-credit negatives; a real 256-scope cold pass;
+257-scope refusal; actual read/write/hash counters; finite owner/FD/name/work
+reservations; nofollow/mode/namespace refusal; deadlines, interruptions and
+selected publication/recovery fault points. They use private temporary roots,
+inert bytes and actual owner codecs, not installed profiles or native tools.
+
+The implementation's private counters distinguish actual transferred/read/hash
+bytes from conservative delegated reservations and source-derived live-slot/
+buffer reservations. Cold census stores fixed 256-byte entries; scope/intent
+plans remain bounded and only one scope's descriptors are opened at a time.
+Ordinary operations reserve at most sixteen owner calls; refusal finalization
+uses the approved twenty-four-call ceiling. Counters are not CPython RSS,
+kernel I/O, power-loss proof, capacity qualification or authority attestations.
+
+Preserved failures and corrections:
+
+- `/tmp/scanipy-res-core-security-first.xml`: 60 passed, three failed before
+  early stop. These were test expectation errors: `BaseExceptionGroup` legally
+  returns an `ExceptionGroup` for all-Exception members. The controls now use
+  `isinstance`, still requiring the exact original interrupt and prior cause.
+- `/tmp/scanipy-res-core-recovery-first.xml`: 77 passed, one genuine failure at
+  source `0c595a370d7953012467f3da751a75f8a8318a318febc9df334e7fd10a791ff4`.
+  A cold-verified stage/final prerequisite pair had two links after interrupted
+  publication, but plan reload required one and blocked its exact recovery.
+  Reload now permits that already-pinned pair for parsing. Actual completed
+  parent closure still requires one-link member files. Both unchanged recovery
+  vectors passed in `/tmp/scanipy-res-core-pair-recovery-green.xml`.
+- `/tmp/scanipy-res-core-path-312-first.xml`: one genuine failure at source
+  `b531111dd061be0de16cf49204d6c6b57784d84309ed994364d816919bc58b86`.
+  Legitimate 3.12 `_raw_paths` constructor fragments were initially rejected.
+  Bounded exact-fragment reconstruction corrected that layout without calling
+  poisoned cached formatting; the unchanged four-mode 3.12 controls then passed
+  in `/tmp/scanipy-res-core-path-312-green.xml`.
+- One targeted retry used a mistyped temporary interpreter path and exited 127
+  before pytest. It is a tooling error, not a product failure or passing test.
+
+Independent complete implementation review and any resulting falsifiers remain
+pending. Selected fault controls do not claim every possible syscall-position
+interleaving or storage power-loss state has been exhaustively exercised.
+Full configured suites, normal hooks, exact-head remote checks and canonical
+approval have not run for this source. All physical-installation, current-owner,
+DB barrier, full-reader/event/spool/controller and native prerequisites in 18.9
+remain unimplemented or separately unaccepted. No full task or gate changes.
+
+### 18.13 Root lifetime correction — independent race retained
+
+Root read the entire initial 1818-line implementation, 1168-line test module
+and section 18 against the actual owner boundaries. Independent accounting and
+recovery review continues separately. The initial source/test hashes and 110-case
+results in 18.12 remain attributed to that frozen checkpoint.
+
+A deterministic real-thread scheduling falsifier demonstrated a genuine race:
+`begin_*` assigned `core.active` after its operation released the internal lock.
+A second caller could finish another begin in that gap. Both callers received a
+private scope handle and two scope directories were created before the first
+call overwrote the second handle's active status. This violated the single-bound-
+scope lifetime contract; it did not grant operational authority.
+
+The unchanged external falsifier is retained at
+`/tmp/scanipy-res-root-review-sB5ezz4S/test_root_concurrency.py`. Its first run
+failed once (with outside-root pytest marker warnings); the explicit configured
+repeat also failed once, zero errors/skips, 0.280s:
+`/tmp/scanipy-res-root-concurrency-configured-before.xml`. Source was the frozen
+`2fd1297a` checkpoint. These are repeated observations of one defect, not two
+independent defects. Original completed filesystem effects were not erased.
+
+The correction keeps the existing single nonblocking lock and all numeric,
+wire, ownership and syscall boundaries. Closed/invalidated state is now checked
+after acquiring that lock; begin rechecks and commits its active handle before
+unlocking. Scope methods recheck their lifetime after acquisition, and scope
+close changes lifetime under the same lock. A failed operation restores only
+its prior private active-handle state before unlocking: no bytes, work credits,
+deadlines or uncertain effects are rolled back or refunded. Once-only descriptor
+cleanup and post-effect writer invalidation remain unchanged.
+
+Five new repository controls cover double begin, publisher close between
+precheck/acquisition, scope close during an owned operation, and both member and
+finalize calls whose scope closes before acquisition. The original independent
+double-begin falsifier remains unchanged and also passes. Corrected source SHA256:
+`2efe26dd6b78fa6eeb0610b3c5f38992ac1031bc8dec5a8c7b48fa44ce1bd4e1`;
+test SHA256:
+`94eb0c478723936a96c8bb2cd43a30cdc4ae589690f84822e3d08d347effb9db`.
+
+Actual configured focused results on these bytes:
+
+- CPython 3.11.16: 116 passed, zero errors/failures/skips, 13.843s;
+  `/tmp/scanipy-res-root-lifetime-combined-311.xml`.
+- CPython 3.12.14: the same 116 passed, zero errors/failures/skips, 11.777s;
+  `/tmp/scanipy-res-root-lifetime-combined-312.xml`.
+- Each selection is 115 repository cases plus the one external race control;
+  the duplicate mechanism is not additional independent coverage. The five
+  lifetime cases alone passed in 0.642s before the final static-only cleanup.
+- Ruff and formatting pass. Initial strict mypy rejected a redundant pre-lock
+  closed-state check as making the later check unreachable; removing that
+  unsynchronized early check, without a suppression, made strict mypy pass.
+
+This is a corrected local checkpoint, not final RES acceptance. Complete the
+independent accounting/recovery review; cover every actual publication/recovery
+write/link/unlink/chmod/fsync/read/close fault position required by 18.9; test the
+combined accepted tree; then run normal hooks, remote checks and canonical review.
+All installation, capacity, authority, full-reader/event/spool/controller, DB-BAR
+and native-static-analysis prerequisites remain separate open action items.
+
+### 18.14 Independent stored-state and cleanup corrections
+
+The subsequent independent review retained five genuine failures against the
+`2efe26dd` source from 18.13, not against the corrected source below:
+
+- `/tmp/scanipy-res-peer-drift-red.xml`: two failed controls, 0.219s. Changed
+  retained leaf bytes and unexpected directory membership were detected during
+  finalization, but the old writer remained usable for a different scope.
+- `/tmp/scanipy-res-peer-close-red.xml`: two failed controls, 0.189s. A read-only
+  owned-file close raised before or after the actual close, but the writer
+  remained usable. These are two descriptor-close timings, not an observed
+  iterator-close failure.
+- `/tmp/scanipy-res-peer-priority-red.xml`: one failed control, 0.595s. Reversed
+  publication UUIDs drove cold member reads before the required prerequisite
+  then authority-inventory priority.
+
+Root corrected only the already-allocated source. A private stored-drift marker
+distinguishes held stamp/name/hash/EOF contradictions from ordinary invalid
+caller conflicts. Detected stored drift, runtime storage/unsafe failures and
+uncertain descriptor or iterator cleanup invalidate the writer, even before a
+new mutation; ordinary pre-I/O invalid input is not silently relabeled as drift.
+No spent accounting is refunded. Cold members follow the fixed prerequisite,
+inventory, then remaining-member order and are decoded/discarded immediately.
+No numeric limits, owner schemas, roles or operational permissions changed.
+
+Corrected source SHA256 is
+`c01df000b92e88b035db5e0184d88a4ff2bfee7af921ca84df32c91cd34247bd`.
+The independent reviewer read the correction and reran the same five outside
+controls unchanged: five passed, zero failures/errors/skips, 0.397s,
+`/tmp/scanipy-res-peer-correction-five.xml`. Their source remains
+`/tmp/scanipy-res-budget-review-4fvK39MD/test_res_drift.py`. Root and peer gave
+scoped source-review approval; this is not an installation or feature gate.
+Equivalent five controls are now in the repository test module. The original
+five lifetime controls and outside real-thread race from 18.13 remain intact.
+
+### 18.15 Systematic observed-position fault campaign
+
+This test-only allocation changed the existing test module and appended this
+evidence; it did not edit root's frozen `c01df000` source. Position-campaign test
+SHA256 (before the separately recorded iterator batch in 18.16):
+`bfc73d8712e536c37720d2aeeb92a2fbc9787134cbeb3c8c9f8379ce34189c84`.
+Removing only the new dataclass import, fault constants and appended tests
+reconstructs the entire previous 115-case file at the exact `94eb0c47` hash in
+18.13. No existing assertion, limit, marker, skip or test body was weakened.
+
+Each vector creates its own private temporary installation with inert bytes
+and actual owner codecs. The manifest path uses the existing controlled history;
+the refusal member is 69,600 bytes, exercising multiple 65,536-byte I/O chunks.
+Pair recovery first performs a real link and deliberately interrupts before
+unlink; fresh reconciliation only observes/syncs that retained state. Baseline
+traces record each actual operation, per-operation ordinal and normalized target
+path, then repeat every observed position with an `OSError` before and after
+the real operation. The table is the observed baseline per phase, not a claimed
+upper bound for every permitted input:
+
+| Phase | Positions | Observed operation counts |
+|---|---:|---|
+| Begin manifest | 48 | close 23; mkdir 5; fsync 12; write 2; fchmod 2; read 4 |
+| Begin refusal | 42 | close 21; mkdir 3; fsync 10; write 2; fchmod 2; read 4 |
+| Publish manifest member | 56 | close 27; read 12; write 2; fsync 11; fchmod 2; link 1; unlink 1 |
+| Publish refusal member | 60 | close 27; read 15; write 3; fsync 11; fchmod 2; link 1; unlink 1 |
+| Finalize manifest | 113 | close 48; read 58; link 1; unlink 1; fsync 5 |
+| Finalize refusal | 48 | close 26; read 15; link 1; unlink 1; fsync 5 |
+| Recover complete parent | 42 | close 25; read 13; fsync 4 |
+| Recover member pair | 42 | close 24; read 12; unlink 1; fsync 5 |
+| Reconcile complete root | 38 | close 20; read 11; fsync 7 |
+| Reconcile root with pair | 38 | close 20; read 11; fsync 7 |
+| Close owned writer | 5 | close 5 |
+
+There are 532 baseline positions and 1,064 before/after `OSError` injections in
+22 parametrized rows. Another 22 rows inject the original `KeyboardInterrupt`
+or `SystemExit` after the last occurrence of each observed operation kind:
+100 interruption vectors, not every position under both interruption classes.
+An additional 44 rows exercise 216 paired failures: the original interruption
+after the last read (first close for writer close), followed by an `OSError`
+before/after every subsequently observed cleanup-close position. They preserve
+the original interruption object, its existing explicit cause, and the cleanup
+failure. Baselines and single-interruption setup repeats are not additional
+independent fault vectors.
+
+Every injected vector requires no returned handle/publication acknowledgment,
+fixed public error text with the original private cause retained, prior bytes
+unchanged or preserved under their valid linked final name, and no further I/O
+through a poisoned writer. Descriptor generations require once-only production
+close attempts and no acknowledged descriptor leak. Only the test harness closes
+its known-still-open descriptor when its stub deliberately failed before close;
+production never retries an uncertain numeric descriptor. Successful cleanup
+is not inferred from an exception. Both before/after effects and cleanup-only
+failures are represented without removing retained publication bytes.
+
+Configured reports on frozen source `c01df000`; preliminary test snapshots are
+identified separately from the final test hash above:
+
+- `/tmp/scanipy-res-systematic-first.xml`: 49 passed, 92.663s JUnit duration;
+  the first 44 fault rows plus five peer regressions, before adding the 44
+  dual-failure rows and the final stronger poison assertion.
+- `/tmp/scanipy-res-dual-fault-first.xml`: 44 passed, 18.547s JUnit duration;
+  the added dual-failure rows only.
+- `/tmp/scanipy-res-systematic-module-311.xml`: CPython 3.11.16, 209 passed,
+  zero failures/errors/skips, 128.457s JUnit duration (pytest summary 128.50s).
+- `/tmp/scanipy-res-systematic-module-312.xml`: CPython 3.12.14, the same 209
+  passed, zero failures/errors/skips, 131.273s JUnit duration (pytest summary
+  134.50s). The runtime repetitions are overlapping evidence, not 418 distinct
+  requirements. Each full selection is 208 repository cases plus the unchanged
+  external real-thread race. The repository addition is 88 fault rows and five
+  equivalent peer controls beyond the preserved 115 cases.
+
+The final XML properties retain `observed_positions`, `injected_positions`,
+`interruption_operation_kinds`, `cleanup_close_positions` and
+`dual_failure_positions`, including exact normalized names/ordinals. Both final
+reports contain the same 1,064 / 100 / 216 vector counts. No genuine source
+failure occurred in this campaign. One mistyped interpreter-path version query
+exited 127 before any pytest collection; the corrected version query confirmed
+the two interpreters above. This was tooling error, not a product red or pass.
+Ruff check and format check pass for the final test file; `git diff --check`
+passes. The configured `-m 'unit or invariant'` collection selects all 208
+repository cases. No full suite, hook, commit or remote action was run here.
+
+Coverage is deliberately finite: these eleven real traces, representative
+manifest/refusal inputs and the stated interruption/cleanup schedule. `open` is
+tracked for descriptor ownership but not position-faulted by this matrix;
+scandir iterator cleanup, all mode/size combinations, all possible multiple
+faults, hostile OS interleavings and real power loss are not exhaustively tested.
+The earlier all-mode, maximum-size, census/accounting and path controls remain
+separate tests, not an implied Cartesian fault campaign. No syscall, heap/RSS,
+filesystem capacity or crash-durability qualification follows from these counts.
+
+Required next actions remain: independent final test/evidence review, combined
+accepted-tree configured full tests, normal hooks, exact-head remote checks and
+canonical SUCCESS/final APPROVE. The operational and full-scope prerequisites
+in 18.9 and 18.13 are unchanged; no task, claim, G0–G3, or installation acceptance
+is promoted by this focused campaign.
+
+### 18.16 Narrow iterator-close owner-boundary supplement
+
+Root requested a separate small iterator-close batch after the 209-case reports,
+not a new exhaustive eleven-trace sweep. The test module now has SHA256
+`691a057e056f2f7dbf11d912dbbd43b1c791116aa58e0c84fa9fe7156beb009c`.
+Removing only this final appended test reconstructs the exact `bfc73d87` file;
+all previous controls and their report attribution remain unchanged. Source is
+still `c01df000`; there was no source correction or new genuine failure.
+
+Twelve cases combine two owner boundaries, before/after the actual iterator
+close, and ordinary cleanup versus original `KeyboardInterrupt`/`SystemExit`:
+
+- Real `scandir` plus the real `_names` helper under the existing
+  `core.operation` context: uncertain iterator cleanup must invalidate the
+  writer, preserve original/prior/cleanup exception objects, and prevent later
+  I/O. Current public steady publication methods do not enumerate names, so
+  these are helper-under-owner-context tests, not an invented public route.
+- Public cold constructor: the same real iterator wrappers must return no
+  handle and release all acknowledged owned file descriptors exactly once.
+  No unavailable writer object is inferred to establish invalidation.
+
+The wrappers retain the actual iterator's bound close method. Production gets
+one close attempt; the harness uses the saved real method only to release its
+known before-close fixture resource, never as a production retry. Both paths
+retain fixed public failure text and private causes; interruption cases retain
+the exact original exception and its preexisting explicit cause. The test tracks
+actual owned descriptor generations and checks no file-descriptor leak. An
+iterator may already close its internal resource at exhaustion; these tests do
+not infer internal kernel lifetime from the wrapper's close exception.
+
+Configured focused results on this new test hash, without rerunning the earlier
+entire module during another owner's broad slot:
+
+- `/tmp/scanipy-res-iterator-owner-311.xml`: CPython 3.11.16, 12 passed,
+  zero failures/errors/skips, 0.617s JUnit duration (pytest summary 9.86s).
+- `/tmp/scanipy-res-iterator-owner-312.xml`: CPython 3.12.14, the same 12
+  passed, zero failures/errors/skips, 0.711s JUnit duration (pytest summary 0.84s).
+
+Ruff check/format pass. The whole final test module now contains 220 repository
+cases; a fresh combined run with the unchanged outside race would contain 221
+and remains root-scheduled, not an already observed 221-pass result. This narrow
+batch supplements but does not remove the finite-coverage and operational limits
+in 18.15. No full suite, hook, commit, remote action or acceptance promotion was
+performed by this test-only assignment.
+
+### 18.17 Root final source/test/evidence checkpoint
+
+Root read the complete original core and test implementation, the lifetime and
+stored-drift/cleanup corrections, all systematic and iterator test additions,
+and sections 18.14–18.16. The source remains the independently approved
+`c01df000` hash; final tests remain `691a057e`. The reviewed document before
+this appended observation was
+`33d5784ad9aa7abbcf794774d733a68294b48c6220ee43549ef8b7ce836ca955`.
+The readback found no further blocker within this diagnostic-only allocation.
+
+The fresh configured combined selection on CPython 3.11.16 passed **221 cases**,
+zero failures/errors/skips, 141.059s JUnit duration:
+`/tmp/scanipy-res-final-221-311.xml`. This is 220 repository cases plus the
+unchanged external real-thread race, not 221 additional requirements. Root
+independently parsed the result and the retained 1,064 single-fault and 216
+paired-cleanup counts. The earlier 209-case and 12-case Python 3.12 reports
+remain separate selections; no combined Python 3.12 result is invented.
+
+This checkpoint is still based on `573b0a5e` plus the three allocated files.
+It is not a fresh full-repository, current-main or production integration
+result. Required next steps are normal commit hooks, minimal accepted-main
+and corrected-ancestor composition with the actual PE/journal prerequisites,
+fresh configured full regression, normal push, exact remote tests and canonical
+SUCCESS/final APPROVE. No event writer, installation, runtime controller,
+database orphan barrier, current authority or native execution is enabled.
