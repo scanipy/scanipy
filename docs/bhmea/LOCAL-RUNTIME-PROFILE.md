@@ -340,11 +340,15 @@ Load protocol:
 1. Validate and privately snapshot the supplied anchor's exact primitive fields;
    start a 35000 ms cooperative deadline before first filesystem access. This
    validates supplied data, not its installed-factory provenance or currentness.
+   Require actual non-root `os.geteuid()`/`os.getegid()` to equal the snapshot's
+   controller UID/GID before metadata/runtime reads; otherwise `unsupported`.
+   This aligns the shared measurement's actual owner checks, not anchor authority.
    No cache reuse solely because path/mtime/hash strings match.
 2. Walk absolute components with held `O_NOFOLLOW|O_DIRECTORY|O_CLOEXEC`
    descriptors. Ancestors are root or controller owned and not group/other
-   writable, except literal root-owned sticky `/tmp`; private metadata parents
-   are mode 0700. Metadata files are regular, one link, mode 0600 or 0400,
+   writable, except literal root-owned sticky `/tmp`; each direct metadata parent
+   is exactly mode 0700 with the pinned metadata-owner UID/GID. Metadata files
+   are regular, one link, mode 0600 or 0400,
    exact pinned owner UID/GID, never symlinks or device/FIFO/socket files.
    Open candidate files with O_NOFOLLOW, O_CLOEXEC and O_NONBLOCK, then inspect
    the held descriptor before reading; an unexpected FIFO must not block open.
@@ -941,7 +945,8 @@ owner decisions; engineering review of this proposal does not supply them.
 - [x] **LRP-02 — allocate loader-only implementation.** Root assigns the schema
   agent these two new files in the controller worktree:
   `tools/worker/runtime_profiles.py`, `tests/unit/test_runtime_profiles.py`.
-  Implementation and its LRP-03/04 acceptance remain outstanding. Import actual shared measurement/types;
+  The local implementation checkpoint is recorded in section 12; canonical
+  LRP-03/04 acceptance remains outstanding. Import actual shared measurement/types;
   no domain callback, Docker call, authority installation or duplicate codec.
 - [ ] **LRP-03 — low-level metadata/anchor-data falsifiers.** Mismatching supplied
   pin/generation/purpose or declared origins; no claim to detect a coherent
@@ -991,7 +996,63 @@ owner decisions; engineering review of this proposal does not supply them.
   solver isolation, asynchronous status, provenance and offline stage rehearsals
   remain distinct mandatory work. No full R-task is completed by this proposal.
 
-No tests, keys, profiles, installed anchors or container evidence are claimed
-as produced here. Upstream Docker source was read without launching Docker;
+No operational keys, profiles, installed anchors or container evidence are
+claimed as produced here. The original proposal produced no test evidence;
+the diagnostic loader checkpoint below is subsequent implementation work.
+Upstream Docker source was read without launching Docker;
 its semantics inform the required falsifiers but do not prove this machine's
 installed binary, daemon, image or runtime configuration.
+
+## 12. Local loader review checkpoint — September 25
+
+The allocated loader and private-file tests form a locally reviewed implementation
+checkpoint, not accepted by canonical review. Initial selected checks passed:
+148 loader cases plus 73 unchanged shared-inventory cases, 221 total with zero
+failures/errors/skips (`/tmp/scanipy-runtime-profiles-expanded.xml`). These
+exercise actual file measurement, not configured-digest equality, and deliberately
+allow opaque domain bytes to demonstrate that this boundary grants no semantic
+or operational authority.
+
+Root's independent review reproduced a cleanup-evidence defect: appending close
+failures preserved an explicit `__cause__` but omitted an earlier implicit
+`__context__`. The configured external regression failed on the initial frozen
+code (`/tmp/scanipy-runtime-profiles-root-context-configured-before.xml`). An
+earlier external-file invocation lacked the repository configuration and had a
+marker warning; it is not substituted for that configured failure.
+
+The correction snapshots cause-or-context before cleanup, and snapshots each
+cleanup failure's original chain before later closes can mutate it. A promoted
+cleanup interruption remains the original object. Immediate cause-group members
+are deduplicated by identity, without rewriting existing private chains or
+retrying an uncertain numeric descriptor. Thirteen new repository cases cover
+public-loader and direct-cleanup paths, explicit-cause precedence, context-only
+failures, promoted interruptions, later context mutation and no-failure controls.
+Explicit `is not None` selection avoids invoking a custom exception's truth
+method when choosing its original cause; two controls exercise that distinction.
+
+Final focused verification includes those 161 loader cases, 73 unchanged shared
+cases and root's one independent external regression: 235 selected cases, zero
+failures/errors/skips (`/tmp/scanipy-runtime-profiles-review-final-named.xml`). Root
+independently repeated all 235 in 2.59 seconds
+(`/tmp/scanipy-runtime-profiles-root-final.xml`). Corpus and root reviewed the
+final context-preserving/explicit-None delta and approved this limited boundary.
+
+The configured full `pytest tests/` run passed 1793 cases with 51 existing skips,
+zero failures/errors, in 142.900 seconds
+(`/tmp/scanipy-runtime-profiles-full.xml`). The actual normal pre-push hook's
+four stages passed; its selected unit/invariant run passed 1748 cases with 11
+existing skips, zero failures/errors, in 122.643 seconds
+(`/tmp/scanipy-runtime-profiles-prepush.xml`). Repository Ruff/format, configured
+strict typing, separate module typing and explicit three-file pre-commit checks
+passed. No threshold, skip policy, baseline or hook bypass was introduced.
+
+The reviewed source SHA256 is
+`b3e721a535243262d83ea3fe40f5433e8619497702c3ed0cbc51e85cf1568daa`;
+the test-file SHA256 is
+`4ab2b0bbbb1358edaf7cf7ae1fa94f6cdd58b0a1dc9179ca7b27bb70fd89fd82`.
+These are task-local verification records, not portable signed acceptance
+artifacts. Normal commit hooks, later combined-main verification and exact-head
+remote CI/canonical SUCCESS with final APPROVE remain required before merge.
+No runtime/container permission is inferred from these checks.
+The real factory/current-anchor, domain decoder, image-namespace, controller,
+admission/ledger and operational no-egress integrations remain unimplemented here.
