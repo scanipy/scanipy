@@ -531,7 +531,10 @@ def _default_parse_env() -> dict[str, str]:
     ``secure_run`` explicitly does NOT inherit the host/image environment
     (``tools/worker/secure_subprocess.py``'s own docstring), so the Dockerfile's
     ``ENV JAVA_HOME``/``PATH`` alone do not reach this subprocess — this
-    dict is the actual effective environment.
+    dict is the explicit adapter input. Java additionally validates and
+    normalizes it to the closed ``scanipy-java-static-env/1`` child profile
+    (private HOME/TMPDIR, pinned runtime paths and exact no-fetch); its actual
+    post-adapter environment is recorded separately where observation is enabled.
     """
     return {
         "PATH": "/opt/joern/bin:/opt/codeql:/opt/temurin-jre/bin:/usr/bin",
