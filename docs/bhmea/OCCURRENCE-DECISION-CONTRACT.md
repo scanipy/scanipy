@@ -36,9 +36,9 @@ Those prerequisites have independent R02/R06/R09/R18/R19/R20 evidence gates.
 |---|---|---|
 | Source capture | Org/codebase, actual resolved commit, framed tree digest, file inventory/digests and immutable storage reference | Retention/cleanup lease only; never rewrite bytes at an existing identity |
 | Scan execution | Request idempotency key/payload digest, scope, explicit lineage and requested spec/tool policy; sealed actual capture/spec bindings before detection | Stage states, lease token/expiry, active attempt and error references |
-| Detection occurrence | Scan/detector result identity, source capture, engine/origin, rule semantics, actual spec/version and detector environment, message/CWE/severity/location, raw/witness evidence references | No detection-content UPDATE; processing/decision state is joined from other records |
+| Detection occurrence | Scan/detector result identity, source capture, engine/origin, rule semantics, actual `S_version` and observed detector `env_digest` with distinct full-environment binding, message/CWE/severity/location, raw/witness evidence references | No detection-content UPDATE; processing/decision state is joined from other records |
 | Identity attempt | Occurrence, attempt number, requested identity policy/code version and actual execution evidence | One-way pending/running/terminal transition guarded by lease; terminal data never rewritten |
-| Final projection | Validated completed R09 finding/provenance, bound to the occurrence and successful attempt | No identity/signature rewrite; historical signed bytes remain verifiable |
+| Final projection | Validated completed R09 finding/provenance, including independent graph/slice metadata and each applicable `cpg_order_hash`/slice conditional annotation (INV-5), bound to the occurrence and successful attempt | No identity/signature rewrite; historical signed bytes remain verifiable |
 | Finding entity | Durable scoped cross-scan identity and creation reason | Explicit current lifecycle pointer/revision; history is append-only |
 | Occurrence/entity link | Occurrence, entity, matching-policy digest, predecessor and match evidence | Append-only; a rematch creates a new adjudication event, not silent history replacement |
 | Human decision event | Target scope, actor/authentication context, action, reason, references, request idempotency and prior revision | Append-only; revoke/change by a new event |
@@ -224,6 +224,19 @@ dimension: an explicit clear/unreviewed/inactive state shadows inheritance,
 rather than falling through to an older entity value. Occurrence-only decisions
 never propagate to later scans merely because the occurrence is linked.
 
+Persist a monotonic lifecycle generation and bind each link to its generation.
+Every lifecycle-state transition, including returning to open, advances it;
+an old link cannot regain authority merely because the current state is open
+again. Each entity decision dimension separately records the generation of its
+explicit human authorization. A newly proposed link after reopening cannot
+inherit an unchanged historical suppression/verdict. Reviewing only the verdict
+or references cannot restamp suppression into the new generation. Preserve
+historical events; a clear is a new explicit dimension event, not deletion.
+Validate typed lifecycle events, entity/decision revisions and per-dimension
+authorizations in the same transaction. Durable event IDs are globally unique
+within their declared store scope and payloads immutable; bounded in-memory
+snapshots do not prove authentication or full event-history uniqueness.
+
 Accept decisions through a trusted human-adjudication service, not the LLM
 triage role. Record authenticated principal from server context where available;
 in intentionally unauthenticated local mode, label the actor as an **unverified
@@ -272,6 +285,11 @@ path and invalidates unsupported automatic inheritance.
 No checkbox is complete merely because this contract exists.
 
 - [ ] Review exact schema/roles and composite scope invariants before migration.
+- [ ] Verify `origin`, actual `S_version`/`env_digest`, and independent graph/slice
+  metadata with required annotations through every completed finding/provenance
+  projection. Provisional occurrences must retain actual detection bindings
+  without fabricating not-yet-computed hashes; preserve R09's explicit oracle
+  not-applicable exception and historical signed bytes.
 - [ ] Implement source-capture/request/occurrence storage and transactional
   scheduling; prove result retention before the first identity invocation.
 - [ ] Decouple raw solver detection/solution evidence from canonical-order and
@@ -294,6 +312,10 @@ No checkbox is complete merely because this contract exists.
   and both direct and service-mediated ranker write denial.
 - [ ] Test changed vulnerability, successful removal, actual file relocation,
   disabled rule, parse failure, source omission and resolved reappearance.
+- [ ] Test a link originally created while open through closure and reopening,
+  newly proposed links after reopening, repeated lifecycle generations and
+  per-dimension fresh authorization. Neither old links nor unchanged suppression
+  may be revived by an unrelated fresh verdict/reference event.
 - [ ] Inject failure after detection and after an earlier completed identity;
   all detected occurrences remain. Retry must not duplicate/overwrite history.
   Include whole-graph canonicalization failure before any slice work.
