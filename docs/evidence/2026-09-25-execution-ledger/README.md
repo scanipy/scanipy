@@ -55,6 +55,36 @@ as reviewed non-secrets; no broad path/plugin exclusion was added. Existing
 baseline entries are preserved. Raw evidence is unchanged. This is a scoped
 review of the new artifacts, not a full repository/history secret audit.
 
+### Independent baseline-entry recount
+
+Compared with reviewed main `89ed803`, `.secrets.baseline` has **69 entries
+versus 3**, a net **66 added finding entries and zero removed entries**. All
+66 additions explicitly have `is_secret: false`. The Git diff reports **541
+inserted lines**, not 541 entries; each JSON entry spans multiple lines.
+
+| Added evidence path | Added finding entries | Reviewed value category |
+|---|---:|---|
+| `2026-09-25-r05-readiness/manifest.yaml` | 16 | Artifact/code/source and container identity digests |
+| `2026-09-25-r05-readiness/raw/container-inspect.json` | 4 | Docker container identity and metadata paths |
+| `2026-09-25-r05-readiness/raw/container.log` | 6 | Recorded artifact/container identity values |
+| `2026-09-25-r05-readiness/raw/diagnostic.json` | 6 | Actual code/source/tool/artifact identities |
+| `historical/2026-08-31/recovery.yaml` | 4 | Historical artifact/corpus digests |
+| `historical/2026-08-31/refactor-invariance-topo8-2026-08-31.json` | 30 | Historical corpus and reported slice hashes |
+
+Paths in this table are relative to `docs/evidence/`. Reproduce the entry
+counts independently (read-only):
+
+```bash
+jq '[.results[] | .[]] | length' .secrets.baseline
+git show 89ed803:.secrets.baseline | jq '[.results[] | .[]] | length'
+git diff --numstat 89ed803 -- .secrets.baseline
+```
+
+Entry identity was compared by `(filename, type, hashed_secret)`, not line
+count. Classification still requires reviewing the actual referenced content;
+this recount verifies scope, not an automatic proof that arbitrary high-entropy
+values can never be sensitive. No raw artifact was changed for this recount.
+
 ## Remaining work
 
 - Required PR review and CI, with no premature completion of umbrella #362.

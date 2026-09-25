@@ -1,13 +1,13 @@
 # DOC-CMP-CI-01 — Continuous-integration gate pipeline
 
-> **Current BHMEA authority (2026-09-25):** for the owner's full Black Hat
-> corrective work, the [active handoff](../PLAN-BHMEA-EXECUTION-2026-09-25.md)
-> and [review backlog](../REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md)
-> supersede obsolete architecture restrictions. The historical four CI gates
-> below remain required and are not weakened. Their closed inventory is not a
-> prohibition on the explicitly required R04 report-acceptance tool or the
-> distinct BHMEA G0/G1/G2/G3 release/stage milestones. No SDD/WBS rewrite or
-> fictional historical CLAR approval is required for that authorized work.
+> **Current BHMEA extension (2026-09-25):**
+> [DECISION-BHMEA-01](../DECISION-BHMEA-01-current-execution-authority-2026-09-25.md)
+> records the owner's task and the report-acceptance extension to this component.
+> The historical four CI gates below remain required and are not weakened or
+> renumbered. The R04 report tool and distinct BHMEA G0/G1/G2/G3 milestones are
+> specified for the current task in the [active handoff](../PLAN-BHMEA-EXECUTION-2026-09-25.md)
+> and [review backlog](../REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md).
+> The baseline architecture and historical CLAR records remain preserved.
 
 ## Current BHMEA report-acceptance contract
 

@@ -18,6 +18,10 @@ Read [review revision 3](REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md),
 task-level TODOs and acceptance criteria; this handoff updates authority,
 decisions, dependencies, ownership, and execution state without deleting them.
 
+[DECISION-BHMEA-01](DECISION-BHMEA-01-current-execution-authority-2026-09-25.md)
+is the standalone record of the actual owner directions, specific current
+engineering extensions and preserved compatibility/review obligations.
+
 Precedence: latest user direction → submitted full scope plus the review/current
 handoff → compatible component contracts and tests → historical plans. The owner
 explicitly said `PLAN.md`, `SDD.md`, and `WBS.md` are old and may have obsolete
@@ -37,8 +41,8 @@ visibility, spend money, or send external messages without separate authority.
 The repository was already public when checked on 2026-09-25. Preparing release
 artifacts and checking public access are not publication approval.
 
-Never execute scanned source, build hooks, target tests, or repository-provided
-commands. Keep the existing development app/DB intact; use isolated projects,
+Never execute scanned source, target build hooks/tests, or commands supplied by
+scanned repositories. Keep the existing development app/DB intact; use isolated projects,
 containers, temporary directories, and test databases for diagnostics. Do not
 infer that the current host is the presentation machine.
 

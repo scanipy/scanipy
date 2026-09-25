@@ -1,21 +1,24 @@
 # Scanipy v3.2 — Agent Context
 
-> **Current Black Hat work:** the owner's 2026-09-25 instructions identify
-> `PLAN.md`, `SDD.md`, and `WBS.md` as old and potentially architecturally
-> obsolete. For BHMEA corrective work, follow
-> [the active handoff](docs/PLAN-BHMEA-EXECUTION-2026-09-25.md) and its full-scope
-> review backlog. Preserve historical contracts/data and relevant safety/tests;
-> obsolete architecture approvals do not block that authorized work. The issue/
-> PR workflow and required review/test merge gates remain in force. The legacy
-> hierarchy below describes prior work, not a veto over these user directions.
+> **Current Black Hat work:** start with
+> [DECISION-BHMEA-01](docs/DECISION-BHMEA-01-current-execution-authority-2026-09-25.md).
+> It records the owner's current goal, the engineering extensions needed for
+> it, preserved compatibility obligations and required review/test merge gates.
+> [The active handoff](docs/PLAN-BHMEA-EXECUTION-2026-09-25.md) contains ownership
+> and execution state. This file summarizes that decision; it does not grant
+> itself authority or claim completed acceptance.
 
-> **Read this file first.** It is derivative of PLAN.md, SDD.md, and WBS.md.
-> When this file conflicts with any of those three, the upstream document wins.
-> Correct this file, never the upstream.
+**Historical baseline context below:** the original PLAN/SDD/WBS-derived
+hierarchy and component inventory are retained for compatible contracts and
+traceability. Apply DECISION-BHMEA-01 to the current Black Hat task; retain the
+baseline hierarchy for work not covered by that decision.
+
+The original baseline instruction was: "When this file conflicts with any of
+those three, the upstream document wins. Correct this file, never the upstream."
 
 ---
 
-## 1. Source-of-truth hierarchy
+## 1. Historical baseline source-of-truth hierarchy
 
 ```
 PLAN.md   (architecture)        ── highest authority; wins all conflicts
