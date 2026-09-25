@@ -1,29 +1,48 @@
 # Self-hosting Scanipy (Docker)
 
-One command, no cloud account, no AWS. This directory holds the packaged application deployment
-(`DOCKER-01`, `CLAR-DEPLOY-25`): a light `python:3.11-slim` image (git + Semgrep in an isolated venv)
-plus the compose file that runs it alongside Postgres.
+This directory holds the packaged application deployment (`DOCKER-01`,
+`CLAR-DEPLOY-25`) and its Postgres service. It requires no cloud account.
+
+**Current containment (#396): new scans are unavailable.** The legacy Git and
+Semgrep execution path has been removed pending the reviewed capture/worker
+cutover. Existing stored scans remain readable. This is not the completed Black
+Hat demo or a production-ready replacement. See the full
+[cutover contract and remaining actions](../docs/bhmea/LEGACY-APP-CUTOVER.md).
+
+Building or starting this version does not restore scanning. No environment
+setting enables the removed legacy path. This code change does not itself
+restart a running deployment, change its configuration or migrate its data.
 
 ## Quickstart
 
 ```bash
 docker compose up --build          # from the repo root
-# → open http://localhost:8000  and paste a public GitHub repo URL
+# → http://localhost:8000 serves the unavailable-capability page
 ```
 
-On start the app waits for Postgres, applies the Alembic (tenanted) schema, and serves the scan API.
+On start the entrypoint waits for Postgres, applies the configured Alembic
+migrations, and serves the legacy read API. Review migrations and back up data
+before starting an updated checkout against an existing deployment.
 
 ## What this path does — and doesn't
 
-- **Detection is oracle-passthrough** (engine: Semgrep). Every finding is
-  `origin=oracle-passthrough`, `engine=semgrep`, `fingerprint_class=weak` — a stable same-source id,
-  **not** a canonical-graph claim. Findings persist to the `oracle` Postgres schema, kept separate from
-  the tenanted deterministic-core `findings` table.
-- **The deterministic-core (IFDS/CPG) engine is staged** and not on this path. Byte-identical
-  reproducibility and refactor-invariant identity are guarantees of that engine — see the
-  honest-labeling ledger in [`../PLAN.md`](../PLAN.md).
-- The stack is **single-tenant per deployment** and **single-node** (API + scan run in one service).
-  Multi-container substrate (MinIO / a shared queue) is tracked as `DOCKER-02`.
+- `POST /api/scan` always returns HTTP 503, `code=native_scan_unavailable`, and
+  `retryable=false`, before a new scan row, task, source staging or native work.
+  It does not validate repository URLs while unavailable.
+- `GET /api/scan/{scan_id}` retains its historical response and 404 behavior.
+  Old `oracle` records keep their actual stored fields; this change neither
+  rewrites nor certifies them. A legacy weak/location-derived identity is not
+  a cross-refactor canonical identity or complete provenance proof.
+- `GET /healthz` reports application liveness and explicit unavailable scan
+  capability. It is not a database check or analysis-readiness certificate.
+  Current `env_digest` is null (`not-observed`); `s_version` is only the configured
+  label (`configured-only`), not proof of an accepted spec bundle.
+- Startup keeps the existing database initialization and marks old in-process
+  `running` scans interrupted, as before. It invokes no scanner/version probe.
+  This is not the new durable occurrence queue or restart/retry implementation.
+- The separate immutable-capture/analysis-worker, accepted-input resolver,
+  occurrence persistence, final provenance and asynchronous UI still need their
+  real integration tests. No full submission claim follows from this containment.
 
 ## Configuration (environment)
 
@@ -32,19 +51,21 @@ Set on the `scanipy` service in `docker-compose.yml` (or an `.env`):
 | Variable | Default | Meaning |
 |---|---|---|
 | `SCANIPY_DATABASE_URL` | `postgresql://scanipy:scanipy_dev@db:5432/scanipy_dev` | Postgres DSN |
-| `SCANIPY_S_VERSION` | `oracle-2026.08` | spec-set version stamped on findings (INV-2) |
-| `SCANIPY_RULES_DIR` | `/app/deploy/rules` | Semgrep ruleset directory |
-| `SEMGREP_BIN` | `semgrep` | Semgrep executable |
-| `LLM_TRIAGE` | `off` | keeps the LLM strictly off the detection path (INV-3) |
+| `SCANIPY_S_VERSION` | `oracle-2026.08` | Configured legacy label exposed by health only; no new finding is emitted |
+| `SCANIPY_RULES_DIR` | unused | Does not enable or configure this disabled route |
+| `SEMGREP_BIN` | unused | Does not select any executable in this application |
+| `LLM_TRIAGE` | `off` | No detection/triage work is launched by this legacy application |
 
-`env_digest` (INV-2) is computed at startup as a real `sha256` over the Semgrep version + ruleset
-content — the identity a re-run must match to be comparable. Check it at `GET /healthz`.
+The prior startup hash of a reported Semgrep version and rule files did not bind
+the full actual runtime. It is no longer emitted as a current environment
+identity. Historical stored digests are preserved without upgrading their meaning.
 
 ## Adding / editing rules
 
-Drop or edit `*.yaml` Semgrep rules in `deploy/rules/`. Changing the ruleset changes `env_digest` by
-construction (rebuild or restart to pick it up). Rules are CWE-mapped; keep `metadata.cwe` and
-`metadata.title` set so findings render with a CWE and a human title.
+Editing `deploy/rules/` does not make this route executable or operationally
+accept a rule. The replacement must bind exact immutable rule/model bytes and
+actual acceptance evidence before a scan; a filename or version label is not
+that binding. Correct CWE/origin mapping remains a cutover requirement.
 
 ## Upgrade
 
@@ -53,8 +74,9 @@ git pull
 docker compose up --build -d       # rebuilds the app image; migrations re-apply idempotently
 ```
 
-A new image (or ruleset) is a new `env_digest`. Findings recorded under a prior digest keep their
-stamped value, so results stay comparable only within a fixed digest.
+This version remains scan-unavailable after rebuild. Historical findings keep
+their stamped values. Do not infer an observed image digest or comparability
+from a configured tag, rule edit, rebuild command, or healthy web endpoint.
 
 ## Backup / restore
 
@@ -74,7 +96,11 @@ docker compose down -v    # stop AND wipe the database volume
 
 ## Security posture
 
-- The scanned code is **never executed** — only cloned and statically analyzed.
+- This contained application does not acquire or analyze source. Safe native
+  acquisition/analysis remains a separate prerequisite; cloning alone never
+  established the promised no-execution guarantee.
+- Containment does not fix legacy read authentication, historic-result bounds,
+  default credentials, host isolation or every other service's native route.
 - Change the default Postgres password (`scanipy_dev`) before exposing the stack beyond localhost.
 - Run behind your own reverse proxy / auth if you expose port 8000; the app ships no auth on this path
   (single-tenant self-host). See [`../SECURITY.md`](../SECURITY.md).

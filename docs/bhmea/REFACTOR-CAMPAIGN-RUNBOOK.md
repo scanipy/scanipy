@@ -46,8 +46,10 @@ fails. There is no hidden source-directory cache, retry, or resume shortcut.
   `16252b21db172b967f13a815ca9bd8fe3078dd19`, after all required checks and a
   successful canonical APPROVE action. The earlier failed session-limit action
   remains historical evidence, not approval. This branch now incorporates
-  reviewed main `69f7f480e2bb04febec103b04d2b753924d3090a`, including the later
-  reviewed documentation reconciliation #401.
+  reviewed main `4cf10d015a4b9ce8c96a93601a2e30588265e1f1`, including the later
+  reviewed documentation reconciliation #401, fail-closed Git containment #402
+  and legacy application containment #403. Neither containment change supplies
+  the still-missing production acquisition or bounded campaign controller.
 - [ ] Complete this producer's combined checks, exact-head CI and successful
   canonical review, then its reviewed merge before collecting protected G0.
   Local dependency merges and controlled tests do not authorize a real run.
@@ -306,3 +308,23 @@ wait for the separately reviewed #395 main integration; no manual pre-push or
 new remote candidate is claimed for this checkpoint. These local paths are
 diagnostic records, not immutable G0/feature-acceptance artifacts or execution
 authorization. Exact-head remote gates remain pending.
+
+### Accepted-main containment refresh
+
+A subsequent normal local merge incorporates accepted main
+`4cf10d015a4b9ce8c96a93601a2e30588265e1f1`, the reviewed #403 merge following
+#402. The two campaign scripts, `scripts/__init__.py`, producer tests and shared
+frontend observer are byte-identical to local checkpoint `414718c`; only this
+runbook's R05-owned text changes. Incoming containment and security-hook changes
+are preserved without replaying their source edits.
+
+Nine focused non-process controls passed with zero skips/failures in 0.35 seconds
+(`/tmp/scanipy-r05-accepted-main-static-review.xml`): exact diagnostic command,
+unsafe target rejection, resource refusal, presentation-identity honesty and
+required Java safety-module binding. They perform no native or container work.
+The earlier 1,613/51 full result above belongs to the previous combined tree and
+is not a full-suite result for this refresh. The refreshed configured full suite,
+actual normal pre-push, exact-head CI and successful canonical review remain
+pending; the root coordinator is serializing broad checks. No remote push or
+PR-metadata change is part of this local refresh. No real 844-attempt campaign,
+corrected G0, full R05 acceptance or runtime-controller readiness is claimed.
