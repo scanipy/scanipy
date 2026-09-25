@@ -1,5 +1,14 @@
 # DOC-CMP-SCM-01 — SCMConnector abstract base
 
+> **Current #395 containment (2026-09-25):** native default Git acquisition is
+> unavailable before staging. The shared process wrapper refuses all Git calls;
+> the snapshot worker and all four provider default clone paths fail explicitly.
+> Trusted injected Python fixture collaborators preserve controlled tests, not
+> production acquisition or no-execution approval. See the current
+> [containment and mandatory replacement contract](../bhmea/GIT-SOURCE-ACQUISITION.md).
+> Historical runnable clone examples below do not override this boundary; the
+> real bounded object-to-capture producer remains required. Other APIs/ACs remain.
+
 > **Source-of-truth:** `SDD.md §3 CMP-SCM-01`. Where this document diverges from `SDD.md` / `PLAN.md`, the upstream document wins; correct this file rather than the upstream.
 > **Status contract:** This doc satisfies `AC-DOC-04` — a code-writing agent reading only this file plus the cross-cutting refs can implement `CMP-SCM-01` without re-reading the SDD.
 
@@ -220,7 +229,7 @@ The suite is **declarative** and lives next to the ABC so that adding a fifth pr
 | `pat` | `token` | Provider PAT or GHE PAT. |
 | `app_installation` | `app_id`, `installation_id`, `private_key_pem` | Used to mint installation tokens at call time. |
 | `oauth` | `access_token`, `refresh_token`, `expires_at` | Refreshed via CMP-CP-02 on `expires_at` proximity. |
-| `ssh_key` | `private_key_pem`, `known_hosts` | Used only for `clone()`; never for REST. |
+| `ssh_key` | `private_key_pem`, `known_hosts` | Used only for `clone()`. Never for REST. |
 
 All payload values are strings (no binary). The encryption-at-rest contract (`AC-SCM-01b`) requires that any `SCMCredentials` instance can be serialised, encrypted by `CMP-CP-02`, persisted, retrieved, decrypted, and deserialised to an instance equal to the original under structural equality — for all four modes.
 
