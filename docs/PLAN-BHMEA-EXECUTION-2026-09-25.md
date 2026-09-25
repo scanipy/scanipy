@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Updated | 2026-09-25 |
-| Snapshot | Revision 14; observed 2026-09-25 22:25 UTC plus explicit 22:30 update; accepted main `4911f656`, earlier cutoffs preserved |
+| Snapshot | Revision 15; observed 2026-09-25 23:31 UTC, explicit 23:36/23:38 updates; accepted main `0e1b2b9a`; earlier cutoffs preserved |
 | Target | FULL_SUBMISSION; all C01–C18 claims and applicable R01–R20 acceptance items |
 | Tracking | [Umbrella issue #362](https://github.com/scanipy/scanipy/issues/362) |
 | Presentation | December 2 or 3, 2026; exact date unconfirmed |
@@ -127,6 +127,76 @@ source custody alone does not make an unsafe checkout trustworthy. See the
 [active safety findings](evidence/2026-09-25-foundation-merges/README.md#other-active-falsifiers-and-next-actions).
 
 ## 3. Work ownership and next actions
+
+### Revision 15 execution queue — observed at 23:31 UTC
+
+The clock observation was 23:31:21 UTC. Accepted main is
+`0e1b2b9abe97c2be6c02023a9e3e72b4790106aa`: Revision 14 documentation
+#419, pure renderer #420 and frozen provenance compatibility #421 have merged
+after required gates. The
+[Revision 15 evidence index](evidence/2026-09-25-foundation-merges/README.md#revision-15--observed-2331-utc-september-25)
+retains exact heads, checks and contrary results. Older queues below remain
+historical; do not repeat their finished work or relabel their test results.
+No task, claim, shared gate, release or stage status changes here.
+
+1. **B / #399:** finish publication of corrected `3e1cfc56` through fresh
+   required hosted CI and canonical review. At the cutoff its normal push was
+   in progress; both earlier hosted integration failures remain evidence.
+   The second identified an oversized static Python development archive before
+   any verifier launch. The bounded fixture-only correction has 63 author/peer
+   checks and 1,155 combined local passes, including all 38 process cases;
+   neither substitutes for corrected hosted gates. Public operational refusal,
+   existing limits and all production guards remain unchanged.
+2. **E/F/G and RES / #400:** E `306a7d76` has fresh full 4,357 passed /51
+   optional skips, including 89 actual occurrence PostgreSQL cases, but no
+   publication at this cutoff. F `49fa9ece` has 1,644 focused passes, not a
+   full run or accepted E dependency. Complete their actual combined-head
+   gates; then continue qualified storage, event/spool/full-history reader,
+   DB barriers, current factory/kernel controls and controller integration.
+   Pure invocation/evidence/journal values are not runtime permission.
+3. **AL-03 / #399:** retain all three earlier smoke failures and their narrow
+   corrections. The same three-node smoke now passes 3/0/0/0, with successful
+   ownership-checked cleanup and bounded catalog confirmation. The 144-case
+   integration selection is collection-ready only at this cutoff; broader
+   execution requires root's separate grant. Preserve 324 offline checks and
+   scoped reviews without treating them as SQL/current-authority acceptance.
+   The failed old disposable cluster was retired by root after preserving its
+   catalog; only the separately identified replacement may be used.
+4. **Actual end-to-end scope:** accepted provenance #421 freezes historical
+   bytes, not a real finding producer. Finish tenant-local accepted builtin
+   publication/current authority, actual Java/Python and Semgrep/CodeQL source
+   producers, measurements, complete persisted provenance, lifecycle/decisions
+   and truthful API/UI. Current keys, restore administration, source/runtime
+   custody and independently verified observations cannot be supplied by tests.
+5. **Scope clarification recorded after this cutoff:** root's engineering
+   [tenant-local scope decision](DECISION-BHMEA-01-current-execution-authority-2026-09-25.md#tenant-local-authority-and-later-publication-extensions)
+   identifies cross-scope global-to-tenant adoption and statistical/LLM
+   inferred-spec publication as later extensions, not Black Hat prerequisites.
+   Do not conflate them with the required tenant-local builtin, signed
+   provenance/current-authority or UI path; do not relabel inferred proposals
+   as builtins. All original C/R/TODOs, Java/Python/CodeQL scope, Gate 4 and
+   INV-3 guards remain. No resolver source or guard is changed by this note.
+
+Later completion of running work needs a separately identified observation.
+This machine remains the confirmed local-Docker stage target, not a measured
+ready installation. No release/image publication, native campaign, user app/DB
+change, October lock or reduced-submission target is introduced.
+
+**Explicit 23:36 update:** B's actual normal push completed all four phases,
+with remote `3e1cfc56` verified. Corrected hosted CI/Gate 3 are running, not
+accepted. Its actual merge artifact with accepted provenance passed 1,251
+pure cases, not a rerun of the 38 process cases or a full suite. Root started
+the frozen AL144 selection at 23:33:51; it was still running at this update.
+
+**Explicit 23:38 update:** that AL `-x` invocation stopped after **16 passed,
+one failed, zero skips/errors** (17 executed, not 144 successes), 203.856s.
+Teardown and bounded catalog checks were clean. The assertion compared a
+psycopg2 format-`c` bytea view with a format-`B` expected view; a separate
+controlled query showed equal bytes can have unequal views, not that the
+failed row's bytes were verified. Root assigned the narrow test-only exact-
+bytes snapshot investigation/correction; no SQL/production change or retry
+is authorized by this documentation. Retain the three-case success and this
+later failure separately; see the exact report in the evidence index.
 
 ### Revision 14 execution queue — observed at 22:25 UTC
 
