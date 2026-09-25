@@ -1,106 +1,97 @@
-# Refactor corpus — ground-truth labelling methodology (CMP-CORP-REFAC-01)
+# Source-derived expectations — corpus 0.2.0
 
-This document is the labelling methodology mandated by
-`DOC-CMP-CORP-REFAC-01 §4.1` and `.claude/commands/corpus-agent.md`
-("No manually generated labels without methodology documentation"). The corpus
-is **not DONE without it**, and `corpus.lock.annotation_methodology_ref` points
-here.
+This methodology corrects the old name-only label derivation. A transform's
+name is insufficient evidence that its source implements the intended
+operation. The generator constructs known source transformations;
+`validate_fixtures.py` checks their relevant shape independently; syntax checks
+and runtime engine observations remain separate obligations.
 
-The headline property: **no label in this corpus is hand-assigned.** Each
-`(seed, refactor)` ground-truth label is *derived by construction* from the
-refactor transform that produced the `after/` tree, under the slice-preservation
-rule below. The transform and the label come from the same deterministic
-function (`pipeline/refactor_transforms.py`), so a curator cannot label a pair
-inconsistently with how it was generated.
+Expectations are fixed by reviewed source semantics before measurement. They
+must not be changed because a measured fingerprint disagrees. A genuine source
+annotation error requires a documented correction, corpus version/digest change,
+and invalidation of previous comparable scores.
 
-## 1. What is labelled
+## Primary source transformations
 
-For each seed (a closed-world program with exactly one seeded finding of a
-Stage-A core class) and each of the 7 named refactors, the pair carries a binary
-ground-truth label:
+| Transform | Source operation and preconditions | Typed expectation |
+|---|---|---|
+| `alpha-rename-local` | Bijective rename of bound seed parameters/locals, retaining operators/literals and uses | strong/strong equality |
+| `pdg-only-formatting` | Add only comments and blank lines | strong/strong equality |
+| `independent-reordering` | Swap two existing independent literal assignments; both feed the original computation; statement multiset unchanged | strong/strong equality |
+| `pure-extract` | Move the original expression into a unique called helper, bind actuals/formals and use its returned value in the original sink | strong/strong equality; real purity certificate required |
+| `fqn-move-package-rename` | Move a real file/package, update declarations plus separate consumer imports, retain complete source tree | strong/strong equality |
+| `aliasing-changing-extract` | Mutate an aliased holder in a called helper, reload its changed value, then perform the original sink-relevant computation | strong/strong inequality; no pure certificate |
+| `genuine-fix` | Remove the unsafe source→sink behavior using separate parameter binding, fixed destination, or non-object data decoding | finding removal, not inferred missing-hash success |
 
-| Label | Meaning for Algorithm 3 |
-|---|---|
-| `should-stay` | Re-running Algorithm 3 on `after/` MUST yield a `slice_fingerprint` byte-identical to `before/`. |
-| `should-flip` | Re-running Algorithm 3 on `after/` MUST yield a `slice_fingerprint` different from `before/`. |
+Each primary seed includes an untrusted argument and a declared sink API. Java
+uses typed String concatenation or primitive bound arithmetic. Java byte-array
+extraction moves scalar length arithmetic while preserving the caller's actual
+array operation. Python source guards `type(input) is str` or `bytes` before
+computation. String concatenation, built-in byte slicing, and scalar arithmetic
+are meaningful computations, not identity wrappers. Helpers are private static
+Java methods or closed-module Python functions. This finite fixture domain does
+not justify certifying arbitrary dynamic operations, annotations, reflection,
+unknown calls, callbacks, overloaded operators, or writable aliases.
 
-The label set is exactly `{should-stay, should-flip}` — no third value.
+Pure refactors preserve the operand sequence and supported normal/exceptional
+behavior under the stated source preconditions. The closed modules do not
+rebind built-ins/helper names or inspect frames. An engine must establish these
+facts from its supported evidence or honestly mark its certificate unavailable;
+the corpus must not declare the required runtime result passed in advance.
 
-## 2. The derivation rule (why a label is what it is)
+## Security fixes and removal semantics
 
-The label is a function of the refactor, fixed by the refactor taxonomy
-(`PLAN.md §"Algorithm 3"` + `AC-CORE-02b`). It is not a per-seed judgement.
+Java SQL uses `PreparedStatement` with a separate `setString` binding; Python
+SQL uses the declared SQLite question-mark binding API. Path and SSRF fixes
+choose a fixed trusted destination independent of the untrusted argument.
+Deserialization replaces Java `ObjectInputStream` with UTF-8 data decoding and
+Python `pickle.loads` with JSON data parsing. These are vulnerability-removing
+changes, not a claim of feature-identical application repairs.
 
-| Refactor | Algorithm 3 normalization pass | Label | Derivation |
-|---|---|---|---|
-| `alpha-rename-local` | α-renaming of locals | `should-stay` | The transform is a consistent alpha-rename of bound seeded identifiers. It is a bijection on names; the backward interprocedural slice (source→sink dataflow) is identical up to alpha-equivalence, which Algorithm 3 normalizes away. |
-| `pdg-only-formatting` | PDG-only formatting | `should-stay` | The transform inserts only whitespace + comments. No statement is added/removed/reordered relative to a PDG edge, so the sliced PDG is unchanged. |
-| `independent-reordering` | canonical topological sort | `should-stay` | The transform inserts a statement that is PDG-independent of the slice (`unrelated = 7 + 35`). Canonical topological sort places independent statements deterministically; the slice's relative order is unchanged. |
-| `pure-extract` | summary-inlining normalization | `should-stay` | The transform extracts a **pure, side-effect-free, alias-stable** helper. Algorithm 3 inlines pure summaries before fingerprinting, so the extract is invisible to the slice. |
-| `fqn-move-package-rename` | FQN normalization | `should-stay` | The transform changes only the package / module path. FQN normalization canonicalises fully-qualified names, so the slice is unchanged. |
-| `genuine-fix` | n/a — sink removed / made safe | `should-flip` | The transform replaces the dangerous sink with a safe / parameterized equivalent (e.g. `PreparedStatement`, `os.path.basename`, host allow-list, `json.loads`). The tainted source no longer reaches a dangerous sink; the backward slice genuinely changes. |
-| `aliasing-changing-extract` | NOT covered by summary-inlining | `should-flip` | The transform routes the tainted value through a freshly-aliased mutable holder before the sink. This changes the points-to / aliasing relation feeding the sink. Algorithm 3's summary-inlining covers *pure* extracts only (contrast `pure-extract`), so the fingerprint must flip. A fingerprint that stays here would be **over-normalizing** — a `CMP-CORE-02` bug. |
+All 50 primary fix cases are predeclared `finding_removal/absent`. For the 38
+injection/path/SSRF fixes with retained sink API calls, separate named cases
+compare the original and post-fix sink slices and require inequality. Those
+comparisons concern candidate slices, not a claim that a vulnerability remains.
+The 12 deserialization fixes remove the dangerous API and do not manufacture
+after-locators/hashes. Absence requires a completed after-scan, relevant rule/
+file coverage and lifecycle evidence; unknown/error/timeout/unsupported is not
+absence. The R04 gate must not trust a producer's `matches_expectation` flag.
 
-This table is the entire labelling decision procedure. Because the label is a
-deterministic property of the refactor name, the corpus is reproducible and
-audit-checkable: `pipeline/build_corpus.py` refuses to emit `corpus.lock` if any
-pair's recorded label disagrees with `refactor_transforms.GROUND_TRUTH`, and if
-any `should-flip` pair's `after/` tree is byte-identical to `before/`.
+## Additional controls
 
-## 3. Seed construction (where the seeded findings come from)
+For each of eight class/language bases, controls include the inverse inline
+operation, genuine extraction combined with rename and relocation, and a
+changed sink-relevant literal. Each language also has an argument-position
+negative (only actual arguments change), a helper-return negative, and two
+sink-specific cases for one multi-assignment helper reused at distinct call
+sites. Both returned values must reconnect correctly; matching just one sink
+cannot satisfy both cases. Intentional Java/Python parser failures keep the
+old finding visible and never count as resolution or a structural mismatch.
 
-Seeds are SYNTHESIZED. Each seed is rendered from one of 8 base templates
-(4 Stage-A classes × 2 Stage-A languages) in `bases/__init__.py`. The template
-is a pure function of a seed integer: the seed perturbs **identifier names and
-constant values only**, never the source→sink topology, so every instantiation
-of a template carries the same seeded finding. This keeps the ground-truth label
-well-defined across seeds.
+## Source validation is not runtime acceptance
 
-Stage-A scope (`.claude/rules/04-staging.md`): classes are
-`injection | path-traversal | ssrf | deserialization`; languages are
-`java | python`. No other class or language is seeded — Algorithm 3 invariance is
-only benchmarked on gate-passing Stage-A pairs (INV-6).
+Checks reject unchanged source, unused helpers, unconnected helper returns,
+non-permutations masquerading as reordering, comment-only moves, stale imports,
+mutation disconnected from the sink, stale locators, invalid ordinary syntax,
+unsafe paths, symlinks, source/metadata drift and undeclared inventory. Tests
+also check exact type guards, two-call contexts and typed outcome separation.
+They are finite source-shape checks, not a general semantic-equivalence proof.
 
-## 4. Adding a new refactor (AC-CORP-REFAC-01b — documented procedure)
+No scanned source is imported or executed. Java syntax checking disables
+annotation processing. A separate actual Joern parse/export/map campaign and
+production fingerprint/detection/lifecycle evaluation must establish runtime
+support and full acceptance. Retain failed/incomplete cases in denominators.
 
-A new refactor column is added **only** by the following procedure, which carries
-a mandatory regression-impact assessment:
+## Adding or correcting cases
 
-1. **Justify the pass.** A new `should-stay` refactor must correspond to a named
-   normalization pass in `PLAN.md §"Algorithm 3"`. If it does not, the addition
-   is invented scope — file a `CLAR-CORP-*` instead (RULE-4). A new `should-flip`
-   refactor must correspond to a genuine slice change documented in `SDD.md §6`.
-2. **Add the transform.** Implement a pure, deterministic transform in
-   `pipeline/refactor_transforms.py`, append its name to `REFACTORS`, and add it
-   to `SHOULD_STAY` or `SHOULD_FLIP` (this auto-populates `GROUND_TRUTH`).
-3. **Add a derivation row** to §2 of this file stating the label and why.
-4. **Regression-impact assessment (mandatory).** In the release ledger entry for
-   the version bump, record: (a) the new `pair_count` (`seed_count × refactor_count`),
-   (b) whether the change is additive (new column) or alters existing pairs,
-   (c) the new `corpus_digest`, and (d) the diff in `label_distribution`. Any
-   change that alters an existing pair's bytes invalidates downstream
-   `CMP-CORE-02` benchmark numbers and must say so explicitly.
-5. **Semver bump.** Bump `CORPUS_VERSION` (minor for additive, major if existing
-   pairs change), regenerate, and commit the new `corpus.lock`. The digest pins
-   the new contents.
-
-## 5. Dispute / failure handling
-
-If `TST-AC-CORE-02a/b` reports a label disagreement (curator label vs.
-implementation fingerprint), follow `DOC-CMP-CORP-REFAC-01 §7` and
-`DOC-RUNBOOK §8`: if the implementation is right and the label is wrong, the
-corpus is wrong — amend §2 here, bump `corpus_version`, and record the
-correction in the release ledger. If the label is right and the implementation
-is wrong, it is a `CMP-CORE-02` bug, not a corpus change.
-
-## 6. Reproducing the corpus
-
-```
-cd tests/corpora/refactor
-python3 pipeline/build_corpus.py --write    # regenerate seeds + corpus.lock
-python3 pipeline/build_corpus.py --check     # CI: fail on digest drift
-python3 -m pytest pipeline/test_pipeline.py  # inventory + determinism self-tests
-```
-
-The build is hermetic (no network, no clock in the digest, no RNG); two builds
-on any machine produce the same `corpus_digest`.
+1. State the submission/review requirement and concrete source semantics first.
+2. Add meaningful before/after trees, exact per-side sink locators, typed outcome,
+   preconditions and rationale. Add independent source/negative tests.
+3. Preserve full required Java/Python coverage; do not trade it for an easier
+   trivial helper or relabel a measured failure as removal.
+4. Bump the pre-1.0 corpus version for source/contract changes; preserve the old
+   lock and identify its immutable Git source revision. After v1.0, follow
+   normal semantic-version compatibility rules.
+5. Regenerate, check schema/current source hashes/exact inventory and syntax,
+   then run the production campaign. Record the new digest, categories, primary
+   and supplemental counts, diversity limits and invalidated previous scores.

@@ -1,0 +1,1178 @@
+[
+  {
+    "after_dir": "controls/java-injection-inline-method/after",
+    "after_locator": {
+      "call_text": "st.executeQuery(value000);",
+      "callee": "executeQuery",
+      "column": 12,
+      "file": "src/main/java/com/scanipy/corpus/refac/OrderService.java",
+      "line": 18
+    },
+    "before_dir": "controls/java-injection-inline-method/before",
+    "before_locator": {
+      "call_text": "st.executeQuery(value000);",
+      "callee": "executeQuery",
+      "column": 12,
+      "file": "src/main/java/com/scanipy/corpus/refac/OrderService.java",
+      "line": 18
+    },
+    "case_id": "control/java-injection-inline-method",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "injection",
+    "ground_truth_label": null,
+    "language": "java",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Inverse of a genuine called-helper extraction; the multi-operand computation moves back into the caller.",
+    "refactor": "java-injection-inline-method",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/java-injection-extract-rename-relocate/after",
+    "after_locator": {
+      "call_text": "st.executeQuery(renamed3);",
+      "callee": "executeQuery",
+      "column": 12,
+      "file": "src/main/java/com/scanipy/corpus/relocated/refac/OrderService.java",
+      "line": 18
+    },
+    "before_dir": "controls/java-injection-extract-rename-relocate/before",
+    "before_locator": {
+      "call_text": "st.executeQuery(value000);",
+      "callee": "executeQuery",
+      "column": 12,
+      "file": "src/main/java/com/scanipy/corpus/refac/OrderService.java",
+      "line": 18
+    },
+    "case_id": "control/java-injection-extract-rename-relocate",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "injection",
+    "ground_truth_label": null,
+    "language": "java",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Combined genuine extraction, bound-local rename, and physical package/module relocation.",
+    "refactor": "java-injection-extract-rename-relocate",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/java-injection-semantic-literal-change/after",
+    "after_locator": {
+      "call_text": "st.executeQuery(value000);",
+      "callee": "executeQuery",
+      "column": 12,
+      "file": "src/main/java/com/scanipy/corpus/refac/OrderService.java",
+      "line": 18
+    },
+    "before_dir": "controls/java-injection-semantic-literal-change/before",
+    "before_locator": {
+      "call_text": "st.executeQuery(value000);",
+      "callee": "executeQuery",
+      "column": 12,
+      "file": "src/main/java/com/scanipy/corpus/refac/OrderService.java",
+      "line": 18
+    },
+    "case_id": "control/java-injection-semantic-literal-change",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "flip",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "injection",
+    "ground_truth_label": null,
+    "language": "java",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Change a literal that actually feeds the implicated sink; canonicalization must retain relevant value semantics.",
+    "refactor": "java-injection-semantic-literal-change",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/python-injection-inline-method/after",
+    "after_locator": {
+      "call_text": "self.cursor.execute(value001)",
+      "callee": "execute",
+      "column": 21,
+      "file": "refac/order_service.py",
+      "line": 16
+    },
+    "before_dir": "controls/python-injection-inline-method/before",
+    "before_locator": {
+      "call_text": "self.cursor.execute(value001)",
+      "callee": "execute",
+      "column": 21,
+      "file": "refac/order_service.py",
+      "line": 16
+    },
+    "case_id": "control/python-injection-inline-method",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "injection",
+    "ground_truth_label": null,
+    "language": "python",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Inverse of a genuine called-helper extraction; the multi-operand computation moves back into the caller.",
+    "refactor": "python-injection-inline-method",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/python-injection-extract-rename-relocate/after",
+    "after_locator": {
+      "call_text": "self.cursor.execute(renamed3)",
+      "callee": "execute",
+      "column": 21,
+      "file": "relocated/refac/order_service.py",
+      "line": 16
+    },
+    "before_dir": "controls/python-injection-extract-rename-relocate/before",
+    "before_locator": {
+      "call_text": "self.cursor.execute(value001)",
+      "callee": "execute",
+      "column": 21,
+      "file": "refac/order_service.py",
+      "line": 16
+    },
+    "case_id": "control/python-injection-extract-rename-relocate",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "injection",
+    "ground_truth_label": null,
+    "language": "python",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Combined genuine extraction, bound-local rename, and physical package/module relocation.",
+    "refactor": "python-injection-extract-rename-relocate",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/python-injection-semantic-literal-change/after",
+    "after_locator": {
+      "call_text": "self.cursor.execute(value001)",
+      "callee": "execute",
+      "column": 21,
+      "file": "refac/order_service.py",
+      "line": 16
+    },
+    "before_dir": "controls/python-injection-semantic-literal-change/before",
+    "before_locator": {
+      "call_text": "self.cursor.execute(value001)",
+      "callee": "execute",
+      "column": 21,
+      "file": "refac/order_service.py",
+      "line": 16
+    },
+    "case_id": "control/python-injection-semantic-literal-change",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "flip",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "injection",
+    "ground_truth_label": null,
+    "language": "python",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Change a literal that actually feeds the implicated sink; canonicalization must retain relevant value semantics.",
+    "refactor": "python-injection-semantic-literal-change",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/java-path-traversal-inline-method/after",
+    "after_locator": {
+      "call_text": "FileInputStream stream = new FileInputStream(target);",
+      "callee": "FileInputStream",
+      "column": 38,
+      "file": "src/main/java/com/scanipy/corpus/refac/FileService.java",
+      "line": 12
+    },
+    "before_dir": "controls/java-path-traversal-inline-method/before",
+    "before_locator": {
+      "call_text": "FileInputStream stream = new FileInputStream(target);",
+      "callee": "FileInputStream",
+      "column": 38,
+      "file": "src/main/java/com/scanipy/corpus/refac/FileService.java",
+      "line": 12
+    },
+    "case_id": "control/java-path-traversal-inline-method",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "path-traversal",
+    "ground_truth_label": null,
+    "language": "java",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Inverse of a genuine called-helper extraction; the multi-operand computation moves back into the caller.",
+    "refactor": "java-path-traversal-inline-method",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/java-path-traversal-extract-rename-relocate/after",
+    "after_locator": {
+      "call_text": "FileInputStream stream = new FileInputStream(target);",
+      "callee": "FileInputStream",
+      "column": 38,
+      "file": "src/main/java/com/scanipy/corpus/relocated/refac/FileService.java",
+      "line": 12
+    },
+    "before_dir": "controls/java-path-traversal-extract-rename-relocate/before",
+    "before_locator": {
+      "call_text": "FileInputStream stream = new FileInputStream(target);",
+      "callee": "FileInputStream",
+      "column": 38,
+      "file": "src/main/java/com/scanipy/corpus/refac/FileService.java",
+      "line": 12
+    },
+    "case_id": "control/java-path-traversal-extract-rename-relocate",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "path-traversal",
+    "ground_truth_label": null,
+    "language": "java",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Combined genuine extraction, bound-local rename, and physical package/module relocation.",
+    "refactor": "java-path-traversal-extract-rename-relocate",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/java-path-traversal-semantic-literal-change/after",
+    "after_locator": {
+      "call_text": "FileInputStream stream = new FileInputStream(target);",
+      "callee": "FileInputStream",
+      "column": 38,
+      "file": "src/main/java/com/scanipy/corpus/refac/FileService.java",
+      "line": 12
+    },
+    "before_dir": "controls/java-path-traversal-semantic-literal-change/before",
+    "before_locator": {
+      "call_text": "FileInputStream stream = new FileInputStream(target);",
+      "callee": "FileInputStream",
+      "column": 38,
+      "file": "src/main/java/com/scanipy/corpus/refac/FileService.java",
+      "line": 12
+    },
+    "case_id": "control/java-path-traversal-semantic-literal-change",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "flip",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "path-traversal",
+    "ground_truth_label": null,
+    "language": "java",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Change a literal that actually feeds the implicated sink; canonicalization must retain relevant value semantics.",
+    "refactor": "java-path-traversal-semantic-literal-change",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/python-path-traversal-inline-method/after",
+    "after_locator": {
+      "call_text": "with open(value003, \"rb\") as stream:",
+      "callee": "open",
+      "column": 14,
+      "file": "refac/file_service.py",
+      "line": 12
+    },
+    "before_dir": "controls/python-path-traversal-inline-method/before",
+    "before_locator": {
+      "call_text": "with open(value003, \"rb\") as stream:",
+      "callee": "open",
+      "column": 14,
+      "file": "refac/file_service.py",
+      "line": 12
+    },
+    "case_id": "control/python-path-traversal-inline-method",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "path-traversal",
+    "ground_truth_label": null,
+    "language": "python",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Inverse of a genuine called-helper extraction; the multi-operand computation moves back into the caller.",
+    "refactor": "python-path-traversal-inline-method",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/python-path-traversal-extract-rename-relocate/after",
+    "after_locator": {
+      "call_text": "with open(renamed3, \"rb\") as stream:",
+      "callee": "open",
+      "column": 14,
+      "file": "relocated/refac/file_service.py",
+      "line": 12
+    },
+    "before_dir": "controls/python-path-traversal-extract-rename-relocate/before",
+    "before_locator": {
+      "call_text": "with open(value003, \"rb\") as stream:",
+      "callee": "open",
+      "column": 14,
+      "file": "refac/file_service.py",
+      "line": 12
+    },
+    "case_id": "control/python-path-traversal-extract-rename-relocate",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "path-traversal",
+    "ground_truth_label": null,
+    "language": "python",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Combined genuine extraction, bound-local rename, and physical package/module relocation.",
+    "refactor": "python-path-traversal-extract-rename-relocate",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/python-path-traversal-semantic-literal-change/after",
+    "after_locator": {
+      "call_text": "with open(value003, \"rb\") as stream:",
+      "callee": "open",
+      "column": 14,
+      "file": "refac/file_service.py",
+      "line": 12
+    },
+    "before_dir": "controls/python-path-traversal-semantic-literal-change/before",
+    "before_locator": {
+      "call_text": "with open(value003, \"rb\") as stream:",
+      "callee": "open",
+      "column": 14,
+      "file": "refac/file_service.py",
+      "line": 12
+    },
+    "case_id": "control/python-path-traversal-semantic-literal-change",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "flip",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "path-traversal",
+    "ground_truth_label": null,
+    "language": "python",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Change a literal that actually feeds the implicated sink; canonicalization must retain relevant value semantics.",
+    "refactor": "python-path-traversal-semantic-literal-change",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/java-ssrf-inline-method/after",
+    "after_locator": {
+      "call_text": "HttpURLConnection connection = (HttpURLConnection) url.openConnection();",
+      "callee": "openConnection",
+      "column": 64,
+      "file": "src/main/java/com/scanipy/corpus/refac/FetchService.java",
+      "line": 12
+    },
+    "before_dir": "controls/java-ssrf-inline-method/before",
+    "before_locator": {
+      "call_text": "HttpURLConnection connection = (HttpURLConnection) url.openConnection();",
+      "callee": "openConnection",
+      "column": 64,
+      "file": "src/main/java/com/scanipy/corpus/refac/FetchService.java",
+      "line": 12
+    },
+    "case_id": "control/java-ssrf-inline-method",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "ssrf",
+    "ground_truth_label": null,
+    "language": "java",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Inverse of a genuine called-helper extraction; the multi-operand computation moves back into the caller.",
+    "refactor": "java-ssrf-inline-method",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/java-ssrf-extract-rename-relocate/after",
+    "after_locator": {
+      "call_text": "HttpURLConnection connection = (HttpURLConnection) url.openConnection();",
+      "callee": "openConnection",
+      "column": 64,
+      "file": "src/main/java/com/scanipy/corpus/relocated/refac/FetchService.java",
+      "line": 12
+    },
+    "before_dir": "controls/java-ssrf-extract-rename-relocate/before",
+    "before_locator": {
+      "call_text": "HttpURLConnection connection = (HttpURLConnection) url.openConnection();",
+      "callee": "openConnection",
+      "column": 64,
+      "file": "src/main/java/com/scanipy/corpus/refac/FetchService.java",
+      "line": 12
+    },
+    "case_id": "control/java-ssrf-extract-rename-relocate",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "ssrf",
+    "ground_truth_label": null,
+    "language": "java",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Combined genuine extraction, bound-local rename, and physical package/module relocation.",
+    "refactor": "java-ssrf-extract-rename-relocate",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/java-ssrf-semantic-literal-change/after",
+    "after_locator": {
+      "call_text": "HttpURLConnection connection = (HttpURLConnection) url.openConnection();",
+      "callee": "openConnection",
+      "column": 64,
+      "file": "src/main/java/com/scanipy/corpus/refac/FetchService.java",
+      "line": 12
+    },
+    "before_dir": "controls/java-ssrf-semantic-literal-change/before",
+    "before_locator": {
+      "call_text": "HttpURLConnection connection = (HttpURLConnection) url.openConnection();",
+      "callee": "openConnection",
+      "column": 64,
+      "file": "src/main/java/com/scanipy/corpus/refac/FetchService.java",
+      "line": 12
+    },
+    "case_id": "control/java-ssrf-semantic-literal-change",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "flip",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "ssrf",
+    "ground_truth_label": null,
+    "language": "java",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Change a literal that actually feeds the implicated sink; canonicalization must retain relevant value semantics.",
+    "refactor": "java-ssrf-semantic-literal-change",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/python-ssrf-inline-method/after",
+    "after_locator": {
+      "call_text": "response = urllib.request.urlopen(value005)",
+      "callee": "urlopen",
+      "column": 35,
+      "file": "refac/fetch_service.py",
+      "line": 13
+    },
+    "before_dir": "controls/python-ssrf-inline-method/before",
+    "before_locator": {
+      "call_text": "response = urllib.request.urlopen(value005)",
+      "callee": "urlopen",
+      "column": 35,
+      "file": "refac/fetch_service.py",
+      "line": 13
+    },
+    "case_id": "control/python-ssrf-inline-method",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "ssrf",
+    "ground_truth_label": null,
+    "language": "python",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Inverse of a genuine called-helper extraction; the multi-operand computation moves back into the caller.",
+    "refactor": "python-ssrf-inline-method",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/python-ssrf-extract-rename-relocate/after",
+    "after_locator": {
+      "call_text": "response = urllib.request.urlopen(renamed3)",
+      "callee": "urlopen",
+      "column": 35,
+      "file": "relocated/refac/fetch_service.py",
+      "line": 13
+    },
+    "before_dir": "controls/python-ssrf-extract-rename-relocate/before",
+    "before_locator": {
+      "call_text": "response = urllib.request.urlopen(value005)",
+      "callee": "urlopen",
+      "column": 35,
+      "file": "refac/fetch_service.py",
+      "line": 13
+    },
+    "case_id": "control/python-ssrf-extract-rename-relocate",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "ssrf",
+    "ground_truth_label": null,
+    "language": "python",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Combined genuine extraction, bound-local rename, and physical package/module relocation.",
+    "refactor": "python-ssrf-extract-rename-relocate",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/python-ssrf-semantic-literal-change/after",
+    "after_locator": {
+      "call_text": "response = urllib.request.urlopen(value005)",
+      "callee": "urlopen",
+      "column": 35,
+      "file": "refac/fetch_service.py",
+      "line": 13
+    },
+    "before_dir": "controls/python-ssrf-semantic-literal-change/before",
+    "before_locator": {
+      "call_text": "response = urllib.request.urlopen(value005)",
+      "callee": "urlopen",
+      "column": 35,
+      "file": "refac/fetch_service.py",
+      "line": 13
+    },
+    "case_id": "control/python-ssrf-semantic-literal-change",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "flip",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "ssrf",
+    "ground_truth_label": null,
+    "language": "python",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Change a literal that actually feeds the implicated sink; canonicalization must retain relevant value semantics.",
+    "refactor": "python-ssrf-semantic-literal-change",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/java-deserialization-inline-method/after",
+    "after_locator": {
+      "call_text": "return stream.readObject();",
+      "callee": "readObject",
+      "column": 23,
+      "file": "src/main/java/com/scanipy/corpus/refac/SessionService.java",
+      "line": 13
+    },
+    "before_dir": "controls/java-deserialization-inline-method/before",
+    "before_locator": {
+      "call_text": "return stream.readObject();",
+      "callee": "readObject",
+      "column": 23,
+      "file": "src/main/java/com/scanipy/corpus/refac/SessionService.java",
+      "line": 13
+    },
+    "case_id": "control/java-deserialization-inline-method",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "deserialization",
+    "ground_truth_label": null,
+    "language": "java",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Inverse of a genuine called-helper extraction; the multi-operand computation moves back into the caller.",
+    "refactor": "java-deserialization-inline-method",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/java-deserialization-extract-rename-relocate/after",
+    "after_locator": {
+      "call_text": "return stream.readObject();",
+      "callee": "readObject",
+      "column": 23,
+      "file": "src/main/java/com/scanipy/corpus/relocated/refac/SessionService.java",
+      "line": 13
+    },
+    "before_dir": "controls/java-deserialization-extract-rename-relocate/before",
+    "before_locator": {
+      "call_text": "return stream.readObject();",
+      "callee": "readObject",
+      "column": 23,
+      "file": "src/main/java/com/scanipy/corpus/refac/SessionService.java",
+      "line": 13
+    },
+    "case_id": "control/java-deserialization-extract-rename-relocate",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "deserialization",
+    "ground_truth_label": null,
+    "language": "java",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Combined genuine extraction, bound-local rename, and physical package/module relocation.",
+    "refactor": "java-deserialization-extract-rename-relocate",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/java-deserialization-semantic-literal-change/after",
+    "after_locator": {
+      "call_text": "return stream.readObject();",
+      "callee": "readObject",
+      "column": 23,
+      "file": "src/main/java/com/scanipy/corpus/refac/SessionService.java",
+      "line": 13
+    },
+    "before_dir": "controls/java-deserialization-semantic-literal-change/before",
+    "before_locator": {
+      "call_text": "return stream.readObject();",
+      "callee": "readObject",
+      "column": 23,
+      "file": "src/main/java/com/scanipy/corpus/refac/SessionService.java",
+      "line": 13
+    },
+    "case_id": "control/java-deserialization-semantic-literal-change",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "flip",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "deserialization",
+    "ground_truth_label": null,
+    "language": "java",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Change a literal that actually feeds the implicated sink; canonicalization must retain relevant value semantics.",
+    "refactor": "java-deserialization-semantic-literal-change",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/python-deserialization-inline-method/after",
+    "after_locator": {
+      "call_text": "data = pickle.loads(value007)",
+      "callee": "loads",
+      "column": 23,
+      "file": "refac/session_service.py",
+      "line": 14
+    },
+    "before_dir": "controls/python-deserialization-inline-method/before",
+    "before_locator": {
+      "call_text": "data = pickle.loads(value007)",
+      "callee": "loads",
+      "column": 23,
+      "file": "refac/session_service.py",
+      "line": 14
+    },
+    "case_id": "control/python-deserialization-inline-method",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "deserialization",
+    "ground_truth_label": null,
+    "language": "python",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Inverse of a genuine called-helper extraction; the multi-operand computation moves back into the caller.",
+    "refactor": "python-deserialization-inline-method",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/python-deserialization-extract-rename-relocate/after",
+    "after_locator": {
+      "call_text": "data = pickle.loads(renamed3)",
+      "callee": "loads",
+      "column": 23,
+      "file": "relocated/refac/session_service.py",
+      "line": 14
+    },
+    "before_dir": "controls/python-deserialization-extract-rename-relocate/before",
+    "before_locator": {
+      "call_text": "data = pickle.loads(value007)",
+      "callee": "loads",
+      "column": 23,
+      "file": "refac/session_service.py",
+      "line": 14
+    },
+    "case_id": "control/python-deserialization-extract-rename-relocate",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "deserialization",
+    "ground_truth_label": null,
+    "language": "python",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Combined genuine extraction, bound-local rename, and physical package/module relocation.",
+    "refactor": "python-deserialization-extract-rename-relocate",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/python-deserialization-semantic-literal-change/after",
+    "after_locator": {
+      "call_text": "data = pickle.loads(value007)",
+      "callee": "loads",
+      "column": 23,
+      "file": "refac/session_service.py",
+      "line": 14
+    },
+    "before_dir": "controls/python-deserialization-semantic-literal-change/before",
+    "before_locator": {
+      "call_text": "data = pickle.loads(value007)",
+      "callee": "loads",
+      "column": 23,
+      "file": "refac/session_service.py",
+      "line": 14
+    },
+    "case_id": "control/python-deserialization-semantic-literal-change",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "flip",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "deserialization",
+    "ground_truth_label": null,
+    "language": "python",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Change a literal that actually feeds the implicated sink; canonicalization must retain relevant value semantics.",
+    "refactor": "python-deserialization-semantic-literal-change",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/java-argument-position-change/after",
+    "after_locator": {
+      "call_text": "st.executeQuery(value000);",
+      "callee": "executeQuery",
+      "column": 12,
+      "file": "src/main/java/com/scanipy/corpus/refac/OrderService.java",
+      "line": 18
+    },
+    "before_dir": "controls/java-argument-position-change/before",
+    "before_locator": {
+      "call_text": "st.executeQuery(value000);",
+      "callee": "executeQuery",
+      "column": 12,
+      "file": "src/main/java/com/scanipy/corpus/refac/OrderService.java",
+      "line": 18
+    },
+    "case_id": "control/java-argument-position-change",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "flip",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "injection",
+    "ground_truth_label": null,
+    "language": "java",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Swap two actual arguments of a uniquely declared helper; operand/binding order changes the returned query.",
+    "refactor": "java-argument-position-change",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/java-helper-return-change/after",
+    "after_locator": {
+      "call_text": "st.executeQuery(value000);",
+      "callee": "executeQuery",
+      "column": 12,
+      "file": "src/main/java/com/scanipy/corpus/refac/OrderService.java",
+      "line": 18
+    },
+    "before_dir": "controls/java-helper-return-change/before",
+    "before_locator": {
+      "call_text": "st.executeQuery(value000);",
+      "callee": "executeQuery",
+      "column": 12,
+      "file": "src/main/java/com/scanipy/corpus/refac/OrderService.java",
+      "line": 18
+    },
+    "case_id": "control/java-helper-return-change",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "flip",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "injection",
+    "ground_truth_label": null,
+    "language": "java",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Keep call site and callee name but change the returned expression; callee semantics must affect identity.",
+    "refactor": "java-helper-return-change",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/java-parser-failure/after",
+    "after_locator": null,
+    "before_dir": "controls/java-parser-failure/before",
+    "before_locator": {
+      "call_text": "st.executeQuery(value000);",
+      "callee": "executeQuery",
+      "column": 12,
+      "file": "src/main/java/com/scanipy/corpus/refac/OrderService.java",
+      "line": 18
+    },
+    "case_id": "control/java-parser-failure",
+    "evidence_type": "analysis_failure",
+    "expected_failure": {
+      "must_not_resolve": true,
+      "stage": "parse",
+      "visible": true
+    },
+    "expected_outcome": "failure",
+    "expected_preconditions": {
+      "fixture_syntax": "invalid_after",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "injection",
+    "ground_truth_label": null,
+    "language": "java",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Deliberately malformed after-source; parse failure must remain visible and must never resolve or suppress the prior finding.",
+    "refactor": "java-parser-failure",
+    "required_strength": null,
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/java-two-call-chain-sink-1/after",
+    "after_locator": {
+      "call_text": "st.executeQuery(value000);",
+      "callee": "executeQuery",
+      "column": 12,
+      "file": "src/main/java/com/scanipy/corpus/refac/OrderService.java",
+      "line": 18
+    },
+    "before_dir": "controls/java-two-call-chain-sink-1/before",
+    "before_locator": {
+      "call_text": "st.executeQuery(value000);",
+      "callee": "executeQuery",
+      "column": 12,
+      "file": "src/main/java/com/scanipy/corpus/refac/OrderService.java",
+      "line": 19
+    },
+    "case_id": "control/java-two-call-chain-sink-1",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "injection",
+    "ground_truth_label": null,
+    "language": "java",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "A multi-assignment computation is moved into one called helper reused with two distinct argument contexts; this case selects one exact sink occurrence.",
+    "refactor": "java-two-call-chain-sink-1",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/java-two-call-chain-sink-2/after",
+    "after_locator": {
+      "call_text": "st.executeQuery(secondValue);",
+      "callee": "executeQuery",
+      "column": 12,
+      "file": "src/main/java/com/scanipy/corpus/refac/OrderService.java",
+      "line": 21
+    },
+    "before_dir": "controls/java-two-call-chain-sink-2/before",
+    "before_locator": {
+      "call_text": "st.executeQuery(secondValue);",
+      "callee": "executeQuery",
+      "column": 12,
+      "file": "src/main/java/com/scanipy/corpus/refac/OrderService.java",
+      "line": 23
+    },
+    "case_id": "control/java-two-call-chain-sink-2",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "injection",
+    "ground_truth_label": null,
+    "language": "java",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "A multi-assignment computation is moved into one called helper reused with two distinct argument contexts; this case selects one exact sink occurrence.",
+    "refactor": "java-two-call-chain-sink-2",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/python-argument-position-change/after",
+    "after_locator": {
+      "call_text": "self.cursor.execute(value001)",
+      "callee": "execute",
+      "column": 21,
+      "file": "refac/order_service.py",
+      "line": 16
+    },
+    "before_dir": "controls/python-argument-position-change/before",
+    "before_locator": {
+      "call_text": "self.cursor.execute(value001)",
+      "callee": "execute",
+      "column": 21,
+      "file": "refac/order_service.py",
+      "line": 16
+    },
+    "case_id": "control/python-argument-position-change",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "flip",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "injection",
+    "ground_truth_label": null,
+    "language": "python",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Swap two actual arguments of a uniquely declared helper; operand/binding order changes the returned query.",
+    "refactor": "python-argument-position-change",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/python-helper-return-change/after",
+    "after_locator": {
+      "call_text": "self.cursor.execute(value001)",
+      "callee": "execute",
+      "column": 21,
+      "file": "refac/order_service.py",
+      "line": 16
+    },
+    "before_dir": "controls/python-helper-return-change/before",
+    "before_locator": {
+      "call_text": "self.cursor.execute(value001)",
+      "callee": "execute",
+      "column": 21,
+      "file": "refac/order_service.py",
+      "line": 16
+    },
+    "case_id": "control/python-helper-return-change",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "flip",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "injection",
+    "ground_truth_label": null,
+    "language": "python",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Keep call site and callee name but change the returned expression; callee semantics must affect identity.",
+    "refactor": "python-helper-return-change",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/python-parser-failure/after",
+    "after_locator": null,
+    "before_dir": "controls/python-parser-failure/before",
+    "before_locator": {
+      "call_text": "self.cursor.execute(value001)",
+      "callee": "execute",
+      "column": 21,
+      "file": "refac/order_service.py",
+      "line": 16
+    },
+    "case_id": "control/python-parser-failure",
+    "evidence_type": "analysis_failure",
+    "expected_failure": {
+      "must_not_resolve": true,
+      "stage": "parse",
+      "visible": true
+    },
+    "expected_outcome": "failure",
+    "expected_preconditions": {
+      "fixture_syntax": "invalid_after",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "injection",
+    "ground_truth_label": null,
+    "language": "python",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "Deliberately malformed after-source; parse failure must remain visible and must never resolve or suppress the prior finding.",
+    "refactor": "python-parser-failure",
+    "required_strength": null,
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/python-two-call-chain-sink-1/after",
+    "after_locator": {
+      "call_text": "self.cursor.execute(value001)",
+      "callee": "execute",
+      "column": 21,
+      "file": "refac/order_service.py",
+      "line": 16
+    },
+    "before_dir": "controls/python-two-call-chain-sink-1/before",
+    "before_locator": {
+      "call_text": "self.cursor.execute(value001)",
+      "callee": "execute",
+      "column": 21,
+      "file": "refac/order_service.py",
+      "line": 17
+    },
+    "case_id": "control/python-two-call-chain-sink-1",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "injection",
+    "ground_truth_label": null,
+    "language": "python",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "A multi-assignment computation is moved into one called helper reused with two distinct argument contexts; this case selects one exact sink occurrence.",
+    "refactor": "python-two-call-chain-sink-1",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  },
+  {
+    "after_dir": "controls/python-two-call-chain-sink-2/after",
+    "after_locator": {
+      "call_text": "self.cursor.execute(second_value)",
+      "callee": "execute",
+      "column": 21,
+      "file": "refac/order_service.py",
+      "line": 19
+    },
+    "before_dir": "controls/python-two-call-chain-sink-2/before",
+    "before_locator": {
+      "call_text": "self.cursor.execute(second_value)",
+      "callee": "execute",
+      "column": 21,
+      "file": "refac/order_service.py",
+      "line": 21
+    },
+    "case_id": "control/python-two-call-chain-sink-2",
+    "evidence_type": "structural_comparison",
+    "expected_failure": null,
+    "expected_outcome": "stay",
+    "expected_preconditions": {
+      "fixture_syntax": "valid",
+      "purity_certificate": "proven",
+      "transformation_validation": "valid"
+    },
+    "finding_class": "injection",
+    "ground_truth_label": null,
+    "language": "python",
+    "observation_subject": "corresponding_sink_slice",
+    "rationale": "A multi-assignment computation is moved into one called helper reused with two distinct argument contexts; this case selects one exact sink occurrence.",
+    "refactor": "python-two-call-chain-sink-2",
+    "required_strength": "strong_strong",
+    "seed_id": null
+  }
+]

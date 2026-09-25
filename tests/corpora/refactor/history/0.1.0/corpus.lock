@@ -1,0 +1,1493 @@
+annotation_methodology_ref: annotation-methodology.md
+built_at: '2026-05-24T17:52:12Z'
+built_by: corpus-agent/CMP-CORP-REFAC-01
+class_distribution:
+  deserialization: 12
+  injection: 14
+  path-traversal: 12
+  ssrf: 12
+classes:
+  - deserialization
+  - injection
+  - path-traversal
+  - ssrf
+corpus_digest: sha256:0750651a2d915dbdb672993b2a41d644f893f5e7407d260e5e28054b3f4e50f6
+corpus_id: CMP-CORP-REFAC-01
+corpus_version: 0.1.0
+distinct_topologies: 8
+ground_truth_method: 'Synthetic seeded-vuln bases (one source->sink slice each) transformed
+  by deterministic refactor functions. Ground-truth label per refactor is derived
+  from a documented slice-preservation rule (annotation-methodology.md), not hand-assigned:
+  should-stay refactors provably preserve the backward interprocedural slice; should-flip
+  refactors change it.'
+label_distribution:
+  should-flip: 100
+  should-stay: 250
+language_distribution:
+  java: 25
+  python: 25
+languages:
+  - java
+  - python
+pair_count: 350
+refactor_count: 7
+refactor_taxonomy:
+  aliasing-changing-extract: should-flip
+  alpha-rename-local: should-stay
+  fqn-move-package-rename: should-stay
+  genuine-fix: should-flip
+  independent-reordering: should-stay
+  pdg-only-formatting: should-stay
+  pure-extract: should-stay
+seed_count: 50
+seeds:
+  - before_sha256: sha256:9fe25a664af2c3ca0412183eef0c00c56972c188035513b50ba190a4fba1c5e3
+    class: injection
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:d0346bb5bb72a2f35273fb9b033258aa4c12bbb44015241a1de9ae15dec5100f
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:f9d4d86b4351d7dace021dabf50f828fe4a3c84175c19226dafa650c527c4e83
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:102ee341cb82f9c194776d6a03ffbc1442f12fa25f207244972fda6534a85b95
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:09faca38b90c663fbb791514d1c21f45584e415167f4d19d7063627630a5c938
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:09c39556ba039bdd50c4d5114f5b72ad7aae6b7b7cbdc7366829a3d25a75bd87
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:3627b0be595eddde338ac2e370b7a3cda0561636d57aa2ebb40b3d5f40ef8a53
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:5efe9f5aa80323124b994e0c4d600a868e13841f32c1ffac775910e988881959
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-001
+    sink_file: OrderService.java
+    sink_line: 16
+  - before_sha256: sha256:61f316edff1f2a2c4a5e95942669d934aadb2a8b1ff8661a2afc257b0250edbc
+    class: injection
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:a1ffb1da94ef41216cb14f7d30959636dc6dc28c73fd770eaba616fa186f411f
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:b77f4115d108ef794297b8ff45edb4e1e4b4618e32c701a2a450b5d606476af9
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:288d38fe8fb4fcee088c0421525e358b5a5b54f73a5056e5a5c39d2c52b4531e
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:a6f7889ed70a54a4e104737aecd242af12b846dcbf9bc289e914c57b50f0f972
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:b009387e37bb128eba50cafd8f64556be7c58215ae44b9d638f9e36c735aa5a2
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:9eba4166e2435a00479fbbfdd5490adfee7b1e12328b8ac551ecafff451d6467
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:e44fecf0d45d60a3ea36f9b23e60c6ca0d193879c2843d00f31b4b19545312bc
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-002
+    sink_file: order_service.py
+    sink_line: 10
+  - before_sha256: sha256:9ebe490542ebd8d2a8aea78c50078c6cb8dae0c001ba9ce0e2303de5ed9da8f1
+    class: path-traversal
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:714056f4f529a4527cd0aab767a86933999cb92a01f1f57133f7082bcdc5c66e
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:ab8303954cad1fe06763357a0d64bb619e28dc148f0e9f6f12de15b3cb16bf8d
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:ea79cedd84fa40cf2a1de10c86a93946486dd2929e0fbcbba229f42aa46a2fb3
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:ea881af26bb4a7a52d0563d6dc0cb82327fe0419050d1a539aadb770ef5577e3
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:262fe5cde666cf9e462d3be2a3348b34660729372aaa7484b2ecdc81f8bd5582
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:0eb110258d558172ef4a5e38c34f946e84bbaaf610bc56f18d00be7b5c2243dd
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:6ebe2b7382eeeaafd393a182d193e513f8eeac0ba388dc0fe9afa614241c4d1d
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-003
+    sink_file: FileService.java
+    sink_line: 11
+  - before_sha256: sha256:c9c17cc6e68161d4ea522ab7ce821b92f09458e4071548baf5a6df7ea443db7f
+    class: path-traversal
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:ac9e75a9ca16b208e4c56ea38ae403a2197a7010d76d23d6b44be6aedc934ae3
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:6ef9c7bda8ebbd0c9dd9a28db8a8db28132a0c0c85a1e6a5e512cdcf3cbcc14c
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:8560615ebcd9588fc463ee005685db8cd18e5f20881a86595860e4402faf8d5b
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:6efb8c03cb22d3e1c4135389763c0430373faddb47ed8da26d740c49e1edcb70
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:f0eab2c9d03f3bc97078997457d98a5198950966da335f91e312eb2d11e35c10
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:f20d04232752422a224c842c39d4457ae39d0ba20918a1e8739bd25dc5b04885
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:dc191d2288f696ba098140523e2daa87d2a2a43cd46657701b007fa60ee3be08
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-004
+    sink_file: file_service.py
+    sink_line: 11
+  - before_sha256: sha256:7a6533869660c759733762a184716a7d48c73ae3d91877965a13e2ee5951f989
+    class: ssrf
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:2981a604dc99548b59bb4a3276dbfb4c0db2c34783e83aabdcac99b23568eb45
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:63b5879f1ded66046522004d81b805664fcc3af41067b06b1428ee3c82552cf2
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:2c33bb347b588eea87dd4d609daba39265555183553caf9f1840e8691d888ef8
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:983e217594286302a37a9677f83166c93559785471e6bcc86ab83f4c7c355947
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:8023df6305dc1d580032f022d22c2e4653a42351a321f9c451bbf426c7cd5af3
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:8fbb1c0d8c270dc93ffd8b45c1d4ac2c25fb7f3134e78c1d86c38b855d2689af
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:9de55d7ebfc18927ab046f0aa4db48e2748841c18f0fea673d8bb4b7ed8851df
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-005
+    sink_file: FetchService.java
+    sink_line: 9
+  - before_sha256: sha256:348980b5ba902efd58e4e1cca3f8c72974f4d4b0bf6b56003c2f423e18ea19a7
+    class: ssrf
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:385de2ab4b96e6fbfa1e973047b3a0c7b199ba28c7523071571e815903bce239
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:b963922789a5619a278ac847824bc0e61da0c7febca2e673c6c2f94087207f47
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:0763e1eb03a5c69d2fe072c26bb86d95df35e9a3e86a48a831bc69b698758bd0
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:2bdd7e6bc729b679f058a31270c3a6f4835fa895d7c9f9e3fd959a4366156bb5
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:e7e405e11c55e01d99c446cd262ea356a6bb12179d56acecc959220a08e88a0f
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:4b8d5b36bb728210434dd74a1eec1973ae643eb9acfcb7a91422800f428de582
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:c0cc00daf5db5c3c864e9ed07d422b64de3866b22876ba6e77b4288fab970ee4
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-006
+    sink_file: fetch_service.py
+    sink_line: 9
+  - before_sha256: sha256:8f8cdae90b31585ec89f06ade302311367d60827a0f6fdee0ca1e9d7bd385511
+    class: deserialization
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:0da981a4923b4a04abd4d4b4d4ffd3ecc2fbd82f02c613eae9ea8b967f23f7f5
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:3e9b301faaaedbae0217418811f22c2f367fadd02fadcefc2409f4ebf0070ea2
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:472a3a2d5f25af2507fe1a2f65b4b868e250a90e8074b31915098c6c27b7e3ef
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:067061d313962b6fe82ab3928a188a02943bb57ef7ae16b6d2151577b3013b94
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:b3680ca3e4ed6b9a1eb7dcb39a65887786afee563b7aadc918700113b92a57ca
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:99d4e4036a4692fbd52071d1f98581fe0ab382617bc043175388c2700b2587d1
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:09f771b9d0696139fe80dcccd4ed842df8f6ec224e7ec12a0774bbcc2ed06756
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-007
+    sink_file: SessionService.java
+    sink_line: 10
+  - before_sha256: sha256:f8bd0fc2e548a23a0a4a6cef99e6328bdee736738eee97c25e97bca484ac6503
+    class: deserialization
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:36aa69d0444dd4ebb18d9fcb26dccd1887dfaff96c9f0feb07b3552842604649
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:7c28596c1928ced398479be8d166d952a348885a84580264f279a510bb2a043e
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:662cd4b0894e75e0788eb1933e9daf6f5371b009a35ec1442528e2e3e13691e6
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:404eb9e08c2d8a19d2064d64e33b11cfb305f6583336122c37fcc2494bac2d7c
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:a0b036fb9c460f3f6775befbb204fa260d9beef5ecb41bdf582061fa6b9447ca
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:66b774c5eec97853fd856e279128adc8a2e914d73cce09fee1b5f3fb6001701a
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:ef834985c726a03c876a8f57ebff89729e76168d550c82a65f3a62dfb9683c22
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-008
+    sink_file: session_service.py
+    sink_line: 8
+  - before_sha256: sha256:4804ea3bcfd93b282ae45d96dafd5ad957f3897020795ca893ac691ae61f1d31
+    class: injection
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:d0346bb5bb72a2f35273fb9b033258aa4c12bbb44015241a1de9ae15dec5100f
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:385b096a13c99b826ae9b07d3d41c0b4c664430b12bc5e1c8f26eec866597a33
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:a0f1b0c18ecf44cc918a033c5798cd32fff55b2abc70ede62c30dd1d3b076fd0
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:c9c8a3e037bed6192fbb39a82965d6bfe0a4c21088844d2da003ee7891b05c5e
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:df91bec7ee7dc3e883774845355d3e551e3f96ec21a433c6e2243efda1f204a2
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:83afd7547dc5ae8918c8bfca3c87a184f4d3d491d38a89e5ba247be8be459a00
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:77a4eb579bd56bb5cb4b014ef05a48363b329c2f3afe2b42291567a293e397f2
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-009
+    sink_file: OrderService.java
+    sink_line: 16
+  - before_sha256: sha256:9b44d9bd327839b788d9b1794869d245ab8cfdf4e7de7003ea0d23f3b7e13580
+    class: injection
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:a1ffb1da94ef41216cb14f7d30959636dc6dc28c73fd770eaba616fa186f411f
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:0e741d82f28e0c49b5d332700788b1033465d066b0f8dc3a9f3093bd6c963e04
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:a99218f9b56c0e26c190fbd1f7aa0bf3f445c00e914e1834d85aac1c9e577d9d
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:c07cc41a07d3d5f220488515282182361cd12634e5d8147c289c67624768bcab
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:6ea076b20c9e4fa4727f788aab5f96f1f18b63d7f1cec60f60d809df6dcfdef8
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:1d3bb8511ab5318da5807021b31ac8ce55a701be4c86c2ad336c1cd8c957b4e8
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:1238a5c0fa3559585117a7206b549aa6922b384c64ca261562aab34e0add7094
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-010
+    sink_file: order_service.py
+    sink_line: 10
+  - before_sha256: sha256:7ba480c7bb695c83db902b1bc95ba1ef22261d09ee5996f8de7c2e992f68c6ad
+    class: path-traversal
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:714056f4f529a4527cd0aab767a86933999cb92a01f1f57133f7082bcdc5c66e
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:c04c411ac9788fbc570b4f90c2bbb0d02cdcd1bc0ae49e5966591e24dfa3ab70
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:b5db76da126a61f5b5110dff743120ad65867317523a7a97749201ec14624dbe
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:502a2345eb9ba161f0c18c53f0f00a01c65ca7aa7dff5d8e2dcf0274a4dc10cc
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:8b5d9b2ac7b938026c40974f4ac19f2c873580e5425f8d3ed2968e218a538758
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:13bf3a8b667849a90dff4651407cf2f233d39652a11c9d53d8da427ee18d2d67
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:a0344d90dcb0311c6f0a17083bd9f2f6f3ef8079754a4dbb3331f6cad20f171c
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-011
+    sink_file: FileService.java
+    sink_line: 11
+  - before_sha256: sha256:0e59e016a35e19964c2b69e3c2d2fb826b16896fb82d43028b5600a31bbb0243
+    class: path-traversal
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:ac9e75a9ca16b208e4c56ea38ae403a2197a7010d76d23d6b44be6aedc934ae3
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:7a8f6adc5ca94ab795720dd46fd6a2e2fb97ae66522bb136fc9074787c5a41b0
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:a6f062a663b7c41721f038ff500ec956ed870d8ee266d060d78a7c776a0a2917
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:70100edb5fc1fe54759eeefafa9a49eb8355fa29b703f1b1e6c1668094d52cb2
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:f4eff3f7ee4a0306dbf256ae257804b5aa4ef5fbb70821aa4b87b931468bf290
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:12a61bdb89f60aa37a87847b35931a4f82c8f251adf013fe974bd0f7b3c9a4c3
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:534b68ad46a94262fa3fc6d1487dad80e6932c34e77dc6ec2de8dacc2646e328
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-012
+    sink_file: file_service.py
+    sink_line: 11
+  - before_sha256: sha256:5a3ce1bcf83ac0e3591dfbfecdd3168801dea6276c1506b75030ff1e979ae3bb
+    class: ssrf
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:2981a604dc99548b59bb4a3276dbfb4c0db2c34783e83aabdcac99b23568eb45
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:48c6c2b61ccabc563b89bf8bebf0e453900191a8f4ef711c38e3396f8d4a48f1
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:e0a3203aba4b5e69f465c14d53cd72b5e535dc7705dc1fdeabd88f3034b5076b
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:97a51fe587ccc9fd636614afd2b6f7574f347c85f6043c397648213a9337e0b7
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:abf1f0ef155ba997dc43f448e53cf6726a4895b650f1f50898e5f882ef12194d
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:ec26d435ff1dfc6f84ab9a34cf96265d48e60904b805cd120980259895eec9af
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:b7b9180a5499f433781fd35328f88113d3db5d7447a462b3c391d845420555bb
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-013
+    sink_file: FetchService.java
+    sink_line: 9
+  - before_sha256: sha256:99814062dfe9c61b78ca2200680b27fcebef7c3df7c7cb64c6e4cae5c93e2046
+    class: ssrf
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:385de2ab4b96e6fbfa1e973047b3a0c7b199ba28c7523071571e815903bce239
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:9c9931380a3dabe8cf957b835ae38818184c3228e6d1fbdf9cb9cc8bb929e493
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:90116652e28cfc0c8a0691cf9a363390e37272abc32afff7c66a197bcee9809e
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:80074ead6b2a325da914ce60b688fcbbff72ea012027cb980f6273924fdb8aad
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:9c499e6204bf80586382b137ee540ba9094bf6de9218a97bb02add1ba7642671
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:c3b18157326479fe7f849744dc39441572faf697092c939ddb71c32fc6bd8919
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:64ebad706a143b259448fbc2a16c457601e20bd8ae638f1e1130fc92533af2f7
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-014
+    sink_file: fetch_service.py
+    sink_line: 9
+  - before_sha256: sha256:7ca1a5f5ae14ed27e74073fad79310dabe2884bb6cb65a92cb1a056afcbd0f50
+    class: deserialization
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:0da981a4923b4a04abd4d4b4d4ffd3ecc2fbd82f02c613eae9ea8b967f23f7f5
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:9c5037a3f00b9b905b99980784a7fcd95b04b481788b573a021eddf1bdda56ec
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:1dcb5dbf2d3327f59dee504df181710742ab3b666baeb9b9f30ed2b9aa2ea572
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:1fe17202f8997871458d8296d345f146880adae63fc17e10abdb208d36e45a6c
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:b5fd6b9c319d604dd8e61628a033e1d6e2f463719e4100f4f1ac4343fdd09659
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:d3d3e29d36a3e28c9981650ad3d9db2d5a0607cdd0af2476e0ef7e7556ef887d
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:a506a8642479912034ca57e8d74b9fa3e819a7928890a5dae2087e5cb1fdacf8
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-015
+    sink_file: SessionService.java
+    sink_line: 10
+  - before_sha256: sha256:b9e1abbf3ad4d8e58165477171ee7807bb03fcf22621544b0aa8611fd29685db
+    class: deserialization
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:36aa69d0444dd4ebb18d9fcb26dccd1887dfaff96c9f0feb07b3552842604649
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:cbb0a5c2e98ccabf1033a12f4769fbc68104a236e344131814a7dcdafcbbaa38
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:005540913f46d02e670231c19feb04f2cd356a65dbba66f7bc27dad05f8917d4
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:593faa6501fddb260dee49279b7c8e102e77cbd17d315278ae0dc761bd15730a
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:ba06f43059176009f80ff8107cfbb3bd7938ee874dd7c199844dd1295731f240
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:fed8212f7e272c277b034d5c5077eb645df1fd2c44e915887d673f18bf0c54f2
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:168ff20c2f5427845d23baf40112a0edd7e6bba55a2341e510ec583f9f504fd9
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-016
+    sink_file: session_service.py
+    sink_line: 8
+  - before_sha256: sha256:7f03171bde8540fded33629890e1b8569e156c3a9c617c0e4bc738480dd3b270
+    class: injection
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:d0346bb5bb72a2f35273fb9b033258aa4c12bbb44015241a1de9ae15dec5100f
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:af57ccbe861cc028b7068b7e7d145c8b252f761df3ffc1fc94b31d47184df04d
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:6555f4e27fa6e27f3be5acafff09301c3469297bd956bc203728a7580d46b8c1
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:979ba780304ed70a205689d0d8e7cd7eef62876cd5efdd87ff9fd9fd25b31687
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:081f7260c929cf497e58043b7b60a3deb033a9feeff0231af8fecca8ac219818
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:7bf00ad62a309f18970e966af7c7f441449480e69b793f2f485544e5f7f08985
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:a327825034dd19830357c5b9818ca6b558373c34f75e6f58636f78435ac9628e
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-017
+    sink_file: OrderService.java
+    sink_line: 16
+  - before_sha256: sha256:7d5e0049fc4dbaac04e836ae862568f026d34c79a05abce4c286da701ff481c5
+    class: injection
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:a1ffb1da94ef41216cb14f7d30959636dc6dc28c73fd770eaba616fa186f411f
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:f97c648805e2c318bf86881e712c61302e266ea9037e2e8da623ee425815d1fa
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:baad65ec166e904c29b9b721099ccb3ea6a526cf6805e3ce10233415b144c762
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:8da170e06e1a286a3741e1d6594e4508f59746cae3d5e901cbc23ca11f7b3626
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:2bedb03abd257a9426b1d2ad444dbf01e48f99ed333fe2a4f15b198c68d4e437
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:2fa1ff02cbe8c63f2a465379a15875dfe7a406112efb1ff297fe50158a11ccae
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:ef9bb95d6f0e7b1a5b539ee22761b697d35b45d561e4efbd22ec7468ce82a3e8
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-018
+    sink_file: order_service.py
+    sink_line: 10
+  - before_sha256: sha256:a316c05ca210e70097bde23ae8051938c1f4783ed52aacdd3bc07f8faa99cc10
+    class: path-traversal
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:714056f4f529a4527cd0aab767a86933999cb92a01f1f57133f7082bcdc5c66e
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:62b66bad5e6e6923b01e37e335d25648e53fd9f047ade8a140a2a9c3b717826d
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:f21042bd116f87fcaa725daf50a394f86f1e8da8849b4c1a21574416ecb8c4f6
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:b92dc7d28a3f5dfece5082a5ffdb3dde816bfc7af279d076f17e9e5569304ab6
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:9c6427bb55ca3cc2973083c8b19d19e6ba24108e3b350f321cf9c9d24304a60f
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:38f72355260b63b5c236032fd076ede01f389ee58a3a87f384c13a12ce3b2fa0
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:cde041877470d18a20483884441c85f11410531f6ea673e95cacbc5ddf231ad0
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-019
+    sink_file: FileService.java
+    sink_line: 11
+  - before_sha256: sha256:00796b0451db3ab8c7c68978de39a8f43913f3bfd7014d21dc0bd0b0e610ae4e
+    class: path-traversal
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:ac9e75a9ca16b208e4c56ea38ae403a2197a7010d76d23d6b44be6aedc934ae3
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:fb5e1736747c592260b61ba9916c3b0c0ac042873e07cecac3eb9c98d1d1cfc7
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:dfb1bc1bcbfb1d6b3aaf08f42aa60063cee01683fc35428ce1ee74c8f9c90d0b
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:12cb540a3645f2ef7d7acaa68b4e805e94431ea3a36a78e15ac429bc3833edc1
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:703bf977a3f9024aae6f8db03f19fa8a9b843eb9b27e81ef33bbcbbc6a8148da
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:30017bc46dd17102a5b8dd8b59196cb309c4135694da2225985ca878974cf86c
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:a2b312e4a303367580e8bf6f8b31d725f03175785fc592d54374402504d08e75
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-020
+    sink_file: file_service.py
+    sink_line: 11
+  - before_sha256: sha256:1e33025028f94573b36b93060983e08e8749099924673e23dffd94038d5b9179
+    class: ssrf
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:2981a604dc99548b59bb4a3276dbfb4c0db2c34783e83aabdcac99b23568eb45
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:9105e5341638f7ecaf48cb385bfd8fb42f640ca38add608fee9c3fbf6a6919d8
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:27572a4604ab113df09117152d4048571082cc126028829a312bf05a07d92417
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:817b7107f0b5d93155c418b782875b089e67a206a65af3dfdd8c79918f541eb0
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:5fabf27260a1b81c80b1d89101bf9103e10292cd73c32a143a68e23b7b120518
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:6dad80a0c9ca9ed7a8fa601f2bf90a39871acd0b09677ec389f0f707a8e086fb
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:8923020e231c57a02c95ba8b6f324d5e8f1d1d45d07eccabada4d9fef1ad4eda
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-021
+    sink_file: FetchService.java
+    sink_line: 9
+  - before_sha256: sha256:7f3e4c53ba40c63239f75eeac7f7ec5ab206960bbd34fa552e3fbeb51ebb1312
+    class: ssrf
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:385de2ab4b96e6fbfa1e973047b3a0c7b199ba28c7523071571e815903bce239
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:26b755e44fad31f6c51f83da2492c2aa73a3b4e9e9a630a5220902af1240c78d
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:73d3b11904de35fff1271dc56f66b0d1bddb151a4ba421dcc7e268f90fa1318d
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:f2259e1cba5eab73161054e00ef5ee67ac73557cf5811f3a4daf498ebe6967de
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:925a80c492b6c92a8ae8eda952ad7ad9e71992fa836c735764167b83a4985c69
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:ab37dd0e70f076d1d07957c751b7097521351379a64cd561933231d3ae4d3aef
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:28b7a11fbf6ae170a750fc863dc9f3b4a100ef428ceee325eb837efa9e93bb4f
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-022
+    sink_file: fetch_service.py
+    sink_line: 9
+  - before_sha256: sha256:ccb39a6f2ac4ddd4dab565e2cd056de14abc0a6a640723a1cda8fd4205134a65
+    class: deserialization
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:0da981a4923b4a04abd4d4b4d4ffd3ecc2fbd82f02c613eae9ea8b967f23f7f5
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:b8faedd74911cbbdc6e53d395e73f0c829bc5dd7182a9122f560dc04b35c4f37
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:c57a49e2ed4ec446f97cadf90944c719222323248de43c16fbba7c5e4263d1cf
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:6b92e3c33fc4263e9229aab29ea524336be03ffc4ccbea433ec593b52ca4eecd
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:17581884f39b39cb808ce7d3a1d33c8a3bc6d7530d39a294736a8065133b4c44
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:147c65a5e916e44d13c3a0a12d9eb6ecc2efddbb05c650a8cf4f3a68d5e40172
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:84cda30d6b37e97076ac76a7deefdac0eb2ce067f6d8334589aa7b11ad153d31
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-023
+    sink_file: SessionService.java
+    sink_line: 10
+  - before_sha256: sha256:944540e1c1336c3b1c69e2a2b8af1f9e1ed52e9647fc5178996a82a63aa9e73d
+    class: deserialization
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:36aa69d0444dd4ebb18d9fcb26dccd1887dfaff96c9f0feb07b3552842604649
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:26825d2b989d45deaf3ff0df7b5a64b94fb2972a488173d6b276ef6182cf5a88
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:dc3866f3b6069f4a68879467c2280037b11a292e5611362f26cc6492bbef93b6
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:8c18045a4fc7ef11b48758fbfee92d54be51800a5b47c7340bd5dd4e96a54885
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:e9c01e0e5040d321074f0df9f5869d380a48503f51243cf9113772cd4b51deec
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:786ca79d6a85b433d25e9b93bd6b34788f91b89d6c7e2488175d8d941eb2553a
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:1d9e2b18e4d39ab734844bd140547c6ac4cdc651b488753d5cd7688e1de4bc0c
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-024
+    sink_file: session_service.py
+    sink_line: 8
+  - before_sha256: sha256:fe9dfc630334d18d9d6450129b1c8909224a1bed33bf73a892630ba54d9d9ede
+    class: injection
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:d0346bb5bb72a2f35273fb9b033258aa4c12bbb44015241a1de9ae15dec5100f
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:bf6e76f41f4346d2f329f0ddcd6af9a869687cd66162a0a1c5f36449e37108fc
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:2814124189057a69d63bcae93356b4a6c19d201c97572fb6a34b962af77e0328
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:504319bbfa3f52b112a361a2b48c594e01e6542fefb7ae5acc9cfd24832f5e1f
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:82a9ae0cb12e3dcb5deb9b144a1af58c49da28b835eb4e84b02a1369457d886a
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:851e290727f6ebe1dae66cc394402d33aadc3dc421c70c6076681dce7ad77e7e
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:e8e713e8d0262b48397a60ba4d717c02f680f8f5d2d325c02967de4144a7dc78
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-025
+    sink_file: OrderService.java
+    sink_line: 16
+  - before_sha256: sha256:f026b8967c00687b5304029fa1a794eb74a89cf8af0d675b806065e75a70551b
+    class: injection
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:a1ffb1da94ef41216cb14f7d30959636dc6dc28c73fd770eaba616fa186f411f
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:6ec96ed04407228b4f5ddfc4bcc008b08b5ac69fbdb2ad9391e2a29c1015814d
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:cfaa777b0eb00f39d4c4b5536871c63d406f9edf7527aca1a9d1242702b6262f
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:f8e5c95fe7dc0ebd13ea9f28d5a8c47ea2bc7fadc66faee1994cd8904cac6adc
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:fc5e8af260f7f8a2589c9d523127e130993804a9c7f27da63dd6b8130d7440cc
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:76db70fedc5db17ae04947681ab5a6a904f3dc1a4a702cdc57fb4ce1bd2027b6
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:080213c24aff0790ac22cbb867d6c69775c0fd0ee81184d69465c4b9f19c4c8d
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-026
+    sink_file: order_service.py
+    sink_line: 10
+  - before_sha256: sha256:a5cf1ad51f22e8c7a5a67405c4fc7fa8ee9a57de286dddc004a880fb1e8b0b9d
+    class: path-traversal
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:714056f4f529a4527cd0aab767a86933999cb92a01f1f57133f7082bcdc5c66e
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:8fe272c2d9cf1daa3a2257eac29f439a3a86b0f9f56d5a7abf33bffbd45f755f
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:680d9459ecb7f2e1a3ec9f406ada1a490e45db91a85b08dcdb53724d4984bfb7
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:706566e26547f7ed46d5cfd6b4b47a42a471794c6b822879f15e60d97ba7b6ae
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:b76a4d4edb9e75e6bf73076ba595f48c1459a9a49869c8411717e7a747d58399
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:ee77ef02cd65b5bd91c099d1f6387552573fec682fe472b560676eabf32e5df0
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:e53ce64bb50b21e8ed9f2fd8dac4c354ca9c4eb066c2179abe95693578c4e1f4
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-027
+    sink_file: FileService.java
+    sink_line: 11
+  - before_sha256: sha256:e8bc93608feb4cb8e31d4089daad4dc5d60c7251def2e46c44cfe714e5c8f6be
+    class: path-traversal
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:ac9e75a9ca16b208e4c56ea38ae403a2197a7010d76d23d6b44be6aedc934ae3
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:f80d0821264d79a13d0d70cf5041f549eef4c442f8b401291aebc727e11fb7ee
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:d3c38f3b0fddcc341076fb0b3081ae3d4417a5bff7e4ccfb113f477c7cf1ea2d
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:fd607fb9576fb8ab71912ba8b2983dc73346b9215d8f6a57a27dff9379328259
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:a36cb0db56319578f5edfbbbf9208bdffedf8ff833032856b4eda208c629607a
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:88c28c36b170a653c80e67996ae4db2f1262105b4b482a3b0f7d5a2e94b7b0f6
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:ad87d248d216dbd3b63a3c106368d9437fe050ee750e781f517b61ff366b5ed5
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-028
+    sink_file: file_service.py
+    sink_line: 11
+  - before_sha256: sha256:2d7fa3eb1d81518f28d0fecf6e46589d7e74121676b91a81cec1237c7c562065
+    class: ssrf
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:2981a604dc99548b59bb4a3276dbfb4c0db2c34783e83aabdcac99b23568eb45
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:7b5bda58c4909efa8abfa5e1cefe859d7005f8ed8bc9129ea04d7bc15bf6acfb
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:7936423a83069f10dd3544ba674f66e2932320f987530452700242d1fa5dc17a
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:89f670b18f714dcc902b7c846a830285e378b1e2f1448b6389771489dd652de6
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:07f1e7bc8b7e429cf51006df57a390fcfedc657bb8ca6837bb00a1bea158ff40
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:ef2afb324087877908b9c752bd0338e8eb41d8806893cf5e4f74041e517bfc70
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:42aa04d8355f323851a8cd53209d49cefa9d7e419f7df7d762439bcd0ae703c1
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-029
+    sink_file: FetchService.java
+    sink_line: 9
+  - before_sha256: sha256:171471790f0228aa31cf477d9753716f9d1ed4694dad77bfd9f8367b4363da8a
+    class: ssrf
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:385de2ab4b96e6fbfa1e973047b3a0c7b199ba28c7523071571e815903bce239
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:23a5dbceabc325b2e380dd5aef6817000ee08a97dee3dcfa6e38def372c3ab74
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:e7e4dbe91040d91330de98ff2207ed6be790cd67ac6903de3325431dc6614f91
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:2113d1f684887ead78761d1221d7af06f3169126f83c9f16064e2ef5751058e2
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:bac28df4ec936ebfb6301821810e05c35a154552e4c0352817fc248d3534516f
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:453faa372fa40a5799080b51e425a23c31bd87ddeec2eaf63dfbecbed20eff71
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:cd84a266ddc953613e6ef728d4a6fccb057bad2719bd1d7e7d22d664ff6828a2
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-030
+    sink_file: fetch_service.py
+    sink_line: 9
+  - before_sha256: sha256:aab135d4d77c5c019ea0d39058797783cd827cb8261af865b4d37b885f48c828
+    class: deserialization
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:0da981a4923b4a04abd4d4b4d4ffd3ecc2fbd82f02c613eae9ea8b967f23f7f5
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:686951d9fdf5262dadae19e07c6bac16810bcf96f9c49f2f68eb14e5ecf8e62e
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:52f620a874a7c6824dd5786487d792c387d92fec3591aa6a4753a550e7068c5f
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:a95bc7460b17eee2d79a497a90fbcc7a73697699caf5e990725a4b86b5061e06
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:d7b3a9e54dbf69a77905328a92e749e85b19d52887bc9f0820e3836f0c43bd04
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:ab40c6d795718a0ae726161bae445eed3fc1d9241beced8e8f420f1e547e287a
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:90339d67f7aa2b2d1e5e9a8d2eae768ce8cc3cc0b2633aae65c5817212bdcd50
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-031
+    sink_file: SessionService.java
+    sink_line: 10
+  - before_sha256: sha256:a3398458b7e823b9d1c17bba3d2d13bbcffc37b5c29b9eeec9a634e4d8a510fd
+    class: deserialization
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:36aa69d0444dd4ebb18d9fcb26dccd1887dfaff96c9f0feb07b3552842604649
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:172935d3a158276d7935a469b978630b6c910c987c98cd604e86c7009fab85f2
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:79527f6d1bfe3fb71ec9a6554332bf6fe78f9c581a94248e929093d0ff5ddcd8
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:f39ebb4e3807abe3e2d3c7abaccf195106817d9716b408016f75e6a38897a534
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:54bc72d07e4f3ef95ed0f351b37850fda0149161725261a44233df38df20b449
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:1baae38f34fdca5f27d956f1f599707ebdc448a8d2ee621c5ba2c1dd296cdbf2
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:fbfd9c5f218e556efe5b3ac038947a6d94c62b0c07753119a134bff75ce58693
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-032
+    sink_file: session_service.py
+    sink_line: 8
+  - before_sha256: sha256:95d3f0aa8b3a1cb0c88c4fbe9d6840cf02389533c6f171d9348896f89b576f48
+    class: injection
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:d0346bb5bb72a2f35273fb9b033258aa4c12bbb44015241a1de9ae15dec5100f
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:a9272f79b064a5e385431ecf1e1c69f36462760d2d51f217255e055984068efb
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:59f2929e42611783ab25607fea7a446f831dcfbaef2e7009537bccdb0ae73a07
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:fb6540aa3564b78119b75a4541bcf74f4d1ede7a684cd0b6d39335ed971ee0c5
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:0d754ca91bec6c68671ff4fde11d6ba02bdb5b05c17d7db9bdd93320f27c0645
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:87ac9548ceb2c7a8cc941afa5c1661cf52c86baf4024a6cae20ba7b0f0aa08df
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:aeca09e28b6ed1fba57c3e514798bc906f7e8944b1e9c670ed8373c1eb2f2663
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-033
+    sink_file: OrderService.java
+    sink_line: 16
+  - before_sha256: sha256:9c5067c55f007b503ead96b8d34e3516981b01283e51c60800a179a274365ad7
+    class: injection
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:a1ffb1da94ef41216cb14f7d30959636dc6dc28c73fd770eaba616fa186f411f
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:8d07faf10c9314f08ac65bc2b25a1a00656b64fef30dd848473fc1fea795da58
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:aa911dc3c2f59a9e14856cfd866c8ea1580c8cc05ed2ca658caa8dff728dcc98
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:c5ac7a3bc09ea7d96aa36b4669f69e740f657b940eb8f0c17acb80c2e5b62159
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:e397b0fcffba392f67a876f1f87f96a731bf90c428b2d9b223c2e2cef117c3df
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:78289aed9ca5a3e78dce488dc5cccdf497ab5bde600c1c164dff67ab466a353d
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:fe65cf757e21e05bd7f5b0c2a040780027afbda5780d9fe4e2f91046ab2e3c54
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-034
+    sink_file: order_service.py
+    sink_line: 10
+  - before_sha256: sha256:9e28fd557ae811076122da8984ed086015a009178dd2455ff0eed68f08556d6f
+    class: path-traversal
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:714056f4f529a4527cd0aab767a86933999cb92a01f1f57133f7082bcdc5c66e
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:e43b29ea1b23082c574dbfcf57939f12cafcd0f93400700e60a73220d2881c74
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:651b2b5b0f08353b470175e6e932a1610c87915e7ed023e648166b57e2ddb945
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:95b41a4eefd3f763f5c53cfafcdd8a0f367897a387277190f9f2ccbc3f8200bb
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:577dcc63d1c57ba91492062db9f9cf234cf5f99d968607a8e9278f7e56e4de9f
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:62a1d8de92020c23b8f4659e7020542a225f4446cc88db79a700ae000d946cd8
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:8932b600b82e361b0106d36228daa1c7827ca7a7fa417e571b36fca54b117392
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-035
+    sink_file: FileService.java
+    sink_line: 11
+  - before_sha256: sha256:2fb68c48cf7343d66bc343c1e8f85c05a48b8ba1a4a711bf4c571a186f8530d1
+    class: path-traversal
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:ac9e75a9ca16b208e4c56ea38ae403a2197a7010d76d23d6b44be6aedc934ae3
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:3f2ec17e9881e9e39c27ca27382eec3a60bbb311d2fc876119c4ebe273f830ba
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:ef4db45a9dbe76a4b1f68ea554bf47f12f1f2fa0989e28126f38ffd184117fcd
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:227dd58331a5291909de8006c64136ddb2cdf5181df3f0292392a85b95212b6c
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:ae6005341ab06e25a958e7415b0997b90673a835e2ed45d1b8255f71d6fecdae
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:a5d8e5c291696826f8406eb935f2bbb8fdb874ef32e600ecd7f724427967a48b
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:501bdb7fabc6ad760ac75bcff8b9536fa7e72b3d69feafea40b166392fd68a71
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-036
+    sink_file: file_service.py
+    sink_line: 11
+  - before_sha256: sha256:ae7ff6a26b69ef39e441a3ee890d304b9d490c534202c1acf583b65fe170464c
+    class: ssrf
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:2981a604dc99548b59bb4a3276dbfb4c0db2c34783e83aabdcac99b23568eb45
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:c1ed1669b6329c95a4cd4783c48184f6be474a5697558ad45e16d901ff70a56c
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:9b687df8b946af7e98b567c1a69ab010f30bf3d4b61d641f9780a21f96fd5a31
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:1ecd64854ccf6fca1b3085f6c144f07e2d2c58336c33ceca0f42ff0116185efd
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:fa19fa84f5e8cee590f5d0a806e6af407000c443b9e409804703f8f499de7a54
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:a1fe180434c3589fd32b9bbdbc67d577e1aa8450dc3a1bb6e1c8e476f90bd76c
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:921af2e6917b83d26d73c04437014bcb044d88c18cefa5bebc669a459296e319
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-037
+    sink_file: FetchService.java
+    sink_line: 9
+  - before_sha256: sha256:c5fd2c44d1ccc489d8cab86856589d6b4779348f1324a03a2aa4f5488742a19b
+    class: ssrf
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:385de2ab4b96e6fbfa1e973047b3a0c7b199ba28c7523071571e815903bce239
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:b9890e5ba6f83967e82fbb69c30ed609a997bca5a884683ef599706145bf30b9
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:5af38a4e514a75b4990de7ab2963faaf151c5f90dd2e60dc2ea4c7ad1bc825bc
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:bf37964ed4fa01db54c32076b14bcbf183f1839e7d070a635b1fe056b66e39e6
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:f391e40a559ae95bf83918d99f7a3a9378ea373d33201a1113867b601a6e6e30
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:03f30f0729c4ed74e44022b408fbcc5d6f6586cbdc5d1fc5a650ad425c593dca
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:427890b309c25a180b265e02ef02cc6373fe9b399653d20474a32149ec3c82b1
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-038
+    sink_file: fetch_service.py
+    sink_line: 9
+  - before_sha256: sha256:df8bf18602cee902da2c1e97e5f26cee0c13e4de5dfe1c270fc9e214eb399ca9
+    class: deserialization
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:0da981a4923b4a04abd4d4b4d4ffd3ecc2fbd82f02c613eae9ea8b967f23f7f5
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:331dfd6a810091379541a4efb6759d781a3ea30d6c04b6ed55ae36af835fd29c
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:2f2ea6cc7ca3eefb3abd70c88216d6378dc943794ff109436f33954f626101b8
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:950aeaa8a90a92fc67acb69e49a545b56ecb2e973ff0308dd3cf1e706a8132be
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:b4a828e19cd256d268b9e4ddbfde99f1e6eebd63d3e74c116eebde9cfb206e75
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:c0c5607abd4291cf77775a9533f86ac9bf1d1696932161140609d8cf3043e823
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:b1543f6fd64cd95ee9d36fe364100004a178ab7971b5ee3e81c781d2042a92c7
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-039
+    sink_file: SessionService.java
+    sink_line: 10
+  - before_sha256: sha256:ad22a1f0146b4bc9ee1059a5f76914e045c0f287184b27914a5d617e2e95b5a0
+    class: deserialization
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:36aa69d0444dd4ebb18d9fcb26dccd1887dfaff96c9f0feb07b3552842604649
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:2ba3af14eb144354e7e145793d13bb09800d4c57dbe15c99ee1c09ac9e92e635
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:7d72208e65645c9a82064473ed3fa1496118fd99f3edd4e602f60a79a4db5a06
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:b78a6988ac75f875a4225977e77081a6f0cd4cbec9e8b0352af7c1d92d3e6f07
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:7973cc353840d648a9ab111b5588aa4bd85d1f6aee1f97f820e782cc575adcb1
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:290cedb56dc41f30593a11665d0be07506ab74fcb0da252325df4716afc4508b
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:55fc35f815999060aae56bcdf8e7c6ee8d1148dd6ab2aef245116dd6698f9a95
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-040
+    sink_file: session_service.py
+    sink_line: 8
+  - before_sha256: sha256:942151440d774d055f35601f9476f8627a11a5bd3a3cd9e9ae1285e2fdca14f5
+    class: injection
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:d0346bb5bb72a2f35273fb9b033258aa4c12bbb44015241a1de9ae15dec5100f
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:f9489088e19256121af1d7ff9443c6c4f917b9bc4043bed574e420e8f1b22118
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:aef62f8fe67e6d99c6963eed274889ff882a48bab6941363621f582ef23a13ee
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:b1c0b86f1dc3cb1108e7ffc77e55e8cbfd04e93cac7e03526323f9412d39ecbe
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:e51c83ebb059e41871938ef9b0744caa1a7ec46f8193a488b2a9655ca98a75d4
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:cab128dbc7ddd7f55da2987081080b2c99357e3a15e378dde685a5cfeb962181
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:6b30034d6b5c3965de59b5f2289675727db0d3ac772160e9afabef7622b7d13a
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-041
+    sink_file: OrderService.java
+    sink_line: 16
+  - before_sha256: sha256:ad002475b1a564964fec04f2aa0544ad267ef6415a994696598f27d2b4436e40
+    class: injection
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:a1ffb1da94ef41216cb14f7d30959636dc6dc28c73fd770eaba616fa186f411f
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:f7c716f8430c1c41d8fc29f5d4bb3882627ca0b43ec2fb51e01ec4433fd4578b
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:2c8b53130d07c5fe3dbf6a714125e0c6826d55dfaebdcbed3f8a768d744199f6
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:f176139d689f94f159ef11ee36b350abdee67b5a580a6611f5ba5d84ebb9ec37
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:ecd94247303078697e10da92a62b54eb20aa0c2dd2412ff03b567086fa1ee17e
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:67e8a5c8a81fa88a06e9ad9960780948b584ec583bce1a5cc073fe7b8fbf73e6
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:7866d1b534ddf0e94b6fb3b68a2a04988e906f48f69a1847d617c0d4ebd407d9
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-042
+    sink_file: order_service.py
+    sink_line: 10
+  - before_sha256: sha256:6ab067a473b3f94b2b4de7e056ddbcd78d1ab25a7c53449ed544134be8322dbf
+    class: path-traversal
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:714056f4f529a4527cd0aab767a86933999cb92a01f1f57133f7082bcdc5c66e
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:73e7108e4271a925f99cabbfe9754f024144c641f4eb0bb799476c515009a37b
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:2e724f7bbff1c12abbe952058cc5086e68a3cbc0cc94ba5a03d8e2fda9cc652d
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:7eb798f7c5746a969873d46f5df72f99a6001b685538173e78be67879b8bec44
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:15592406b72e1602335c794e00540f94205eab188a935b083120412039f162c7
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:7397db112f85e6394489d3ebc36927d3fca780683b68df8dad146dcd80afe0a8
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:bd6f25175b0001d31420b53feba6ca94c8f61c3fad07c7eb9b4a54fb7adc9116
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-043
+    sink_file: FileService.java
+    sink_line: 11
+  - before_sha256: sha256:3299427df9ba10c11fb7ba6cdcdf4780b2be118092c9507ca14bb1e5e0fc621b
+    class: path-traversal
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:ac9e75a9ca16b208e4c56ea38ae403a2197a7010d76d23d6b44be6aedc934ae3
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:7eda7e4af023292dc5e483022d87911cd391d90f1d0b4a92de4e7a665a9b6b0a
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:e69b95b4e653ef130933636783129b7a5190e162355ab93c11b31c979d5ea271
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:f7622f29765be136513afa69c03470742d94335018c8392651fdf2bd9c783ded
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:dbbc426482a5dab55b36334de8506e5b9e06736c2b9b6db1848bc7d8b4b99f2a
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:64c62c6d6fc315088564f678fadd22fea96358c6183b55894e756c0717c42c17
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:df5acd2c74442c5643c3c55cf18edd14c2a3f2b252d0ff0695ea515764ce0025
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-044
+    sink_file: file_service.py
+    sink_line: 11
+  - before_sha256: sha256:4fb43a805ae6200d12725ec550c5c9ec0797ff3ebf9c379764caf4b835a28a92
+    class: ssrf
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:2981a604dc99548b59bb4a3276dbfb4c0db2c34783e83aabdcac99b23568eb45
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:527595b50e3ba249f1933b872d6575035c8dac7b023157ea73a0cff8a04a17db
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:4406d7f5bbbc790517d26af0f1c89a7d2d69d9e3046858b7ad6f2a0367b4aafc
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:7029d1c4e9cd876ec6d3f40d9702e8e1d072fbb8e8b97761d8aaccf5ef0c294e
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:f88bb271c25406a97dae176305c2736f74eb78065f25d8fea6b36201983466c5
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:493752d5cee9d6b93ad0abaa0e5c35b4f1fd0ab332e00b3459bd8924651dcdbf
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:fa103dd4e98c08b50d9b5f493726b75f3dee7696632d5e971b38839e7f37d52b
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-045
+    sink_file: FetchService.java
+    sink_line: 9
+  - before_sha256: sha256:bbf3f1775f8c98a5cb8b544a1fcfc11196812f4f6e84be9a5f56fdc7f689300a
+    class: ssrf
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:385de2ab4b96e6fbfa1e973047b3a0c7b199ba28c7523071571e815903bce239
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:d946a256ddc419535c00e35bcd402573ae988c8919193782f8ef2888f54a0f8a
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:4a314bb2fbf8844e8bfadf42425319a47a921f62cd7ca379cf62382d800849b5
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:7e92f2d24e5c43d1ceba8237765836eb3d4d0fef780d2f56f460e398e35f622a
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:38b115e2d9f0a6b3e6a537206e29c8b7a9ca48159450dd54a4653a43f20bd450
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:74e4febeaaa28cb94d069fb21d4f436350b7c15a18c46ae196ced853cf4e83c2
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:d51d41d8d9012cfb08ba15f267be321470e993e873097fb1ae99f3675b750c36
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-046
+    sink_file: fetch_service.py
+    sink_line: 9
+  - before_sha256: sha256:964fd53845764aa8ffd2f86a1be48fad2fd2e4328c96f61195930a3ad41552f4
+    class: deserialization
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:0da981a4923b4a04abd4d4b4d4ffd3ecc2fbd82f02c613eae9ea8b967f23f7f5
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:ca08c44da7afbd7b206f2da203e9678f7f3d12c840e5fdb608c5b11b744d2afe
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:b53415a994f97d3861b5c4d9f792178cc9e1f293470d103ae6a2b330f5a176c0
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:487cbe72c482cc165a362620f19ea32a2b081ac437e9cacf3fca92b15be3c85a
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:58f72e39b2c238b0bbb216502867916578b370854b5ab91813c9bff0e5881a2a
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:bed2d54131c48a0a071cf6ab1222e5c57881f1c47b3f28fa547d1e5608914959
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:bdb39bb6d6e02665d7065181dfa77609dfa309628af4a496fb21b576d706e781
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-047
+    sink_file: SessionService.java
+    sink_line: 10
+  - before_sha256: sha256:b9380561cd8c1156c36562102359dc4b58ae02f3b7975583dc92e955cba21c37
+    class: deserialization
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:36aa69d0444dd4ebb18d9fcb26dccd1887dfaff96c9f0feb07b3552842604649
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:1ea6367dbeb6aa0cf1be27f443a72c26fb0329103830635223da1e4b1e0a1d76
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:60a1daf8be16f3ff7b33d1182aab707f4b548faa6a954d4d36288fa96fea26ec
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:60e0fef76f148e49985fbdacb91a217ccc6016d25c90d0ebc5f45dfa6d627204
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:25d49d05c983554ce2852e1378ce718c4027a2c7e8e16a07e2333f4cb7e663c3
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:f0f8a3b3a4f383a0779c64a8c018246b1f168a981ec3ff2e0ddd5d8b1b38dbf4
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:67d25977f004a6fbd23d05a6d4b09e746b9d9c0282f7ebf7db2237875ed5f871
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-048
+    sink_file: session_service.py
+    sink_line: 8
+  - before_sha256: sha256:154e989de387c93863018bd4ea36003c8ac07217ba741d3f2d107482f58245ff
+    class: injection
+    language: java
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:d0346bb5bb72a2f35273fb9b033258aa4c12bbb44015241a1de9ae15dec5100f
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:9308f9d1f86cfd08e58cea97517694f97822151062d6901b11514419f274dc64
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:640b27d5afd3fc8d6779a15f7f9ac10a73277ab3b7672df78153a38147ef334f
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:035b8680482e2023ac2029d078836724cf882ce9a161b98eaa4271e431f7481b
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:40296e5d776c0020f0027e53710272bf2655a57dec59a374c6fdc12bde204a1f
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:d2eab32e96ce21cd75a3b2e6c4e249aa3d93502871b78cb1b93a1f705e978212
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:78479ad8a880d473a85dd286bfa3e746f68c1a5008d05b0e6e524aa0e45bac4f
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-049
+    sink_file: OrderService.java
+    sink_line: 16
+  - before_sha256: sha256:8ab55821e834781acf91f641333b0d66fefbc0b92add311df302e06978a9a77e
+    class: injection
+    language: python
+    license: Apache-2.0
+    refactor_pairs:
+      - after_sha256: sha256:a1ffb1da94ef41216cb14f7d30959636dc6dc28c73fd770eaba616fa186f411f
+        ground_truth_label: should-stay
+        refactor: alpha-rename-local
+      - after_sha256: sha256:b4007554536a042d7d1a75ac1b941e17d2ba21ab4016c016bd2aa83cd11c9dab
+        ground_truth_label: should-stay
+        refactor: pdg-only-formatting
+      - after_sha256: sha256:90384a4fb3e587dfed8a7f97d1616fb222c2a85424f4b5e9a135b7876ed362e6
+        ground_truth_label: should-stay
+        refactor: independent-reordering
+      - after_sha256: sha256:8319a65a6269229aac3f97cc222a6cf221d5b2da229b6d9b6bcc8d3f80a33d1a
+        ground_truth_label: should-stay
+        refactor: pure-extract
+      - after_sha256: sha256:4d997f5b27dcdbb4d52dc020d290c1fc4b3538bcc75838fb277f177855664b1d
+        ground_truth_label: should-stay
+        refactor: fqn-move-package-rename
+      - after_sha256: sha256:3e4315e73d92b2d4b767ef8000ac4acb71914096212b27d0dc5ca76b1c45d4cd
+        ground_truth_label: should-flip
+        refactor: genuine-fix
+      - after_sha256: sha256:62406a82884ca29f347080eb3b2ad7889a79ea6ff5c68e2785fc5b7735097d98
+        ground_truth_label: should-flip
+        refactor: aliasing-changing-extract
+    seed_id: seed-050
+    sink_file: order_service.py
+    sink_line: 10
