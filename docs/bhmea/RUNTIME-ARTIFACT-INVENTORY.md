@@ -191,11 +191,23 @@ group/other write. Ancestors follow the same policy except the literal `/tmp`
 directory, owned by root with its sticky bit set, is allowed; the selected child must still
 satisfy the strict root/descendant policy. This does not allow a user-owned
 sticky directory or a group-writable development checkout. No `resolve()` or
-symlink-following stat is an admission step. Reject observed
-device/inode/type/mode/link/size/mtime/ctime/owner
-changes. Read through EOF, match the complete expected inventory and recheck
-directory observations/membership before success. Stream file content; never
-buffer a 128 MiB object. Close every held descriptor on all paths.
+symlink-following stat is an admission step. For ancestor traversal chains,
+final equality checks exactly device, inode, full mode (including type and
+permission/special bits), UID and GID. Ancestor nlink/size/mtime/ctime can change
+because of siblings outside the measured inventory and do not alone invalidate
+unchanged measured roots/runtime leaves. Preserve all nine internal stat fields
+in every recorded chain; apply a private identity/security projection only at
+the final ancestor comparison, not during recording or safety checks.
+
+Every measured root and descendant still requires complete membership and exact
+FULL nine-field stamp equality (device, inode, full mode, nlink, size, mtime_ns,
+ctime_ns, UID, GID). Both executable/worker leaf observations likewise retain
+the full stamp and actual content hash/EOF checks. A root present in an ancestor
+chain is also independently subject to that full measured-root check. This is
+not a `/tmp` error exemption, retry or suppression of a `changed` failure.
+Read through EOF, match the complete expected inventory and recheck directory
+observations/membership before success. Stream file content; never buffer a
+128 MiB object. Close every held descriptor on all paths.
 
 The initial helper targets CPython 3.11 on Linux, matching the current two
 worker profiles. Its exact `PosixPath` component snapshot is deliberately
@@ -203,7 +215,8 @@ version-specific; unsupported path implementations fail closed. Other Python
 versions/platforms need a reviewed adapter and tests, not a permissive fallback.
 
 Final deployment must use readonly immutable code/runtime mounts. Permission and
-stat checks do not protect against hostile concurrent host root/same-UID writers.
+stat checks do not protect against hostile concurrent host root/same-UID writers,
+unobserved ACL/mount changes or changes between the finite observations.
 The helper does not execute/import any measured file, follow loader-selected
 libraries, run `ldd`, install packages, spawn a process or contact a network.
 Shared libraries outside these roots, Python prior imports/mutable globals and
@@ -277,3 +290,41 @@ dependency integration still follow. No installed production loader/profile,
 Docker launcher, trusted operator keys, native scan, image build or stage
 rehearsal was created by these tests. All runtime/controller/consumer TODOs
 above remain required; these file fixtures are diagnostic evidence only.
+
+## Ancestor equality correction — September 25
+
+Root approved this narrow contract refinement after reviewing the original
+279-line contract, actual measurement code and retained controlled diagnosis.
+An accepted-main preparation run originally had 72 pass / one `changed` failure
+in `/tmp/scanipy-runtime-inventory-main-focused.xml`; its exact changing
+ancestor was not established. The unchanged 73-test repeat passed separately
+in 0.671 seconds and does not erase that first result.
+
+The independent controlled fixture then produced six pass / two red in
+`/tmp/scanipy-runtime-inventory-peer-ancestor-red.xml`: adding an unrelated
+sibling file/directory changed ancestor metadata while measured roots and
+payload bytes stayed unchanged. The assigned implementation agent reproduced
+the same unchanged external controls in
+`/tmp/scanipy-runtime-inventory-core-ancestor-red.xml` (six pass / two fail).
+This concrete reproduction, rather than an assumed cause of the first run,
+justifies the explicit ancestor-versus-measured-object equality distinction.
+
+The correction owns only this contract, runtime_artifacts.py and its dedicated
+unit tests. Existing no-follow traversal, `_safe`, full root/leaf stamps,
+entry/read/deadline accounting, exception/interrupt handling and public/wire
+models are unchanged. Final selected unit run on Python 3.11.16:
+`/tmp/scanipy-runtime-inventory-core-ancestor-final.xml`, **99 passed, zero
+failures/errors/skips**, 0.868 seconds. The 26 added controls cover sibling
+file/directory changes under outer/installation/runtime-only parents, retained
+full chain observations, all five protected ancestor fields, a real safe-mode
+change, and timestamp-only changes on roots/descendants/both runtime leaves.
+The unchanged external eight-case reproducer passes after the correction in
+`/tmp/scanipy-runtime-inventory-core-ancestor-green.xml` (0.191 seconds), including
+its actual ancestor replacement and root content/membership negatives.
+All original red reports remain retained separately.
+
+Scoped Ruff/format, strict module mypy and diff whitespace checks pass. The
+three files are frozen for independent correction review. No broad suite,
+hooks, commit, remote update or native execution was performed for this
+correction. No new controller authority, full R16/#400 acceptance or protection
+against hostile root/same-UID mutation is implied.

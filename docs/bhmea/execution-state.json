@@ -45,13 +45,17 @@
     "The DAG expresses milestone acceptance prerequisites; explicitly assigned hermetic build-ahead may proceed with unmet verification dependencies, without claiming them satisfied.",
     "Evidence targets are planned locations; only evidence_paths records retained actual evidence.",
     "No full task, claim or shared gate has passed. Corrective board ownership was reconciled on 2026-09-25 after transient GraphQL failures.",
-    "Revision 10: reviewed foundations through main 6ae30df include #401 stage/handoff documentation, #402 Git containment, #403 legacy app containment and #404 Semgrep parser after exact-head successful reviews. The foundation-merges README retains all heads, checks and the initial #402 checklist-only review failure. Narrow #395/#396/#394 Done is not full task or submission acceptance.",
+    "Revision 11: accepted main 6f1ebc8 at 17:20:34 UTC includes #405 Revision 10 documentation, #380 R05 producer and #406 source custody; local evidence cutoff is 17:29 UTC on 2026-09-25. Exact-head checks/reviews are linked in the foundation record. Narrow #392/#395/#396/#394 Done does not complete any full R-task, claim or gate; #362/#378/#374 remain open.",
     "R07 lifecycle-generation and R16 implicit Java execution/coverage gaps are explicit follow-ups; no production continuity policy or corrected G0 exists.",
     "The earlier canonical session-limit failures are preserved. Recovery was observed: #390, #382 and #389 subsequently had successful exact-head APPROVE actions and merged. Remaining candidates still require combined-head tests and their own successful canonical review; no failed action is accepted.",
-    "Local-only #378 and #391–#393 checkpoints are not merged acceptance evidence. #394 at ed55bfc passed1840/51 full, normal push, all seven remote checks and successful canonical APPROVE before PR404 merged6ae30df. Keep parser limit revalidation: root disproved the optional review suggestion's frozen-dataclass immutability premise. Merged Git/app containment includes the package-copy correction but no image build or user app/DB rollout. Source custody c5eaa472 preserves reviewed authored bytes with fresh combined full1710/51, not remote acceptance.",
-    "Local #397 preserves three red reviews: 13 failed negatives, eight later closure/wrapper failures, then four root scope-multiplicity/order failures after intermediate controlled passes. Final raw source74ab0618 has root/corpus approval with387 selected passes,206 independent projection passes, root four negatives green and full2469/51; normal commit/current-main/remote gates remain. #398 transport d3ce731 has130 focused on3.11/3.12 and1774/51 full; #399 inventory integration309 focused. None establishes native or production authority.",
-    "Local #400 includes reviewed inventory/loader and pure renderer af75910: combined accepted-main/transport/loader/renderer full2298/51, normal renderer commit hooks and the same288 focused tests in author/root/corpus runs. Earlier loader235 focused/1793/51 full remain correctly scoped. Remote gates, trusted current-anchor factory, durable journal, kernel readers, real Docker controller/recovery and operational authority remain unresolved. R05 at652f1ee passed combined full1700/51 but awaits normal push/remote gates; no native campaign or corrected G0 exists.",
-    "The owner confirmed this development machine for the Docker presentation. Selected 13:21 UTC host observations identify capacity and current resource pressure only; no stage budget or G3_STAGE criterion is accepted by that confirmation."
+    "Local #378/#391/#393 remain separate from merged acceptance. Source custody #406 now merged at6f1ebc8 from b005eaa with identical tree2a9d914d, 1958 passed/51 skipped, actual CI/Gate3 and successful canonical36165792723/APPROVE5836441907. Its first procedural REQUEST-CHANGES36164994933/5836335604 is retained; only title/body scope, actual CI links and prep-test mapping changed. No gate bypass, historical AC completion, actual acquisition, DB seal or runtime authority follows. Earlier source1710/51 belongs to c5eaa472. User app/DB remain untouched.",
+    "Merged #404 parser remains limited to observed data and unverified coverage. Keep limit revalidation after the disproved frozen-dataclass premise. Typed #393 at83b9ec6/tree01ad138a incorporates accepted6f1ebc8 and passed2103/51; actual push was running with no PR at cutoff. Prior0929e47 full2039/51 and successful push remain attributed to that older head.",
+    "Local #397 preserves the projection's13,8,4 genuine negative-review failures and corrections. Earlier500 checks and2469/51 full belong to prior heads, not the new seven frozen uncommitted compiler/declaration/raw files atop e6c4a2e. Compiler scope approved; raw six genuine UUID coercion failures were corrected at source2a1043b0, with root126 and corpus128 passing overlapping focused selections plus scoped approval. Current combined full/commit/remote and actual native/model/authority/durable acceptance remain pending.",
+    "Local #398 at7dccd5e/tree7791ee03 integrates accepted6f1ebc8 with all ten authored files unchanged; current full pending at cutoff. Priorc2c2078 full2211/51 and d3ce731 transport130 focused on3.11/3.12 plus1774/51 remain historical scoped evidence; the prior deadline failure is preserved. #399 inventory integration has309 focused passes. Neither supplies operational acquisition or authority.",
+    "Local #400 d51c5f3 includes reviewed inventory/loader/renderer and pure process-evidence codec, with combined full2971/51. Root/author483 and corpus480 focused selections overlap and are not additive; original path/loss-red controls remain retained. The corrected1477-line runtime-store design42d31451 has scoped wire/replay approval, while exact pure-journal API/six-role authority adapters remain in progress and no store code exists. Physical capacity/installer/work isolation, parent DB orphan barriers, current-anchor factory, kernel readers, real Docker lifecycle/recovery and operational authority remain unresolved.",
+    "R05 #380 merged3e2773e from exact9be0579 after1894/51 full, normal push, required CI and canonical36162235882/APPROVE5835971061. Its prior failed review and older1613/51 and1700/51 runs are preserved separately. Integrate the actual bounded runtime/controller and verify image/readiness before any approved fresh844-side campaign; no corrected G0 exists.",
+    "The owner confirmed this development machine for the Docker presentation. Selected 13:21 UTC host observations identify capacity and current resource pressure only; no stage budget or G3_STAGE criterion is accepted by that confirmation.",
+    "Explicit later update at17:45 UTC: accepted main1b29100 includes PR407 from exact83b9ec6/tree01ad138a after2103/51 full, normal push, seven test checks and canonical36167975158 SUCCESS/finalAPPROVE5836718691. Narrow393Done only. Scalar seven-file c4f85c5 normally committed and accepted6f main integratedf6903cf; new full running. Git7dcc full2265/51 passed; newer3abf021 includes accepted typed main and needs fresh combined checks. Runtime structural-only API47731c42 approved after raw/domain-link/accounting corrections; only journal source/test files now allocated/in progress, noFS/DB/authority/controller acceptance. These facts supersede the corresponding17:29 pending-status notes, not any task/claim/gate states."
   ],
   "tasks": [
     {
@@ -67,7 +71,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R01",
       "evidence_paths": [],
-      "next_action": "Handoff #368/#388/#401, containment #402/#403 and parser #404 are merged. Preserve Revision 10 exact-head evidence and all task/claim/gate states; review pending local producer/runtime work and reforecast after corrected G0/G1."
+      "next_action": "Preserve Revision11 accepted #405/#380/#406/#407, original17:29 local snapshot and explicit17:45 update, all contrary evidence and unchanged task/claim/gate/DAG states. Complete pending producer/runtime integration and reforecast after corrected G0/G1; #362 remains open."
     },
     {
       "id": "R02",
@@ -113,7 +117,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R04",
       "evidence_paths": [],
-      "next_action": "Typed checker #375 merged; integrate the real fresh all-case producer and verify honest G0 plus protected acceptance history. Narrow #367 closure is not full R04 acceptance."
+      "next_action": "Typed checker #375 and producer #380 are merged; integrate verified runtime/image execution before the fresh all-case campaign, honest G0 and protected acceptance history. Narrow #367 closure is not full R04 acceptance."
     },
     {
       "id": "R05",
@@ -130,7 +134,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R05",
       "evidence_paths": [],
-      "next_action": "Draft #380 is refreshed locally at652f1ee onto accepted main4cf10d0 and passed combined full1700/51. Complete normal push and exact-head remote review, integrate #400 runtime/controller and verify image/readiness before approved bounded probes or all844 uncached attempts. No real G0."
+      "next_action": "#380 is merged at3e2773e from reviewed9be0579 with1894 passed/51 optional skipped and successful exact-head CI/canonical review. Integrate #400 actual runtime/controller and verify image/readiness before approved bounded probes or all844 uncached attempts. #374 remains open; no real G0 or detection/purity/lifecycle/full-environment acceptance."
     },
     {
       "id": "R06",
@@ -176,7 +180,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R08",
       "evidence_paths": [],
-      "next_action": "Containment #402/#403 and parser #404 are merged; narrow #395/#396/#394 Done is not scan delivery. Review/merge local #378/#391/#392, complete #397 source-bound core, #398 verified acquisition, #399 actual authority and #400 factory/journal/kernel/controller, then persist observations before identity and wire Compose, retries, durable decisions and truthful API/UI. Track #403 test-ID/fixture/NoReturn follow-ups; user app/DB remain untouched."
+      "next_action": "Containment #402/#403, parser #404 and custody #406 are merged; narrow closures are not scan delivery. Review/merge local #378/#391, integrate #397 raw core, #398 actual acquisition, #399 current authority and #400 durable evidence/DB orphan barriers/factory/kernel/controller, then persist observations before any identity and wire Compose, retries, durable decisions and truthful API/UI. Track #403 test-ID/fixture/NoReturn follow-ups; user app/DB remain untouched."
     },
     {
       "id": "R09",
@@ -207,7 +211,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R10",
       "evidence_paths": [],
-      "next_action": "Local #391 kernel and #393 typed observed transport are independently reviewed but unmerged; neither provides real-source scalar value flow. Implement #397 source-bound qualified-rule semantics after exact worker/model contracts and dependencies, then verify nonempty witnesses, negative controls and fresh canonical reruns. No G1 evidence yet."
+      "next_action": "#393 typed transport now merged via407; local391 kernel remains pending. #397 compiler/raw slice has scoped approval, root126/corpus128 focus, normal c4f85c5 checkpoint and accepted-main f6903cf integration; current full is running at17:45, not native evidence. Complete combined/remote gates and actual source/native/accepted-rule/runtime/authority bindings before nonempty G1 witnesses and fresh canonical reruns."
     },
     {
       "id": "R11",
@@ -286,7 +290,7 @@
         "docs/EVIDENCE-BHMEA-DEPENDENCY-COMPATIBILITY-2026-09-25.md",
         "docs/evidence/2026-09-25-stage-machine/README.md"
       ],
-      "next_action": "Runtime #373, snapshot lock #383, hook #387 and #402 package-copy correction are merged; no corrected image is built/installed. Local pin-relative loader/pure renderer are not a trusted operational controller. On the confirmed presentation machine, recheck shared resources, verify approved install/startup, measure budgets and rehearse offline twice with recovery/fallback."
+      "next_action": "Runtime #373, snapshot lock #383, hook #387, package correction #402 and producer #380 are merged; no corrected image is built/installed. Local loader/renderer/PE codec and runtime-store design are not operational controller or capacity proof. On this confirmed presentation machine, qualify storage/work isolation, recheck shared resources, verify approved install/startup, measure budgets and rehearse offline twice with recovery/fallback."
     },
     {
       "id": "R16",
@@ -302,7 +306,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R16",
       "evidence_paths": [],
-      "next_action": "#390 Java safety and #402/#403 legacy containment are merged, not full R16 acceptance. Complete #398 verified acquisition and #400 actual factory, journal, kernel controls and Docker lifecycle beyond its existing low-level loader/renderer. Verify coverage, helpers, descendants, other engines and final Compose restrictions before enabling scans; no native approval follows from unit tests."
+      "next_action": "#390 Java safety, #402/#403 containment and #406 custody are merged, not full R16 acceptance. Complete #398 actual acquisition and #400 durable evidence, qualified physical/work isolation, DB orphan barriers, actual factory/kernel controls and Docker lifecycle beyond its pure loader/renderer/PE codec. Verify coverage, helpers, descendants, other engines and final Compose restrictions before enabling scans; unit tests or supplied pins do not authorize native work."
     },
     {
       "id": "R17",
@@ -318,7 +322,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R17",
       "evidence_paths": [],
-      "next_action": "Preserve evidence, track all claims, execute shared gates and seek separate release/video authority."
+      "next_action": "Preserve Revision 11 exact-head merge/local evidence and failed-review history without promoting states; archive final immutable raw artifacts, execute all shared gates and seek separate release/image/video authority. Later-than-cutoff checks require their own explicit update."
     },
     {
       "id": "R18",
@@ -348,7 +352,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R19",
       "evidence_paths": [],
-      "next_action": "R19-A #382 is merged; integrate R19-B #393 with exact-head gates. Final pure #397 projection correction has scoped root/corpus approval and full 2469/51 after preserved red controls; complete normal commit/current-main/remote gates. Complete actual native/runtime fidelity, isolated rules/models, matched-return solver and full Java/Python access-path/heap/fixpoint coverage."
+      "next_action": "R19-A382 and typed407 are merged. #397 compiler/declaration and corrected raw solver are locally checkpointed c4f85c5/f6903cf with six genuine UUID-coercion failures preserved then fixed; root126/corpus128 focus does not replace current full (running17:45) or pending remote gates. Bind actual native/source/runtime and accepted rules/models, then complete full Java/Python access-path/heap/fixpoint and fidelity coverage."
     },
     {
       "id": "R20",

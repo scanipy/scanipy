@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 10 — 2026-09-25 reviewed Git/app containment and Semgrep parser merges, current local producer/runtime checks and preserved unresolved acceptance |
+| Revision | 11 — 2026-09-25 accepted R05/source/typed-transport foundations; 17:29 UTC evidence snapshot with explicit 17:45 UTC update, full acceptance unresolved |
 | Status | Execution started; no full R01–R20 task or submitted claim is yet accepted as complete |
 | Initial review code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
@@ -46,16 +46,18 @@ All unchecked acceptance items below remain required unless explicitly
 classified optional. An adopted design, recovered historical report, or one
 successful Joern parse does not complete a task or verify a submitted claim.
 
-Reviewed foundations have now landed through main `6ae30df`: independent
+Reviewed foundations have now landed through main `6f1ebc8`: independent
 artifact metadata, typed report checking, corrected corpus and dependency
 locks, board/fail-closed hook tooling, the occurrence/decision contract, and
 the bounded canonical identity/budget foundation, Java static invocation
 safety, opt-in raw Joern transport, the pure continuity module, stage/handoff
 documentation, fail-closed legacy Git/application containment and bounded
-Semgrep observation parsing. Occurrence storage, source
-custody and integrated observation producers remain separate pending scopes;
-none is accepted merely because its
-design or local tests pass. See the
+Semgrep observation parsing, Revision 10 documentation (#405), the R05 campaign
+producer (#380) and bounded local source custody (#406). The accepted source
+head `b005eaa` and merge `6f1ebc8` have the same tree. Narrow #392 is Done;
+filesystem custody is not actual Git acquisition, a database seal, runtime
+authority or a delivered scan. Occurrence storage and integrated producers
+remain pending. See the
 [bounded merge/evidence record](evidence/2026-09-25-foundation-merges/README.md)
 for exact heads, checks and limitations. Initial defect observations below
 remain historical evidence; do not assume every described defect is still
@@ -70,11 +72,19 @@ not satisfy that gate. Continue safe, assigned local work without merging until
 the exact-head review actually completes successfully. Do not weaken feature
 acceptance or retry an exhausted service continuously.
 
-Local-only storage, source custody and typed CPG checkpoints
-have scoped tests and independent review but remain separate from merged
-acceptance. Git containment #402, application containment #403 and Semgrep parser
-#404 are now merged; only their narrow issues #395/#396/#394 are Done. Tests from
-one branch do not validate the combined deployment. Refusing unsafe scans is containment, not delivery
+This revision's local evidence cutoff is **17:29 UTC on 2026-09-25**. Later
+checks or publication require a separate update, not silent promotion of this
+snapshot. The merged R05 producer passed 1,894 tests with 51 existing optional
+skips at `9be0579`; source custody passed 1,958/51 at `b005eaa`. Both have
+successful exact-head canonical APPROVE actions. The first #406 procedural
+REQUEST-CHANGES remains recorded: only title/body scope, actual CI links and
+prep-test mapping changed before approval, not the three reviewed files.
+No gate was bypassed and no historical component AC was declared complete.
+
+Local-only occurrence storage and typed CPG checkpoints remain separate from
+merged acceptance. Git containment #402, application containment #403 and
+Semgrep parser #404 are merged; their narrow issues #395/#396/#394 are Done.
+Tests from one branch do not validate the combined deployment. Refusing unsafe scans is containment, not delivery
 of the promised scan workflow. The next source/authority/semantic contracts
 must bind exact verified capture bytes, accepted rule/model bytes, current
 durable authorization and actual native observations before a real core/oracle
@@ -84,19 +94,52 @@ transport, runtime-file verification and a pin-relative low-level profile loader
 now have reviewed local code; the pure Docker create renderer has three
 independent/author runs of the same 288 checks, not 864 distinct tests.
 Source-syntax parsing, offline Git capture and signature verification have
-reviewed local implementations with separately bounded evidence. The actual
-Docker controller, trusted current-anchor factory, durable journal/admission,
-kernel enforcement, real operator authority and API/UI integration remain TODOs.
+reviewed local implementations with separately bounded evidence. Typed CPG
+head `83b9ec6` passed 2,103/51 after incorporating accepted main; its actual
+push was running and no PR existed at the cutoff. Offline Git head `7dccd5e`
+preserves all ten authored files after the same integration; its fresh full
+run was pending, and the prior 2,211/51 belongs only to `c2c2078`.
+Runtime checkpoint `d51c5f3` includes a reviewed pure process-evidence codec
+and a 2,971/51 full run. The overlapping root/author 483-case and corpus
+480-case selections are not additive. Its earlier path and loss-accounting
+failures remain preserved. The corrected 1,477-line runtime-store design has
+scoped wire/replay approval, but its exact pure-journal API is still being
+specified and no store implementation exists. Physical capacity, filesystem
+installation, database orphan barriers and operational authority are not
+accepted. The actual Docker controller, trusted current-anchor factory,
+durable journal/admission, kernel enforcement, real operator authority and
+API/UI integration remain TODOs.
 The source-bound projection review reproduced 13 failing negative controls, then
 eight additional closure/wrapper failures after the first correction. A later
 368-pass controlled run was followed by four reproduced scope-multiplicity/order
 failures. The final correction has root and independent corpus approval after
 387 selected checks, 206 independently rerun projection checks and root's same
 four negatives passing. The configured full suite passed 2,469 tests with 51
-existing optional skips. Normal commit/current-main/remote gates remain; no native fidelity, solver
-or full feature acceptance follows. Preserve the contrary results and remaining work.
+existing optional skips on that earlier projection tree. The later seven-file
+compiler/declaration/raw-solver slice is frozen but uncommitted atop `e6c4a2e`.
+Its compiler/declaration files have scoped approval. Six genuine raw binding
+UUID-coercion negatives were corrected; root's 126-case run and the independent
+128-case run pass with scoped raw-solver approval. The earlier 500-case and
+2,469/51 results do not validate this newer slice; no new whole-suite run or
+commit exists at the cutoff. Complete current-tree tests, normal gates and
+remote review, then actual source/native/model/authority/durable integration.
+No native fidelity, full Java/Python semantics or G1 acceptance follows from
+these controlled checks. Preserve the contrary results and remaining work.
 All unchecked TODOs below
 remain required; the handoff records exact checkpoints and remaining work.
+
+**Later update — 17:45 UTC:** the earlier 17:29 local snapshot above is retained
+as history. Typed transport #407 is now merged at `1b29100` from exact reviewed
+`83b9ec6`, with identical tree, all seven remote test checks and successful
+canonical APPROVE; only narrow #393 is Done. The scalar seven-file slice was
+normally committed at `c4f85c5`, then accepted main was integrated at `f6903cf`;
+its new full run is in progress, not yet a passing result. Offline Git `7dccd5e`
+passed 2,265/51; its subsequent typed-main integration `3abf021` still needs
+fresh affected checks and publication gates. The pure journal API was approved
+after correcting authorization-domain versus raw-hash linkage and accounting;
+only its two pure source/test files are now allocated and in progress. No
+filesystem store, trusted authority, Docker controller or native acceptance is
+established. Use the handoff's latest update for immediate next actions.
 
 ## 1. Objective and document boundaries
 
