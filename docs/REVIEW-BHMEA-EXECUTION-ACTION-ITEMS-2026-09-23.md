@@ -419,6 +419,13 @@ TODO:
 - [ ] Pin the expected corpus version/digest, required pair IDs, language cells,
   evidence types, preconditions, and comparison-strength requirements in the
   gate configuration.
+- [ ] Bind reports to the semantic policy content, not its name alone. A changed
+  namespace/strength policy must not erase previously protected passes. Preserve
+  an append-only, reviewed baseline/improvement registry without a hash cycle.
+- [ ] For acceptance and nonregression, require an independently supplied
+  expected analysis-code revision. Do not accept an older green report merely
+  because it is still fresh, or confuse the analyzed repository's commit with
+  the analysis implementation's commit.
 - [ ] Require every expected pair to appear exactly once. Reject missing,
   duplicate, malformed, or unexpected-version reports.
 - [ ] Require correct strong/strong comparisons for claimed refactor invariance.
@@ -428,6 +435,10 @@ TODO:
   honest failing/unevaluated results on valid fixtures; accepting that baseline
   artifact does not pass those claims. The final gate must reject required
   failing or unevaluated cases according to their declared evidence type.
+- [ ] Default G0 requires fresh real Joern execution and an evidenced processing
+  attempt for every before/after side. Historical, synthetic, cached or
+  all-not-run diagnostic reports cannot pass that gate. Missing purity,
+  detection or lifecycle semantics may remain explicit red baseline results.
 - [ ] Enforce no regression per pair and per language, including all relevant
   should-flip cases. One repaired case cannot offset a newly broken case in an
   unchanged total. Protect both the G0 record and improvements already accepted
@@ -624,6 +635,16 @@ TODO:
 - [ ] Introduce explicit processing state separate from fingerprint strength:
   pending/running/completed/failed, with completed fingerprints either strong or
   weak. A permanently weak result is not an eternally pending strong result.
+- [ ] Persist immutable detection occurrences before per-finding identity work.
+  The current worker computes a slice before appending its finding; an identity
+  exception can discard already detected results. Separate occurrence records
+  from identity attempts and completed, identity-bearing finding/provenance
+  projections. A later timeout must leave the occurrence visible with its
+  original origin and `identity_failed`, not disappear or become an oracle.
+- [ ] Preserve the completed-record constraints of R09 through that staged
+  boundary. Do not manufacture strong metadata or silently relax signed-final
+  record guarantees to represent pending work. Test failure on a later finding
+  after earlier results, retry/idempotency and restart recovery.
 - [ ] Continue API/UI polling through fingerprint completion. Handle terminal
   parse failures, unresolved sinks, budget exhaustion, timeouts, and retries.
 - [ ] Display each finding's actual stored fingerprint, class, origin, and relevant

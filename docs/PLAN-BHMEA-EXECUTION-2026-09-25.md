@@ -58,6 +58,7 @@ claims that the owner explicitly selected an architectural option.
 | D-CANON / D-BUDGET | Content-binding v2 encoding; exact direction-aware WL refinement plus complete bounded individualisation; deterministic work-budget fallback; time expiry is a failed analysis | Implement/test R18/R20, prove any symmetry pruning, run real graphs, thread version/status to all consumers |
 | D-CLASS | Independent graph/slice hash, class, annotation, and identity version; either weak/unknown blocks automatic inheritance | Four-combination producer/consumer tests, additive schema and historical readers; never copy one legacy class into both fields |
 | D-PRODUCERS | Real producer for every provenance field; CPG-less oracle metadata nullable with explicit reason/status, never fabricated | Verify actual snapshot/spec/output bindings and CPG-backed full-demo path; retain detection separately from identity failure |
+| D-OCCURRENCE | Persist immutable detection observations before identity attempts; completed identity-bearing records are a separate projection | R08 must retain core detections through later slice failures without changing origin, inventing metadata or weakening final-record constraints; R07 durable decisions reference stable occurrence/entity IDs |
 | D-ENV | Distinct actual snapshot/detector image identities plus canonical full-analysis environment manifest | Finalize manifest/addressing contract; retain per-image boot guards; mounted code must be content-identified |
 
 Detailed canonical direction is in
@@ -80,6 +81,14 @@ Finalize the actual exporter accessors, finite facts/transfer rules, matched
 returns, and nontrivial purity registry early. CALL export alone is not R19.
 Do not replace full positive extraction requirements with unsupported/trivial
 cases to obtain green tests.
+
+R09's scoped schema PR protects completed identity-bearing core records; it does
+not implement asynchronous observation retention. The current worker can lose
+solver results when a later slice computation raises. D-OCCURRENCE requires a
+persisted pre-identity stage with visible failure/retry state before this is
+accepted as the live demo pipeline. A parser failure before detection is a
+different event from an identity failure after detection; neither establishes
+successful finding absence.
 
 ## 3. Work ownership and next actions
 
