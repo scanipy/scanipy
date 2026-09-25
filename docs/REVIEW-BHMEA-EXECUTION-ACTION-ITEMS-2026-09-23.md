@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 4 — 2026-09-25 reviewed foundations and newly identified safety/lifecycle gaps |
+| Revision | 5 — 2026-09-25 merged canonical foundation and explicit pending producer/storage work |
 | Status | Execution started; no remediation task or submitted claim is yet accepted as complete |
 | Reviewed code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
@@ -42,13 +42,23 @@ All unchecked acceptance items below remain required unless explicitly
 classified optional. An adopted design, recovered historical report, or one
 successful Joern parse does not complete a task or verify a submitted claim.
 
-Reviewed foundations have now landed through main `0223651`: independent
+Reviewed foundations have now landed through main `2709177`: independent
 artifact metadata, typed report checking, corrected corpus and dependency
-locks, board/fail-closed hook tooling, and the occurrence/decision contract. See the
+locks, board/fail-closed hook tooling, the occurrence/decision contract, and
+the bounded canonical identity/budget foundation. Raw Joern transport, Java
+safety, continuity, occurrence storage, source custody and raw observation
+producers are separate pending scopes; none is accepted merely because its
+design or local tests pass. See the
 [bounded merge/evidence record](evidence/2026-09-25-foundation-merges/README.md)
 for exact heads, checks and limitations. Initial defect observations below
 remain historical evidence; do not assume every described defect is still
 present, or mistake a narrow repair for full R-task acceptance.
+
+The current handoff also records an external canonical-review session limit.
+Successful unit/CI checks or an APPROVE word inside a failed review action do
+not satisfy that gate. Continue safe, assigned local work without merging until
+the exact-head review actually completes successfully. Do not weaken feature
+acceptance or retry an exhausted service continuously.
 
 ## 1. Objective and document boundaries
 

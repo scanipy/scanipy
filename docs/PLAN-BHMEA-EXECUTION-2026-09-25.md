@@ -59,8 +59,8 @@ claims that the owner explicitly selected an architectural option.
 | D4 — video | Existing video is historical submitted material | Audit against accepted implementation; ask owner about any replacement/publication action |
 | D5 — claim acceptance | Evidence-gated G2 for all submitted claims; no October freeze | Record failures honestly; owner approval needed for any scope reduction |
 | D6 — public repository | Already public when checked | Verify public source/license/evidence and clean install; do not perform a redundant visibility flip |
-| D-CANON / D-BUDGET | Content-binding v2 encoding; exact direction-aware WL refinement plus complete bounded individualisation; deterministic work-budget fallback; time expiry is a failed analysis | Implement/test R18/R20, prove any symmetry pruning, run real graphs, thread version/status to all consumers |
-| D-CLASS | Independent graph/slice hash, class, annotation, and identity version; either weak/unknown blocks automatic inheritance | Four-combination producer/consumer tests, additive schema and historical readers; never copy one legacy class into both fields |
+| D-CANON / D-BUDGET | Content-binding v2 encoding; exact direction-aware WL refinement plus complete bounded individualisation; deterministic work-budget fallback; time expiry is a failed analysis | Preserve merged #369 foundation; extend/verify remaining R18/R20, prove any new symmetry pruning, run real semantic graphs, thread versions/status to every new consumer |
+| D-CLASS | Independent graph/slice hash, class, annotation, and identity version; either weak/unknown blocks automatic inheritance | Preserve/extend merged #371/#369 four-combination, schema and history guarantees for new producers and semantic versions; never copy one legacy class into both fields |
 | D-PRODUCERS | Real producer for every provenance field; CPG-less oracle metadata nullable with explicit reason/status, never fabricated | Verify actual snapshot/spec/output bindings and CPG-backed full-demo path; retain detection separately from identity failure |
 | D-OCCURRENCE | Persist immutable detection observations before identity attempts; completed identity-bearing records are a separate projection | R08 must retain core detections through later slice failures without changing origin, inventing metadata or weakening final-record constraints; R07 durable decisions reference stable occurrence/entity IDs |
 | D-ENV | Distinct actual snapshot/detector image identities plus canonical full-analysis environment manifest | Finalize manifest/addressing contract; retain per-image boot guards; mounted code must be content-identified |
@@ -109,6 +109,15 @@ lead to partial source coverage. See the [source audit and remaining checks](evi
 No-delombok and no-fetch are safety controls, not evidence that missing generated
 semantics or all-language coverage has been solved.
 
+The follow-up Git audit found a live gap: the legacy argument guard admits
+arbitrary `-c` values, bare subcommands and unsafe URL forms, while the snapshot
+execution loop already performs clone/checkout. Its old deferred-warning comment
+is stale. A separate GitHub default runner also inherits unbounded/unpinned
+execution behavior. No unsafe command was run. Correct these controls and use a
+reviewed data-only commit/tree/blob capture path before enabling the new worker;
+source custody alone does not make an unsafe checkout trustworthy. See the
+[active safety findings](evidence/2026-09-25-foundation-merges/README.md#other-active-falsifiers-and-next-actions).
+
 ## 3. Work ownership and next actions
 
 Use independent worktrees/branches for independent PRs. Existing user untracked
@@ -118,14 +127,18 @@ handoff; do not cherry-pick or overwrite another agent's in-flight edits.
 | Workstream | Owner | Exclusive active files / boundary | Immediate action |
 |---|---|---|---|
 | R01/R17 handoff and evidence | Root; [#362](https://github.com/scanipy/scanipy/issues/362); initial #365 closed | Current handoff, review, execution ledger, evidence inventory | Reconcile reviewed merges and new findings; preserve all remaining TODOs and original evidence |
-| R18/R20 foundations; traversal defect | Canonical agent; [#364](https://github.com/scanipy/scanipy/issues/364) | `analysis/ordering.py`, `analysis/fingerprint.py`, dedicated canonical tests | Integrate merged R09/current main into #369; check actual four-class producer flow, explicit legacy-default refusal and deadline-to-failure propagation |
+| R18/R20 foundations; traversal defect | Canonical agent; narrow [#364](https://github.com/scanipy/scanipy/issues/364) closed | Bounded foundation merged in #369, including combined producer/default/deadline regressions | Verify richer semantic graphs, shared invocation budgets and all advertised normalizations; narrow closure is not full R18/R20 acceptance |
 | R09 class propagation | Schema agent; narrow [#363](https://github.com/scanipy/scanipy/issues/363) closed | Completed worker/findings/SARIF/schema correction merged in #371 | Preserve compatibility; full environment/source-only snapshot/final workflow producers remain under #362 |
 | R03 corpus correction | Corpus agent; [#361](https://github.com/scanipy/scanipy/issues/361) | Source correction merged in #372; fixture/manifest validation remains assigned | Finish remaining transformation/precondition/correspondence and real-frontend validation, preserve topology limitations and supply G0 inputs; component acceptance does not require a completed G0 |
 | R04 typed gate | Root accountable; narrow [#367](https://github.com/scanipy/scanipy/issues/367) closed | Checker/policy/contract merged in #375 | Integrate fresh real producer; retain honest G0 and protected history; full R04/G2 remains open |
-| R05 real campaign producer | Corpus agent; [#374](https://github.com/scanipy/scanipy/issues/374) | New typed runner/controller/tests/runbook; observer-only frontend seam coordinated with R19 | Attempt all 844 sides with no hidden cache; retain actual source/tool/command evidence and report unavailable semantics honestly |
-| R19-A raw semantic export | Schema agent; [#376](https://github.com/scanipy/scanipy/issues/376) | Opt-in v2 exporter, strict raw schema, contract/probes; existing v1/default unchanged | Preserve actual roles, native properties and parallel edge payloads; report missing properties explicitly; richer mapper/solver remains later work |
-| R07/R08 occurrence and decisions | Root persistence/API; canonical agent pure matcher; [#378](https://github.com/scanipy/scanipy/issues/378) | Contract merged in #385; pure module/tests/doc in separate assigned tree | Checkpoint lifecycle-generation fix; review exact schema/roles, then durable storage and raw-detection seam; no production policy accepted |
-| R16 Java invocation safety | Schema agent; [#386](https://github.com/scanipy/scanipy/issues/386) | Shared subprocess grammar/profile and coordinated frontend/observer hunk | Reject implicit build/JVM overrides, force no-fetch/no-delombok; hermetic tests and review precede new real probes |
+| R05 real campaign producer | Corpus agent; [#374](https://github.com/scanipy/scanipy/issues/374) | #380 local integration checkpoint incorporates main and pending #390; shared safety files unchanged | After #390 is approved/merged, refresh #380 and obtain review; verify bounded readiness before 844 uncached side attempts. No native campaign has run |
+| R19-A raw semantic export | Schema agent; [#376](https://github.com/scanipy/scanipy/issues/376) | #382 opt-in v2 exporter/schema frozen for canonical review; existing v1/default unchanged | Review and merge exact tested head, then integrate typed transport; raw CALL/property export does not certify correct binding or purity |
+| R19-B typed observations | Canonical agent; [#393](https://github.com/scanipy/scanipy/issues/393) | New typed model/wire/tests/contract based on pending #382 | Preserve original raw bytes and all typed native evidence; structural role views stay observed-only. Require legacy-reader refusal, resource bounds and independent code review before merge |
+| R07/R08 occurrence and decisions | Schema agent persistence; root integration; [#378](https://github.com/scanipy/scanipy/issues/378) | #389 pure matcher frozen; separate occurrence migrations/store/envelopes/tests and dedicated PostgreSQL CI job in progress | Complete adversarial restricted-role/concurrency tests and review; attach real producers next. No API/UI or production continuity policy is accepted |
+| R08/R10 raw core detections | Canonical agent; [#391](https://github.com/scanipy/scanipy/issues/391) | Isolated raw CFG/CALL observation kernel and tests, local checkpoint only | Review/merge bounded scope, then implement actual typed semantic producer. The narrow kernel rejects ordinary AST/PDG mapper exports and is not G1 |
+| R08/R16 source custody | Root; [#392](https://github.com/scanipy/scanipy/issues/392) | Isolated descriptor-based source capture/verification and tests, local checkpoint only | Review/merge, then bind actual safe SCM checkout, database receipts, read-only mounts and lifecycle leases. Owner-asserted commit is not SCM proof |
+| R08/R11 Semgrep observations | Root; [#394](https://github.com/scanipy/scanipy/issues/394) | New bounded parser/contract/tests; no legacy adapter changes | Review raw-byte/multiplicity/error handling; then implement closed native runner, coverage and durable source-bound projection. Parser output always has unverified coverage |
+| R16 Java invocation safety | Schema agent; [#386](https://github.com/scanipy/scanipy/issues/386) | #390 shared subprocess grammar/profile and coordinated frontend/observer hunk, frozen for canonical review | Obtain successful exact-head review before new real Java probes; no-fetch/no-delombok controls alone do not prove source coverage |
 | Repository workflow prerequisite | Root; narrow [#377](https://github.com/scanipy/scanipy/issues/377) closed | Bounded board helper merged in #379 | Continue serialized exact-item state changes; never infer ownership or Todo from failure |
 | R15 dependency prerequisite | Root; [#366](https://github.com/scanipy/scanipy/issues/366); narrow #370/#381 closed | Runtime declarations (#373) and snapshot lock/gate (#383) merged | Verify actual image installation/startup only after resource review; no build, publication or active environment promotion yet |
 | Hook fail-closed correction | Root; narrow [#384](https://github.com/scanipy/scanipy/issues/384) closed | Corrected hooks/declared YAML tool/tests merged in #387 | Use the current worktree's reviewed hooks and declared yamllint 1.35.1; do not rely on an older shared hook path or ambient CLI |
@@ -139,8 +152,8 @@ required checks and canonical review passing. Keep remote status current; do
 not use that narrow closure to mark a full R-task, claim or gate complete.
 The first #376/#377 synchronization encountered the rate limit again. After
 quota recovery, the merged bounded helper verified membership/field metadata
-and real status changes. Narrow #365/#367/#363/#377/#381/#384 are Done after approved
-merges; #376/#378/#386 remain In Progress. Initial synchronization failures
+and real status changes. Narrow #365/#367/#363/#377/#381/#384/#364 are Done after approved
+merges; #376/#378/#386/#391/#392/#393/#394 remain In Progress. Initial synchronization failures
 are not rewritten as successful preflight checks. GitHub unexpectedly closed
 #378 on wording containing a negated closing keyword; root removed the trigger,
 reopened the issue and restored In Progress. Use “#N remains open,” not a
@@ -153,7 +166,7 @@ corrective issue must not close umbrella #362 or an entire R-task prematurely.
 
 ### Branch/PR handoff snapshot
 
-Snapshot base: main `022365123d0a14127e2039dc005606a7401bc358`.
+Snapshot base: main `2709177afff1c78f06532e0298dd5ee4d608237f`.
 [Exact merge/check records](evidence/2026-09-25-foundation-merges/README.md)
 distinguish landed corrections from review-stage work. Check newer heads and
 rerun integration on the combined tree. Local test totals do not prove the
@@ -162,7 +175,7 @@ submitted functionality is complete.
 | PR / scope | Observed local progress | Merge / remaining condition |
 |---|---|---|
 | [#368](https://github.com/scanipy/scanipy/pull/368), handoff/ledger/evidence | MERGED after current-head CI and canonical APPROVE; 26 ledger tests and preserved historical bytes | Continue full backlog/evidence reconciliation; narrow #365 closed, not R01/R17 acceptance |
-| [#369](https://github.com/scanipy/scanipy/pull/369), canonical identity/budget foundation | Review-stage implementation; merged R09 is now available | Final combined producer/deadline/default-namespace regressions and canonical re-review; no full normalization claim |
+| [#369](https://github.com/scanipy/scanipy/pull/369), canonical identity/budget foundation | MERGED after exact-head CI, supplemental Gate 3 and successful canonical APPROVE; 55 dedicated new tests; combined local run 1,235 passed/48 skipped | Narrow #364 closed; richer semantic roles, all refactor normalizations and real-source acceptance remain |
 | [#371](https://github.com/scanipy/scanipy/pull/371), independent artifact classes/provenance | MERGED after all seven test checks and canonical APPROVE; 1,015 passed/48 skipped locally, isolated PostgreSQL checks retained | Narrow #363 closed; source-only snapshot producer, full environment and live persistence orchestration remain |
 | [#372](https://github.com/scanipy/scanipy/pull/372), genuine typed corpus | MERGED after current-head CI and canonical APPROVE; 422 cases, 85 corpus and 31 harness-compatibility tests; Java/Python syntax checks | #361 stays open; fixture preconditions are demands, not purity observations; no corrected real G0 run yet |
 | [#373](https://github.com/scanipy/scanipy/pull/373), fresh dependency compatibility | MERGED after CI, supplemental Gate 3 and canonical APPROVE; fresh declared install: 862 tests pass, 47 existing skips | Narrow #370 closed; broader R15 clean Docker install and stage acceptance remain |
@@ -171,8 +184,31 @@ submitted functionality is complete.
 | [#383](https://github.com/scanipy/scanipy/pull/383), snapshot lock | MERGED after seven test checks and canonical APPROVE; exact lock bytes bound, 1,043 passed/47 skipped locally | Narrow #381 closed; no corrected image build/install/startup or registry promotion performed |
 | [#385](https://github.com/scanipy/scanipy/pull/385), occurrence/decision contract | MERGED after CI and canonical APPROVE; no product code changed | #378 remains open; exact schema/grants, persistence and real workflow still required |
 | [#387](https://github.com/scanipy/scanipy/pull/387), fail-closed developer hooks | MERGED after CI and canonical APPROVE; 33 focused tests and fresh declared toolchain | Narrow #384 closed; current hooks must propagate failures without partial-mypy fallback |
-| [#380](https://github.com/scanipy/scanipy/pull/380), real campaign producer | DRAFT; controlled producer tests only | Integrate reviewed #369 and #386 with current main, then canonical review and bounded real runs before full 844-side campaign |
-| [#382](https://github.com/scanipy/scanipy/pull/382), raw Joern v2 transport | DRAFT; actual bounded Python/Java raw exports retained, 86 focused checks; final transport semantics not enabled by default | Current-main integration/review; actual typed mapper, precise bindings/purity and matched-return solver remain R19-B/C/D |
+| [#388](https://github.com/scanipy/scanipy/pull/388), progress reconciliation | MERGED after CI and canonical APPROVE; documentation/ledger only | Its earlier evidence cutoff is superseded by this snapshot; no feature acceptance |
+| [#380](https://github.com/scanipy/scanipy/pull/380), real campaign producer | DRAFT remotely; newer local checkpoint `11dba036cc6241a00a8100c4918b5e8bec18ef7b` incorporates main and pending #390; actual local pre-push selection 1,351 passed/11 skipped | Wait for reviewed #390, then integrate approved main, publish/review exact candidate and run bounded readiness. No full 844-side campaign or G0 yet |
+| [#382](https://github.com/scanipy/scanipy/pull/382), raw Joern v2 transport | Ready for review at `9035359e548ac210c3d101f24df76b7df2ebc32d`; all seven test checks pass, canonical action failed on external session limit | Retry after capacity reset; do not merge on peer approval alone. Typed mapping, precise bindings/purity and matched-return solver remain R19-B/C/D |
+| [#389](https://github.com/scanipy/scanipy/pull/389), pure continuity matcher | Ready for review at `2fd67cb58f2850dd0d0e8c0a4966ad1ee70fdbc0`; all seven test checks pass, canonical action failed on external session limit | Successful canonical review remains required; no durable decisions/API/UI or accepted production policy |
+| [#390](https://github.com/scanipy/scanipy/pull/390), Java invocation safety | Ready for review at `16252b21db172b967f13a815ca9bd8fe3078dd19`; all seven test checks pass, canonical action failed on external session limit | Review first when capacity returns; a comment containing APPROVE with an action error is not approval. No new Java probe before merge |
+
+Local build-ahead is intentionally separate from the remote merge queue:
+
+| Issue / local-only scope | Retained checkpoint | Next acceptance action |
+|---|---|---|
+| [#391](https://github.com/scanipy/scanipy/issues/391), raw core observation kernel | `278734bc9482f46f8b48d48aef3867479a885a1b`; 168 focused checks, full local run 1,403 passed/48 skipped, normal hooks passed; scoped independent review | Submit after review capacity returns. Exact CFG/CALL profile is intentionally narrower than real mapper output; no full IFDS/IDE or G1 claim |
+| [#392](https://github.com/scanipy/scanipy/issues/392), local source custody | `e3d318b3c24f9509560b07bae04066dd370bf9e0`; 64 focused checks, full local run 1,313 passed/51 skipped, normal hooks passed; scoped independent review | Submit after review capacity returns. Filesystem readback/receipt is not SCM verification, a database seal or protection against the same OS user |
+| [#378](https://github.com/scanipy/scanipy/issues/378), occurrence storage | Implementation and isolated real PostgreSQL audit in progress; no frozen final test claim yet | Finish array-shape/history/concurrency/security audit, freeze exact code, run full tests and required review. Keep user app/database untouched |
+| [#393](https://github.com/scanipy/scanipy/issues/393), typed observed CPG | Independently approved design; implementation/tests in progress on pending #382 | Validate lossless transport, lower-only limits, uncertainty and compatibility fences. Full semantic mapping/solver remains future work |
+| [#394](https://github.com/scanipy/scanipy/issues/394), Semgrep observations | Independent review found and corrected blank rule/path acceptance; 193 focused checks passed on corrected parser, final full tests/hooks pending | Freeze/review actual code. Native execution, accepted rules, coverage, durable binding, measured rate and signed provenance remain unimplemented in this slice |
+
+At approximately 10:59 UTC on September 25 the canonical reviewer reported a
+session limit, with a reported reset at **13:40 UTC / 18:40 Asia/Karachi**. This
+is not GitHub API quota exhaustion and is not a guarantee that the service will
+recover at that time. Do not launch repeated reviews before that time without
+independent evidence of recovery. Retry #390 first, then #382/#389 serially;
+recheck exact heads, required tests, actual action success and the final APPROVE
+verdict before each merge. Preserve any new corrective review findings.
+Continue safe, assigned local work meanwhile; do not bypass review or describe
+the full Black Hat goal as blocked while meaningful in-scope work remains.
 
 Fresh-install CI exposed an AnyIO/Starlette warning-as-error incompatibility and
 SQLAlchemy driver-default drift. The narrow corrective dependency issue fixes
