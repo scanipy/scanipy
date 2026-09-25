@@ -1,0 +1,125 @@
+schema_version: 1
+run_id: "2026-09-25-r05-readiness"
+evidence_kind: real_frontend_readiness_diagnostic
+task: R05
+task_status: partial_readiness_evidence
+full_submission_acceptance: false
+corrected_G0: false
+C18_complete: false
+reference_host_is_confirmed_presentation_hardware: false
+code:
+  revision: "940d440cb99e23131d28ee5bbb1655ea29d46a58"
+  worktree_has_untracked_documentation: true
+  tracked_changes_observed_before_run: false
+  production_collaborators_replaced: false
+  relevant_files:
+    analysis/cpg_ingest/joern_frontend.py: 1150eeb9c42fb415c0c06f3b2bc614ffb9f2bfbd897c355b967feffb63e88d1f
+    analysis/cpg_ingest/mapper.py: 1b476b4edc4afe59a828568cc6b146502d83d8a2e55adfd390c0c633e7971a76
+    tools/worker/secure_subprocess.py: 63fa157272c0a738ca4ecacfc694549fbd9dc5e62c58b070c9299202c658d088
+    workers/snapshot/joern-scripts/export_cpg.sc: 922e648f468e6172e2c56fe3ff89ca9120c5789d322fe7919609860e12ca1546
+    analysis/ordering.py: 0f5a1d6d56211f0bd8b6cf0c125f05bde707baa1f76af0f8ed3f608230aedd79
+    analysis/fingerprint.py: 4fcb16d8f8efc5c4e5a2b5b95f732543c578e0a2350e2346344f4d5096dae696
+    services/scan/oracle_fingerprint.py: 41c5330c997bcf50dc03eab8a7c0ecd0dbc352b25cdaea5f1dde72f4e83fdde4
+  diagnostic_driver:
+    archived_path: raw/executed-probe.py.txt
+    original_runtime_path: /repo/docs/evidence/2026-09-25-r05-readiness/probe.py
+    sha256: 76cb4fd747f4c7e6e37c141918b1f23a3ddb43a68135690e1ab042c5bdfdba96
+source:
+  path: tests/corpora/refactor/seeds/seed-002/before/order_service.py
+  bytes: 315
+  sha256: 48248ee8497a33887fa787c42ffb41a5a4fd33d67a998f57645cdb9279ee8704
+  language: python
+  synthesized_fixture: true
+  corpus_id: CMP-CORP-REFAC-01
+  corpus_version: "0.1.0"
+  corpus_digest_declared: "sha256:0750651a2d915dbdb672993b2a41d644f893f5e7407d260e5e28054b3f4e50f6"
+  corpus_lock_file_sha256: 32738b453adf05db9223ed0288f18e50afe23a9e0f5bc6bfd1c82a98b846155f
+  fixture_count: 1
+  refactor_pairs_evaluated: 0
+runtime:
+  original_local_image_tag: "scanipy-t2run:latest"
+  actual_local_image_id: "sha256:911e6f836fcf5e183a0c559e04e1868ba9d1838c35263728fe85dc1e9cce987b"
+  registry_manifest_digest: null
+  release_signature_verified: false
+  python: "3.11.15"
+  PyYAML: "6.0.3"
+  child_environment_ref: "raw/diagnostic.json#/joern_child_environment"
+  image_export_script_matches_worktree: true
+  installed_packages_during_run: false
+  source_program_executed: false
+  detection_performed: false
+  fingerprint_computation_performed: false
+  S_version: null
+  production_env_digest_claimed: false
+isolation:
+  container_name: "scanipy-r05-readiness-20260925-0820"
+  container_id: dde989e91172c4dd8596b81f6f0003362115315ed73a2bc76012c388baac097f
+  memory_bytes: 4294967296
+  memory_plus_swap_bytes: 4294967296
+  cpus: 2
+  pids_limit: 256
+  user: "1000:1000"
+  network: none
+  root_filesystem_read_only: true
+  repository_read_only: true
+  capabilities_dropped: [ALL]
+  no_new_privileges: true
+  tmpfs_bytes: 268435456
+  host_writable_job_directory: "/tmp/scanipy-r05-readiness-20260925-Z4ppNJvT"
+  container_work_directory: /job/work
+  container_output_directory: /job/out
+  separate_container_temp_directory: /job/tmp
+execution:
+  command_record: commands.md
+  probe_started_at_utc: "2026-09-25T08:20:54.334784Z"
+  probe_finished_at_utc: "2026-09-25T08:21:33.119991Z"
+  elapsed_seconds: 38.78520335396752
+  parse_attempts: 1
+  actual_tool_invocations: 2
+  cache_reused: false
+  fresh_work_directory: true
+  status: parse_export_map_succeeded
+  probe_exit_code: 0
+  container_exit_code: 0
+  oom_killed: false
+  peak_memory_measured: false
+  container_removed_after_exit: true
+  existing_app_and_database_preserved: true
+  diagnostic_process_still_running: false
+graph:
+  nodes: 222
+  edges: 500
+  edge_kinds: {AST: 195, CFG: 77, PDG: 228}
+  location_entries: 222
+  location_entries_with_positive_lines: 153
+  production_mapper_surfaces_agree: true
+raw_artifacts:
+  - path: raw/diagnostic.json
+    bytes: 4504
+    sha256: ec2bce821eb6204852d5257b860233b41fdde5f16cbecd3935115635031da7bf
+  - path: raw/container-inspect.json
+    bytes: 10520
+    sha256: 4a9b7833e465ec3961cf16be14082c1326efb3cb0a8746bc99e68b250b5736b7
+  - path: raw/container.log
+    bytes: 7757
+    sha256: 21d474d99f133eb2036cad9ce1054abd4c72f0807f555227ddb0dd459bed73c4
+  - path: raw/cpg_export.json
+    bytes: 60555
+    sha256: d03720b7ed3503a5ff9eb3c306a8a850d24f0a7f6315748d820cbb95cb48c968
+  - path: raw/cpg.bin
+    bytes: 109791
+    sha256: f3b5b6b2b59712c56ed1b6cdc543c41b778fd4c54a51eb2d1101b2d040471f1d
+  - path: raw/executed-probe.py.txt
+    artifact_kind: executed_diagnostic_driver
+    bytes: 7051
+    sha256: 76cb4fd747f4c7e6e37c141918b1f23a3ddb43a68135690e1ab042c5bdfdba96
+artifact_transfer:
+  method: exact_file_copy
+  all_source_destination_byte_comparisons: equal
+  temporary_originals_retained: true
+limitations:
+  - "Reference host is not confirmed presentation hardware."
+  - "One Python before-fixture; no Java, refactor, detector, fidelity, provenance, or independent-repeat acceptance."
+  - "Explicit environment and existing image only; no clean-build or default-packaging success claim."
+  - "No formal no-execution or security-isolation campaign was performed."
+  - "Production wrapper discards successful child stdout/stderr; only probe output and actual invocation audit events are preserved."

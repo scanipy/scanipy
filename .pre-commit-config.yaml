@@ -10,7 +10,11 @@ repos:
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
+        # Retained execution bytes must not be rewritten by hygiene hooks.
+        # Schema/secret/size checks still apply; manifests verify content hashes.
+        exclude: ^docs/evidence/(historical/|[^/]+/raw/)
       - id: end-of-file-fixer
+        exclude: ^docs/evidence/(historical/|[^/]+/raw/)
       - id: check-yaml
         args: [--allow-multiple-documents]
       - id: check-json
@@ -61,6 +65,8 @@ repos:
   # Python — mypy (type checking)
   # ---------------------------------------------------------------------------
   - repo: https://github.com/pre-commit/mirrors-mypy
+    # Match the supported checker used by project/CI verification. The old
+    # 1.10 hook cannot consume current dependency stubs used by the worker.
     rev: v2.3.1
     hooks:
       - id: mypy
