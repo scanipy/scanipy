@@ -121,6 +121,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 import sqlalchemy
 from sqlalchemy.orm import Session as SqlAlchemySession
 
+from analysis.artifact_identity import identity_metadata
 from detectors.registry import DetectorRegistry
 from services.scan.models.findings import Finding as FindingRow
 from services.scan.provenance import (
@@ -620,8 +621,16 @@ def run_detector_job(
             env_digest=f.env_digest,
             cpg_order_hash=bytes.fromhex(f.cpg_order_hash),
             cpg_order_hash_annotation=f.cpg_order_hash_annotation,
-            fingerprint_class=f.fingerprint_class,
+            # The shared legacy field is intentionally empty on v2 records.
+            fingerprint_class=None,
             slice_fingerprint=bytes.fromhex(f.slice_fingerprint),
+            identity_schema_version=f.identity_schema_version,
+            cpg_order_class=f.cpg_order_class,
+            slice_fingerprint_class=f.slice_fingerprint_class,
+            cpg_order_status=f.cpg_order_status,
+            slice_status=f.slice_status,
+            cpg_order_namespace=f.cpg_order_namespace,
+            slice_namespace=f.slice_namespace,
             witness_blob_uri=f.witness_blob_uri,
             precondition_status=f.precondition_status,
             spec_provenance=f.spec_provenance,
@@ -646,7 +655,7 @@ def run_detector_job(
             env_digest=f.env_digest,  # type: ignore[arg-type]
             cpg_order_hash=bytes.fromhex(f.cpg_order_hash),  # type: ignore[arg-type]
             cpg_order_hash_annotation=f.cpg_order_hash_annotation,
-            fingerprint_class=f.fingerprint_class,  # type: ignore[arg-type]
+            fingerprint_class=None,
             witness_blob_uri=f.witness_blob_uri,
             slice_fingerprint=bytes.fromhex(f.slice_fingerprint),  # type: ignore[arg-type]
             rule_id=f.rule_id,
@@ -663,6 +672,8 @@ def run_detector_job(
             repartition_reason=None,
             repartition_oracle_id=None,
             claim_label=_claim_label_for(f.origin),
+            record_schema_version=2,
+            artifact_identity=identity_metadata(f),
         )
         signed = sign_provenance(
             record,

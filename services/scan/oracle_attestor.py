@@ -26,42 +26,20 @@ THE HONEST PARTITION IS NOT NEGOTIABLE HERE (``.claude/rules/05-determinism.md``
     even at ``reproduction_rate == 1.0``. A perfectly reproducing Semgrep run is
     a measured number, not a theorem.
 
-BLOCKING INTEGRATION CONSTRAINT — provenance fields with no oracle-path source.
-  ``canonical_emit._validate_finding`` requires, non-empty, on EVERY finding
-  (core and oracle alike): ``cpg_order_hash`` (INV-5), ``precondition_status``,
-  and ``class_``. None of the three has a legitimate value on a Semgrep-only
-  scan:
+VERSIONED ARTIFACT METADATA (BHMEA R09).
+  A Semgrep-only scan explicitly supplies ``None`` for unavailable CPG and
+  CW-DETECT outputs. SARIF v2 emits null values and ``not-applicable`` states;
+  it never manufactures graph or slice hashes from oracle content. If a real
+  graph result is supplied, its independent class and namespace may accompany
+  it. A historical hash without that evidence remains ``legacy-ambiguous``.
 
-    | field                 | legitimate producer                | on this path |
-    |-----------------------|------------------------------------|--------------|
-    | ``cpg_order_hash``    | CMP-CORE-03 ``canonical_order(cpg)``| no CPG built |
-    | ``precondition_status``| CMP-SNAP-03 ``CW-DETECT``          | never runs   |
-    | ``class_``            | detector spec / CLAR-ORCH-03 (OPEN)| unmapped     |
-
-  The shipped self-host oracle service (``deploy/scanipy_oracle/app.py``) sides
-  with honesty by simply NOT HAVING a ``cpg_order_hash`` column — its ``oracle``
-  schema is deliberately separate from the tenanted ``findings`` table. That
-  omission and FND-01's NOT-NULL requirement are in direct tension, and this
-  adapter cannot resolve it: fabricating a sha256 (of the source tree, of the
-  ruleset, of anything) would mint a value that LOOKS like a CMP-CORE-03
-  canonical-order digest and is not one — precisely the INV-5 lie the invariant
-  exists to prevent.
-
-  RESOLUTION TAKEN HERE: all three are REQUIRED, caller-supplied inputs on
-  :class:`OracleScanProvenance`, validated on construction. A deployment with no
-  CPG cannot supply ``cpg_order_hash`` and gets a typed
-  :class:`OracleProvenanceUnavailable` naming the missing producer — fail-closed,
-  never a silent default. Surfaced as text for the orchestrator to file a CLAR
-  (an implementation agent cannot edit ``WBS.md §17``); it extends the existing
-  CLAR-CP-05-03 interface-shape list and touches the OPEN CLAR-ORCH-03 (oracle
-  ``class_`` sourcing).
-
-  ``fingerprint_class`` is NOT caller-supplied: it is pinned to ``"weak"`` on
-  every finding here, matching the shipped oracle service's precedent ("a
-  same-source content id, never a canonical-CPG claim"). Threading a ``"strong"``
-  class through from some ``canonical_order`` result would assert INV-5
-  canonicality over a Semgrep content hash. ``"weak"`` is the only honest class
-  for a finding with no slice witness through a CPG.
+  Oracle content identity has its own same-source-only namespace. It is not a
+  slice fingerprint and is never eligible for cross-refactor suppression.
+  The legacy ``fingerprint_class="weak"`` Python attribute is retained only
+  for old callers; v2 output does not publish the ambiguous shared class.
+  Matched rules still require an explicit rule-to-vulnerability-class mapping.
+  This honest optional metadata does not establish the submitted core demo or
+  real source/graph/witness producer integration by itself.
 
 DETERMINISM NOTE. This adapter is NOT claimed to be deterministic — that is the
 whole point of measuring a rate. Its own projection is a pure function of the
@@ -142,13 +120,10 @@ _DEFAULT_TIMEOUT_S: Final[int] = 600
 
 
 class OracleProvenanceUnavailable(Exception):  # noqa: N818  (a constraint, not an error state)
-    """A provenance field required by CMP-FND-01 has no oracle-path producer.
+    """A supplied provenance value is malformed or a rule class is unmapped.
 
-    Raised (fail-closed) when the caller cannot supply ``cpg_order_hash``,
-    ``precondition_status``, or the ``class_`` for a matched rule. This is the
-    BLOCKING INTEGRATION CONSTRAINT documented in the module docstring — a real
-    finding about the pipeline, not a transient failure. The adapter refuses to
-    invent a value that would read as a CMP-CORE-03 / CW-DETECT output.
+    Explicit ``None`` is valid for CPG/CW-DETECT outputs absent on this path;
+    blank or invented placeholder digests are not.
     """
 
 
@@ -161,7 +136,7 @@ class SemgrepInvocationError(Exception):
 
 
 # ---------------------------------------------------------------------------
-# Caller-supplied provenance bundle (the blocking-constraint boundary)
+# Caller-supplied provenance bundle (explicit producer boundary)
 # ---------------------------------------------------------------------------
 
 
@@ -170,14 +145,12 @@ class OracleScanProvenance:
     """The provenance every emitted finding must carry (INV-2 / INV-5, RULE-6).
 
     Every field here is supplied by the CALLER because none of them can be
-    derived from a Semgrep run. Construction validates them; an absent or
-    malformed value raises :class:`OracleProvenanceUnavailable` naming the
-    component that legitimately produces it.
+    derived from a Semgrep run. Construction validates supplied values;
+    ``None`` explicitly records absent CPG/CW-DETECT producers.
 
     ``rule_classes`` maps a Semgrep ``check_id`` to its Scanipy vulnerability
-    class. There is no shipped rule -> class table (oracle ``class_`` sourcing is
-    the OPEN CLAR-ORCH-03), so an unmapped matched rule fails closed rather than
-    being labelled by guesswork.
+    class. An unmapped matched rule fails closed rather than being labelled by
+    guesswork. Historical CLAR-ORCH-03 remains traceability, not an approval gate.
 
     ``llm_triage_flag`` is a factual record of the run, so it is required rather
     than defaulted: defaulting it to ``False`` would assert that triage was off
@@ -192,12 +165,14 @@ class OracleScanProvenance:
     S_version: str
     env_digest: str
     #: CMP-CORE-03 ``canonical_order(cpg).cpg_order_hash.hex()`` — 64 hex chars.
-    cpg_order_hash: str
+    cpg_order_hash: str | None
     #: CMP-SNAP-03 CW-DETECT verdict for the snapshot under scan.
-    precondition_status: PreconditionStatus
+    precondition_status: PreconditionStatus | None
     #: Semgrep ``check_id`` -> Scanipy class. Unmapped matched rule => fail-closed.
     rule_classes: dict[str, str]
     llm_triage_flag: bool
+    cpg_order_class: str | None = None
+    cpg_order_namespace: str | None = None
 
     def __post_init__(self) -> None:
         for field_name in ("commit_sha", "S_version", "env_digest"):
@@ -211,7 +186,7 @@ class OracleScanProvenance:
         # INV-5: the hash must be a real CMP-CORE-03 digest. We cannot verify its
         # provenance, but we CAN refuse anything that is not shaped like one, and
         # we never supply one ourselves.
-        if not _is_sha256_hex(self.cpg_order_hash):
+        if self.cpg_order_hash is not None and not _is_sha256_hex(self.cpg_order_hash):
             raise OracleProvenanceUnavailable(
                 f"cpg_order_hash must be 64 lowercase hex chars (INV-5); got "
                 f"{self.cpg_order_hash!r}. Its ONLY legitimate producer is "
@@ -224,13 +199,23 @@ class OracleScanProvenance:
                 f"ruleset, or the findings — that would forge an INV-5 canonical-"
                 f"order digest."
             )
-        if self.precondition_status not in ("closed-world", "degraded", "full-reparse"):
+        if self.precondition_status is not None and self.precondition_status not in (
+            "closed-world",
+            "degraded",
+            "full-reparse",
+        ):
             raise OracleProvenanceUnavailable(
                 f"precondition_status must be one of "
                 f"('closed-world', 'degraded', 'full-reparse'); got "
                 f"{self.precondition_status!r}. Its only legitimate producer is the "
                 f"CMP-SNAP-03 CW-DETECT verdict for this snapshot, which does not "
                 f"run on a Semgrep-only scan."
+            )
+        if self.cpg_order_class is not None or self.cpg_order_namespace is not None:
+            from analysis.artifact_identity import ArtifactIdentity
+
+            ArtifactIdentity(
+                "completed", self.cpg_order_hash, self.cpg_order_class, self.cpg_order_namespace
             )
 
     def class_for(self, check_id: str) -> str:
@@ -281,9 +266,9 @@ class OracleFinding:
     engine: str
     S_version: str  # normative INV-2 field name (capital S; DOC-SARIF §5/§6)
     env_digest: str
-    cpg_order_hash: str
+    cpg_order_hash: str | None
     fingerprint_class: str
-    slice_fingerprint: str
+    slice_fingerprint: str | None
     rule_id: str
     message: str
     uri: str
@@ -294,9 +279,17 @@ class OracleFinding:
     severity: str
     class_: str
     status: str
-    precondition_status: str
+    precondition_status: str | None
     witness_blob_uri: str | None = None
     spec_provenance: str | None = None
+    identity_schema_version: int = 2
+    cpg_order_class: str | None = None
+    slice_fingerprint_class: str | None = None
+    cpg_order_status: str = "legacy-ambiguous"
+    slice_status: str = "not-applicable"
+    cpg_order_namespace: str | None = None
+    slice_namespace: str | None = None
+    oracle_fingerprint: str | None = None
 
 
 def _oracle_finding_is_workerfinding(f: OracleFinding) -> WorkerFinding:
@@ -462,7 +455,7 @@ def _relative_uri(raw_path: str, source_dir: Path) -> str:
         return Path(raw_path).as_posix()
 
 
-def _weak_slice_fingerprint(
+def _oracle_content_fingerprint(
     *, commit_sha: str, check_id: str, uri: str, start_line: int, start_col: int
 ) -> str:
     """A deterministic SAME-SOURCE content id for an oracle finding.
@@ -470,8 +463,8 @@ def _weak_slice_fingerprint(
     NOT a CMP-CORE-02 Algorithm-3 slice fingerprint: an oracle finding has no
     slice witness through a CPG (see ``services.scan.worker``'s fail-closed
     ``SliceFingerprinter``). It is stable identity for the same finding at the
-    same location in the same commit, and nothing more — which is exactly why
-    every finding here carries ``fingerprint_class = "weak"``. It is never
+    same location in the same commit, and nothing more. Its dedicated namespace
+    cannot be confused with a graph or slice identity. It is never
     refactor-stable and must never be used to auto-suppress across a refactor.
     Same construction as the shipped ``deploy/scanipy_oracle/app.py``.
     """
@@ -489,8 +482,8 @@ def map_semgrep_report(
 
     PURE: a function of ``(report, source_dir, provenance)`` only. Every finding
     is stamped ``origin="oracle-passthrough"`` / ``engine="semgrep"`` (INV-1) and
-    ``fingerprint_class="weak"`` (INV-5); the INV-2/INV-5 provenance is threaded
-    verbatim from ``provenance`` and never re-derived here.
+    artifact-local metadata. Available producer evidence is threaded verbatim
+    from ``provenance``; absent graph/slice results are explicit, never invented.
 
     Returns a ``frozenset`` because that is ``normalize``'s input type. The set
     is widened to ``frozenset[WorkerFinding]`` explicitly: ``frozenset`` is
@@ -526,7 +519,8 @@ def map_semgrep_report(
                 # --- INV-5: caller-supplied CMP-CORE-03 hash; class pinned weak ---
                 cpg_order_hash=provenance.cpg_order_hash,
                 fingerprint_class=ORACLE_FINGERPRINT_CLASS,
-                slice_fingerprint=_weak_slice_fingerprint(
+                slice_fingerprint=None,
+                oracle_fingerprint=_oracle_content_fingerprint(
                     commit_sha=provenance.commit_sha,
                     check_id=check_id,
                     uri=uri,
@@ -545,6 +539,15 @@ def map_semgrep_report(
                 class_=provenance.class_for(check_id),
                 status="open",  # CMP-FND-02 schema default for a newly emitted finding
                 precondition_status=provenance.precondition_status,
+                cpg_order_class=provenance.cpg_order_class,
+                cpg_order_namespace=provenance.cpg_order_namespace,
+                cpg_order_status=(
+                    "completed"
+                    if provenance.cpg_order_class is not None
+                    else "legacy-ambiguous"
+                    if provenance.cpg_order_hash
+                    else "not-applicable"
+                ),
                 witness_blob_uri=None,  # no witness blob: an oracle match has no slice
                 spec_provenance=None,  # CMP-TRI-03 territory; not set at emission
             )

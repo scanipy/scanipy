@@ -58,16 +58,13 @@ BUILD-AHEAD REGIME (sanctioned by CLAR-PROC-01, WBS §17 RESOLVED 2026-06-04).
   The oracle adapter value is never computed-as-fake on the production path
   (CLAR-PROC-01 condition (2)): the prod seam raises; only a test double supplies
   a value.
-  ``fingerprint_class`` is sourced from CMP-CORE-03 (it rides on the run-level
-  ``canonical_order(cpg)``), which deviates from DOC §4.2's "carried from
-  CMP-CORE-02" — the source-attribution conflict is filed as CLAR-ORCH-03
-  (OPEN; Architect to reconcile). This wiring does NOT resolve it: the run-level
-  ``fingerprint_class`` threading stays byte-for-byte unchanged. The real
-  CMP-CORE-02 ``compute_slice_fingerprint`` (now wired in
-  :func:`_findings_from_core`) supplies only the per-finding ``slice_fingerprint``
-  hex; whether the per-finding CMP-CORE-02 ``fingerprint_class`` should also flow
-  here, replacing the run-level CMP-CORE-03 value, remains the OPEN CLAR-ORCH-03
-  question and is left untouched.
+  BHMEA R09 now carries independent ``cpg_order_class`` from CMP-CORE-03 and
+  ``slice_fingerprint_class`` from CMP-CORE-02, with their producer namespaces.
+  Neither verdict overwrites the other. ``fingerprint_class`` remains a legacy
+  graph-only Python alias; v2 SARIF publishes only the artifact-local verdicts.
+  Old oracle adapter digests without independent slice evidence remain
+  ``legacy-ambiguous`` and are not promoted into a computed class. Historical
+  CLAR-ORCH-03 records the original conflict, not an active architecture gate.
 
 INTERFACE RECONCILE: CLAR-ORCH-02 (is_mixed sourcing); WorkerJob shape
 deviations filed as CLAR-ORCH-04 (precondition_status source) and
@@ -223,6 +220,15 @@ class Finding:
     cpg_order_hash_annotation: str = CPG_ORDER_HASH_ANNOTATION  # INV-5 pinned literal
     fingerprint_class: str = ""  # "strong" | "weak"; carried from CMP-CORE-03
     slice_fingerprint: str = ""  # hex; from real CMP-CORE-02 for core findings
+    # R09: independent producer verdicts. Defaults deliberately do not infer
+    # slice canonicality from a legacy adapter's single graph-level class.
+    identity_schema_version: int = 1
+    cpg_order_class: str | None = None
+    slice_fingerprint_class: str | None = None
+    cpg_order_status: str = "legacy-ambiguous"
+    slice_status: str = "legacy-ambiguous"
+    cpg_order_namespace: str | None = None
+    slice_namespace: str | None = None
     #   (pre-filled in _findings_from_core); the SliceFingerprinter port now only
     #   covers findings not pre-filled upstream (oracle — no slice witness)
     witness_blob_uri: str | None = None
@@ -553,7 +559,8 @@ def _findings_from_core(
         # ``analysis.ordering``); ``.hex()`` yields the 64-hex ``str`` the worker
         # Finding field / CMP-FND-01 ``WorkerFinding`` Protocol expect — the same
         # conversion the run-level ``order.cpg_order_hash.hex()`` uses below.
-        slice_fingerprint_hex = compute_slice_fingerprint(sf, cpg).slice_fingerprint.hex()
+        slice_result = compute_slice_fingerprint(sf, cpg)
+        slice_fingerprint_hex = slice_result.slice_fingerprint.hex()
         out.append(
             Finding(
                 rule_id=sf.spec_id,
@@ -573,6 +580,12 @@ def _findings_from_core(
                 # from the worker-level canonical_order (advisor trap #3), NOT
                 # read off the solver finding (oracle findings have no solver).
                 slice_fingerprint=slice_fingerprint_hex,  # CMP-CORE-02 (Algorithm 3)
+                identity_schema_version=2,
+                slice_fingerprint_class=slice_result.fingerprint_class,
+                slice_status="completed",
+                slice_namespace=getattr(
+                    slice_result, "identity_namespace", "scanipy-slice-fingerprint/1"
+                ),
                 witness_blob_uri=None,
             )
         )
@@ -719,6 +732,10 @@ def _run_detector_unmetered(
         f.cpg_order_hash = cpg_order_hash_hex  # INV-5 (carried from CMP-CORE-03)
         f.cpg_order_hash_annotation = CPG_ORDER_HASH_ANNOTATION  # INV-5 pinned literal
         f.fingerprint_class = fingerprint_class  # INV-5 conditional class
+        f.identity_schema_version = 2
+        f.cpg_order_class = fingerprint_class
+        f.cpg_order_status = "completed"
+        f.cpg_order_namespace = getattr(order, "identity_namespace", "scanipy-cpg-order/1")
         if not f.slice_fingerprint:
             # CORE findings already carry a real CMP-CORE-02 ``slice_fingerprint``
             # (pre-filled in _findings_from_core via compute_slice_fingerprint), so
