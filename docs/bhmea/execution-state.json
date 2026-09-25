@@ -55,7 +55,13 @@
     "Local #400 d51c5f3 includes reviewed inventory/loader/renderer and pure process-evidence codec, with combined full2971/51. Root/author483 and corpus480 focused selections overlap and are not additive; original path/loss-red controls remain retained. The corrected1477-line runtime-store design42d31451 has scoped wire/replay approval, while exact pure-journal API/six-role authority adapters remain in progress and no store code exists. Physical capacity/installer/work isolation, parent DB orphan barriers, current-anchor factory, kernel readers, real Docker lifecycle/recovery and operational authority remain unresolved.",
     "R05 #380 merged3e2773e from exact9be0579 after1894/51 full, normal push, required CI and canonical36162235882/APPROVE5835971061. Its prior failed review and older1613/51 and1700/51 runs are preserved separately. Integrate the actual bounded runtime/controller and verify image/readiness before any approved fresh844-side campaign; no corrected G0 exists.",
     "The owner confirmed this development machine for the Docker presentation. Selected 13:21 UTC host observations identify capacity and current resource pressure only; no stage budget or G3_STAGE criterion is accepted by that confirmation.",
-    "Explicit later update at17:45 UTC: accepted main1b29100 includes PR407 from exact83b9ec6/tree01ad138a after2103/51 full, normal push, seven test checks and canonical36167975158 SUCCESS/finalAPPROVE5836718691. Narrow393Done only. Scalar seven-file c4f85c5 normally committed and accepted6f main integratedf6903cf; new full running. Git7dcc full2265/51 passed; newer3abf021 includes accepted typed main and needs fresh combined checks. Runtime structural-only API47731c42 approved after raw/domain-link/accounting corrections; only journal source/test files now allocated/in progress, noFS/DB/authority/controller acceptance. These facts supersede the corresponding17:29 pending-status notes, not any task/claim/gate states."
+    "Explicit later update at17:45 UTC: accepted main1b29100 includes PR407 from exact83b9ec6/tree01ad138a after2103/51 full, normal push, seven test checks and canonical36167975158 SUCCESS/finalAPPROVE5836718691. Narrow393Done only. Scalar seven-file c4f85c5 normally committed and accepted6f main integratedf6903cf; new full running. Git7dcc full2265/51 passed; newer3abf021 includes accepted typed main and needs fresh combined checks. Runtime structural-only API47731c42 approved after raw/domain-link/accounting corrections; only journal source/test files now allocated/in progress, noFS/DB/authority/controller acceptance. These facts supersede the corresponding17:29 pending-status notes, not any task/claim/gate states.",
+    "Revision 12 at 19:00 UTC September 25: accepted documentation main d4ad0c0 via #408. Corrected Git #409 acbd9d6/tree bd07d391 passed full 2437/51, normal push and all five jobs in exact CI 36176023679. Canonical 36176791343 was running; initial 36171909118 REQUEST-CHANGES is preserved. No merge or online/native acceptance is assumed at that cutoff.",
+    "Occurrence #411 initial 2fec34d full 2287/51 includes 89 actual isolated PostgreSQL tests without skips. CI 36173529503 and Gate 3 run 36173529509 passed all eight checks. Initial canonical 36173529725 REQUEST-CHANGES is preserved. Local e08ac41 adds only 14 documentation lines and OPEN CLAR-BHMEA-02, with source/SQL/CI unchanged; corrected push/combined gates pending. Durable decisions, final Finding bridge and API/UI remain open.",
+    "Rule codec 6ae81ad passed full 2269/51 and 192 focused checks; inventory 980c5ef passed full 2202/51 and 107 independent focused checks; neither has a PR. Inventory's original unlocalized 72-pass/one-failure result and controlled sibling-change 6-pass/two-failure result remain separate. CodeQL #410 source e2ace77d passed 440 peer checks after 12 genuine path failures; 93ae0aa's first full was running at the cutoff. Real CodeQL import/native execution and R13 acceptance remain open.",
+    "Pure journal source 51e56785 passed 331 focused checks on Python 3.11/3.12 and independent review; 0dbee6e incorporates main/inventory with 434 affected checks. AL-02 source bc361a8f passed 286 on both versions, with independent review ongoing at 19:00. Scalar c8fb75c retains f690's full-tested tree, 3365/140. No runtime, current-authority, model, native/fidelity or G1 acceptance follows from these libraries.",
+    "The 741-line authority design and 544-line amendment have scoped design approval only. Physical-store planning exposed publication-ID loss after intent retirement and an unresolved 512 MiB helper versus 256 MiB reader hash allowance. Retention/accounting/API amendments are pending. Real operator/current-admission/independent-restore choices, SQL history/barriers, physical capacity, kernel controller and actual source/model/scan integration remain required. All task/claim/gate/DAG states are unchanged.",
+    "Explicit 19:05 UTC update: Git #409 merged at 595484b from exact acbd9d6 with identical tree bd07d391, after all five corrected CI checks and canonical 36176791343 SUCCESS/final APPROVE (comment 5837964794). Only offline/transport preparation is accepted; #398/#362 stay open. After the cutoff, CodeQL 93ae0aa passed full 2864/51 in 311.53s; AL-02 passed independent 291/0 and source review, then normal commit 66607b9. Remote/native/current-authority/full acceptance remains pending for those other components."
   ],
   "tasks": [
     {
@@ -71,7 +77,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R01",
       "evidence_paths": [],
-      "next_action": "Preserve Revision11 accepted #405/#380/#406/#407, original17:29 local snapshot and explicit17:45 update, all contrary evidence and unchanged task/claim/gate/DAG states. Complete pending producer/runtime integration and reforecast after corrected G0/G1; #362 remains open."
+      "next_action": "Preserve Revision12 19:00 snapshot, accepted #408 and prior foundations, original17:29/17:45 history, contrary results and all task/claim/gate/DAG states. Complete exact-head gates and real producer/runtime integration; reforecast only after corrected G0/G1. #362 remains open."
     },
     {
       "id": "R02",
@@ -165,7 +171,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R07",
       "evidence_paths": [],
-      "next_action": "Contract #385 and pure matcher #389 are merged. #378 occurrence store has a local checkpoint with 89 passing dedicated PostgreSQL checks but remains unmerged. Complete durable decision history/CAS and API/UI after persistence integration; map pure tests to current acceptance IDs and validate proposals at adapter boundaries. Production policy registry stays empty."
+      "next_action": "Contract #385 and matcher #389 merged. #411 initial2fec full2287/51 includes89realPG/no skips, all8remote tests green; canonical requested CLAR/checklist. Local e08 documentation correction needs combined/push/review gates. Preserve both WBS CLAR rows; finish actual producers, final Finding/R09 bridge, durable decision/CAS and API/UI. Production policy registry stays empty."
     },
     {
       "id": "R08",
@@ -180,7 +186,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R08",
       "evidence_paths": [],
-      "next_action": "Containment #402/#403, parser #404 and custody #406 are merged; narrow closures are not scan delivery. Review/merge local #378/#391, integrate #397 raw core, #398 actual acquisition, #399 current authority and #400 durable evidence/DB orphan barriers/factory/kernel/controller, then persist observations before any identity and wire Compose, retries, durable decisions and truthful API/UI. Track #403 test-ID/fixture/NoReturn follow-ups; user app/DB remain untouched."
+      "next_action": "Preserve accepted containment/parser/custody and integrate #409's accepted offline Git/transport bytes. Finish #411 and rule/inventory/CodeQL gates, #391/#397 raw producers, #399 actual current-authority ledger and #400 durable store/DB barriers/factory/kernel/controller. Retain occurrences before identity and wire Compose/retries/decisions/truthful API/UI. User app/DB untouched; no library approval establishes a delivered scan."
     },
     {
       "id": "R09",
@@ -211,7 +217,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R10",
       "evidence_paths": [],
-      "next_action": "#393 typed transport now merged via407; local391 kernel remains pending. #397 compiler/raw slice has scoped approval, root126/corpus128 focus, normal c4f85c5 checkpoint and accepted-main f6903cf integration; current full is running at17:45, not native evidence. Complete combined/remote gates and actual source/native/accepted-rule/runtime/authority bindings before nonempty G1 witnesses and fresh canonical reruns."
+      "next_action": "Typed transport #407 merged; local391 kernel pending. #397 c8fb75c preserves f690 full-tested tree3365/140 with all negative-control corrections. Complete dependency/current-head/remote gates and actual source/native/accepted-rule/runtime/authority bindings before nonempty G1 witnesses and fresh canonical reruns."
     },
     {
       "id": "R11",
@@ -352,7 +358,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R19",
       "evidence_paths": [],
-      "next_action": "R19-A382 and typed407 are merged. #397 compiler/declaration and corrected raw solver are locally checkpointed c4f85c5/f6903cf with six genuine UUID-coercion failures preserved then fixed; root126/corpus128 focus does not replace current full (running17:45) or pending remote gates. Bind actual native/source/runtime and accepted rules/models, then complete full Java/Python access-path/heap/fixpoint and fidelity coverage."
+      "next_action": "R19-A382/typed407 merged. #397 c8fb75c/f690 same tree passed3365/140; all six UUID-coercion reds and prior projection failures retained. Complete current dependency/remote gates, bind actual native/source/runtime and accepted rules/models, then finish full Java/Python access-path/heap/fixpoint and fidelity coverage."
     },
     {
       "id": "R20",
