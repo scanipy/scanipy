@@ -61,7 +61,23 @@
     "Rule codec 6ae81ad passed full 2269/51 and 192 focused checks; inventory 980c5ef passed full 2202/51 and 107 independent focused checks; neither has a PR. Inventory's original unlocalized 72-pass/one-failure result and controlled sibling-change 6-pass/two-failure result remain separate. CodeQL #410 source e2ace77d passed 440 peer checks after 12 genuine path failures; 93ae0aa's first full was running at the cutoff. Real CodeQL import/native execution and R13 acceptance remain open.",
     "Pure journal source 51e56785 passed 331 focused checks on Python 3.11/3.12 and independent review; 0dbee6e incorporates main/inventory with 434 affected checks. AL-02 source bc361a8f passed 286 on both versions, with independent review ongoing at 19:00. Scalar c8fb75c retains f690's full-tested tree, 3365/140. No runtime, current-authority, model, native/fidelity or G1 acceptance follows from these libraries.",
     "The 741-line authority design and 544-line amendment have scoped design approval only. Physical-store planning exposed publication-ID loss after intent retirement and an unresolved 512 MiB helper versus 256 MiB reader hash allowance. Retention/accounting/API amendments are pending. Real operator/current-admission/independent-restore choices, SQL history/barriers, physical capacity, kernel controller and actual source/model/scan integration remain required. All task/claim/gate/DAG states are unchanged.",
-    "Explicit 19:05 UTC update: Git #409 merged at 595484b from exact acbd9d6 with identical tree bd07d391, after all five corrected CI checks and canonical 36176791343 SUCCESS/final APPROVE (comment 5837964794). Only offline/transport preparation is accepted; #398/#362 stay open. After the cutoff, CodeQL 93ae0aa passed full 2864/51 in 311.53s; AL-02 passed independent 291/0 and source review, then normal commit 66607b9. Remote/native/current-authority/full acceptance remains pending for those other components."
+    "Explicit 19:05 UTC update: Git #409 merged at 595484b from exact acbd9d6 with identical tree bd07d391, after all five corrected CI checks and canonical 36176791343 SUCCESS/final APPROVE (comment 5837964794). Only offline/transport preparation is accepted; #398/#362 stay open. After the cutoff, CodeQL 93ae0aa passed full 2864/51 in 311.53s; AL-02 passed independent 291/0 and source review, then normal commit 66607b9. Remote/native/current-authority/full acceptance remains pending for those other components.",
+    "Revision 13 observed cutoff is 2026-09-25 20:51 UTC. Accepted main075f92fe/tree7bce9471 includes CodeQL413 and occurrence411. These notes supersede earlier pending instructions only; every task/claim/gate/DAG state, required scope and prior failure remains unchanged. All full claims and #378/#362 remain open.",
+    "CodeQL413 merged5118c93 at20:08:11 from reviewed4be0c28 with identicaltree047536ed; CI36181665721/Gate336181665520 seven successes and canonical36182993701 SUCCESS/finalAPPROVE5838721370. Initial pending-CI/Unicode review36181665499 retained; actual NFD/NFC three controls pass in /tmp/scanipy-413-unicode-assertion-confirmation.xml. This is supplied-data observation parsing, not actual CodeQL import/native execution, source custody, accepted query/model authority, reproduction or R13/G2 acceptance.",
+    "Occurrence411 merged075f92fe at20:33:41 from1c2f3b7472b459a09700866ec0822a735dd66349 with identicaltree7bce9471. CI36185087471/Gate336185087522 eight successes including89 actual isolatedPG tests without skips; canonical36186007470 SUCCESS/finalAPPROVE5839122349 and actual APPROVE/PASS gate. Earlier3992e5c full2621pass/51skip392.62s belongs to that tree; current548focus=95occurrence+427CodeQL+26ledger. Initial411 failed review and CLAR-BHMEA-02 remain retained. No live producer/authority/final Finding bridge/decision/API/UI acceptance follows.",
+    "Local packet a9e80119/controllerccaf7e5 sharetree7976bbd438a6436fb019fca171579c31f2a58858. /tmp/scanipy-runtime-packet-ancestor-main-full.xml has5662passed/51skipped,0failures/errors,483.365s, including89 actual tests.integration.test_occurrence_store cases with no skips. Total5713 is not passes. Packet639a6c9 has760owned+16independent=776 checks per Python3.11/3.12, and combined1946focus. Preserve original controller3772pass/51skip/1failure345.76s; its changed object was unobserved. Separate sibling diagnostic1pass/1fail establishes the ancestor mechanism only. Reviewed5c57897 retains nine-field selected-file/direct-parent checks and five-field ancestor identity/security;117peer/664combined pass. No operational controller/authority/native acceptance.",
+    "Inventoryd59c427647focus and rule2f1b3f7714focus are local with no PR at20:51 cutoff; root's inventory push is running. Earlier full2536/51 and2603/51 belong to their earlier heads. AL0266607b9 is locally committed/reviewed. AL03be3c00d shapes/facade56pass is draft; actual helper SQL/PG/current-authority acceptance is absent. At20:49 root/peer approved WORK0285174198 logical raw/image/history/canonical admission accounting after14A replay andN-seen+1 census corrections; incorporate before affected helper implementation. A new detector run is RUNNING, and initial denial must be atomic; neither is live execution proof.",
+    "RES non-event core source2fd1297a/tests3a509395/contract3dcb1d3d is frozen with110passes eachPython3.11/3.12, independent review pending. Retain genuine cold-recovery77pass/1fail and3.12path1fail plus corrected greens. Its staged role plans/permanent intent mapping address only the allocated non-event boundary; full-history reader/event/spool, qualified installation/capacity, six-role current owner closure, DB orphan/pre-reservation barriers and operational factory remain required. No diagnostic fallback enables production.",
+    "Confirmed presentation machine remains unchanged, no October lock, December 2 or 3 exact date unconfirmed. Root's 20:32 resource observation was approximately 8.3 GiB available RAM, swap full, 96 GiB free shared device; not reserved capacity or stage acceptance. No installation/release/native campaign or user app/DB mutation occurred. Recheck resources and obtain explicit bounded-run readiness/authority before native work.",
+    "Explicit later update at 20:54 UTC: inventory d59c427 normal push passed and PR414 is open against075f92fe; CI36188497922 and canonical36188497794 are running. Rule2f1b3f7 normal push is running. Root reproduced a genuine RES double-begin thread race on source2fd1297a: one failure/zero skips in /tmp/scanipy-res-root-concurrency-configured-before.xml. Its narrow lifetime correction has interim111 passes plus five new focused controls; final independent/fault review, full and publication gates remain pending. Original110 reports retain their old-source attribution; no acceptance state changes.",
+    "Revision 14 observed cutoff is 2026-09-25 22:25 UTC (clock read22:25:56). Accepted main4911f6568a85206651adbf40428529eb090c389f/tree1b81b0fd1e4d52165695e957d90f7818aafe08cd includes inventory414, documentation415, rule416 and metadata-loader417. This supersedes corresponding pending instructions, not earlier failures/history or any C/R/G state. Required CI/canonical SUCCESS/final APPROVE and truthful checklists preceded all four merges; exact links and original failed reviews are in the foundation evidence index.",
+    "Inventory414 mergedc7eb7b3 at21:14:06; final canonical36189446059/APPROVE5839597708. Documentation415 mergedfd35a61 at21:32:28; final canonical36191780566/APPROVE5839898409. Rule416 merged2dcec908 at21:56:20; CI36192191972/Gate336192193211 eight successful test checks, final canonical36193652089/APPROVE5840152964 and explicit independent security approval. Rule actual merge813affected/0skip remains distinct from a full run. Each CI ran89actual occurrencePG cases. Initial procedural/pending-CI/security-signoff review failures remain preserved.",
+    "Loader417 merged4911f656 at22:16:42 fromde685797 with identicaltree1b81b0fd. CI36195155422 six successes,89actual occurrencePG/no skips; first canonical36195155430 SUCCESS/finalAPPROVE5840329710, actual gate22:11:48. Root actual fetched merge bab501ff has identical tree and1090affected/0skip9.594s, report/tmp/scanipy-loader-417-merge-focus.xml. C617full3424/51 is not relabeled. Exact PosixPath required; five retained ancestor identity/security fields. Metadata consistency is not authority or native readiness.",
+    "ResolverB b0717452/treef5ddf9de has804affected/0skip53.025s, exact13reviewed additions/baseline167 unchanged. Pre-C c365e129 full3549pass/51optional skips/0failures440.047s includes89actual occurrencePG; not a full result on laterB. Actual normal push running and noPR at22:25 cutoff. D6bf0651/tree59744482 has856affected/0skip4.257s, exactlyfourDpaths and normal hooks; freshfull/push/remote pending. E257336c/tree0d8d0427 has479owned/0skip5.136s and normal commit hooks, needs accepted-parent/full/publication gates. F complete-journal packaging starts fromE; no pure-record result enables Docker execution.",
+    "Provenance de17aa06/treea6cedbe4 has702affected/0skip10.815s after acceptedC merge; pre-C1a349f22 full3391pass/51optional skips/0failures391.621s includes89actual occurrencePG. Six owned paths unchanged, baseline167plus38reviewed public-value entries. Actualpush/remote and all live producer/finalization/key/export work pending. The initial C-focused nonexistent-filename command exited4 before tests; empty report retained separately. Ten synthetic signatures preserve legacy bytes, not installed trust or a real scan.",
+    "AL03 remains uncommitted atopbe3c00d within16path allocation;147unit/source controls pass, no actual ALPostgreSQL run at22:25. Five frozen migration/table/ACL/history/bridge resources have independent scoped security approval; facade review pending. Five failing source-order controls preserved generated-denial prepayment and backward-time omissions, now corrected under unchanged ceilings/ABI. Stored-only wrappers preserve private work-limit marker versus malformed stored content. Original lower helpers validate NEW occurrence inputs; later checks rely on ordinary immutable history and precise locked material, not a new full seal-digest bridge. Full SQL/provider/admin/crypto/runtime acceptance remains pending.",
+    "RES3194baa1/tree41f5b633 full4720pass/51optional skips/0failures563.717s includes89actual occurrencePG. This belongs to its recorded combined tree, not a later narrow publication. Retain original double-begin race and other reds; remaining dependency publication, qualified capacity/storage, event/spool/full-reader, six-role current owners, DB barriers and kernel/controller/native integration are mandatory. This machine remains the confirmed stage target; roughly8405MiBavailable/fullswap/93GiBsharedfree at this cutoff is not reserved capacity. App/DB unchanged. No release/image/native campaign, no October lock, no task/claim/gate promotion.",
+    "Explicit later update at22:30 UTC: B actual normal push passed all four stages (Ruff/267format/mypy106/configured unit+invariant), independently verified remote b0717452 now PR418. Current CI/canonical pending, no merge. AL final focused185pass/0skip eachPython3.11/3.12=149AL+36occurrence;138PGcases collection-only. New root-owned container cd533fce165bbf316d67dd29a875c2a8461626cda2e5b79d691898103d0c052f uses cached Postgres16 image, networknone/noports,1536MiBmemory+same swap limit,2CPUs,256PIDs,1GiBtmpfs and private task socket. No ALPG test run yet; facade review then separately granted3case smoke remains next. App/DB/occurrence cluster untouched; Dfull queued. Earlier147unit evidence retains its attribution."
   ],
   "tasks": [
     {
@@ -77,7 +93,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R01",
       "evidence_paths": [],
-      "next_action": "Preserve Revision12 19:00 snapshot, accepted #408 and prior foundations, original17:29/17:45 history, contrary results and all task/claim/gate/DAG states. Complete exact-head gates and real producer/runtime integration; reforecast only after corrected G0/G1. #362 remains open."
+      "next_action": "Preserve Revision14 observed22:25 snapshot and accepted4911f656 main, all earlier cutoffs/contrary evidence and unchanged task/claim/gate/DAG states. Finish B/D/E/F/G/provenance current-head gates, first isolated ALPostgreSQL verification and actual producer/runtime/authority integration; reforecast only after corrected G0/G1. #362 remains open."
     },
     {
       "id": "R02",
@@ -171,7 +187,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R07",
       "evidence_paths": [],
-      "next_action": "Contract #385 and matcher #389 merged. #411 initial2fec full2287/51 includes89realPG/no skips, all8remote tests green; canonical requested CLAR/checklist. Local e08 documentation correction needs combined/push/review gates. Preserve both WBS CLAR rows; finish actual producers, final Finding/R09 bridge, durable decision/CAS and API/UI. Production policy registry stays empty."
+      "next_action": "Contract385/matcher389/store411 are merged;411 exact1c2f3b7→075f92fe has8green tests including89actualPG/no skips and successful canonicalAPPROVE. Preserve initial failed review and OPEN CLAR-BHMEA-02. Implement actual producers/current authority, final Finding/R09 bridge, durable decision/CAS and API/UI. Production policy registry stays empty; #378 remains open."
     },
     {
       "id": "R08",
@@ -186,7 +202,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R08",
       "evidence_paths": [],
-      "next_action": "Preserve accepted containment/parser/custody and integrate #409's accepted offline Git/transport bytes. Finish #411 and rule/inventory/CodeQL gates, #391/#397 raw producers, #399 actual current-authority ledger and #400 durable store/DB barriers/factory/kernel/controller. Retain occurrences before identity and wire Compose/retries/decisions/truthful API/UI. User app/DB untouched; no library approval establishes a delivered scan."
+      "next_action": "Preserve accepted containment/custody/Git409/CodeQL413/store411/inventory414/rule416/metadata-loader417 bytes. Finish B/D/E/F/G current-head gates,391/397 actual raw producers,399 SQL/owner-bridge realPG and current authority,400 qualified store/DB barriers/factory/kernel/controller. Retain occurrences before identity; wire Compose/retries/final Finding/decisions/truthful API/UI. User app/DB untouched; pure records and persistence do not establish a delivered scan."
     },
     {
       "id": "R09",
@@ -201,7 +217,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R09",
       "evidence_paths": [],
-      "next_action": "Scoped metadata #371 and combined canonical producer regressions #369 merged. Complete actual observed environment, accepted-content and source/snapshot/final persistence producers; retain legacy bytes. Local custody/observation objects do not certify those bindings. Full R09 remains open."
+      "next_action": "Preserve metadata371/canonical369 and accepted runtime-metadata417. Finish provenance-compatibility de17aa06 current-head gates, then every actual environment/accepted-content/source/snapshot/witness/final persistence producer and versioned export. Retain original v1/v2 signed bytes and independent artifact classes. Synthetic fixtures/local custody do not certify live bindings. Full R09 remains open."
     },
     {
       "id": "R10",
@@ -247,7 +263,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R12",
       "evidence_paths": [],
-      "next_action": "Persist actual scan provenance and local keys; export and verify with public key in fresh process."
+      "next_action": "Finish frozen-provenance compatibility current-head gates without treating ten synthetic records as live scan evidence. Implement actual producer map, atomic complete eligible occurrence/SARIF finalization, persistent local keys and complete versioned export; verify independently in a fresh process after restart."
     },
     {
       "id": "R13",
@@ -262,7 +278,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R13",
       "evidence_paths": [],
-      "next_action": "Implement actual CodeQL adapter in approved static-only modes; retain output and errors."
+      "next_action": "Pure CodeQL observations merged in413 at5118c93; preserve raw bytes, path/Unicode controls and explicit unknown coverage. Implement bounded real import/native adapter in approved static-only modes with actual accepted rule/source/location/CWE/origin mapping, retained outputs/errors and independent reproduction/comparator evidence. R13 remains unaccepted."
     },
     {
       "id": "R14",
@@ -296,7 +312,7 @@
         "docs/EVIDENCE-BHMEA-DEPENDENCY-COMPATIBILITY-2026-09-25.md",
         "docs/evidence/2026-09-25-stage-machine/README.md"
       ],
-      "next_action": "Runtime #373, snapshot lock #383, hook #387, package correction #402 and producer #380 are merged; no corrected image is built/installed. Local loader/renderer/PE codec and runtime-store design are not operational controller or capacity proof. On this confirmed presentation machine, qualify storage/work isolation, recheck shared resources, verify approved install/startup, measure budgets and rehearse offline twice with recovery/fallback."
+      "next_action": "Merged dependencies and local runtime/packet5662pass/51skip do not install a corrected image or prove capacity. Complete gates and qualify storage/work isolation/current runtime before approved startup. On this confirmed machine recheck the20:32 pressure sample, measure actual budgets and rehearse offline twice with recovery/fallback; no operational constructor or release is enabled."
     },
     {
       "id": "R16",
@@ -312,7 +328,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R16",
       "evidence_paths": [],
-      "next_action": "#390 Java safety, #402/#403 containment and #406 custody are merged, not full R16 acceptance. Complete #398 actual acquisition and #400 durable evidence, qualified physical/work isolation, DB orphan barriers, actual factory/kernel controls and Docker lifecycle beyond its pure loader/renderer/PE codec. Verify coverage, helpers, descendants, other engines and final Compose restrictions before enabling scans; unit tests or supplied pins do not authorize native work."
+      "next_action": "Preserve merged390Java/402/403containment/406custody/409offline transport. Finish398online acquisition and400 reviewed non-event core, event/spool/full-reader, qualified storage/work isolation, DB orphan barriers, current factory/kernel controls and Docker lifecycle. Preserve controller unlocalized failure versus controlled ancestor mechanism. Verify coverage/helpers/descendants/other engines/Compose before scans; pure packet validation and tests do not authorize native work."
     },
     {
       "id": "R17",
@@ -328,7 +344,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R17",
       "evidence_paths": [],
-      "next_action": "Preserve Revision 11 exact-head merge/local evidence and failed-review history without promoting states; archive final immutable raw artifacts, execute all shared gates and seek separate release/image/video authority. Later-than-cutoff checks require their own explicit update."
+      "next_action": "Preserve Revision14 exact-head merge/local evidence and all historical failures without promoting states; keep earlier full results attached to their trees and repeated focused counts nonadditive. Archive final immutable raw artifacts, execute all shared gates and seek separate release/image/video authority. Later-than22:25 results require explicit updates; confirm exact December2/3 slot and rehearse on this machine."
     },
     {
       "id": "R18",

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Updated | 2026-09-25 |
-| Snapshot | Revision 12; 19:00 UTC snapshot plus 19:05 update; accepted main `595484b`, earlier cutoffs preserved |
+| Snapshot | Revision 14; observed 2026-09-25 22:25 UTC plus explicit 22:30 update; accepted main `4911f656`, earlier cutoffs preserved |
 | Target | FULL_SUBMISSION; all C01–C18 claims and applicable R01–R20 acceptance items |
 | Tracking | [Umbrella issue #362](https://github.com/scanipy/scanipy/issues/362) |
 | Presentation | December 2 or 3, 2026; exact date unconfirmed |
@@ -103,7 +103,8 @@ and append-only human decisions. Its pure matcher is merged in #389,
 with an empty production policy registry. A lifecycle-generation correction
 prevents old links or unchanged suppression from reviving after reopening;
 fresh authorization is per dimension, not implied by a new verdict/reference.
-Neither a design nor a pure module supplies the required PostgreSQL/API/UI path.
+The occurrence store is now merged in #411, but neither it nor the pure matcher
+supplies the live producer, durable decision or API/UI integration by itself.
 
 The restricted Java parse/export profile is now merged in #390 (narrow #386
 closed). Before further Java probes, verify the actual compatible installed
@@ -127,9 +128,128 @@ source custody alone does not make an unsafe checkout trustworthy. See the
 
 ## 3. Work ownership and next actions
 
-### Revision 12 execution queue — observed at 19:00 UTC
+### Revision 14 execution queue — observed at 22:25 UTC
 
-This queue supersedes corresponding stale pending statuses in the older
+Accepted main `4911f6568a85206651adbf40428529eb090c389f` now includes inventory
+#414, Revision 13 documentation #415, rule #416 and metadata-loader #417. The
+[Revision 14 evidence index](evidence/2026-09-25-foundation-merges/README.md#revision-14--observed-2225-utc-september-25)
+records exact review/test links and retained failures. The earlier queues below
+are historical; do not repeat completed merges or promote full acceptance.
+
+1. **Root — publication and evidence:** resolver B `b0717452` has 804 affected
+   passes and its normal push is running, not assumed complete. The pre-C full
+   3,549/51 belongs only to `c365e129`. Open/review it only after real push
+   success; require exact-head CI/canonical and merged-artifact checks. Keep
+   all broad/full/pre-push runs serialized and canonical reviews serialized.
+2. **Runtime owner — narrow dependency packaging:** D `6bf0651` has 856 affected
+   passes and needs fresh full then normal push/remote gates. E `257336c` has
+   479 owned passes and normal commit hooks, but requires accepted-parent
+   refresh and its own gates. Package complete reviewed F journal unit after E,
+   then G packet/controller dependencies; do not import a stale baseline or
+   reconstruct selected semantics from a large combined branch.
+3. **Accepted-input owner — real database verification:** AL-03 SQL/validation/
+   reads now include reviewed stored-error, generated-denial precharge and
+   backward-time corrections. Its 147 unit/source checks and five-resource
+   scoped security approval are not PostgreSQL evidence. Finish independent
+   facade review, then use a separately owned bounded cluster and reviewed
+   fixture. Do not reuse the application's DB or the occurrence fixture's
+   global roles. Preserve every real failure; no provider or key is installed.
+4. **Root/provenance — compatibility before producers:** `de17aa06` has 702
+   affected passes; 3,391/51 full belongs to pre-C `1a349f22`. Complete its
+   normal push/current-head gates. Then finish every producer/finalization/
+   persistent-key/export TODO in the compatibility contract; synthetic signed
+   examples authenticate neither a source scan nor an operator.
+5. **Physical runtime and delivered workflow:** RES `3194baa1` has 4,720/51 full
+   on its recorded combined tree, not on a later publication composition.
+   Qualified storage, event/spool/full-reader, current six-role owner closure,
+   DB orphan barriers, kernel/Docker/controller and actual native producers
+   remain required. Wire raw detections before identity, durable decisions,
+   final provenance, API/UI, all-source campaigns and independent rehearsal.
+
+All recorded skips stay skips; repeated focused runs are not additive distinct
+coverage. No full R/C/G state changes. Acceptance/RSVP remains done, presentation
+December 2 or 3, no October lock, this development machine as Docker target.
+Release/image publication, spending and external messages still need authority.
+
+**Later update — observed 22:30 UTC:** B normal push passed and the independently
+verified remote `b0717452` is now [PR #418](https://github.com/scanipy/scanipy/pull/418).
+Its current CI/canonical gates remain pending, not accepted. AL's final unit
+selection is 185 on each Python version (149 AL +36 unchanged occurrence);
+138 PostgreSQL cases were collected only. A new root-owned, network-none,
+1.5 GiB-limited PostgreSQL container is ready on a private task socket; no AL
+SQL test has run. Finish facade review before the separately granted three-case
+smoke, then expanded SQL tests. Existing app/DB and occurrence cluster are
+untouched; D full remains queued. Earlier 147-case evidence retains its own scope.
+
+### Revision 13 execution queue — historical observation at 20:51 UTC
+
+Accepted main `075f92fe9d6aa1afb0a16494769e9cc96ba0df16` includes CodeQL
+parser #413 and occurrence store #411. Their exact reviewed trees, successful
+checks/reviews and retained contrary evidence are in the
+[Revision 13 evidence index](evidence/2026-09-25-foundation-merges/README.md#revision-13--observed-2051-utc-september-25).
+This queue replaces earlier pending instructions; historical tables below do
+not require repeating completed merges. No full task/claim/gate state changes.
+
+1. **Root — publication and evidence:** preserve accepted #413/#411 bytes;
+   complete the inventory `d59c427` and rule `2f1b3f7` normal-push/current-head
+   CI/canonical queue. They have 647 and 714 focused passes and no PR at this
+   cutoff. Prior full 2,536/51 and 2,603/51 belong to older heads, respectively.
+   Root's inventory push is running, not assumed successful. Then finish the
+   runtime/packet and remaining semantic/authority dependency gates.
+2. **Runtime owner — integrate, do not enable:** local packet `a9e8011` and
+   controller `ccaf7e5` have identical tree `7976bbd4`. The configured full
+   run passed **5,662 /51 existing skips**, zero failures/errors, 483.365s;
+   it includes 89 actual occurrence-store PostgreSQL tests with no skips.
+   Reviewed packet commit `639a6c9` has 760 owned plus 16 independent pure
+   controls on both Python versions. The combined focused selection was 1,946.
+   Preserve the original controller **3,772/51/one-failure** and separately
+   established ancestor mechanism; reviewed `5c57897` retains full selected
+   file/direct-parent checks. None of this supplies current owner authority,
+   installed kernel controls, supervised Docker lifecycle or native acceptance.
+3. **Schema/authority owner — implement the approved boundary:** AL-02 is a
+   locally committed/reviewed input codec. AL-03 `be3c00d` has 56 draft
+   shapes/facade checks, not SQL/PG acceptance. At 20:49 UTC root and peer
+   approved WORK02 `85174198` after replay `14A` and census `N-seen+1`
+   corrections. Incorporate those exact logical raw/image/history/canonical
+   accounting rules before affected helper implementation. A new detector
+   run is RUNNING; initial denial must be atomic. Keep configured trust,
+   current-use authority, operator/restore decisions and actual DB bridges
+   distinct; logical ceilings do not prove RSS or workload capacity.
+4. **RES owner/reviewers — finish frozen non-event core review:** 110 controls
+   pass on each Python 3.11/3.12, with both genuine draft reds preserved.
+   Independent review is pending. The private byte-custody core does not
+   install/qualify storage, provide a full history/event/spool writer, satisfy
+   DB orphan barriers or enable an operational constructor. Preserve retained
+   publication-ID mapping, staged role plans and failure-invalidated writers;
+   do not bypass the deferred full-reader work-accounting boundary.
+5. **Producer/integration owners — deliver the actual workflow:** #413 is a
+   lossless supplied-report parser, not real CodeQL acquisition/invocation.
+   #411 provides tested persistence, not native/raw-detection producers,
+   accepted current authority or the final Finding/R09 bridge. Wire the
+   merged source custody, exact accepted inputs, runtime evidence and raw
+   detections before any identity operation, then durable decisions and
+   truthful API/UI. Keep CLAR-BHMEA-02 open and no fake snapshot/env/hash.
+6. **After qualified runtime and explicit run approval:** bounded sequential
+   readiness probes, all 844 uncached R05 sides, real nonempty core/Semgrep,
+   CodeQL reproduction/comparators and full Java AND Python evidence precede
+   G0/G1/G2 and the separate release/stage gates. No native run is authorized
+   by this queue. The owner-confirmed machine still needs capacity/rehearsal
+   proof; the 20:32 observation was about 8.3 GiB available RAM, full swap and
+   96 GiB free on a shared device.
+
+**Later update — 20:54 UTC:** inventory normal push passed (Ruff/249 formatted
+files/mypy 99/configured unit selection); [PR #414](https://github.com/scanipy/scanipy/pull/414)
+is now open at exact `d59c427`, with CI `36188497922` and canonical
+`36188497794` running. Rule `2f1b3f7` push remains running. RES root review
+reproduced the double-begin thread race on `2fd1297a`; the narrow lifetime
+correction has interim 111 passing checks and five additional focused controls,
+not final acceptance. Finish the corrective peer/fault review and gates before
+any new checkpoint. These later facts supersede items 1/4 only as stated;
+old-source 110-pass results remain historical.
+
+### Historical Revision 12 execution queue — observed at 19:00 UTC
+
+At its cutoff this queue superseded corresponding pending statuses in the older
 ownership/checkpoint rows below. It does not change their full acceptance
 obligations. Root retains issue/merge coordination; local code review is not
 the required remote canonical review.
@@ -210,17 +330,18 @@ handoff; do not cherry-pick or overwrite another agent's in-flight edits.
 | R05 real campaign producer | Corpus agent; [#374](https://github.com/scanipy/scanipy/issues/374) | #380 merged at `3e2773e` from reviewed `9be0579`; combined full 1,894/51, required CI and successful canonical APPROVE | Integrate #400's actual bounded controller and verified image/runtime readiness before 844 uncached side attempts. No native campaign or corrected G0 has run; #374 remains open |
 | R19-A raw semantic export | Schema agent; [#376](https://github.com/scanipy/scanipy/issues/376) | #382 opt-in v2 exporter/schema merged after combined-head tests and canonical APPROVE | Integrate typed transport and runtime/source semantics; raw CALL/property export does not certify correct binding or purity |
 | R19-B typed observations | Canonical agent; narrow [#393](https://github.com/scanipy/scanipy/issues/393) Done | #407 merged at `1b29100` from reviewed `83b9ec6`, identical tree, full 2,103/51, normal push, all seven tests and canonical APPROVE | Preserve original bytes, observed-only semantics and legacy-reader refusal. Integrate actual source-bound semantics under #397; full R19 remains open |
-| R07/R08 occurrence and decisions | Schema agent persistence; root integration; [#378](https://github.com/scanipy/scanipy/issues/378) | Local store checkpoint with 89 passing dedicated PostgreSQL checks; #389 pure matcher now merged | Review/merge persistence then attach actual producers, durable decisions and API/UI. SQL/crypto/fence assertions and test fixtures do not establish live accepted inputs or operational continuity |
+| R07/R08 occurrence and decisions | Schema agent persistence; root integration; [#378](https://github.com/scanipy/scanipy/issues/378) | #411 merged at `075f92f`, identical to reviewed `1c2f3b7`, eight green test checks including 89 actual PG cases/no skips and successful canonical APPROVE; #389 matcher merged | Attach actual producers/current authority, final Finding/R09 bridge, durable decisions and API/UI. Tested persistence is not an enabled workflow; #378/#362 stay open |
 | R08/R10 raw core detections | Canonical agent; [#391](https://github.com/scanipy/scanipy/issues/391) | Isolated raw CFG/CALL observation kernel and tests, local checkpoint only | Review/merge bounded scope, then implement actual typed semantic producer. The narrow kernel rejects ordinary AST/PDG mapper exports and is not G1 |
 | R08/R16 source custody | Root; narrow [#392](https://github.com/scanipy/scanipy/issues/392) Done | Three-file custody primitive merged in #406 at `6f1ebc8`; reviewed `b005eaa` has the identical tree, full 1,958/51 and successful exact-head CI/review | Bind verified raw Git objects without checkout, actual database seals/receipts, read-only mounts and lifecycle leases. Owner-asserted commit is not SCM proof; full #378/#362 remain open |
 | R08/R11 Semgrep observations | Root; narrow [#394](https://github.com/scanipy/scanipy/issues/394) Done | Bounded parser merged in #404 after combined tests, all seven remote test checks and successful canonical APPROVE | Implement closed native runner, coverage and durable source-bound projection. Parser output always has unverified coverage; full R08/R11/R16 remain open |
 | R16 legacy Git containment | Corpus agent; narrow [#395](https://github.com/scanipy/scanipy/issues/395) Done | Generic Git refusal, snapshot/default SCM containment and package-copy correction merged in #402 | Preserve refusal until actual approved acquisition exists. This does not certify safe acquisition or a rebuilt image |
 | R08/R16 legacy demo containment | Root; narrow [#396](https://github.com/scanipy/scanipy/issues/396) Done | Seven-file containment merged in #403: unavailable new scans, truthful health/UI and preserved historical reads | User's running app/DB remain untouched. Re-enable only through the reviewed capture/authority/worker/store path; retain the nonblocking review follow-ups below |
-| R19 source-bound scalar producer | Canonical agent; [#397](https://github.com/scanipy/scanipy/issues/397) | Seven frozen uncommitted compiler/declaration/raw-solver files atop `e6c4a2e`; compiler scope approved, corrected raw source `2a1043b0` has root 126 and independent 128 passing checks with scoped approval | Run the new combined full suite and normal/current-main/remote gates. Prior 500 and 2,469/51 results belong to earlier heads. Wire actual native/source/model/authority/durable producers; full Java/Python scope and G1 remain unaccepted |
-| R16 raw Git producer and process transport | Corpus agent; [#398](https://github.com/scanipy/scanipy/issues/398) | Accepted-main refresh `7dccd5e` preserves all ten authored files; new full run pending at cutoff; prior `c2c2078` full 2,211/51 retained | Complete fresh combined tests, normal gates and exact-head remote review. Online Git needs an approved profile and enforceable egress/runtime controller; offline consistency is not SCM-origin authentication |
+| R19 source-bound scalar producer | Canonical agent; [#397](https://github.com/scanipy/scanipy/issues/397) | Local committed `c8fb75c` retains `f6903cf` tree with full 3,365/140; compiler/raw corrections and earlier genuine rejection failures remain retained | Complete current dependency/remote gates and actual native/source/model/authority/durable producers. Prior 500 and 2,469/51 results belong to earlier heads; full Java/Python scope and G1 remain unaccepted |
+| R16 raw Git producer and process transport | Corpus agent; [#398](https://github.com/scanipy/scanipy/issues/398) | Offline/transport slice merged in #409 at `595484b`; receipt/cleanup corrections and earlier contrary tests retained | Bind the actual source seal/runtime and online acquisition path. Online Git needs an approved profile and enforceable egress/runtime controller; offline consistency is not SCM-origin authentication |
 | R08/R09 accepted input authority | Schema agent; [#399](https://github.com/scanipy/scanipy/issues/399) | Local bounded verifier committed with test-only keys and private bytecode-cache isolation; later durable registry and per-attempt authorization remain open | Integrate the actual loader/controller and durable authority. Owner-installed trust, durable publication and live execution authorization remain separate from diagnostic verification |
 | R16 Java invocation safety | Schema agent; [#386](https://github.com/scanipy/scanipy/issues/386) | #390 merged with successful exact-head canonical APPROVE and all seven test checks; narrow issue/board Done | Verify actual runtime/profile and coverage before new Java probes; no-fetch/no-delombok alone does not prove source coverage |
-| R08/R15/R16 runtime enforcement | Root; [#400](https://github.com/scanipy/scanipy/issues/400) | Local `d51c5f3` includes inventory/loader/renderer and reviewed pure process-evidence codec; combined full 2,971/51. Corrected runtime-store wire/replay design approved, exact pure-journal API still in progress | Obtain combined/remote gates; implement qualified durable store, physical-capacity/installer checks, parent DB orphan barriers, current-anchor factory, kernel readers, supervised Docker lifecycle/recovery and actual authority. No operational controller exists |
+| R08/R15/R16 runtime enforcement | Root; [#400](https://github.com/scanipy/scanipy/issues/400) | Local `ccaf7e5` shares packet `a9e8011` tree `7976bbd4`, full 5,662/51; pure journal/packet/ancestor corrections reviewed. Separate frozen RES core has 110 checks per runtime, independent review pending | Obtain remote gates; qualify storage/installer/work limits, finish event/spool/full-reader and parent DB orphan barriers, current-anchor factory, kernel readers, supervised Docker lifecycle/recovery and actual authority. No operational controller exists |
+| R13 CodeQL observations and adapter | Canonical agent parser; root integration; [#410](https://github.com/scanipy/scanipy/issues/410) | Three-file pure observation parser merged in #413 at `5118c93` from `4be0c28`; seven green checks and canonical APPROVE | Implement bounded real-output/import/native adapter, accepted rule/source/CWE/origin mapping, coverage, reproduction and comparator evidence; no native CodeQL or R13 acceptance |
 | Repository workflow prerequisite | Root; narrow [#377](https://github.com/scanipy/scanipy/issues/377) closed | Bounded board helper merged in #379 | Continue serialized exact-item state changes; never infer ownership or Todo from failure |
 | R15 dependency prerequisite | Root; [#366](https://github.com/scanipy/scanipy/issues/366); narrow #370/#381 closed | Runtime declarations (#373) and snapshot lock/gate (#383) merged | Verify actual image installation/startup only after resource review; no build, publication or active environment promotion yet |
 | Hook fail-closed correction | Root; narrow [#384](https://github.com/scanipy/scanipy/issues/384) closed | Corrected hooks/declared YAML tool/tests merged in #387 | Use the current worktree's reviewed hooks and declared yamllint 1.35.1; do not rely on an older shared hook path or ambient CLI |
@@ -246,7 +367,7 @@ No full R-task is DONE. Subtasks implemented on branches remain pending required
 review, merge, and the acceptance scope they actually address. Closing a narrow
 corrective issue must not close umbrella #362 or an entire R-task prematurely.
 
-### Branch/PR handoff snapshot
+### Historical branch/PR handoff snapshot
 
 Merged snapshot base: main `1b29100ad9c96ebab9a4ac1a439fc2a5b19ac2ee`
 at 17:42:32 UTC on September 25. The local-only table retains its 17:29 UTC
@@ -283,7 +404,8 @@ submitted functionality is complete.
 | [#406](https://github.com/scanipy/scanipy/pull/406), source-custody prep extension | MERGED at `6f1ebc8720cac8f2bbba20a061c0cba7ca8ff792` from `b005eaa5e7081a3920a97b01be0281430f5ef74f`, identical tree `2a9d914d226f27d36a1111b2c1488068ceb9e4a1`; full 1,958/51, normal push, seven test checks and successful canonical APPROVE | Narrow #392 Done only. The three authored files remain byte-identical to `e3d318b3`; 64 focused, historical 1,313/51 and earlier 1,710/51 retain their original attribution. No actual acquisition, DB seal, operational authority or historical CMP-SNAP-05 AC completion |
 | [#407](https://github.com/scanipy/scanipy/pull/407), typed observed transport | MERGED from `83b9ec6cc96e2d1283be87d12ea85de50ddef50b`, identical tree `01ad138a6e67b1816b5db6b35c3d37ed38d10954`; full 2,103/51, normal push, seven test checks and canonical action 36167975158 SUCCESS / APPROVE 5836718691 | Narrow #393 Done only; all five authored files unchanged from reviewed `b7dfaba`. Actual binding, flow, purity, semantic identity and G1 remain required. Prior `0929e47` full 2,039/51 and original 145 focused checks retain their own attribution |
 
-Local build-ahead is intentionally separate from the remote merge queue:
+The following local build-ahead table retains its earlier checkpoint; the
+Revision 13 queue supersedes its completed/pending instructions:
 
 | Issue / local-only scope | Retained checkpoint | Next acceptance action |
 |---|---|---|
@@ -294,7 +416,7 @@ Local build-ahead is intentionally separate from the remote merge queue:
 | [#399](https://github.com/scanipy/scanipy/issues/399), accepted-byte authority verifier | Reviewed 13-file `0f4d2dc`: 236 focused and 2,297 full passes/140 optional skips; normal gates. Inventory merge `58b552c` now has 309 combined focused passes, not a new whole-suite/native result | Operational verifier still refuses absent actual current authority/controller. Operator/root/admission installation, durable registry publication and launcher/API integration remain open |
 | [#400](https://github.com/scanipy/scanipy/issues/400), runtime metadata and pure process evidence | `d51c5f33a0c929bd95be9107a1b46f73b5690652`, tree `233e603344d8391709df301b2a50eaa4177b8b33`; combined full 2,971/51. Pure PE codec source `601fef04` / tests `14178e56`: root/author 483 and corpus 480 overlapping checks pass, not additive. Earlier loader 235/1,793 and renderer 288/2,298 results retain their own scope | Remote gates remain pending. Corrected 1,477-line runtime-store design `42d31451` has scoped wire/replay approval; exact pure-journal API in progress, no store code. Capacity/installer qualification, parent DB orphan barriers, trusted factory/current anchors, kernel readers, Docker lifecycle/recovery, real authority and native integration remain required |
 
-### Latest local delta — 17:45 UTC
+### Historical local delta — 17:45 UTC
 
 This explicit update supersedes only the older pending-status statements above;
 it does not reassign an old test result to a newer head or promote acceptance.
@@ -370,8 +492,9 @@ not an invented new approval blocker or permission to edit historical WBS here.
 
 Immediate integration TODOs, not satisfied by these local checks:
 
-- Integrate accepted typed observations; finish current-head tests/review for
-  offline Git, accepted-input verification, runtime helpers and the new scalar slice.
+- Preserve accepted typed observations, offline Git, CodeQL observations and
+  occurrence storage; finish current-head gates for accepted-input verification,
+  runtime helpers and the new scalar slice before real producer integration.
 - Bind actual acquired source bytes to the accepted custody receipt and DB
   seal; preserve the acquisition trust distinction and irreversible retirement.
 - Implement durable runtime evidence with explicit visible-prefix versus
@@ -467,7 +590,7 @@ sequential probes only after the relevant safety/packaging changes are reviewed.
 The owner subsequently confirmed this host as the actual presentation machine.
 The [13:21 UTC stage observation](evidence/2026-09-25-stage-machine/README.md)
 records Ubuntu 22.04.5/x86_64, 32 VMware-exposed CPUs, 62.75 GiB total RAM,
-7.37 GiB currently available, nearly full swap and 101.91 GiB free on the shared
+7.37 GiB available at that time, nearly full swap and 101.91 GiB free on the shared
 workspace/tmp/Docker filesystem. These transient values do not establish a safe
 worker allocation or stage budget. Earlier diagnostic results keep their
 original scope; do not promote them to offline or feature acceptance.
