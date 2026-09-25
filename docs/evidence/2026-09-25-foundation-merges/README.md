@@ -1,9 +1,13 @@
 # September 25 — reviewed foundation corrections
 
 Scope: repository correction evidence, not Black Hat feature acceptance.
-Snapshot main: `1b29100ad9c96ebab9a4ac1a439fc2a5b19ac2ee` on 2026-09-25 at 17:42:32 UTC.
+Historical snapshot main: `1b29100ad9c96ebab9a4ac1a439fc2a5b19ac2ee` on 2026-09-25 at 17:42:32 UTC.
 Revision 11 retains the 17:29 UTC local snapshot and explicit 17:45 update below;
 later local work requires its own updated gates.
+Revision 12 appends the 2026-09-25 **19:00 UTC** cutoff below, based on accepted
+Revision 11 main `d4ad0c0b692cef4539d5333c60066cdcedecfb4e`, with a separately
+identified post-cutoff update. Earlier pending statements remain historical
+observations, not instructions to repeat finished work.
 Owner: root engineering coordinator, umbrella #362.
 
 Every merged row below had the required tests and canonical `claude-review`
@@ -447,3 +451,129 @@ acceptance archive. Final evidence retention and combined-artifact gates remain 
 - Preserve all remaining R01–R20 TODOs and exact submission scope. Stage-machine
   identity is confirmed; actual measured budgets/rehearsals, exact presentation
   date and separate release/image/video authority remain future inputs.
+
+## Revision 12 — explicit 19:00 UTC cutoff, September 25
+
+This is a bounded status/evidence update, not a new acceptance decision. The
+accepted documentation base is `d4ad0c0b692cef4539d5333c60066cdcedecfb4e`
+(Revision 11, PR #408). The candidates below are **not added to the merged
+correction table**. A completed local check, normal push or green test workflow
+does not replace exact-head canonical SUCCESS/final APPROVE. Running work has
+no result at this cutoff; later completion requires a separately dated update.
+Local XML and external-test paths identify reproducible diagnostic records,
+not a public immutable archive of raw evidence. Counts from overlapping runs
+or different trees are not summed into coverage.
+
+### Publication and combined-tree checkpoints
+
+| Scope / exact candidate | Observed checks at this cutoff | Still pending / scope boundary |
+|---|---|---|
+| Git source preparation, [PR #409](https://github.com/scanipy/scanipy/pull/409), `acbd9d6a517505efb2514dd922e5f6f03cf1a12a`, tree `bd07d391a05c5b70947074d213b3114d045cdb90` | Configured full **2,437 passed / 51 existing skips**, reported 306.01s; normal push passed. Corrected [CI 36176023679](https://github.com/scanipy/scanipy/actions/runs/36176023679) completed all five jobs SUCCESS, final completion 18:57:15 UTC. | [Canonical review 36176791343](https://github.com/scanipy/scanipy/actions/runs/36176791343) was RUNNING. No merge or online/native acquisition acceptance is inferred. |
+| Occurrence-store preparation, [PR #411](https://github.com/scanipy/scanipy/pull/411), `e08ac41c0dd7b9d7e623a707661ddd1888abc938`, tree `27d12120b1410816abf24892d2a5a86e2c7caea7` | This correction is only 14 documentation lines over `2fec34db554361e97e67c92722172f7414ba5d24`; implementation bytes are unchanged. The earlier `2fec34d` full run passed **2,287 / 51 existing skips**, reported 379.83s, including **89 actual PostgreSQL checks with zero skips** (`/tmp/scanipy-378-revision11-full-with-postgres.xml`). Earlier [CI 36173529503](https://github.com/scanipy/scanipy/actions/runs/36173529503) and [Gate 3 36173529509](https://github.com/scanipy/scanipy/actions/runs/36173529509) completed all eight checks successfully. | Corrected normal push and current-head remote gates remain pending. The documentation records CLAR-BHMEA-02 and the still-missing finalization bridge; no workflow completion or retrospective current-head test result is claimed. |
+| Qualified-rule codec, `6ae81ad246fc289f1d5e820ddc54f0884ba742a4`, tree `0cbc5d80c3dfb58dd2fe20b89090bb67335e09a4` | Focused **192 / 0 skips** (166 owned cases plus 26 ledger checks); configured full **2,269 / 51 existing skips**, reported 294.11s, `/tmp/scanipy-rule-codec-revision11-full.xml`. | No PR yet. This is bounded byte/identity/model decoding, not accepted publication, source analysis, tabulation or G1. |
+| Shared runtime inventory, `980c5eff3501476e82f0303cc3eac365b500c94b`, tree `5eae2fef93c2e82936a3b42dd122896d0183c119` | Corrected module **99 / 0 skips**; independent **107 / 0 skips** (99 repository plus eight controlled external checks). Configured full **2,202 / 51 existing skips**, reported 287.66s, `/tmp/scanipy-runtime-inventory-corrected-full.xml`. | No PR yet. Final ancestor equality uses the reviewed identity/security projection; full measured-root, descendant and runtime-leaf stamps remain. Installed trust, immutable mounts, controller and native runtime admission are not established. |
+| CodeQL observations, original own-file checkpoint `b907851e4e739492a6410974030d7fca759f0724`; combined `93ae0aaf5042c5739f2cd7b6425f00fb0950a8cd`, tree `2d44060ef50d7a1523cb43327ce48a1ac2d21e7d` | Original scope is exactly three files / 3,518 added lines. Independent corrected **440 / 0 skips** (427 repository plus 13 unchanged external checks); source SHA256 prefix `e2ace77d`. Combined head adds the exact reviewed `acbd9d6` dependency without changing those three files. | Its **first combined full suite was RUNNING**, with no result yet. No PR, native CodeQL invocation, query-pack acceptance, source custody or R13/G2 completion follows from the pure observation codec. |
+| Pure runtime journal, `653d89d8d9bd5f5e501a8b03a8b0fc3db87a19fd` to combined `0dbee6ef97409b9dda7fcc38545595edefc82348`, tree `f87caca5de1a86fa23255db658b206ded74e40dc` | The five-file pure journal checkpoint has **331 / 0 skips** on both Python 3.11 and 3.12, with independent peer checks. Combined main plus the three-file inventory correction passed **434 focused / 0 skips**, reported 20.06s. | No new combined full or push. These are pure structural records and validation, not filesystem storage, durability acknowledgement, Docker/controller execution or current authority. |
+| AL-02 command codec, source SHA256 prefix `bc361a8f`, two new files | Frozen implementation under independent review. The completed 291-case result is explicitly dated after this cutoff below, not reassigned to 19:00. | Normal commit was still pending. No SQL, permission, signature verification, live ledger, receipt or full AL-02 acceptance is implemented by this input-structure-only slice. |
+| Source-bound scalar foundations, `c8fb75cff9a12868f0acf341cbc36475103c9547` | Configured full **3,365 / 140 explicit skips**, reported 467.67s. Its actual tree `d6f6bb8938944eb96bc03971e64012dbc937c26d` is identical to `f6903cfe7c3154001267b7a9bdec30c72a364675`; the test result is not reassigned to changed source. | Remote prerequisite integration and gates remain pending. Pure modeled Python evidence does not establish Java execution, real Joern/source association, installed/current authority, durable production delivery or G1. |
+
+### Explicit later observations — after the 19:00 cutoff
+
+- **19:05:08 UTC — #409 merged:** main
+  `595484bd7bd81e3a1761c727edf5d38b5d736930` has the exact reviewed `acbd9d6`
+  tree `bd07d391a05c5b70947074d213b3114d045cdb90` (verified by Git tree/diff).
+  [Canonical action 36176791343](https://github.com/scanipy/scanipy/actions/runs/36176791343)
+  completed SUCCESS with [final APPROVE](https://github.com/scanipy/scanipy/pull/409#issuecomment-5837964794),
+  all five corrected-head test jobs were green, and the full checklist was
+  checked before the exact-head guarded merge. Root read the complete final
+  review and checked the action's parsed APPROVE. Prior failed reviews remain
+  preserved. #398/#362 stay open; online acquisition, native runtime, DB sealing
+  and delivered scan integration are not accepted by this offline/transport slice.
+- CodeQL's first combined full run on `93ae0aa` subsequently completed:
+  **2,864 passed / 51 existing skips**, zero failures/errors, reported 311.53s,
+  `/tmp/scanipy-410-codeql-git-combined-full.xml`. This does not alter its RUNNING
+  state at the strict cutoff or establish normal push, remote CI, canonical
+  approval, native CodeQL execution or R13 acceptance.
+- AL-02's independent 291-case result is timed below. After that review, normal
+  commit `66607b9537242d7ca05c93b2da03722b841dd83c` passed all applicable source
+  hooks: exactly two new files / 1,615 added lines. No full run or push had
+  followed; the local commit remains an input-structure-only checkpoint.
+
+### Contrary results and exact correction boundaries
+
+- Git PR #409 retains its [initial failed canonical action
+  36171909118](https://github.com/scanipy/scanipy/actions/runs/36171909118) and
+  [review comment 5837245158](https://github.com/scanipy/scanipy/pull/409#issuecomment-5837245158).
+  The corrected CI success and review running at the 19:00 cutoff do not relabel
+  that failure. Its later successful review/merge is recorded separately above.
+- Occurrence PR #411 retains [failed canonical action
+  36173529725](https://github.com/scanipy/scanipy/actions/runs/36173529725) and
+  [comment 5837461311](https://github.com/scanipy/scanipy/pull/411#issuecomment-5837461311).
+  The CLAR/finalization documentation correction does not implement the missing
+  bridge, resolve the larger issue or convert the old-head checks into a new
+  canonical verdict.
+- Runtime inventory first reported **72 passed / one `changed` failure** in
+  `/tmp/scanipy-runtime-inventory-main-focused.xml`; the exact changing ancestor
+  was not observed. An unchanged repeat passed all 73. Separately controlled
+  sibling-file/directory changes reproduced **six pass / two fail** in
+  `/tmp/scanipy-runtime-inventory-peer-ancestor-red.xml`, while measured roots
+  and content stayed unchanged. This demonstrates that specific overstrict
+  ancestor comparison, not the retrospective cause of the first unlocalized
+  failure. The approved correction compares ancestor device/inode/full-mode/
+  UID/GID only, retaining full nine-field observations and every full measured
+  root/descendant/leaf check. No retry, swallowed change, new `/tmp` exception
+  or hostile same-UID/root/ACL/mount protection is claimed. Independent final
+  evidence is `/tmp/scanipy-runtime-inventory-peer-correction-final.xml`.
+- CodeQL path review retained **12 failures / one positive** in
+  `/tmp/scanipy-410-codeql-peer-path-red.xml`: unsupported bases could mask an
+  invalid URI, and C1 controls were not consistently excluded from aliases,
+  inventory paths and decoded URIs. The narrow correction preserves invalid/
+  inconsistent precedence and rejects C0 plus DEL/C1 across those three inputs.
+  Final unchanged external controls join the 427 owned cases in
+  `/tmp/scanipy-410-codeql-peer-final-440.xml`. Raw report bytes stay intact;
+  data-only path validation does not claim full source-custody parity.
+- **AL-02 post-cutoff observation:** `/tmp/scanipy-al02-core-review-mJP0VJ/result.xml`
+  records a suite start of **19:00:06.971 UTC on September 25**, after the main
+  cutoff. That run completed **291 passed / zero skips/failures/errors** (286
+  repository plus five external controls), reported 10.84s; XML suite time is
+  10.831s. Independent scoped review then approved unchanged source `bc361a8f`
+  and tests `27e1c230`. This later result does not establish that review or test
+  completion had already occurred at 19:00. The five additional checks exercise
+  two model artifacts,
+  two detectors/four bilingual rules, late invalid-member rejection, detached
+  carrier/UUID snapshots and missing UUID storage. Actual successful complex
+  input used 69 SHA calls against 20,067 conservatively reserved calls. These
+  are bounded-input/hash-work checks, not measured native performance or
+  operational authorization. The external source is retained separately at
+  `/tmp/scanipy-al02-core-review-mJP0VJ/test_ledger_peer.py`; it is not a fixture
+  key, live publisher or accepted model event.
+
+### Required next actions — no status promotion
+
+1. Finish each pending current-tree full run, normal push and exact-head remote
+   tests; read the actual canonical final verdict. Preserve failures and verify
+   the prospective merged tree before any normal PR merge. Git #409's review
+   and merge are complete as recorded above; integrate its accepted bytes.
+   CodeQL's later full pass is not a remote gate.
+   Retest changed combinations
+   rather than borrowing another branch's counts.
+2. Preserve the occurrence finalization bridge as open work under
+   CLAR-BHMEA-02. Do not infer a complete scan workflow from the tested store,
+   documentation correction or successful PostgreSQL foundation tests.
+3. Complete the authority design's missing operational closure separately from
+   the runtime evidence-store amendments. The **741-line authority design plus
+   544-line amendment** retain scoped design approval. Two newly identified
+   **runtime evidence-store DESIGN gaps** remain: publication-ID replay after
+   intent retirement, and the full-reader **512 MiB versus 256 MiB hash-work
+   allowance**. Those storage/API amendments are pending; neither authority
+   design approval nor the pure AL-02 codec resolves them.
+4. Integrate actual accepted-content/current-authority owners and the installed
+   runtime/store/controller only through their reviewed interfaces. Missing
+   fetched closure, authority metadata, durable finalization, source/runtime
+   observations or cleanup must remain unavailable/unknown, not fabricated from
+   supplied digests, frozen dataclasses, fixture keys or successful pure codecs.
+5. Keep full Java **and** Python, all 422 corrected corpus cases, the 844 fresh
+   case-side attempts and every remaining R01–R20/C01–C18 obligation unchanged.
+   No shared G0/G1/G2/G3 or full R/C status changes in this snapshot. No release,
+   image publication, user-service/database change, native engine run or operator identity/
+   installation choice is authorized or claimed here.
