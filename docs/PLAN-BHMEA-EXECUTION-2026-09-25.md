@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Updated | 2026-09-25 |
-| Snapshot | Revision 11; accepted main `1b29100`; 17:29 UTC local snapshot and explicit 17:45 UTC update |
+| Snapshot | Revision 12; 19:00 UTC snapshot plus 19:05 update; accepted main `595484b`, earlier cutoffs preserved |
 | Target | FULL_SUBMISSION; all C01–C18 claims and applicable R01–R20 acceptance items |
 | Tracking | [Umbrella issue #362](https://github.com/scanipy/scanipy/issues/362) |
 | Presentation | December 2 or 3, 2026; exact date unconfirmed |
@@ -126,6 +126,75 @@ source custody alone does not make an unsafe checkout trustworthy. See the
 [active safety findings](evidence/2026-09-25-foundation-merges/README.md#other-active-falsifiers-and-next-actions).
 
 ## 3. Work ownership and next actions
+
+### Revision 12 execution queue — observed at 19:00 UTC
+
+This queue supersedes corresponding stale pending statuses in the older
+ownership/checkpoint rows below. It does not change their full acceptance
+obligations. Root retains issue/merge coordination; local code review is not
+the required remote canonical review.
+
+1. Complete #409's corrected canonical re-review on `acbd9d6`. Its full
+   2,437/51, normal push and exact-head five-job CI are green; review run
+   `36176791343` is still running. The initial failed action remains evidence.
+   Do not merge an APPROVE word inside a failed action.
+2. Integrate accepted dependencies into #411 and push its correction. Its
+   source/SQL/CI bytes are unchanged at local `e08ac41`; the new OPEN
+   `CLAR-BHMEA-02` tracks the final-record/R09 bridge. Initial `2fec34d` full
+   2,287/51 includes 89 actual PostgreSQL cases with no skips, and all eight
+   remote tests passed. That head's failed canonical review is not acceptance.
+   Preserve both new WBS CLAR rows when merging concurrent branch additions.
+3. Publish reviewed narrow foundations with actual combined-head gates: rule
+   codec `6ae81ad` (full 2,269/51), inventory `980c5ef` (full 2,202/51), then
+   their runtime/accepted-input/scalar consumers. Original owned bytes must be
+   compared across integrations; a normal merge-hook skip is not a fresh test.
+4. Finish #410's CodeQL pure parser gates: `93ae0aa` contains the unchanged
+   three reviewed files plus exact `acbd9d6` dependencies; first full is running.
+   Publish as a three-file slice only after the Git dependency is accepted.
+   Next implement the truthful runnable real-output adapter and required
+   rule/location/CWE/origin mapping. R11/R12/R14/G2 are downstream, not substitutes.
+5. Preserve journal `0dbee6e` / source `51e56785`: pure 331-case runs on both
+   Python versions and independent review are green; 434 affected tests pass
+   after main/inventory integration. Next: combined/remote gates and actual
+   physical publication/capacity/owner adapters/DB barriers/controller. New
+   authority-codec files (`bc361a8f` source) have 286-case runs on both runtimes;
+   independent review is ongoing. Both remain data-only, not live permission.
+6. Continue scalar `c8fb75c` from its 3,365/140 full-tested tree, preserving all
+   negative-control corrections. Merge the real dependencies, obtain remote
+   gates and establish actual nonempty source/native/model/authority evidence;
+   full Java AND Python and full refactor/fidelity requirements remain open.
+
+The 741-line authority design and 544-line amendment have scoped design
+approval. Actual namespace operation history, no-retrospective-adoption,
+restricted SQL roles/bridges, current providers and real operator/restore choices
+remain implementation or owner prerequisites. AL-02 input validation does not
+create those rows or grant current execution authority.
+
+Physical publication planning exposed two design gaps: retired intents lose
+the publication-ID mapping needed for exact recovery, and the full journal
+helper's 512 MiB hash ceiling is not proof it fits the reader's 256 MiB allowance.
+Resolve retention/accounting and delegated work before implementing affected
+APIs. No quota increase, fake reserved capacity, generic event writer or
+operational fallback is authorized by identifying these gaps. Database barrier
+claims still need actual positive current authority and namespace-first locking;
+lease expiry or a structural journal record cannot prove native cleanup.
+
+All scratch XML/local hashes below are scoped diagnostics, not immutable public
+acceptance artifacts. No full R-task, C-claim, gate, release or stage readiness
+is promoted. Root preserves the original app/DB, submitted bytes and old evidence.
+
+### Earlier ownership and checkpoint detail
+
+**Later update — 19:05 UTC:** #409 is now accepted at main `595484b`, tree
+identical to reviewed `acbd9d6`, after successful canonical action
+`36176791343` / final APPROVE and the five green corrected-head CI jobs.
+The first queue item above is therefore complete only for that narrow merge;
+#398 and all online/runtime/sealing work remain open. CodeQL's first combined
+full subsequently passed 2,864/51 on `93ae0aa`. AL-02's independent 291-case
+run and full source review approved its unchanged two files, then normal
+commit `66607b9` passed hooks. These are local-only component results, not
+real adapter/current-authority/full-task acceptance. Integrate accepted main
+and recheck exact bytes before their remaining push/remote gates.
 
 Use independent worktrees/branches for independent PRs. Existing user untracked
 files and running containers belong to the user. Shared files require explicit
