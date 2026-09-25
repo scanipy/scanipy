@@ -420,6 +420,7 @@ class DimensionDecision:
     event_id: str
     revision: int
     references: tuple[str, ...] = ()
+    authorized_generation: int | None = None
 
     def __post_init__(self) -> None:
         if self.value not in _VERDICTS | _SUPPRESSIONS:
@@ -427,6 +428,22 @@ class DimensionDecision:
         _text(self.event_id, "human decision event id")
         _revision(self.revision)
         _references(self.references)
+        if self.authorized_generation is not None:
+            _revision(self.authorized_generation)
+
+
+@dataclass(frozen=True)
+class ReferenceMetadata:
+    """Reference-only human event: deliberately cannot authorize a dimension."""
+
+    event_id: str
+    revision: int
+    references: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        _text(self.event_id, "reference metadata event id")
+        _revision(self.revision)
+        _references(self.references, required=True)
 
 
 @dataclass(frozen=True)
@@ -437,6 +454,7 @@ class DecisionSnapshot:
     revision: int
     verdict: DimensionDecision | None = None
     suppression: DimensionDecision | None = None
+    metadata: ReferenceMetadata | None = None
 
     def __post_init__(self) -> None:
         if self.target_scope not in {"occurrence", "entity"}:
@@ -452,6 +470,25 @@ class DecisionSnapshot:
                 or decision.revision > self.revision
             ):
                 raise ValueError("decision dimension/value/revision mismatch")
+            if decision is not None and (
+                (self.target_scope == "entity" and decision.authorized_generation is None)
+                or (
+                    self.target_scope == "occurrence" and decision.authorized_generation is not None
+                )
+            ):
+                raise ValueError("authorization generation must match decision scope")
+        if self.metadata is not None and (
+            not isinstance(self.metadata, ReferenceMetadata)
+            or self.metadata.revision > self.revision
+        ):
+            raise ValueError("invalid reference metadata/revision")
+        ids = [
+            item.event_id
+            for item in (self.verdict, self.suppression, self.metadata)
+            if item is not None
+        ]
+        if len(ids) != len(set(ids)):
+            raise ValueError("decision events must have distinct event ids")
 
 
 @dataclass(frozen=True)
@@ -461,10 +498,12 @@ class EntitySnapshot:
     lifecycle: Literal["open", "resolved", "reappeared", "uncertain"]
     revision: int
     decisions: DecisionSnapshot
+    lifecycle_generation: int
 
     def __post_init__(self) -> None:
         _text(self.entity_id, "entity id")
         _revision(self.revision)
+        _revision(self.lifecycle_generation)
         if self.lifecycle not in {"open", "resolved", "reappeared", "uncertain"}:
             raise ValueError("unknown entity lifecycle")
         if (
@@ -474,6 +513,161 @@ class EntitySnapshot:
             or self.decisions.cohort != self.cohort
         ):
             raise ValueError("entity decision target/scope mismatch")
+        for decision in (self.decisions.verdict, self.decisions.suppression):
+            if decision is not None and (
+                decision.authorized_generation is None
+                or decision.authorized_generation > self.lifecycle_generation
+            ):
+                raise ValueError("entity cannot carry future/absent authorization generation")
+
+
+_LIFECYCLE_TARGETS = {
+    "resolve": "resolved",
+    "reappear": "reappeared",
+    "mark_uncertain": "uncertain",
+    "open_for_review": "open",
+}
+
+
+@dataclass(frozen=True)
+class EntityLifecycleEvent:
+    """Trusted coordinator event, not proof of coverage or a human authorization."""
+
+    event_id: str
+    entity_id: str
+    cohort: CohortKey
+    action: str
+    previous_revision: int
+    previous_generation: int
+    evidence_refs: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        _text(self.event_id, "lifecycle event id")
+        _text(self.entity_id, "lifecycle entity id")
+        if not isinstance(self.cohort, CohortKey) or self.action not in _LIFECYCLE_TARGETS:
+            raise ValueError("invalid lifecycle event scope/action")
+        _revision(self.previous_revision)
+        _revision(self.previous_generation)
+        _references(self.evidence_refs, required=True)
+
+
+@dataclass(frozen=True)
+class HumanAuthorization:
+    """Adapter-authenticated immutable event; a caller flag is not authentication.
+
+    The human event store must enforce global event-id uniqueness and payload
+    immutability. Current bounded snapshots cannot prove those historical facts.
+    """
+
+    entity_id: str
+    cohort: CohortKey
+    dimension: Literal["verdict", "suppression", "metadata"]
+    event: DimensionDecision | ReferenceMetadata
+    authority_ref: str
+
+    def __post_init__(self) -> None:
+        _text(self.entity_id, "human authorization target")
+        _text(self.authority_ref, "trusted human authority reference")
+        if not isinstance(self.cohort, CohortKey):
+            raise ValueError("human authorization requires explicit scope")
+        if self.dimension == "metadata":
+            if not isinstance(self.event, ReferenceMetadata):
+                raise ValueError("metadata event cannot grant dimension authorization")
+        elif self.dimension in {"verdict", "suppression"}:
+            allowed = _VERDICTS if self.dimension == "verdict" else _SUPPRESSIONS
+            if (
+                not isinstance(self.event, DimensionDecision)
+                or self.event.value not in allowed
+                or self.event.authorized_generation is None
+            ):
+                raise ValueError("entity human authorization dimension/generation mismatch")
+        else:
+            raise ValueError("unknown human authorization dimension")
+
+
+def validate_entity_transition(
+    previous: EntitySnapshot,
+    current: EntitySnapshot,
+    *,
+    lifecycle_event: EntityLifecycleEvent | None = None,
+    human_authorizations: tuple[HumanAuthorization, ...] = (),
+) -> None:
+    """Validate one scoped lifecycle/human-event transaction before actual CAS.
+
+    Every state change, including reopening, advances the lifecycle generation.
+    Old immutable human events remain historical, not reauthorized by reopening
+    or an unrelated event. Actual append-only/auth/CAS enforcement is external.
+    """
+    if current.entity_id != previous.entity_id or current.cohort != previous.cohort:
+        raise ValueError("entity transition cannot change target or scope")
+    if current.revision != previous.revision + 1:
+        raise ValueError("entity transition requires exactly the next revision")
+    changed_lifecycle = previous.lifecycle != current.lifecycle
+    if current.lifecycle_generation != previous.lifecycle_generation + int(changed_lifecycle):
+        raise ValueError("generation must advance exactly once per lifecycle-state change")
+    if changed_lifecycle:
+        if (
+            not isinstance(lifecycle_event, EntityLifecycleEvent)
+            or lifecycle_event.entity_id != current.entity_id
+            or lifecycle_event.cohort != current.cohort
+            or lifecycle_event.previous_revision != previous.revision
+            or lifecycle_event.previous_generation != previous.lifecycle_generation
+            or _LIFECYCLE_TARGETS[lifecycle_event.action] != current.lifecycle
+        ):
+            raise ValueError("lifecycle change requires an exact typed lifecycle event")
+    elif lifecycle_event is not None:
+        raise ValueError("lifecycle event requires an actual state change")
+    if not isinstance(human_authorizations, tuple) or any(
+        not isinstance(item, HumanAuthorization) for item in human_authorizations
+    ):
+        raise ValueError("human authorizations must be immutable typed events")
+    if not changed_lifecycle and not human_authorizations:
+        raise ValueError("entity transition has no lifecycle or human event")
+    if current.decisions.revision != previous.decisions.revision + int(bool(human_authorizations)):
+        raise ValueError("decision revision must advance exactly once per human-event transaction")
+    by_dimension = {item.dimension: item for item in human_authorizations}
+    if len(by_dimension) != len(human_authorizations):
+        raise ValueError("duplicate human authorization dimension in transition")
+    old_ids = {
+        item.event_id
+        for item in (
+            previous.decisions.verdict,
+            previous.decisions.suppression,
+            previous.decisions.metadata,
+        )
+        if item is not None
+    }
+    event_ids = [item.event.event_id for item in human_authorizations]
+    if lifecycle_event is not None:
+        event_ids.append(lifecycle_event.event_id)
+    if len(event_ids) != len(set(event_ids)) or old_ids.intersection(event_ids):
+        raise ValueError("transition event ids must be unique and not restamp current events")
+    for name in ("verdict", "suppression", "metadata"):
+        old = getattr(previous.decisions, name)
+        new = getattr(current.decisions, name)
+        authorization = by_dimension.get(name)
+        if authorization is None:
+            if new != old:
+                raise ValueError(
+                    "unchanged dimension cannot be restamped without its own human event"
+                )
+            continue
+        if (
+            authorization.entity_id != current.entity_id
+            or authorization.cohort != current.cohort
+            or new is None
+            or new == old
+            or authorization.event != new
+            or new.revision != current.decisions.revision
+        ):
+            raise ValueError("fresh human event must match exact target/dimension/new revision")
+        if isinstance(new, DimensionDecision):
+            if new.authorized_generation != current.lifecycle_generation:
+                raise ValueError(
+                    "fresh human event must authorize the current lifecycle generation"
+                )
+        elif isinstance(old, ReferenceMetadata) and not set(old.references) <= set(new.references):
+            raise ValueError("reference metadata additions must preserve previous references")
 
 
 @dataclass(frozen=True)
@@ -515,6 +709,7 @@ class GuardRevisions:
     activation_event_id: str
     entity_id: str
     entity_revision: int
+    entity_lifecycle_generation: int
     decision_revision: int
     predecessor_inventory_digest: str
     current_inventory_digest: str
@@ -526,6 +721,7 @@ class GuardRevisions:
             self.lineage_revision,
             self.registry_revision,
             self.entity_revision,
+            self.entity_lifecycle_generation,
             self.decision_revision,
         ):
             _revision(revision_value)
@@ -728,6 +924,7 @@ def plan_continuity(
             entry.activation_event_id,
             entity.entity_id,
             entity.revision,
+            entity.lifecycle_generation,
             entity.decisions.revision,
             before.content_digest,
             after.content_digest,
@@ -823,6 +1020,13 @@ def effective_decisions(
             reason = "stale_entity_or_decision_snapshot"
         elif not link.inherit_entity_decisions or entity.lifecycle != "open":
             reason = "entity_requires_fresh_human_review"
+        elif entity.lifecycle_generation != link.guards.entity_lifecycle_generation:
+            reason = "link_requires_current_lifecycle_generation_adjudication"
+        elif not any(
+            decision is not None and decision.authorized_generation == entity.lifecycle_generation
+            for decision in (entity.decisions.verdict, entity.decisions.suppression)
+        ):
+            reason = "no_current_generation_human_authorization"
         else:
             inherited = entity.decisions
             reason = None
@@ -838,6 +1042,8 @@ def effective_decisions(
                         return EffectiveDimension(
                             value.value, "occurrence", value.event_id, value.references
                         )
+                    if entity is None or value.authorized_generation != entity.lifecycle_generation:
+                        continue
                     return EffectiveDimension(
                         value.value, "entity", value.event_id, value.references
                     )

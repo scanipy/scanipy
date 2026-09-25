@@ -19,7 +19,9 @@ from services.scan.continuity import (
     DecisionSnapshot,
     DetectionInventory,
     DimensionDecision,
+    EntityLifecycleEvent,
     EntitySnapshot,
+    HumanAuthorization,
     IdentityBinding,
     IdentityObservation,
     LineageSnapshot,
@@ -28,10 +30,12 @@ from services.scan.continuity import (
     PolicyEntry,
     PolicyRegistrySnapshot,
     PredecessorEntity,
+    ReferenceMetadata,
     effective_decisions,
     guards_match,
     inventory_digest,
     plan_continuity,
+    validate_entity_transition,
     validate_registry_transition,
 )
 
@@ -132,10 +136,10 @@ def entity(item, number=1):
         f"entity-{number}",
         item.cohort,
         2,
-        DimensionDecision("false_positive", "verdict-event", 1, ("inert:review-note",)),
-        DimensionDecision("active", "suppression-event", 2),
+        DimensionDecision("false_positive", "verdict-event", 1, ("inert:review-note",), 0),
+        DimensionDecision("active", "suppression-event", 2, authorized_generation=0),
     )
-    return EntitySnapshot(f"entity-{number}", item.cohort, "open", 3, decisions)
+    return EntitySnapshot(f"entity-{number}", item.cohort, "open", 3, decisions, 0)
 
 
 @pytest.fixture
@@ -532,7 +536,7 @@ def test_human_revocations_are_current_and_dimension_local(sample, dimension, ne
     changed_decisions = replace(
         sample.entity.decisions,
         revision=3,
-        **{dimension: DimensionDecision(new_value, "human-revocation", 3)},
+        **{dimension: DimensionDecision(new_value, "human-revocation", 3, authorized_generation=0)},
     )
     current = replace(sample.entity, revision=4, decisions=changed_decisions)
     result = effective(sample, entity=current)
@@ -614,6 +618,7 @@ def test_resolved_reappearance_and_uncertainty_never_reactivate_suppression(samp
         "activation_event_id",
         "entity_id",
         "entity_revision",
+        "entity_lifecycle_generation",
         "decision_revision",
         "predecessor_inventory_digest",
         "current_inventory_digest",
@@ -678,3 +683,304 @@ def test_link_cannot_be_replayed_on_another_scope_or_payload(sample):
 def test_malformed_evidence_decisions_and_bindings_fail_closed(factory):
     with pytest.raises(ValueError):
         factory()
+
+
+def change_lifecycle(previous, state):
+    actions = {
+        "resolved": "resolve",
+        "reappeared": "reappear",
+        "uncertain": "mark_uncertain",
+        "open": "open_for_review",
+    }
+    current = replace(
+        previous,
+        revision=previous.revision + 1,
+        lifecycle=state,
+        lifecycle_generation=previous.lifecycle_generation + 1,
+    )
+    event = EntityLifecycleEvent(
+        f"controlled-lifecycle-{current.revision}",
+        previous.entity_id,
+        previous.cohort,
+        actions[state],
+        previous.revision,
+        previous.lifecycle_generation,
+        ("controlled-lifecycle-evidence:not-real-coverage",),
+    )
+    validate_entity_transition(previous, current, lifecycle_event=event)
+    return current, event
+
+
+def authorize_dimension(previous, dimension, value="confirmed", *, event_id=None):
+    revision = previous.decisions.revision + 1
+    event_id = event_id or f"controlled-human-{dimension}-{revision}"
+    if dimension == "metadata":
+        old_refs = previous.decisions.metadata.references if previous.decisions.metadata else ()
+        event = ReferenceMetadata(event_id, revision, (*old_refs, f"inert:note-{revision}"))
+    else:
+        event = DimensionDecision(
+            value, event_id, revision, authorized_generation=previous.lifecycle_generation
+        )
+    authorization = HumanAuthorization(
+        previous.entity_id,
+        previous.cohort,
+        dimension,
+        event,
+        "controlled-human-event-store:not-auth",
+    )
+    current = replace(
+        previous,
+        revision=previous.revision + 1,
+        decisions=replace(previous.decisions, revision=revision, **{dimension: event}),
+    )
+    validate_entity_transition(previous, current, human_authorizations=(authorization,))
+    return current, authorization
+
+
+@pytest.mark.parametrize(
+    "states",
+    (
+        ("resolved", "open"),
+        ("resolved", "reappeared", "open"),
+        ("uncertain", "open"),
+        ("resolved", "reappeared", "uncertain", "open"),
+        ("resolved", "open", "resolved", "reappeared", "open"),
+    ),
+)
+def test_originally_open_link_never_revives_after_lifecycle_cycles(sample, states):
+    old_link = linked(sample)
+    current = sample.entity
+    historical_decisions = current.decisions
+    for state in states:
+        current, _ = change_lifecycle(current, state)
+        observed = effective(sample, link=old_link, entity=current)
+        assert not observed.inheritance_active
+        assert observed.suppression.value == "inactive"
+        assert current.decisions == historical_decisions  # History is not erased/restamped.
+    assert current.lifecycle == "open"
+    assert current.lifecycle_generation == len(states)
+    sample.entity = current
+    fresh_link = linked(sample)
+    assert fresh_link.guards.entity_lifecycle_generation == current.lifecycle_generation
+    assert not effective(sample, link=fresh_link).inheritance_active
+    reviewed_verdict, _ = authorize_dimension(current, "verdict", "confirmed")
+    verdict_only = effective(sample, link=fresh_link, entity=reviewed_verdict)
+    assert verdict_only.verdict.value == "confirmed"
+    assert verdict_only.verdict.source == "entity"
+    assert verdict_only.suppression.value == "inactive"
+    assert reviewed_verdict.decisions.suppression == historical_decisions.suppression
+    reviewed_both, _ = authorize_dimension(reviewed_verdict, "suppression", "active")
+    assert effective(sample, link=fresh_link, entity=reviewed_both).suppression.value == "active"
+    assert effective(sample, link=old_link, entity=reviewed_both).suppression.value == "inactive"
+
+
+def test_reference_metadata_cannot_renew_any_dimension_after_reopen(sample):
+    closed, _ = change_lifecycle(sample.entity, "resolved")
+    reopened, _ = change_lifecycle(closed, "open")
+    with_note, authorization = authorize_dimension(reopened, "metadata")
+    assert with_note.decisions.verdict == reopened.decisions.verdict
+    assert with_note.decisions.suppression == reopened.decisions.suppression
+    sample.entity = with_note
+    assert not effective(sample).inheritance_active
+    restamped = replace(
+        with_note,
+        decisions=replace(
+            with_note.decisions,
+            suppression=replace(
+                with_note.decisions.suppression,
+                authorized_generation=with_note.lifecycle_generation,
+            ),
+        ),
+    )
+    with pytest.raises(ValueError, match="unchanged dimension cannot be restamped"):
+        validate_entity_transition(reopened, restamped, human_authorizations=(authorization,))
+    # Updating per-authorization references is not a metadata-only authorization either.
+    altered = replace(
+        with_note,
+        decisions=replace(
+            with_note.decisions,
+            suppression=replace(with_note.decisions.suppression, references=("new",)),
+        ),
+    )
+    with pytest.raises(ValueError, match="unchanged dimension cannot be restamped"):
+        validate_entity_transition(reopened, altered, human_authorizations=(authorization,))
+
+
+def test_explicit_occurrence_override_survives_entity_epoch_barrier_only_locally(sample):
+    old_link = linked(sample)
+    closed, _ = change_lifecycle(sample.entity, "resolved")
+    reopened, _ = change_lifecycle(closed, "open")
+    direct = DecisionSnapshot(
+        "occurrence",
+        sample.after.occurrence_id,
+        sample.after.cohort,
+        1,
+        suppression=DimensionDecision("active", "direct-human", 1),
+    )
+    result = effective(sample, entity=reopened, link=old_link, direct=direct)
+    assert not result.inheritance_active
+    assert result.suppression.value == "active" and result.suppression.source == "occurrence"
+    with pytest.raises(ValueError, match="another occurrence"):
+        effective_decisions(sample.before, direct=direct)
+
+
+@pytest.mark.parametrize("generation", (0, 2, 3))
+def test_lifecycle_generation_cannot_stay_or_jump_on_transition(sample, generation):
+    current, event = change_lifecycle(sample.entity, "resolved")
+    with pytest.raises(ValueError, match="exactly once"):
+        validate_entity_transition(
+            sample.entity,
+            replace(current, lifecycle_generation=generation),
+            lifecycle_event=event,
+        )
+
+
+def test_lifecycle_generation_cannot_rollback_or_advance_on_same_state(sample):
+    closed, _ = change_lifecycle(sample.entity, "resolved")
+    reopened, event = change_lifecycle(closed, "open")
+    with pytest.raises(ValueError, match="exactly once"):
+        validate_entity_transition(
+            closed, replace(reopened, lifecycle_generation=0), lifecycle_event=event
+        )
+    reviewed, authorization = authorize_dimension(reopened, "verdict")
+    with pytest.raises(ValueError, match="exactly once"):
+        validate_entity_transition(
+            reopened,
+            replace(reviewed, lifecycle_generation=reviewed.lifecycle_generation + 1),
+            human_authorizations=(authorization,),
+        )
+
+
+def test_reopen_requires_explicit_matching_typed_lifecycle_event(sample):
+    closed, _ = change_lifecycle(sample.entity, "resolved")
+    reopened, event = change_lifecycle(closed, "open")
+    for invalid in (
+        None,
+        replace(event, action="reappear"),
+        replace(event, previous_revision=0),
+        replace(event, previous_generation=0),
+        replace(event, entity_id="foreign"),
+    ):
+        with pytest.raises(ValueError, match="exact typed lifecycle event"):
+            validate_entity_transition(closed, reopened, lifecycle_event=invalid)
+    with pytest.raises(ValueError, match="invalid lifecycle event"):
+        replace(event, action="open")
+
+
+def test_new_link_does_not_accept_replayed_immutable_preclosure_human_event(sample):
+    closed, _ = change_lifecycle(sample.entity, "resolved")
+    reopened, _ = change_lifecycle(closed, "open")
+    old = sample.entity.decisions.suppression
+    with pytest.raises(ValueError, match="unique and not restamp"):
+        authorize_dimension(reopened, "suppression", "active", event_id=old.event_id)
+    current = replace(
+        reopened,
+        revision=reopened.revision + 1,
+        decisions=replace(
+            reopened.decisions,
+            revision=reopened.decisions.revision + 1,
+            suppression=replace(old, event_id="distinct-but-stale-immutable-event"),
+        ),
+    )
+    stale = HumanAuthorization(
+        current.entity_id,
+        current.cohort,
+        "suppression",
+        current.decisions.suppression,
+        "controlled-authority",
+    )
+    with pytest.raises(ValueError, match="new revision"):
+        validate_entity_transition(reopened, current, human_authorizations=(stale,))
+    current = replace(
+        current,
+        decisions=replace(
+            current.decisions,
+            suppression=replace(
+                current.decisions.suppression,
+                revision=current.decisions.revision,
+            ),
+        ),
+    )
+    stale = replace(stale, event=current.decisions.suppression)
+    with pytest.raises(ValueError, match="current lifecycle generation"):
+        validate_entity_transition(reopened, current, human_authorizations=(stale,))
+
+
+def test_dimension_cannot_be_deleted_or_changed_without_its_own_authorization(sample):
+    reviewed, authorization = authorize_dimension(sample.entity, "verdict")
+    for suppression in (None, replace(reviewed.decisions.suppression, value="inactive")):
+        with pytest.raises(ValueError, match="unchanged dimension"):
+            validate_entity_transition(
+                sample.entity,
+                replace(reviewed, decisions=replace(reviewed.decisions, suppression=suppression)),
+                human_authorizations=(authorization,),
+            )
+    # An explicit suppression revoke remains a genuine independent action.
+    revoked, _ = authorize_dimension(sample.entity, "suppression", "inactive")
+    assert effective(sample, entity=revoked).suppression.value == "inactive"
+
+
+def test_constructor_retains_historical_epochs_but_rejects_future_or_scope_confusion(sample):
+    historical = replace(sample.entity, lifecycle_generation=7)
+    assert historical.decisions.suppression.authorized_generation == 0
+    future = replace(sample.entity.decisions.suppression, authorized_generation=1)
+    with pytest.raises(ValueError, match="future/absent"):
+        replace(sample.entity, decisions=replace(sample.entity.decisions, suppression=future))
+    with pytest.raises(ValueError, match="generation must match decision scope"):
+        replace(sample.entity.decisions, suppression=replace(future, authorized_generation=None))
+    with pytest.raises(ValueError, match="generation must match decision scope"):
+        DecisionSnapshot(
+            "occurrence", sample.after.occurrence_id, sample.after.cohort, 2, suppression=future
+        )
+    with pytest.raises(ValueError, match="dimension/generation"):
+        HumanAuthorization(
+            sample.entity.entity_id,
+            sample.entity.cohort,
+            "suppression",
+            DimensionDecision("active", "occurrence-event", 3),
+            "controlled-authority",
+        )
+
+
+def test_transition_event_ids_dimensions_and_scopes_are_unique(sample):
+    reviewed, authorization = authorize_dimension(sample.entity, "verdict")
+    with pytest.raises(ValueError, match="duplicate human authorization dimension"):
+        validate_entity_transition(
+            sample.entity, reviewed, human_authorizations=(authorization, authorization)
+        )
+    with pytest.raises(ValueError, match="exact target/dimension"):
+        validate_entity_transition(
+            sample.entity,
+            reviewed,
+            human_authorizations=(replace(authorization, entity_id="foreign"),),
+        )
+    closed, lifecycle = change_lifecycle(sample.entity, "resolved")
+    event = DimensionDecision(
+        "inactive",
+        lifecycle.event_id,
+        sample.entity.decisions.revision + 1,
+        authorized_generation=closed.lifecycle_generation,
+    )
+    combined = replace(
+        closed, decisions=replace(closed.decisions, revision=event.revision, suppression=event)
+    )
+    human = HumanAuthorization(
+        combined.entity_id, combined.cohort, "suppression", event, "controlled-authority"
+    )
+    with pytest.raises(ValueError, match="unique and not restamp"):
+        validate_entity_transition(
+            sample.entity, combined, lifecycle_event=lifecycle, human_authorizations=(human,)
+        )
+
+
+def test_current_snapshot_validation_does_not_authenticate_event_store(sample):
+    # This is intentionally a controlled authority reference. The pure helper
+    # proves structural transition constraints, not a human login or global UUID
+    # uniqueness. Production must load immutable events from its authenticated
+    # append-only store before invoking this validator and commit under real CAS.
+    current, authorization = authorize_dimension(sample.entity, "suppression", "inactive")
+    assert authorization.authority_ref == "controlled-human-event-store:not-auth"
+    assert (
+        validate_entity_transition(sample.entity, current, human_authorizations=(authorization,))
+        is None
+    )
