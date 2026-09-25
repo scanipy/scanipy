@@ -5,6 +5,12 @@
 **Source of truth:** `SDD.md` §8 (CMP-FND-01..03), §10 (CMP-CP-05). Where this document and the SDD disagree, the SDD wins.
 **SARIF version pin:** **v2.1.0** (OASIS standard).
 
+**BHMEA compatibility note (2026-09-25):** The original sections retain the
+legacy Scanipy extension v1 contract. For explicitly versioned artifact-identity
+v2 results, §11.1 specifies scoped changes to §§6–12. SARIF itself remains
+version 2.1.0; existing v1 output is not rewritten. The current BHMEA execution
+handoff's D-CLASS/D-PRODUCERS decisions govern this corrective extension.
+
 This document is the canonical contract for every SARIF log Scanipy v3.2 emits. Adherence is mandatory for any component that writes SARIF: `CMP-ORCH-03` (worker), `CMP-FND-01` (normalizer), `CMP-CP-05` (Attestor), and the SARIF export delivered by the Attestation API (`GET /api/v1/attestations/{scan_id}`).
 
 Cross-cutting references this document depends on:
@@ -390,6 +396,63 @@ $defs:
 ```
 
 The `const` constraint on `cpg_order_hash_annotation` enforces INV-5 at the schema layer: an emission that elides or alters the annotation fails JSON Schema validation in CI.
+
+### 11.1 Artifact-identity v2 compatibility extension (BHMEA R09)
+
+This extension implements the D-CLASS/D-PRODUCERS engineering direction in the
+[current execution handoff](../PLAN-BHMEA-EXECUTION-2026-09-25.md). It does not
+declare full R09, R12, language semantics, or the submitted demo accepted.
+
+Consumers must dispatch on `Result.properties["scanipy.identity"].schema_version`
+when that object is present. Its only supported version here is integer `2`.
+An absent object denotes the unchanged v1 contract; it does not establish either
+of the two independent v2 classes. Unknown versions fail closed.
+
+The v2 object has exactly `schema_version`, `cpg_order`, and `slice`. Each
+artifact descriptor has exactly these fields:
+
+| Field | Contract |
+|---|---|
+| `status` | `completed`, `pending`, `running`, `failed`, `not-applicable`, or `legacy-ambiguous`; never a strength |
+| `digest` | 64 lowercase hexadecimal characters for computed evidence; otherwise null, except a retained historical digest on `legacy-ambiguous` |
+| `fingerprint_class` | This artifact's `strong` or `weak` verdict only for `completed`; otherwise null |
+| `namespace` | The actual producer's nonempty algorithm namespace for `completed`; otherwise null |
+| `annotation` | Exact literal `canonical iff fingerprint_class = strong`, scoped to this descriptor's class |
+
+V2 retains flat `scanipy.cpg_order_hash` and `scanipy.slice_fingerprint` values
+for navigation, adds flat `scanipy.cpg_order_class` and
+`scanipy.slice_fingerprint_class`, and validates them against the descriptors.
+It **omits** the ambiguous top-level `scanipy.fingerprint_class` and
+`scanipy.cpg_order_hash_annotation` keys. Consumers must read/render the annotation
+next to its digest inside each descriptor; they must not require the old
+top-level annotation on a v2 result or infer a shared strength.
+
+The native SARIF `fingerprints` object contains both
+`scanipy.cpg_order_hash/v2` and `scanipy.slice_fingerprint/v2` only when both
+descriptors are completed/strong and their namespaces are respectively
+`scanipy-canonical-graph/2` and `scanipy-slice-normal-form/2`. Otherwise it is
+empty. This does not hide weak evidence: the descriptors retain it. Legacy
+namespaces, including `scanipy-witness-edge-sequence/1`, must never be promoted
+by a strong-looking label. These checks are necessary identity guards, not
+proof of binding/purity correctness or authorization for automatic suppression.
+
+Every core v2 result requires completed graph/slice evidence and a real
+precondition verdict. A CPG-less oracle result can instead carry null graph,
+slice and precondition values, artifact status `not-applicable`, and
+`scanipy.precondition_applicability = "not-applicable"`. Its independent
+`scanipy.oracle_native_identity` uses namespace `scanipy-oracle-content/1` and
+scope `same-source-only`; it is neither a graph/slice hash nor refactor proof.
+Origin, `S_version`, and `env_digest` remain mandatory runtime provenance.
+Nullable metadata alone does not implement source-only snapshot production.
+
+V1 serialization, fingerprint keys and annotation placement remain unchanged.
+V2 validation checks the scoped annotations and independent evidence rather
+than applying the v1-only required-key pseudocode in §11. Current implementation
+uses `validate_sarif` and `validate_identity_metadata`; this addendum does not
+claim the proposed hosted extension-schema URL is published. Regression tests
+in `tests/unit/test_artifact_identity.py` cover all four class combinations,
+namespace rejection, class tampering, CPG-less oracle output, and fixed v1
+serialization checksums.
 
 ---
 

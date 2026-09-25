@@ -5,13 +5,11 @@ mirror of the ``findings`` table whose DDL already ships in CMP-CP-03's Alembic
 migration ``db/migrations/versions/20260524_0001_initial_tenancy_tables.py``
 (the declared FND-02 migration vehicle, per DOC-DB §4.12 / DOC-CMP-CP-03 §3.1).
 
-The model mirrors that DDL **verbatim** — same columns, same nullability, the
-same enum / regex / literal CHECK constraints under the same constraint names,
-the same length CHECKs, and the same indexes (including the partial
-``deterministic-core`` index and the ``(codebase_id, slice_fingerprint)``
-baseline-lookup index). It does NOT introduce a second migration; CMP-FND-02's
-schema lives in the CP-03 migration and this ORM is the read/insert surface for
-it.
+Migration ``20260925_0003`` adds independent graph/slice classes and states.
+Legacy rows retain their original fields unchanged and do not acquire inferred
+classes. New core rows require computed evidence; oracle rows may explicitly
+mark unavailable artifacts not applicable. Existing enum, length, and literal
+checks and indexes remain, with conditional identity checks added below.
 
 Schema-level invariant discharge owned here (DOC-CMP-FND-02 §5, Appendix A):
 
@@ -20,10 +18,11 @@ Schema-level invariant discharge owned here (DOC-CMP-FND-02 §5, Appendix A):
   ``oracle-passthrough`` — never ``mixed``).
 * **INV-2** — ``S_version`` / ``env_digest`` NOT NULL; ``env_digest`` sha256
   format CHECK.
-* **INV-5** — ``cpg_order_hash`` NOT NULL + 32-byte length CHECK;
+* **INV-5** — computed ``cpg_order_hash`` has a 32-byte length CHECK;
   ``cpg_order_hash_annotation`` NOT NULL + literal CHECK pinning the exact
   string ``canonical iff fingerprint_class = strong``; ``fingerprint_class``
-  NOT NULL + enum CHECK (defence-in-depth, DOC-CMP-FND-02 §5.3).
+  retains its legacy enum CHECK. V2 classes are artifact-local, never inferred
+  from that ambiguous historical field.
 
 INV-3 (the triage-role grant fence) is enforced at the GRANT level in the
 CP-03 migration, not in the ORM.
@@ -39,6 +38,7 @@ from sqlalchemy import (
     CheckConstraint,
     ForeignKey,
     Index,
+    Integer,
     LargeBinary,
     Text,
     text,
@@ -64,7 +64,7 @@ CPG_ORDER_HASH_ANNOTATION = "canonical iff fingerprint_class = strong"
 class Finding(Base):
     """A single persisted finding row (``findings`` table, DOC-DB §4.12).
 
-    Mirrors the DDL shipped in migration ``20260524_0001`` verbatim.
+    Mirrors initial DDL plus the additive ``20260925_0003`` identity migration.
     """
 
     __tablename__ = "findings"
@@ -109,7 +109,7 @@ class Finding(Base):
     env_digest: Mapped[str] = mapped_column(Text, nullable=False)
 
     # === INV-5 anchors (defence-in-depth: NOT NULL + length/literal/enum CHECK) ===
-    cpg_order_hash: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    cpg_order_hash: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
     cpg_order_hash_annotation: Mapped[str] = mapped_column(
         Text,
         nullable=False,
@@ -119,12 +119,25 @@ class Finding(Base):
         # the CP-03 migration DDL.
         server_default=text(f"'{CPG_ORDER_HASH_ANNOTATION}'"),
     )
-    fingerprint_class: Mapped[FPClass] = mapped_column(Text, nullable=False)
-    slice_fingerprint: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    fingerprint_class: Mapped[FPClass | None] = mapped_column(Text, nullable=True)
+    slice_fingerprint: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    identity_schema_version: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("1")
+    )
+    cpg_order_class: Mapped[FPClass | None] = mapped_column(Text, nullable=True)
+    slice_fingerprint_class: Mapped[FPClass | None] = mapped_column(Text, nullable=True)
+    cpg_order_status: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'legacy-ambiguous'")
+    )
+    slice_status: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'legacy-ambiguous'")
+    )
+    cpg_order_namespace: Mapped[str | None] = mapped_column(Text, nullable=True)
+    slice_namespace: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # === Optional + status fields ===
     witness_blob_uri: Mapped[str | None] = mapped_column(Text, nullable=True)
-    precondition_status: Mapped[PreconditionStatus] = mapped_column(Text, nullable=False)
+    precondition_status: Mapped[PreconditionStatus | None] = mapped_column(Text, nullable=True)
     spec_provenance: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[Status] = mapped_column(Text, nullable=False, server_default=text("'open'"))
     suppression_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -136,6 +149,50 @@ class Finding(Base):
     )
 
     __table_args__ = (
+        CheckConstraint("identity_schema_version IN (1, 2)", name="findings_identity_version_chk"),
+        CheckConstraint(
+            "identity_schema_version <> 2 OR fingerprint_class IS NULL",
+            name="findings_no_shared_class_chk",
+        ),
+        CheckConstraint(
+            "cpg_order_class IS NULL OR cpg_order_class IN ('strong', 'weak')",
+            name="findings_graph_class_chk",
+        ),
+        CheckConstraint(
+            "slice_fingerprint_class IS NULL OR slice_fingerprint_class IN ('strong', 'weak')",
+            name="findings_slice_class_chk",
+        ),
+        CheckConstraint(
+            "identity_schema_version <> 1 OR (cpg_order_hash IS NOT NULL "
+            "AND slice_fingerprint IS NOT NULL AND fingerprint_class IS NOT NULL "
+            "AND precondition_status IS NOT NULL AND cpg_order_class IS NULL "
+            "AND slice_fingerprint_class IS NULL AND cpg_order_status = 'legacy-ambiguous' "
+            "AND slice_status = 'legacy-ambiguous' AND cpg_order_namespace IS NULL "
+            "AND slice_namespace IS NULL)",
+            name="findings_legacy_identity_chk",
+        ),
+        CheckConstraint(
+            "identity_schema_version <> 2 OR origin <> 'deterministic-core' OR "
+            "(cpg_order_status = 'completed' AND slice_status = 'completed' "
+            "AND precondition_status IS NOT NULL)",
+            name="findings_core_identity_chk",
+        ),
+        *(
+            CheckConstraint(
+                f"({prefix}_status = 'completed' AND {digest} IS NOT NULL "
+                f"AND {klass} IS NOT NULL AND {prefix}_namespace IS NOT NULL "
+                f"AND length({prefix}_namespace) > 0) OR "
+                f"({prefix}_status = 'legacy-ambiguous' AND {klass} IS NULL "
+                f"AND {prefix}_namespace IS NULL) OR "
+                f"({prefix}_status IN ('pending', 'running', 'failed', 'not-applicable') "
+                f"AND {digest} IS NULL AND {klass} IS NULL AND {prefix}_namespace IS NULL)",
+                name=f"findings_{prefix}_artifact_chk",
+            )
+            for prefix, digest, klass in (
+                ("cpg_order", "cpg_order_hash", "cpg_order_class"),
+                ("slice", "slice_fingerprint", "slice_fingerprint_class"),
+            )
+        ),
         # --- CHECK constraints (names + sqltext verbatim from the DDL) ---
         CheckConstraint(
             "commit_sha ~ '^[0-9a-f]{40}$'",
