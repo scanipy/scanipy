@@ -110,7 +110,8 @@ WEAK_CLASS_CAVEAT: Final[str] = (
 )
 
 #: Env handed to the Joern front-end when running inside the snapshot worker
-#: image. Mirrors ~/scanipy-demo/runner/cpg_stats.py. Override with --joern-env-json.
+#: image. Java inputs (including --joern-env-json) are restricted by the shared
+#: closed Java profile; this base mapping is not its post-adapter child env.
 DEFAULT_JOERN_ENV: Final[dict[str, str]] = {
     "PATH": "/opt/joern/bin:/opt/codeql:/opt/temurin-jre/bin:/usr/bin",
     "JAVA_HOME": "/opt/temurin-jre",
@@ -517,7 +518,8 @@ class RealFingerprinter:
     """Default :class:`Fingerprinter`: real Joern parse + real Algorithm 3.
 
     Must run inside the snapshot worker image (the ``joern-parse`` / ``joern``
-    binaries are resolved from ``PATH``). Parsed trees are cached by resolved
+    binaries are resolved from pinned absolute paths). Java caller environment
+    overrides cannot bypass the shared closed static profile. Parsed trees are cached by resolved
     source directory, so a seed's ``before/`` tree is parsed once and reused
     across all 7 of its refactors.
     """
@@ -1018,7 +1020,10 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--joern-env-json",
         type=Path,
         default=None,
-        help="JSON file of env vars for the joern child process (default: in-image PATH/JAVA_HOME)",
+        help=(
+            "JSON adapter env (default: in-image PATH/JAVA_HOME); Java accepts only "
+            "the reviewed closed static environment profile"
+        ),
     )
     return parser
 
