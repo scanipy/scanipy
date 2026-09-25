@@ -1,47 +1,225 @@
-base_sha256: sha256:bd52877d4edcd50a52d568bc0aa0d775175acb4454afa516ec0bbaab66bffd08
+additional_evidence_cases: []
 before_dir: before
 license: Apache-2.0
+preconditions:
+  - Java String/primitive operations retain operand and exception order.
+  - Non-null byte array; extraction moves scalar length arithmetic, not mutable-array
+    access.
 refactor_pairs:
   - after_dir: after/alpha-rename-local
+    after_locator:
+      call_text: return stream.readObject();
+      callee: readObject
+      column: 23
+      file: src/main/java/com/scanipy/corpus/refac/SessionService.java
+      line: 13
+    before_dir: seeds/seed-015/before
+    before_locator:
+      call_text: return stream.readObject();
+      callee: readObject
+      column: 23
+      file: src/main/java/com/scanipy/corpus/refac/SessionService.java
+      line: 13
+    case_id: seed-015/alpha-rename-local
+    evidence_type: structural_comparison
+    expected_failure: null
+    expected_outcome: stay
+    expected_preconditions:
+      fixture_syntax: valid
+      transformation_validation: valid
+    finding_class: deserialization
     ground_truth_label: should-stay
-    rationale: Consistent alpha-rename of seeded locals/params; slice preserved, fingerprint
-      must stay.
+    language: java
+    observation_subject: corresponding_sink_slice
+    rationale: Bijective rename of bound parameters/locals; no operator or literal
+      change.
     refactor: alpha-rename-local
+    required_strength: strong_strong
+    seed_id: seed-015
   - after_dir: after/pdg-only-formatting
+    after_locator:
+      call_text: return stream.readObject();
+      callee: readObject
+      column: 23
+      file: src/main/java/com/scanipy/corpus/refac/SessionService.java
+      line: 27
+    before_dir: seeds/seed-015/before
+    before_locator:
+      call_text: return stream.readObject();
+      callee: readObject
+      column: 23
+      file: src/main/java/com/scanipy/corpus/refac/SessionService.java
+      line: 13
+    case_id: seed-015/pdg-only-formatting
+    evidence_type: structural_comparison
+    expected_failure: null
+    expected_outcome: stay
+    expected_preconditions:
+      fixture_syntax: valid
+      transformation_validation: valid
+    finding_class: deserialization
     ground_truth_label: should-stay
-    rationale: Whitespace/comment-only churn; no PDG edge changes, fingerprint must
-      stay.
+    language: java
+    observation_subject: corresponding_sink_slice
+    rationale: Only comments and blank lines change; executable statements are identical.
     refactor: pdg-only-formatting
+    required_strength: strong_strong
+    seed_id: seed-015
   - after_dir: after/independent-reordering
+    after_locator:
+      call_text: return stream.readObject();
+      callee: readObject
+      column: 23
+      file: src/main/java/com/scanipy/corpus/refac/SessionService.java
+      line: 13
+    before_dir: seeds/seed-015/before
+    before_locator:
+      call_text: return stream.readObject();
+      callee: readObject
+      column: 23
+      file: src/main/java/com/scanipy/corpus/refac/SessionService.java
+      line: 13
+    case_id: seed-015/independent-reordering
+    evidence_type: structural_comparison
+    expected_failure: null
+    expected_outcome: stay
+    expected_preconditions:
+      fixture_syntax: valid
+      transformation_validation: valid
+    finding_class: deserialization
     ground_truth_label: should-stay
-    rationale: Reorder a PDG-independent statement; canonical topo-sort no-op, fingerprint
-      must stay.
+    language: java
+    observation_subject: corresponding_sink_slice
+    rationale: Swap two existing independent literal assignments that both feed the
+      sink computation; no added/deleted statement.
     refactor: independent-reordering
+    required_strength: strong_strong
+    seed_id: seed-015
   - after_dir: after/pure-extract
+    after_locator:
+      call_text: return stream.readObject();
+      callee: readObject
+      column: 23
+      file: src/main/java/com/scanipy/corpus/refac/SessionService.java
+      line: 13
+    before_dir: seeds/seed-015/before
+    before_locator:
+      call_text: return stream.readObject();
+      callee: readObject
+      column: 23
+      file: src/main/java/com/scanipy/corpus/refac/SessionService.java
+      line: 13
+    case_id: seed-015/pure-extract
+    evidence_type: structural_comparison
+    expected_failure: null
+    expected_outcome: stay
+    expected_preconditions:
+      fixture_syntax: valid
+      purity_certificate: proven
+      transformation_validation: valid
+    finding_class: deserialization
     ground_truth_label: should-stay
-    rationale: Extract a pure alias-stable helper; summary-inlining covers it, fingerprint
-      must stay.
+    language: java
+    observation_subject: corresponding_sink_slice
+    rationale: Move existing multi-operand slice computation into a called helper;
+      bind actuals/formals and reconnect the return to the original sink.
     refactor: pure-extract
+    required_strength: strong_strong
+    seed_id: seed-015
   - after_dir: after/fqn-move-package-rename
+    after_locator:
+      call_text: return stream.readObject();
+      callee: readObject
+      column: 23
+      file: src/main/java/com/scanipy/corpus/relocated/refac/SessionService.java
+      line: 13
+    before_dir: seeds/seed-015/before
+    before_locator:
+      call_text: return stream.readObject();
+      callee: readObject
+      column: 23
+      file: src/main/java/com/scanipy/corpus/refac/SessionService.java
+      line: 13
+    case_id: seed-015/fqn-move-package-rename
+    evidence_type: structural_comparison
+    expected_failure: null
+    expected_outcome: stay
+    expected_preconditions:
+      fixture_syntax: valid
+      transformation_validation: valid
+    finding_class: deserialization
     ground_truth_label: should-stay
-    rationale: Move class/module to a new FQN; FQN normalization covers it, fingerprint
-      must stay.
+    language: java
+    observation_subject: corresponding_sink_slice
+    rationale: Actually move the source file and rename its package/module, updating
+      a separate importing consumer.
     refactor: fqn-move-package-rename
+    required_strength: strong_strong
+    seed_id: seed-015
   - after_dir: after/genuine-fix
+    after_locator: null
+    before_dir: seeds/seed-015/before
+    before_locator:
+      call_text: return stream.readObject();
+      callee: readObject
+      column: 23
+      file: src/main/java/com/scanipy/corpus/refac/SessionService.java
+      line: 13
+    case_id: seed-015/genuine-fix
+    evidence_type: finding_removal
+    expected_failure: null
+    expected_outcome: absent
+    expected_preconditions:
+      fixture_syntax: valid
+      transformation_validation: valid
+    finding_class: deserialization
     ground_truth_label: should-flip
-    rationale: Seeded sink replaced by a safe/parameterized equivalent for this class;
-      slice changes, fingerprint must flip.
+    language: java
+    observation_subject: finding_lifecycle
+    rationale: Remove the vulnerability by parameter binding, a fixed trusted path/URL,
+      or replacing object deserialization with non-executing data decoding. Requires
+      a completed scan establishing absence, not a missing hash.
     refactor: genuine-fix
+    required_strength: null
+    seed_id: seed-015
   - after_dir: after/aliasing-changing-extract
+    after_locator:
+      call_text: return stream.readObject();
+      callee: readObject
+      column: 23
+      file: src/main/java/com/scanipy/corpus/refac/SessionService.java
+      line: 16
+    before_dir: seeds/seed-015/before
+    before_locator:
+      call_text: return stream.readObject();
+      callee: readObject
+      column: 23
+      file: src/main/java/com/scanipy/corpus/refac/SessionService.java
+      line: 13
+    case_id: seed-015/aliasing-changing-extract
+    evidence_type: structural_comparison
+    expected_failure: null
+    expected_outcome: flip
+    expected_preconditions:
+      fixture_syntax: valid
+      purity_certificate: not_proven
+      transformation_validation: valid
+    finding_class: deserialization
     ground_truth_label: should-flip
-    rationale: Extract routes taint through a freshly-aliased holder; aliasing changes,
-      fingerprint must flip.
+    language: java
+    observation_subject: corresponding_sink_slice
+    rationale: A called helper mutates an aliased holder and its changed value reaches
+      the original sink; not eligible for pure normalization.
     refactor: aliasing-changing-extract
+    required_strength: strong_strong
+    seed_id: seed-015
+schema_version: 2
 seed_finding:
   class: deserialization
-  description: tainted bytes `bytes014` deserialized via ObjectInputStream.readObject
+  description: untrusted method parameter input014 reaches readObject
   language: java
-  sink_file: SessionService.java
-  sink_line: 10
+  sink_file: src/main/java/com/scanipy/corpus/refac/SessionService.java
+  sink_line: 13
 seed_id: seed-015
 synthesized: true
+template_index: 6
