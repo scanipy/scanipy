@@ -94,14 +94,16 @@ handoff; do not cherry-pick or overwrite another agent's in-flight edits.
 | R09 class propagation | Schema agent; [#363](https://github.com/scanipy/scanipy/issues/363) | Worker/findings/SARIF/schema and dedicated tests; not canonical modules | Preserve slice verdict; add independent graph/slice fields and safe historical handling |
 | R03 corpus correction | Corpus agent; [#361](https://github.com/scanipy/scanipy/issues/361) | Corpus bases/templates/generator/manifests and pipeline tests | Real permutation, extraction/call/return, physical relocation, sink-relevant alias changes; explicit before/after locators |
 | R04 typed gate | Canonical agent; root accountable; [#367](https://github.com/scanipy/scanipy/issues/367) | Separate report-consumer script/config/tests; harness edits coordinated with corpus agent | Reject denominator reduction and fake flips; distinguish structural/removal/failure cases; enforce per-pair nonregression |
+| R05 real campaign producer | Corpus agent; [#374](https://github.com/scanipy/scanipy/issues/374) | New typed runner/controller/tests/runbook; observer-only frontend seam coordinated with R19 | Attempt all 844 sides with no hidden cache; retain actual source/tool/command evidence and report unavailable semantics honestly |
 | R15 dependency prerequisite | Root; [#370](https://github.com/scanipy/scanipy/issues/370), under [#366](https://github.com/scanipy/scanipy/issues/366) | Dependency declarations, focused compatibility tests and observed environment | Restore fresh-install CI without warning suppression; clean Docker/stage acceptance remains separate |
 | Remaining implementation | Root accountable; specialist assigned before first edit | R02, R06–R08, R10–R16, R19 | Finalize graph/flow contracts, then assign real producer/integration work in dependency order |
 
-Project-board prechecks found the corrective scopes available. Claim updates
-encountered GitHub GraphQL rate limiting; final board status is not assumed.
-Root records local ownership here and reconciles the remote board when the API
-allows it. This temporary synchronization issue does not justify duplicate work,
-obsolete WBS edits, premature DONE, or skipping review before merge.
+Project-board prechecks found the corrective scopes available. Initial claim
+updates encountered GitHub GraphQL rate limiting. On September 25, root
+reconciled #361–365, #367 and #374 to In Progress through `scripts/board.sh`.
+The narrow dependency issue #370 became Done only after PR #373 merged with
+required checks and canonical review passing. Keep remote status current; do
+not use that narrow closure to mark a full R-task, claim or gate complete.
 
 No task is DONE. Subtasks implemented on branches remain pending required
 review, merge, and the acceptance scope they actually address. Closing a narrow
@@ -120,7 +122,8 @@ the submitted functionality is complete.
 | [#369](https://github.com/scanipy/scanipy/pull/369), canonical identity/budget foundation | 41 focused tests; finite graph/search counterexamples covered | Review requested changes; R09 must land first, then combined real producer/consumer regression; no full normalization claim |
 | [#371](https://github.com/scanipy/scanipy/pull/371), independent artifact classes/provenance | Broad local suite and isolated PostgreSQL checks; actual synthetic-graph producer integration covers all four class combinations | Remote CI/review; actual source-only snapshot producer, complete environment and live persistence orchestration remain |
 | [#372](https://github.com/scanipy/scanipy/pull/372), genuine typed corpus | 422 cases; 85 corpus and 31 harness-compatibility tests; Java/Python syntax checks | Remote CI/review; fixture preconditions are demands, not purity observations; no corrected real G0 run yet |
-| [#370](https://github.com/scanipy/scanipy/issues/370), fresh dependency compatibility | Fresh declared Python 3.11 install: 862 tests pass, 47 existing skips, no post-install package overrides | Narrow prerequisite of R15; remote CI/review and broader clean install remain |
+| [#373](https://github.com/scanipy/scanipy/pull/373), fresh dependency compatibility | MERGED after CI, supplemental Gate 3 and canonical APPROVE; fresh declared install: 862 tests pass, 47 existing skips | Narrow #370 closed; broader R15 clean Docker install and stage acceptance remain |
+| [#375](https://github.com/scanipy/scanipy/pull/375), typed report gate | 73 controlled checker tests; complete corpus binding independently checked | Fresh real producer and G0 still missing; bind semantic policy as well as corpus and protect per-case historical passes |
 
 Fresh-install CI exposed an AnyIO/Starlette warning-as-error incompatibility and
 SQLAlchemy driver-default drift. The narrow corrective dependency issue fixes
