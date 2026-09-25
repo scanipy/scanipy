@@ -39,6 +39,8 @@ from services.scan.continuity import (
     validate_registry_transition,
 )
 
+pytestmark = pytest.mark.unit
+
 
 def digest(label):
     return "sha256:" + hashlib.sha256(label.encode()).hexdigest()
