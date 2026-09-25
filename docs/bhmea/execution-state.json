@@ -45,11 +45,12 @@
     "The DAG expresses milestone acceptance prerequisites; explicitly assigned hermetic build-ahead may proceed with unmet verification dependencies, without claiming them satisfied.",
     "Evidence targets are planned locations; only evidence_paths records retained actual evidence.",
     "No full task, claim or shared gate has passed. Corrective board ownership was reconciled on 2026-09-25 after transient GraphQL failures.",
-    "Reviewed foundations through main e79dc54, including bounded canonical #369, Java safety #390, opt-in raw Joern #382 and pure continuity #389, are indexed in docs/evidence/2026-09-25-foundation-merges/README.md; narrow issue closure is not full task or submission acceptance.",
+    "Revision 10: reviewed foundations through main 6ae30df include #401 stage/handoff documentation, #402 Git containment, #403 legacy app containment and #404 Semgrep parser after exact-head successful reviews. The foundation-merges README retains all heads, checks and the initial #402 checklist-only review failure. Narrow #395/#396/#394 Done is not full task or submission acceptance.",
     "R07 lifecycle-generation and R16 implicit Java execution/coverage gaps are explicit follow-ups; no production continuity policy or corrected G0 exists.",
     "The earlier canonical session-limit failures are preserved. Recovery was observed: #390, #382 and #389 subsequently had successful exact-head APPROVE actions and merged. Remaining candidates still require combined-head tests and their own successful canonical review; no failed action is accepted.",
-    "Local-only #378 and #391–#396 checkpoints are not merged acceptance evidence; #395 includes a tested packaging correction but no image build. See the handoff for exact code/test boundaries, not additive test counts.",
-    "Local #397 has reviewed rule/model, syntax-worker and pure-codec implementations; #398 has a committed offline producer and a separately reviewed transport path correction under final gates; #399 has a committed test-key crypto/diagnostic verifier and refuses operational launch. #400 has a reviewed committed runtime-file verifier, not a Docker controller or trusted installation loader. Missing production trust/integration cannot be replaced by assertions, fixture keys or pure tests.",
+    "Local-only #378 and #391–#393 checkpoints are not merged acceptance evidence. #394 at ed55bfc passed1840/51 full, normal push, all seven remote checks and successful canonical APPROVE before PR404 merged6ae30df. Keep parser limit revalidation: root disproved the optional review suggestion's frozen-dataclass immutability premise. Merged Git/app containment includes the package-copy correction but no image build or user app/DB rollout. Source custody c5eaa472 preserves reviewed authored bytes with fresh combined full1710/51, not remote acceptance.",
+    "Local #397 preserves three red reviews: 13 failed negatives, eight later closure/wrapper failures, then four root scope-multiplicity/order failures after intermediate controlled passes. Final raw source74ab0618 has root/corpus approval with387 selected passes,206 independent projection passes, root four negatives green and full2469/51; normal commit/current-main/remote gates remain. #398 transport d3ce731 has130 focused on3.11/3.12 and1774/51 full; #399 inventory integration309 focused. None establishes native or production authority.",
+    "Local #400 includes reviewed inventory/loader and pure renderer af75910: combined accepted-main/transport/loader/renderer full2298/51, normal renderer commit hooks and the same288 focused tests in author/root/corpus runs. Earlier loader235 focused/1793/51 full remain correctly scoped. Remote gates, trusted current-anchor factory, durable journal, kernel readers, real Docker controller/recovery and operational authority remain unresolved. R05 at652f1ee passed combined full1700/51 but awaits normal push/remote gates; no native campaign or corrected G0 exists.",
     "The owner confirmed this development machine for the Docker presentation. Selected 13:21 UTC host observations identify capacity and current resource pressure only; no stage budget or G3_STAGE criterion is accepted by that confirmation."
   ],
   "tasks": [
@@ -66,7 +67,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R01",
       "evidence_paths": [],
-      "next_action": "Handoff #368/#388 merged; reconcile the #369 foundation and separately pending review/local producer work, retain full task/claim coverage and reforecast after corrected G0/G1."
+      "next_action": "Handoff #368/#388/#401, containment #402/#403 and parser #404 are merged. Preserve Revision 10 exact-head evidence and all task/claim/gate states; review pending local producer/runtime work and reforecast after corrected G0/G1."
     },
     {
       "id": "R02",
@@ -129,7 +130,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R05",
       "evidence_paths": [],
-      "next_action": "#390 is merged. Refresh draft #380 against reviewed main, retest and obtain its own canonical review. Verify corrected image and bounded sequential probes before all 844 uncached side attempts. No real G0 yet."
+      "next_action": "Draft #380 is refreshed locally at652f1ee onto accepted main4cf10d0 and passed combined full1700/51. Complete normal push and exact-head remote review, integrate #400 runtime/controller and verify image/readiness before approved bounded probes or all844 uncached attempts. No real G0."
     },
     {
       "id": "R06",
@@ -175,7 +176,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R08",
       "evidence_paths": [],
-      "next_action": "Review/merge local #378/#391/#392/#394 and containment #395/#396; none is integrated yet. Complete #397 source-bound core, #398 verified SCM/shared transport and #399 accepted authority, persist actual observations before identity, then wire Compose, fenced retries, durable decisions and truthful API/UI. Disabled legacy scanning is not feature delivery."
+      "next_action": "Containment #402/#403 and parser #404 are merged; narrow #395/#396/#394 Done is not scan delivery. Review/merge local #378/#391/#392, complete #397 source-bound core, #398 verified acquisition, #399 actual authority and #400 factory/journal/kernel/controller, then persist observations before identity and wire Compose, retries, durable decisions and truthful API/UI. Track #403 test-ID/fixture/NoReturn follow-ups; user app/DB remain untouched."
     },
     {
       "id": "R09",
@@ -221,7 +222,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R11",
       "evidence_paths": [],
-      "next_action": "#394 local parser checkpoint has 194 focused checks and preserves raw Semgrep observations only, always with unverified coverage. Implement reviewed native/rule/source/coverage producers and independent real Semgrep/CodeQL reruns, then persist and expose per-engine empirical rates."
+      "next_action": "#394 parser merged via PR404 at6ae30df from reviewed ed55bfc after194 focused/1840 full passes,51 existing skips, normal push, all seven remote checks and successful canonical APPROVE. Raw observations always have unverified coverage. Implement reviewed native/rule/source/coverage producers and independent Semgrep/CodeQL reruns, then persist and expose actual per-engine rates."
     },
     {
       "id": "R12",
@@ -285,7 +286,7 @@
         "docs/EVIDENCE-BHMEA-DEPENDENCY-COMPATIBILITY-2026-09-25.md",
         "docs/evidence/2026-09-25-stage-machine/README.md"
       ],
-      "next_action": "Runtime #373, snapshot lock #383 and hook #387 merged. #395 locally fixes/tests a missing integrations Docker COPY but is not merged or built. Stage machine is owner-confirmed and measured, not ready. After resource/safety review verify actual install/startup, recheck shared RAM/swap/disk, measure budgets and rehearse offline twice with recovery/fallback."
+      "next_action": "Runtime #373, snapshot lock #383, hook #387 and #402 package-copy correction are merged; no corrected image is built/installed. Local pin-relative loader/pure renderer are not a trusted operational controller. On the confirmed presentation machine, recheck shared resources, verify approved install/startup, measure budgets and rehearse offline twice with recovery/fallback."
     },
     {
       "id": "R16",
@@ -301,7 +302,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R16",
       "evidence_paths": [],
-      "next_action": "#390 Java safety is merged, not full R16 acceptance. Review local #395/#396 containment and complete #398 offline/online acquisition boundaries. #400 local file verifier does not supply the required Docker controller/loader. Verify actual controls, coverage, helpers, descendants, other engines and final Compose restrictions before enabling scans."
+      "next_action": "#390 Java safety and #402/#403 legacy containment are merged, not full R16 acceptance. Complete #398 verified acquisition and #400 actual factory, journal, kernel controls and Docker lifecycle beyond its existing low-level loader/renderer. Verify coverage, helpers, descendants, other engines and final Compose restrictions before enabling scans; no native approval follows from unit tests."
     },
     {
       "id": "R17",
@@ -347,7 +348,7 @@
       "acceptance_document": "docs/REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md",
       "acceptance_section": "R19",
       "evidence_paths": [],
-      "next_action": "R19-A #382 is merged. Integrate reviewed main into R19-B #393 and obtain exact-head gates; observed CALL candidates may still be wrong or ambiguous. Complete #397 source-bound scalar flow with isolated rules, actual runtime/loader, exact models and matched returns; full Java/Python access-path/heap/fixpoint and fidelity obligations remain."
+      "next_action": "R19-A #382 is merged; integrate R19-B #393 with exact-head gates. Final pure #397 projection correction has scoped root/corpus approval and full 2469/51 after preserved red controls; complete normal commit/current-main/remote gates. Complete actual native/runtime fidelity, isolated rules/models, matched-return solver and full Java/Python access-path/heap/fixpoint coverage."
     },
     {
       "id": "R20",
