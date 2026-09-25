@@ -839,3 +839,140 @@ def test_final_outcome_construction_has_bounded_actual_fallback(
     assert evidence.outcome.stderr.data == b""
     assert evidence.outcome.cleanup == "incomplete"
     _reaped(evidence.outcome)
+
+
+class _PoisonPathValue:
+    def __getitem__(self, _key):
+        raise AssertionError("caller path slicing callback invoked")
+
+    def __iter__(self):
+        raise AssertionError("caller path iteration callback invoked")
+
+    def __bool__(self):
+        raise AssertionError("caller path truthiness callback invoked")
+
+    def __str__(self):
+        raise AssertionError("caller path formatting callback invoked")
+
+
+@pytest.mark.parametrize("target", ["cwd", "spool_dir"])
+def test_poisoned_path_storage_rejects_before_callback_or_filesystem(
+    configured, monkeypatch, target
+):
+    argv = _argv(configured, "pass")
+    path = Path(str(configured["cwd"]))
+    storage = "_raw_paths" if hasattr(path, "_raw_paths") else "_parts"
+    object.__setattr__(path, storage, _PoisonPathValue())
+    try:
+        object.__delattr__(path, "_str")
+    except AttributeError:
+        pass
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("invalid primitive path reached filesystem or spawn")
+
+    monkeypatch.setattr(bp.os, "open", forbidden)
+    monkeypatch.setattr(bp.subprocess, "Popen", forbidden)
+    with pytest.raises(bp.ProcessValidationError):
+        bp.run_bounded_process(argv, **(configured | {target: path}))
+
+
+class _PoisonPathList(list):
+    def __getitem__(self, _key):
+        raise AssertionError("caller list slicing callback invoked")
+
+    def __len__(self):
+        raise AssertionError("caller list length callback invoked")
+
+
+@pytest.mark.parametrize("target", ["cwd", "spool_dir", "output"])
+@pytest.mark.parametrize(
+    "kind", ["list-subclass", "member", "count", "member-size", "aggregate", "nul", "unicode"]
+)
+def test_path_primitive_bounds_precede_any_io(configured, monkeypatch, target, kind):
+    argv = _argv(configured, "pass")
+    path = Path(str(configured["cwd"]))
+    storage = "_raw_paths" if hasattr(path, "_raw_paths") else "_parts"
+    parts = {
+        "list-subclass": _PoisonPathList(["/", "work"]),
+        "member": ["/", _PoisonPathValue()],
+        "count": ["x"] * 100_000,
+        "member-size": ["/", "x" * 4097],
+        "aggregate": ["/", "x" * 2048, "y" * 2048],
+        "nul": ["/", "null\0member"],
+        "unicode": ["/", "lone\ud800surrogate"],
+    }[kind]
+    object.__setattr__(path, storage, parts)
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("invalid primitive path reached filesystem or spawn")
+
+    monkeypatch.setattr(bp.os, "open", forbidden)
+    monkeypatch.setattr(bp.subprocess, "Popen", forbidden)
+    with pytest.raises(bp.ProcessValidationError):
+        if target == "output":
+            bp.SpoolOutput(bp.StreamEvidence(0, None, None, False, False), path)
+        else:
+            bp.run_bounded_process(argv, **(configured | {target: path}))
+
+
+@pytest.mark.parametrize("field", ["_drv", "_root"])
+def test_parsed_path_root_and_drive_are_exact_primitives(field):
+    path = Path("/bounded/private-work")
+    if hasattr(path, "_raw_paths"):
+        # This layout has no parsed drive/root authority; raw components own it.
+        object.__setattr__(path, "_raw_paths", [_PoisonPathValue()])
+    else:
+        object.__setattr__(path, field, _PoisonPathValue())
+    with pytest.raises(bp.ProcessValidationError):
+        bp._path(path)
+
+
+def test_fresh_path_snapshot_used_for_launch_spool_and_evidence(configured, monkeypatch):
+    argv = _argv(configured, "import os; print(os.getcwd())")
+    expected_cwd = Path(str(configured["cwd"]))
+    expected_spool = expected_cwd.parent / "spool"
+    caller_cwd, caller_spool = Path(str(expected_cwd)), Path(str(expected_spool))
+    for path in (caller_cwd, caller_spool):
+        object.__setattr__(path, "_str", _PoisonPathValue())
+        try:
+            object.__setattr__(path, "_pparts", _PoisonPathValue())
+        except AttributeError:
+            pass
+    actual_popen = bp.subprocess.Popen
+
+    def spawn(args, **kwargs):
+        assert kwargs["cwd"] is not caller_cwd and kwargs["cwd"] == expected_cwd
+        for path in (caller_cwd, caller_spool):
+            storage = "_raw_paths" if hasattr(path, "_raw_paths") else "_parts"
+            object.__getattribute__(path, storage)[-1] = "changed-after-snapshot"
+        return actual_popen(args, **kwargs)
+
+    monkeypatch.setattr(bp.subprocess, "Popen", spawn)
+    outcome = bp.run_bounded_process(
+        argv, **(configured | {"cwd": caller_cwd, "spool_dir": caller_spool})
+    )
+    assert outcome.reason == "exited" and outcome.returncode == 0
+    assert outcome.invocation.cwd == str(expected_cwd)
+    assert outcome.stdout.path == expected_spool / "stdout.bin"
+    assert outcome.stdout.path.read_bytes() == (str(expected_cwd) + "\n").encode()
+    assert outcome.stderr.path == expected_spool / "stderr.bin"
+    _reaped(outcome)
+
+
+def test_spool_record_retains_its_own_path_snapshot():
+    caller = Path("/bounded/private-spool/stdout.bin")
+    output = bp.SpoolOutput(bp.StreamEvidence(0, None, None, False, False), caller)
+    assert output.path is not caller
+    storage = "_raw_paths" if hasattr(caller, "_raw_paths") else "_parts"
+    object.__getattribute__(caller, storage)[-1] = _PoisonPathValue()
+    object.__setattr__(caller, "_str", _PoisonPathValue())
+    assert str(output.path) == "/bounded/private-spool/stdout.bin"
+
+
+def test_path_utf8_limit_applies_to_the_fresh_normalized_value():
+    exact = "/" + "é" * 2047 + "x"
+    assert len(exact.encode()) == 4096
+    assert str(bp._path(Path(exact))) == exact
+    with pytest.raises(bp.ProcessValidationError):
+        bp._path(Path(exact + "x"))

@@ -120,6 +120,21 @@ Reject subclasses/custom containers before iteration, encoding, hashing or
 filesystem work. No unbounded poison iterable may be consumed for validation.
 Environment keys must be nonempty and contain no equals sign.
 
+Exact PosixPath type alone is insufficient: its internal component storage and
+cached strings can still be illicitly mutated. Before invoking any path
+property, formatting method or filesystem operation, read only its class-owned
+raw storage: the inspected CPython 3.11 `_parts` or 3.12 `_raw_paths` layout.
+Require an exact built-in list with 1..4096 members; take a bounded built-in
+slice of at most 4097 before copying, recheck count, then require exact strings
+and bounded individual/aggregate UTF-8 bytes. On the parsed 3.11 layout, also
+check exact primitive drive/root and component constraints. Unknown layouts
+fail closed. Never read caller `_str`/`_pparts` caches as authority or invoke a
+caller iterator/slicer/formatter. Construct a fresh private PosixPath, apply the
+same normalized-absolute/no-parent/root/4-KiB checks, and use ONLY that copy for
+directory walks, Popen, spool creation and frozen evidence. SpoolOutput stores
+its own fresh path copy, not a caller alias. This does not broaden any domain's
+path allowlist or protect against a privileged concurrent filesystem writer.
+
 Validate container count first, then bounded string lengths/types, then encoded
 lengths. Copy the exact dict to a private built-in dict, validate that snapshot,
 and use ONLY that snapshot for Popen and frozen evidence. Freeze argv and input
@@ -344,6 +359,9 @@ Never use the generic mechanism to execute a fixture's source as a test.
 
 - [ ] Exact types/count/string/cap/path checks before Popen; poison tuple/dict/
   path subclasses and invalid UTF-8/NUL/bool values never invoke callbacks.
+  Exact but internally poisoned paths also reject before callbacks/I/O; stale
+  caches are ignored, actual launch/spool/evidence use private copies, and
+  later caller component mutation cannot redirect the operation/result path.
 - [ ] Caller env mutation cannot change actual child env or frozen evidence.
   Exact env/argv/cwd/input digest observed by a trusted echo child; repr privacy.
 - [ ] Concurrent large stdin/stdout/stderr cannot deadlock; partial writes,
@@ -400,7 +418,8 @@ skips, zero failures/errors**, 1,620 total, 157.864 seconds. Broader strict mypy
 passed all 96 source files; repository Ruff and formatting passed (207 files).
 The normal local pre-push hook passed its full 85-source-file mypy selection,
 Ruff/format and configured unit/invariant selection. Normal pre-commit and
-commit-msg hooks remain required for the new local checkpoint commit.
+commit-msg hooks subsequently passed for shared checkpoint
+`62a61583ba340405fde8b30ff636ad50d800ddaf`.
 
 Recorded commands used the declared Python 3.11.16 development environment,
 explicit source PYTHONPATH and installed CLI PATH; live AWS/DB opt-ins were
@@ -418,6 +437,42 @@ python -m pytest tests/ -q --tb=short --junitxml=/tmp/scanipy-398-transport-chec
 python -m mypy --config-file pyproject.toml analysis detectors integrations services workers tools
 sh .husky/pre-push </dev/null
 ```
+
+### 9.1 Separate path-snapshot correction after the offline checkpoint
+
+The offline producer was separately checkpointed at
+`6dbbfec087d103f1f2c24852dd19fd8f31c53a03` (177 focused and 1,746 full-suite
+passes, 51 existing skips, normal local hooks). Root then identified that the
+shared transport's own `_path` still formatted an exact but internally
+poisonable PosixPath. Consumer-side path copies do not satisfy this public
+transport boundary, so root assigned this existing three-file slice as a
+separate correction; no offline producer or consumer files are changed.
+
+The new regression was first run against the unchanged transport. It failed
+exactly at pathlib formatting → caller component slicing, before the poisoned
+filesystem/Popen sentinels: one failure, 102 deselected, 0.71 seconds
+(`/tmp/scanipy-398-transport-path-before.xml`). No child or native source command
+ran during that falsifier. The original failed evidence is retained, not
+relabelled as a passing checkpoint. This correction implements the primitive
+snapshot/actual-copy-use rules above without changing time/byte limits,
+allowlists, process profiles, or production availability.
+
+All 130 focused cases passed without skips on the declared Python 3.11.16
+runtime in 5.30 seconds (`/tmp/scanipy-398-transport-path-focused.xml`) and on
+the already-present Python 3.12.14 runtime in 5.58 seconds
+(`/tmp/scanipy-398-transport-path-python312.xml`); no dependency was installed.
+Ruff/format and strict module mypy pass. Root reviewed and approved the scoped
+three-file delta and independently reran all 130 cases without failures/skips
+in 5.39 seconds (`/tmp/scanipy-398-transport-path-root-review.xml`). The schema
+consumer independently read and approved the correction without an overlapping
+test run. The actual CI/pre-push markers select all 130 tests. Normal staged
+pre-commit checks passed without source rewrites. Broad runs were serialized
+to limit host contention. The final configured `python -m pytest tests/` run
+passed **1,774 tests with 51 existing skips and zero failures/errors**, 1,825
+total, in 169.62 seconds (`/tmp/scanipy-398-transport-path-full.xml`). The
+normal local pre-push then passed repository Ruff/format (213 files), its full
+87-source-file mypy selection, and the configured unit/invariant test selection.
+No remote CI/canonical review or operational acceptance is claimed.
 
 JUnit files are task-local diagnostic records, not portable immutable acceptance
 artifacts. Existing user containers/database were untouched. Only small trusted
