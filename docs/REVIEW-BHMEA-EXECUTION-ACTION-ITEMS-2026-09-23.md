@@ -42,9 +42,9 @@ All unchecked acceptance items below remain required unless explicitly
 classified optional. An adopted design, recovered historical report, or one
 successful Joern parse does not complete a task or verify a submitted claim.
 
-Reviewed foundations have now landed through main `51da8a6`: independent
+Reviewed foundations have now landed through main `0223651`: independent
 artifact metadata, typed report checking, corrected corpus and dependency
-locks, board tooling, and the occurrence/decision contract. See the
+locks, board/fail-closed hook tooling, and the occurrence/decision contract. See the
 [bounded merge/evidence record](evidence/2026-09-25-foundation-merges/README.md)
 for exact heads, checks and limitations. Initial defect observations below
 remain historical evidence; do not assume every described defect is still

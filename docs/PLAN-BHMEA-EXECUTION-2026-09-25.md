@@ -128,7 +128,7 @@ handoff; do not cherry-pick or overwrite another agent's in-flight edits.
 | R16 Java invocation safety | Schema agent; [#386](https://github.com/scanipy/scanipy/issues/386) | Shared subprocess grammar/profile and coordinated frontend/observer hunk | Reject implicit build/JVM overrides, force no-fetch/no-delombok; hermetic tests and review precede new real probes |
 | Repository workflow prerequisite | Root; narrow [#377](https://github.com/scanipy/scanipy/issues/377) closed | Bounded board helper merged in #379 | Continue serialized exact-item state changes; never infer ownership or Todo from failure |
 | R15 dependency prerequisite | Root; [#366](https://github.com/scanipy/scanipy/issues/366); narrow #370/#381 closed | Runtime declarations (#373) and snapshot lock/gate (#383) merged | Verify actual image installation/startup only after resource review; no build, publication or active environment promotion yet |
-| Hook fail-closed correction | Corpus agent; [#384](https://github.com/scanipy/scanipy/issues/384) | Hook scripts, declared YAML tool, dedicated tests | Stop masked lint-staged/full-mypy failures; verify fresh declared tools and all gates, not partial retries |
+| Hook fail-closed correction | Root; narrow [#384](https://github.com/scanipy/scanipy/issues/384) closed | Corrected hooks/declared YAML tool/tests merged in #387 | Use the current worktree's reviewed hooks and declared yamllint 1.35.1; do not rely on an older shared hook path or ambient CLI |
 | Remaining implementation | Root accountable; specialist assigned before first edit | R02, R06–R08, R10–R16, later R19 stages | Finalize graph/flow and occurrence/decision contracts, then assign real producer/integration work in dependency order |
 
 Project-board prechecks found the corrective scopes available. Initial claim
@@ -139,8 +139,8 @@ required checks and canonical review passing. Keep remote status current; do
 not use that narrow closure to mark a full R-task, claim or gate complete.
 The first #376/#377 synchronization encountered the rate limit again. After
 quota recovery, the merged bounded helper verified membership/field metadata
-and real status changes. Narrow #365/#367/#363/#377/#381 are Done after approved
-merges; #376/#378/#384/#386 remain In Progress. Initial synchronization failures
+and real status changes. Narrow #365/#367/#363/#377/#381/#384 are Done after approved
+merges; #376/#378/#386 remain In Progress. Initial synchronization failures
 are not rewritten as successful preflight checks. GitHub unexpectedly closed
 #378 on wording containing a negated closing keyword; root removed the trigger,
 reopened the issue and restored In Progress. Use “#N remains open,” not a
@@ -153,7 +153,7 @@ corrective issue must not close umbrella #362 or an entire R-task prematurely.
 
 ### Branch/PR handoff snapshot
 
-Snapshot base: main `51da8a6fbbde6545ce7cb9f24c6554aea101c3df`.
+Snapshot base: main `022365123d0a14127e2039dc005606a7401bc358`.
 [Exact merge/check records](evidence/2026-09-25-foundation-merges/README.md)
 distinguish landed corrections from review-stage work. Check newer heads and
 rerun integration on the combined tree. Local test totals do not prove the
@@ -170,6 +170,7 @@ submitted functionality is complete.
 | [#379](https://github.com/scanipy/scanipy/pull/379), bounded board helper | MERGED with required checks/review; 95 hermetic tests, live post-reset metadata/mutations verified | Narrow #377 closed; root still serializes transitions; no atomic ownership-lock claim |
 | [#383](https://github.com/scanipy/scanipy/pull/383), snapshot lock | MERGED after seven test checks and canonical APPROVE; exact lock bytes bound, 1,043 passed/47 skipped locally | Narrow #381 closed; no corrected image build/install/startup or registry promotion performed |
 | [#385](https://github.com/scanipy/scanipy/pull/385), occurrence/decision contract | MERGED after CI and canonical APPROVE; no product code changed | #378 remains open; exact schema/grants, persistence and real workflow still required |
+| [#387](https://github.com/scanipy/scanipy/pull/387), fail-closed developer hooks | MERGED after CI and canonical APPROVE; 33 focused tests and fresh declared toolchain | Narrow #384 closed; current hooks must propagate failures without partial-mypy fallback |
 | [#380](https://github.com/scanipy/scanipy/pull/380), real campaign producer | DRAFT; controlled producer tests only | Integrate reviewed #369 and #386 with current main, then canonical review and bounded real runs before full 844-side campaign |
 | [#382](https://github.com/scanipy/scanipy/pull/382), raw Joern v2 transport | DRAFT; actual bounded Python/Java raw exports retained, 86 focused checks; final transport semantics not enabled by default | Current-main integration/review; actual typed mapper, precise bindings/purity and matched-return solver remain R19-B/C/D |
 

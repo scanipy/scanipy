@@ -39,6 +39,9 @@ dev = [
     # psycopg2. Deliberately migrate driver/URLs before allowing that minor.
     "sqlalchemy>=2.0,<2.1",
     "pre-commit>=3.7",
+    # lint-staged invokes this CLI outside pre-commit's isolated hook venv.
+    # Keep the fresh dev install aligned with .pre-commit-config.yaml.
+    "yamllint==1.35.1",
     # CLAR-DEPLOY-21: CI-side AWS emulation — moto is an in-process pip dep (no
     # docker service). It emulates API mechanics ONLY; it does NOT evaluate IAM
     # session policies, S3 bucket policies, or KMS key policies, so every

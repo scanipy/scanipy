@@ -2,6 +2,9 @@
 # Husky pre-commit hook — Scanipy v3.2
 # Runs: lint-staged (JS/TS) + pre-commit (Python + shell + secrets)
 
+# A successful later command must never hide an earlier lint/tooling failure.
+set -e
+
 # Run lint-staged for JS/TS/CSS files in web/
 npx lint-staged
 

@@ -1,8 +1,8 @@
 # September 25 — reviewed foundation corrections
 
 Scope: repository correction evidence, not Black Hat feature acceptance.
-Snapshot main: `51da8a6fbbde6545ce7cb9f24c6554aea101c3df` at approximately
-10:17 UTC on 2026-09-25. Owner: root engineering coordinator, umbrella #362.
+Snapshot main: `022365123d0a14127e2039dc005606a7401bc358` on 2026-09-25.
+Owner: root engineering coordinator, umbrella #362.
 
 Every merged row below had the required tests and canonical `claude-review`
 APPROVE checked at the exact head before a normal PR merge. These are links to
@@ -22,6 +22,7 @@ R17 obligations. No full R-task, C01–C18 claim, or shared gate is accepted her
 | [#375](https://github.com/scanipy/scanipy/pull/375), typed report consumer | `53e035ad1567961ef5f8e1c770b0ba3e5ddc6d94` | `cd62f5f457a13f89d3691d77af347f4cde562cf1` | [CI](https://github.com/scanipy/scanipy/actions/runs/36121862891), [reopened CI](https://github.com/scanipy/scanipy/actions/runs/36122255169), [APPROVE](https://github.com/scanipy/scanipy/actions/runs/36122255289) |
 | [#371](https://github.com/scanipy/scanipy/pull/371), independent artifact metadata | `a1da17bb51c7e4d29c413f54620207620dc67d52` | `c54064424435b4c8e25b10a52e5a68f45764b278` | [CI](https://github.com/scanipy/scanipy/actions/runs/36122357038), [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36122357005), [APPROVE](https://github.com/scanipy/scanipy/actions/runs/36122357014) |
 | [#385](https://github.com/scanipy/scanipy/pull/385), occurrence/decision design | `e74914847205e61962ec97ba8814e9c1f045b29b` | `51da8a6fbbde6545ce7cb9f24c6554aea101c3df` | [CI](https://github.com/scanipy/scanipy/actions/runs/36122489350), [APPROVE](https://github.com/scanipy/scanipy/actions/runs/36122489330) |
+| [#387](https://github.com/scanipy/scanipy/pull/387), fail-closed developer hooks | `9d5f8574f83e9d238951aa62592c3a5409d0d2dc` | `022365123d0a14127e2039dc005606a7401bc358` | [CI](https://github.com/scanipy/scanipy/actions/runs/36123526095), [APPROVE](https://github.com/scanipy/scanipy/actions/runs/36123526023) |
 
 ### What this establishes—and does not
 
@@ -52,8 +53,12 @@ R17 obligations. No full R-task, C01–C18 claim, or shared gate is accepted her
   pure matcher checkpoint `a2ffb71` has 130 controlled tests and a lifecycle
   generation repair; it is not merged or production-enabled in this snapshot.
   Its production policy registry remains empty.
+- #387 fixes both masked hook failures and declares yamllint 1.35.1. It has
+  33 focused tests and a fresh declared full run of 1,180 passed / 48 skipped.
+  The actual changed commit/push hooks passed; runtime image and full release
+  acceptance remain separate.
 
-Narrow issues #365/#367/#363/#377/#381 and the earlier #370 are closed after
+Narrow issues #365/#367/#363/#377/#381/#384 and the earlier #370 are closed after
 their reviewed corrections. #361/#362/#366/#374/#376/#378 remain open for their
 larger scope. GitHub auto-closed #378 when it parsed a closing keyword inside
 a negated sentence in #385; root removed that wording, reopened #378 and
@@ -108,11 +113,11 @@ R19 fidelity work. R16 is not complete.
   per-dimension authorization to lifecycle generations. Required durable tests
   must include fresh links with old decisions, unrelated verdict/reference
   changes, repeated cycles, concurrency and immutable event-ID history.
-- #384: pre-commit could mask a failed lint-staged result with a later success;
+- #384 (corrected by merged #387): pre-commit could mask a failed lint-staged result with a later success;
   pre-push could mask full-project mypy failure with a partial retry. Missing
   declared yamllint exposed the first path. Failed checks were rerun before
-  earlier pushes; neither masking path is considered acceptable. A separate
-  corrective PR must preserve all gates and verify the fresh declared closure.
+  earlier pushes; neither masking path is considered acceptable. The merged
+  correction preserves all gates and verifies the fresh declared closure.
 - #369: integrate actual four-class producers and explicit legacy-default
   rejection; time exhaustion must remain a failed analysis, not a weak success.
 - #380/#382: integrate reviewed current main and obtain canonical approval.
