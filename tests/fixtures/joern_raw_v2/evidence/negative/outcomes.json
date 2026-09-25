@@ -1,0 +1,17 @@
+[
+  {
+    "case": "wrong_frontend",
+    "envelope": "failed_not_completed",
+    "export_process": "failed_as_required"
+  },
+  {
+    "case": "existing_output",
+    "export_process": "failed_as_required",
+    "preserved_sha256": "666949fd19266a01e4f7fbd6b20247306e4f97059b7b4b74931a0dabd4a838eb"
+  },
+  {
+    "case": "symlink_source",
+    "envelope": "absent_provenance_failure",
+    "export_process": "failed_as_required"
+  }
+]
