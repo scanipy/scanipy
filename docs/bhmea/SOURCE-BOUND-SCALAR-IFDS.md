@@ -750,8 +750,11 @@ duplicate keys, floats, non-finite values, NUL/lone-surrogate strings, bool-as-i
 or implicit string/number coercion. Decode bounded exact UTF-8 bytes, preserving
 those original bytes for hashing; input whitespace/key order need not be rewritten
 into a purported historical representation. Enforce section 5's byte/depth/value
-limits before or during decoding. Arrays retain order; only `clauses` may contain
-duplicate equal members, because original ordinals are meaningful.
+limits before or during decoding. Arrays retain order. Positional arrays such as
+parameter types and declaration components permit repeated values, as do
+`clauses`, whose original ordinals are meaningful. Uniqueness applies only where
+the specific table/domain below requires it (languages, profiles, model IDs,
+preconditions, effects and transfer authorizations).
 
 Common types:
 
@@ -1479,7 +1482,14 @@ decode_qualified_rule_key(data: bytes) -> QualifiedRuleKey
 encode_qualified_rule_key(key: QualifiedRuleKey) -> bytes
 ```
 
-BoundRule retains original bytes/ordinals, decoded closed schemas and key.
+BoundRule retains `key`, exact original `rule_bytes`/`model_bytes`, requested
+`language`, and `rule_document`/`model_document` as immutable `FrozenObject`
+values from the actual typed-observed dependency. Their `get(name)` returns
+validated scalar fields or `FrozenArray.values` for ordered languages, clauses
+and model rows. Construction re-decodes and checks the raw hashes and closed
+schemas; callers cannot supply pre-decoded substitute documents. Java content
+is decodable for membership inspection but is not executable by this first
+Python producer. Original clause ordinals remain array positions.
 Its exact fields are `key`, `rule_bytes`, `model_bytes`, `language`,
 `rule_document`, `model_document`; decoded documents use the closed immutable
 section-9 schemas, not mutable JSON dicts exposed to callers.
@@ -1872,3 +1882,32 @@ Reviewed design decisions and remaining implementation/acceptance gates:
   successful PR review or this document's approval is not that event.
 
 No item above is marked complete merely by writing this contract.
+
+### 17.1 Local metadata/decoder checkpoint — not a producer or G1 result
+
+The first local checkpoint implements the shared qualified-rule key and bounded
+JSON/limit helpers. The next scoped checkpoint adds exact rule/model decoding
+and the four static source/model/rule fixture files; it does not yet implement
+syntax parsing, projection, tabulation, raw witnesses or the production runner.
+The Python/Java source fixtures were retained as bytes, not imported or executed.
+
+On 2026-09-25, Python 3.11.16 with the declared development dependencies ran all
+166 marked codec unit tests (166 passed, no skips), including artifact hash and
+key binding, closed model effects/checks, bool-as-integer rejection, lowered
+limits, duplicate clauses, repeated positional types and qualified-rule isolation.
+The same frozen implementation passed the full configured suite: 1,646 passed,
+51 existing skips in 177.505 seconds. Strict mypy and Ruff checks also passed.
+The resolver owner independently reviewed the actual decoder and found no scoped
+schema/authority-seam blocker. Normal checkpoint hooks and later integrated-head
+checks remain distinct evidence; none of these tests authenticates a model,
+establishes real source/native association or satisfies the nonempty G1 gate.
+
+The first normal commit attempt stopped at detect-secrets on the rule fixture's
+actual model-content SHA256; every other applicable hook passed. Root separately
+rehashed the model file, confirmed the exact rule binding and authorized one
+reviewed `is_secret:false` baseline entry, with all existing settings/records
+preserved. That administrative baseline exception is this checkpoint's eighth
+changed file, not an expansion of the 18-file producer implementation scope.
+The actual local pre-push hook subsequently passed all four phases, including
+the configured unit/invariant test selector; it performed no remote push.
+The fixture bytes and digest were not altered to evade the secret check.

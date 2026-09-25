@@ -7,11 +7,16 @@ same QualifiedRuleKey and delegates to its codec. Legacy DSL is unchanged.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
-from dataclasses import asdict, dataclass, fields
-from typing import Final, cast
+import unicodedata
+from dataclasses import InitVar, asdict, dataclass, field, fields
+from typing import TYPE_CHECKING, Final, cast
 from uuid import UUID
+
+if TYPE_CHECKING:
+    from analysis.cpg_ingest.typed_observed import FrozenObject
 
 QUALIFIED_RULE_SCHEMA: Final = "scanipy-qualified-rule/1"
 RULE_SCHEMA: Final = "scanipy-bound-rule-set/1"
@@ -353,3 +358,379 @@ def decode_qualified_rule_key(data: bytes) -> QualifiedRuleKey:
         schema=_checked_string(row["schema"]),
     )
     return key
+
+
+_PYTHON_TARGET: Final = "scanipy-target-cpython311-posix/1"
+_JAVA_TARGET: Final = "scanipy-target-java21-jdbc/1"
+_TYPE_IDS: Final = frozenset(
+    (
+        "python.exact-str",
+        "python.int",
+        "java.lang.String",
+        "java.sql.Statement",
+        "java.sql.ResultSet",
+    )
+)
+
+
+def _array(value: object, *, maximum: int, minimum: int = 0) -> list[object]:
+    if type(value) is not list or not minimum <= len(value) <= maximum:
+        raise BoundRuleError("invalid-array")
+    return cast("list[object]", value)
+
+
+def _enum(value: object, choices: tuple[str, ...] | frozenset[str]) -> str:
+    if type(value) is not str or value not in choices:
+        raise BoundRuleError("invalid-enum")
+    return value
+
+
+def _position(value: object, *, result: bool = False) -> dict[str, object]:
+    row = _closed(value, {"kind", "index"})
+    expected = "result" if result else "argument"
+    if row["kind"] != expected or type(row["kind"]) is not str:
+        raise BoundRuleError("invalid-position")
+    index = row["index"]
+    if type(index) is not int or not 0 <= index <= (0 if result else 255):
+        raise BoundRuleError("invalid-position")
+    return row
+
+
+def _argument(index: int) -> dict[str, object]:
+    return {"kind": "argument", "index": index}
+
+
+def _initial_model(model_id: str) -> dict[str, object]:
+    """A fresh closed capability row, not an artifact/model authority registry."""
+    if model_id not in (
+        "python.string-concat/1",
+        "python.os-system/1",
+        "java.string-concat/1",
+        "java.jdbc-execute-query/1",
+    ):
+        raise BoundRuleError("unsupported-model")
+    python = model_id.startswith("python.")
+    concat = model_id.endswith("string-concat/1")
+    string_type = "python.exact-str" if python else "java.lang.String"
+    checks: tuple[tuple[str, str], ...]
+    if concat:
+        checks = (
+            (("python-exact-str-operands/1", "checked"),)
+            if python
+            else (
+                ("java-standard-string-semantics/1", "assumed"),
+                ("java-string-operands/1", "checked"),
+            )
+        )
+    elif python:
+        checks = (
+            ("python-direct-os-import/1", "checked"),
+            ("python-exact-str-argument/1", "checked"),
+            ("python-no-external-binding-mutation/1", "assumed"),
+            ("python-no-local-binding-mutation/1", "checked"),
+            ("python-standard-os-implementation/1", "assumed"),
+            ("terminal-selected-entry-call/1", "checked"),
+        )
+    else:
+        checks = (
+            ("java-declared-statement-receiver/1", "checked"),
+            ("java-string-argument/1", "checked"),
+            ("java21-jdbc-contract/1", "assumed"),
+            ("terminal-selected-entry-call/1", "checked"),
+        )
+    symbol: dict[str, object] | None = None
+    if not concat:
+        symbol = {
+            "owner": "os" if python else "java.sql.Statement",
+            "member": "system" if python else "executeQuery",
+        }
+    result = {"kind": "result", "index": 0}
+    return {
+        "model_id": model_id,
+        "language": "python" if python else "java",
+        "kind": "builtin-operator" if concat else "external-call",
+        "target_platform_profile": _PYTHON_TARGET if python else _JAVA_TARGET,
+        "operation": "string-concat" if concat else "external-api",
+        "symbol": symbol,
+        "signature": {
+            "receiver": None if concat or python else "java.sql.Statement",
+            "parameters": [string_type] * (2 if concat else 1),
+            "result": string_type if concat else ("python.int" if python else "java.sql.ResultSet"),
+        },
+        "preconditions": [{"id": name, "evidence_kind": kind} for name, kind in checks],
+        "normal": {
+            "result": "defined",
+            "effects": ["allocation"]
+            if concat
+            else ["external-io", "external-process" if python else "unknown-external-effect"],
+        },
+        "exceptional": {
+            "result": "absent",
+            "continuation": "exit-unknown-exception",
+            "effects": ["resource-failure"] if concat else ["unknown-external-effect"],
+        },
+        "transfer_authorization": {
+            "sink_inputs": []
+            if concat
+            else [
+                {
+                    "position": _argument(0),
+                    "class_id": "injection",
+                    "context_id": "posix-shell-command" if python else "sql-query-text",
+                }
+            ],
+            "propagation": [{"from": _argument(index), "to": result} for index in range(2)]
+            if concat
+            else [],
+            "sanitization": [],
+        },
+    }
+
+
+def _models(
+    value: object, limits: ScalarLimits
+) -> tuple[dict[str, object], dict[str, dict[str, object]]]:
+    root = _closed(value, {"schema", "target_platform_profiles", "models"})
+    if root["schema"] != MODEL_SCHEMA:
+        raise BoundRuleError("unknown-model-schema")
+    profiles = [
+        _enum(profile, (_PYTHON_TARGET, _JAVA_TARGET))
+        for profile in _array(root["target_platform_profiles"], maximum=2, minimum=1)
+    ]
+    if profiles != sorted(set(profiles)):
+        raise BoundRuleError("invalid-profile-order")
+    models: dict[str, dict[str, object]] = {}
+    used_profiles: set[str] = set()
+    previous: str | None = None
+    for value in _array(root["models"], maximum=limits.max_models, minimum=1):
+        if type(value) is not dict or "model_id" not in value:
+            raise BoundRuleError("invalid-model")
+        row = cast("dict[str, object]", value)
+        model_id = _identifier(row["model_id"])
+        if previous is not None and model_id <= previous:
+            raise BoundRuleError("invalid-model-order")
+        # The strict parser below rejects every boolean before equality: Python
+        # otherwise considers true==1 and false==0 inside nested structures.
+        if row != _initial_model(model_id):
+            raise BoundRuleError("unsupported-model")
+        models[model_id] = row
+        used_profiles.add(cast("str", row["target_platform_profile"]))
+        previous = model_id
+    if set(profiles) != used_profiles:
+        raise BoundRuleError("unbound-target-profile")
+    return root, models
+
+
+def _source_selector(value: object, languages: list[str], limits: ScalarLimits) -> str:
+    row = _closed(
+        value, {"kind", "language", "source_file", "declaration", "formal_index", "parameter_types"}
+    )
+    if row["kind"] != "entry_parameter":
+        raise BoundRuleError("unsupported-selector")
+    language = _enum(row["language"], ("python", "java"))
+    if language not in languages:
+        raise BoundRuleError("selector-language")
+    path = _checked_string(row["source_file"], maximum=limits.max_path_bytes)
+    components = path.split("/")
+    if (
+        len(components) > limits.max_path_components
+        or any(part in ("", ".", "..") for part in components)
+        or "\\" in path
+        or any(unicodedata.category(character) == "Cc" for character in path)
+    ):
+        raise BoundRuleError("invalid-source-path")
+    names = _array(row["declaration"], maximum=32, minimum=1)
+    for name in names:
+        if _NAME.fullmatch(_checked_string(name, maximum=128)) is None:
+            raise BoundRuleError("invalid-name")
+    index = row["formal_index"]
+    if type(index) is not int or not 0 <= index <= 255:
+        raise BoundRuleError("invalid-formal-index")
+    if language == "python":
+        if len(names) != 1 or row["parameter_types"] is not None or not path.endswith(".py"):
+            raise BoundRuleError("unsupported-entry-selector")
+    else:
+        for parameter in _array(row["parameter_types"], maximum=256):
+            _enum(parameter, _TYPE_IDS)
+    return language
+
+
+def _rule(
+    value: object,
+    *,
+    models: dict[str, dict[str, object]],
+    key: QualifiedRuleKey,
+    language: str,
+    limits: ScalarLimits,
+) -> dict[str, object]:
+    # Reuse the established class vocabulary, never the legacy spec parser or
+    # transfer implementation. Lazy import keeps QualifiedRuleKey stdlib-only.
+    from analysis.ifds.dsl.spec import CLASS_NAMES
+
+    root = _closed(
+        value,
+        {
+            "schema",
+            "semantics",
+            "spec_id",
+            "class_id",
+            "engine",
+            "languages",
+            "projection_profile",
+            "model_artifact_digest",
+            "clauses",
+        },
+    )
+    if root["schema"] != RULE_SCHEMA or root["semantics"] != SCALAR_SEMANTICS:
+        raise BoundRuleError("unknown-rule-semantics")
+    if root["engine"] != "ifds" or root["projection_profile"] != PROJECTION_PROFILE:
+        raise BoundRuleError("unsupported-profile")
+    if (
+        _identifier(root["spec_id"]) != key.rule_id
+        or _digest(root["model_artifact_digest"]) != key.model_raw_sha256
+    ):
+        raise BoundRuleError("rule-content-binding")
+    class_id = _enum(root["class_id"], CLASS_NAMES)
+    languages = [
+        _enum(item, ("python", "java")) for item in _array(root["languages"], maximum=2, minimum=1)
+    ]
+    if len(set(languages)) != len(languages) or language not in languages:
+        raise BoundRuleError("invalid-languages")
+    source_count = sink_count = 0
+    contexts: set[str] = set()
+    for value in _array(root["clauses"], maximum=limits.max_clauses, minimum=1):
+        if type(value) is not dict:
+            raise BoundRuleError("invalid-clause")
+        clause = cast("dict[str, object]", value)
+        primitive = _enum(clause.get("primitive"), ("source", "sink", "propagate", "sanitize"))
+        if primitive == "source":
+            _closed(clause, {"primitive", "selector"})
+            source_count += _source_selector(clause["selector"], languages, limits) == language
+            continue
+        additions = {"from", "to"} if primitive == "propagate" else {"position", "context_id"}
+        _closed(clause, {"primitive", "selector"} | additions)
+        selector = _closed(clause["selector"], {"kind", "language", "model_id"})
+        if selector["kind"] != "model":
+            raise BoundRuleError("unsupported-selector")
+        selected_language = _enum(selector["language"], ("python", "java"))
+        model_id = _identifier(selector["model_id"])
+        if model_id not in models:
+            raise BoundRuleError("missing-model")
+        model = models[model_id]
+        if selected_language not in languages or selected_language != model["language"]:
+            raise BoundRuleError("selector-language")
+        authorization = cast("dict[str, object]", model["transfer_authorization"])
+        requested: dict[str, object]
+        if primitive == "propagate":
+            requested = {
+                "from": _position(clause["from"]),
+                "to": _position(clause["to"], result=True),
+            }
+            allowed = _array(authorization["propagation"], maximum=256)
+        else:
+            context = _enum(clause["context_id"], ("posix-shell-command", "sql-query-text"))
+            requested = {
+                "position": _position(clause["position"], result=primitive == "sanitize"),
+                "class_id": class_id,
+                "context_id": context,
+            }
+            allowed = _array(
+                authorization["sink_inputs" if primitive == "sink" else "sanitization"], maximum=256
+            )
+            if selected_language == language:
+                contexts.add(context)
+                sink_count += primitive == "sink"
+        if requested not in allowed:
+            raise BoundRuleError("unauthorized-transfer")
+    if source_count == 0 or sink_count == 0 or len(contexts) != 1:
+        raise BoundRuleError("incomplete-rule")
+    expected_context = "posix-shell-command" if language == "python" else "sql-query-text"
+    if class_id != "injection" or contexts != {expected_context}:
+        raise BoundRuleError("unsupported-class-context")
+    return root
+
+
+def _rule_json(data: bytes, *, maximum: int, limits: ScalarLimits) -> object:
+    value = decode_bounded_json(
+        data,
+        max_bytes=maximum,
+        max_depth=limits.max_rule_json_depth,
+        max_values=limits.max_rule_json_values,
+        max_string_bytes=limits.max_rule_string_bytes,
+    )
+    pending = [value]
+    while pending:
+        item = pending.pop()
+        if type(item) is bool:
+            raise BoundRuleError("unsupported-boolean")
+        if type(item) is dict:
+            pending.extend(item.values())
+        elif type(item) is list:
+            pending.extend(item)
+    return value
+
+
+@dataclass(frozen=True, slots=True)
+class BoundRule:
+    """Validated immutable content, NOT operational authority or execution readiness.
+
+    Java content is decodable so a resolver can retain and inspect it; the first
+    semantic producer separately refuses Java execution. Supplied Python objects
+    cannot replace the raw byte decoding or introduce arbitrary model callbacks.
+    """
+
+    key: QualifiedRuleKey
+    rule_bytes: bytes = field(repr=False)
+    model_bytes: bytes = field(repr=False)
+    language: str
+    limits: InitVar[ScalarLimits | None] = None
+    rule_document: FrozenObject = field(init=False, repr=False)
+    model_document: FrozenObject = field(init=False, repr=False)
+
+    def __post_init__(self, limits: ScalarLimits | None) -> None:
+        from analysis.cpg_ingest.typed_observed import freeze_value
+
+        checked = checked_limits(ScalarLimits() if limits is None else limits)
+        if type(self.key) is not QualifiedRuleKey:
+            raise BoundRuleError("key-type")
+        self.key.__post_init__()
+        _enum(self.language, ("python", "java"))
+        if type(self.rule_bytes) is not bytes or type(self.model_bytes) is not bytes:
+            raise BoundRuleError("input-type")
+        if (
+            len(self.rule_bytes) > checked.max_rule_bytes
+            or len(self.model_bytes) > checked.max_model_bytes
+            or len(self.rule_bytes) + len(self.model_bytes) > checked.max_accepted_bytes
+        ):
+            raise BoundRuleError("json-byte-limit")
+        if (
+            hashlib.sha256(self.rule_bytes).hexdigest() != self.key.rule_raw_sha256
+            or hashlib.sha256(self.model_bytes).hexdigest() != self.key.model_raw_sha256
+        ):
+            raise BoundRuleError("raw-content-binding")
+        model_document, models = _models(
+            _rule_json(self.model_bytes, maximum=checked.max_model_bytes, limits=checked), checked
+        )
+        rule_document = _rule(
+            _rule_json(self.rule_bytes, maximum=checked.max_rule_bytes, limits=checked),
+            models=models,
+            key=self.key,
+            language=self.language,
+            limits=checked,
+        )
+        object.__setattr__(self, "rule_document", cast("FrozenObject", freeze_value(rule_document)))
+        object.__setattr__(
+            self, "model_document", cast("FrozenObject", freeze_value(model_document))
+        )
+
+
+def decode_bound_rule(
+    rule_bytes: bytes,
+    model_bytes: bytes,
+    *,
+    key: QualifiedRuleKey,
+    language: str,
+    limits: ScalarLimits,
+) -> BoundRule:
+    """Decode one qualified rule's exact bytes without changing legacy DSL semantics."""
+    return BoundRule(key, rule_bytes, model_bytes, language, limits)
