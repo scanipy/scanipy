@@ -54,15 +54,19 @@ underlying spawn exactly like ``tests/unit/test_snap_specs.py:541-573``.
 from __future__ import annotations
 
 import json
+import subprocess
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Final
+from time import monotonic
+from typing import TYPE_CHECKING, Final, Literal
 
 from analysis.cpg_ingest.mapper import map_export
 from analysis.ordering import CPG
 from tools.worker.secure_subprocess import secure_run
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Callable, Mapping
 
 # Fixed in-image path the export script is COPYed to by
 # workers/snapshot/Dockerfile (CLAR-SNAP-05). Never src_root-relative — the
@@ -129,7 +133,97 @@ class JoernExportMissingError(Exception):
     """
 
 
-def parse_source(src_root: Path, language: str, *, env: Mapping[str, str], workdir: Path) -> CPG:
+@dataclass(frozen=True)
+class JoernProcessEvent:
+    """Observation of one actual ``secure_run`` call, not a synthetic success.
+
+    ``argv`` comes from the subprocess result/exception; it is unknown when
+    validation or launch fails before subprocess supplies a command. Raw byte
+    streams are deliberately retained without decoding. No environment values
+    are captured (the worker environment may contain credentials).
+    """
+
+    phase: Literal["parse", "export"]
+    tool: str
+    requested_argv: tuple[str, ...]
+    argv: tuple[str, ...] | None
+    cwd: str
+    timeout_s: int
+    started_at: str
+    completed_at: str
+    elapsed_seconds: float
+    returncode: int | None
+    stdout: bytes
+    stderr: bytes
+    error_type: str | None
+    error_message: str | None
+
+
+def _observed_run(
+    tool: str,
+    argv: list[str],
+    *,
+    phase: Literal["parse", "export"],
+    timeout_s: int,
+    env: dict[str, str],
+    cwd: str,
+    observer: Callable[[JoernProcessEvent], None] | None,
+) -> None:
+    if observer is None:
+        secure_run(tool, argv=argv, timeout_s=timeout_s, env=env, cwd=cwd)
+        return
+    started_at = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+    started = monotonic()
+    actual_argv: tuple[str, ...] | None = None
+    returncode: int | None = None
+    stdout = stderr = b""
+    error_type = error_message = None
+    try:
+        result = secure_run(tool, argv=argv, timeout_s=timeout_s, env=env, cwd=cwd)
+        actual_argv = tuple(result.args)
+        returncode = result.returncode
+        stdout, stderr = result.stdout, result.stderr
+    except Exception as exc:
+        error_type, error_message = type(exc).__name__, str(exc)
+        if isinstance(exc, subprocess.CalledProcessError | subprocess.TimeoutExpired):
+            actual_argv = (exc.cmd,) if isinstance(exc.cmd, str) else tuple(exc.cmd)
+            stdout = exc.stdout or b""
+            stderr = exc.stderr or b""
+            if isinstance(exc, subprocess.CalledProcessError):
+                returncode = exc.returncode
+        raise
+    finally:
+        # Observer failures propagate: losing required evidence must not turn a
+        # campaign into an undocumented success. With no observer, the original
+        # worker path and exception behavior are unchanged.
+        observer(
+            JoernProcessEvent(
+                phase=phase,
+                tool=tool,
+                requested_argv=tuple(argv),
+                argv=actual_argv,
+                cwd=cwd,
+                timeout_s=timeout_s,
+                started_at=started_at,
+                completed_at=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                elapsed_seconds=monotonic() - started,
+                returncode=returncode,
+                stdout=stdout,
+                stderr=stderr,
+                error_type=error_type,
+                error_message=error_message,
+            )
+        )
+
+
+def parse_source(
+    src_root: Path,
+    language: str,
+    *,
+    env: Mapping[str, str],
+    workdir: Path,
+    observer: Callable[[JoernProcessEvent], None] | None = None,
+) -> CPG:
     """Parse ``src_root`` with the pinned Joern front-end and return a :class:`CPG`.
 
     The track-1A/1B handshake signature (plan "Handshakes" section) —
@@ -153,6 +247,9 @@ def parse_source(src_root: Path, language: str, *, env: Mapping[str, str], workd
         workdir: a writable scratch directory for the intermediate
             ``cpg.bin`` and the export JSON (typically an ephemeral per-job
             temp directory the caller owns and cleans up).
+        observer: optional evidence consumer for actual subprocess events.
+            Does not alter commands, allowlists, timeouts, or graph semantics.
+            A failing consumer aborts rather than silently losing evidence.
 
     Returns:
         The mapped :class:`analysis.ordering.CPG` (see
@@ -198,7 +295,7 @@ def parse_source(src_root: Path, language: str, *, env: Mapping[str, str], workd
     base_env.setdefault("HOME", str(workdir))
 
     # --- Phase 1: parse (headless joern-parse — see module docstring) ---
-    secure_run(
+    _observed_run(
         "joern-parse",
         argv=[
             "--language",
@@ -210,18 +307,22 @@ def parse_source(src_root: Path, language: str, *, env: Mapping[str, str], workd
         timeout_s=JOERN_PARSE_TIMEOUT_S,
         env=dict(base_env),
         cwd=str(workdir),
+        phase="parse",
+        observer=observer,
     )
 
     # --- Phase 2: export (CLAR-SNAP-05) ---
     export_env = dict(base_env)
     export_env[ENV_CPG_BIN_PATH] = str(cpg_bin_path)
     export_env[ENV_EXPORT_JSON_PATH] = str(export_json_path)
-    secure_run(
+    _observed_run(
         "joern",
         argv=["--script", EXPORT_SCRIPT_PATH],
         timeout_s=JOERN_EXPORT_TIMEOUT_S,
         env=export_env,
         cwd=str(workdir),
+        phase="export",
+        observer=observer,
     )
 
     try:
@@ -244,6 +345,7 @@ __all__ = [
     "JOERN_LANGUAGE_BY_SCANIPY_LANG",
     "JOERN_PARSE_TIMEOUT_S",
     "JoernExportMissingError",
+    "JoernProcessEvent",
     "UnsupportedParseLanguageError",
     "parse_source",
 ]
