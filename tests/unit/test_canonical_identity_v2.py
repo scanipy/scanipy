@@ -218,3 +218,14 @@ def test_invalid_and_extended_graphs_fail_closed() -> None:
     object.__setattr__(graph.nodes[0], "semantic_role", "new-role")
     with pytest.raises(ValueError, match="unsupported CPG node fields"):
         compute_slice_fingerprint(SimpleNamespace(witness=(node,)), graph)
+
+
+@pytest.mark.parametrize("attribute", ["argument_bindings", "effect_summaries", "model_version"])
+def test_graph_level_semantic_extensions_cannot_be_silently_dropped(attribute: str) -> None:
+    graph = CPG()
+    node = graph.add_node("CALL", resolved_fqn="sink")
+    setattr(graph, attribute, "future-model/3")
+    with pytest.raises(ValueError, match="unsupported CPG"):
+        canonical_order(graph)
+    with pytest.raises(ValueError, match="unsupported CPG"):
+        compute_slice_fingerprint(SimpleNamespace(witness=(node,)), graph)

@@ -182,6 +182,8 @@ def validate_cpg(cpg: CPG, budget: CanonicalizationBudget | None = None) -> None
     New semantic fields must deliberately extend/version the encoding and may
     not disappear in a legacy graph copy or canonical hash.
     """
+    if set(vars(cpg)) - {"model_version"} != {"nodes", "edges"}:
+        raise ValueError("unsupported CPG graph fields; update the versioned semantic encoding")
     if getattr(cpg, "model_version", "scanipy-cpg/1") != "scanipy-cpg/1":
         raise ValueError("unsupported CPG model version for canonical graph encoding")
     node_fields = {
