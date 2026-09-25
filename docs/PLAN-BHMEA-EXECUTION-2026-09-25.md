@@ -93,7 +93,8 @@ handoff; do not cherry-pick or overwrite another agent's in-flight edits.
 | R18/R20 foundations; traversal defect | Canonical agent; [#364](https://github.com/scanipy/scanipy/issues/364) | `analysis/ordering.py`, `analysis/fingerprint.py`, dedicated canonical tests | Implement framed canonical bytes, complete search/shared budget, versioned results, complete reverse witness cone |
 | R09 class propagation | Schema agent; [#363](https://github.com/scanipy/scanipy/issues/363) | Worker/findings/SARIF/schema and dedicated tests; not canonical modules | Preserve slice verdict; add independent graph/slice fields and safe historical handling |
 | R03 corpus correction | Corpus agent; [#361](https://github.com/scanipy/scanipy/issues/361) | Corpus bases/templates/generator/manifests and pipeline tests | Real permutation, extraction/call/return, physical relocation, sink-relevant alias changes; explicit before/after locators |
-| R04 typed gate | Root | Separate report-consumer script/config/tests; harness edits coordinated with corpus agent | Reject denominator reduction and fake flips; distinguish structural/removal/failure cases; enforce per-pair nonregression |
+| R04 typed gate | Canonical agent; root accountable; [#367](https://github.com/scanipy/scanipy/issues/367) | Separate report-consumer script/config/tests; harness edits coordinated with corpus agent | Reject denominator reduction and fake flips; distinguish structural/removal/failure cases; enforce per-pair nonregression |
+| R15 dependency prerequisite | Root; [#370](https://github.com/scanipy/scanipy/issues/370), under [#366](https://github.com/scanipy/scanipy/issues/366) | Dependency declarations, focused compatibility tests and observed environment | Restore fresh-install CI without warning suppression; clean Docker/stage acceptance remains separate |
 | Remaining implementation | Root accountable; specialist assigned before first edit | R02, R06–R08, R10–R16, R19 | Finalize graph/flow contracts, then assign real producer/integration work in dependency order |
 
 Project-board prechecks found the corrective scopes available. Claim updates
@@ -105,6 +106,27 @@ obsolete WBS edits, premature DONE, or skipping review before merge.
 No task is DONE. Subtasks implemented on branches remain pending required
 review, merge, and the acceptance scope they actually address. Closing a narrow
 corrective issue must not close umbrella #362 or an entire R-task prematurely.
+
+### Branch/PR handoff snapshot
+
+These are review-stage implementation records, not accepted milestones. Check
+each PR's current head, checks and canonical review before merging; rerun
+integration on the combined tree. Do not read local test totals as proof that
+the submitted functionality is complete.
+
+| PR / scope | Observed local progress | Merge / remaining condition |
+|---|---|---|
+| [#368](https://github.com/scanipy/scanipy/pull/368), handoff/ledger/evidence | 26 ledger tests, normal hooks, retained artifact byte checks; historical main report reconciled without changing originals | Required remote CI and current-head canonical review |
+| [#369](https://github.com/scanipy/scanipy/pull/369), canonical identity/budget foundation | 41 focused tests; finite graph/search counterexamples covered | Review requested changes; R09 must land first, then combined real producer/consumer regression; no full normalization claim |
+| [#371](https://github.com/scanipy/scanipy/pull/371), independent artifact classes/provenance | Broad local suite and isolated PostgreSQL checks; actual synthetic-graph producer integration covers all four class combinations | Remote CI/review; actual source-only snapshot producer, complete environment and live persistence orchestration remain |
+| [#372](https://github.com/scanipy/scanipy/pull/372), genuine typed corpus | 422 cases; 85 corpus and 31 harness-compatibility tests; Java/Python syntax checks | Remote CI/review; fixture preconditions are demands, not purity observations; no corrected real G0 run yet |
+| [#370](https://github.com/scanipy/scanipy/issues/370), fresh dependency compatibility | Fresh declared Python 3.11 install: 862 tests pass, 47 existing skips, no post-install package overrides | Narrow prerequisite of R15; remote CI/review and broader clean install remain |
+
+Fresh-install CI exposed an AnyIO/Starlette warning-as-error incompatibility and
+SQLAlchemy driver-default drift. The narrow corrective dependency issue fixes
+project declarations; temporary development-environment pins are not the product
+fix. Review-stage branches must incorporate the reviewed correction and rerun
+required checks. Old CI failures must not be relabeled as passing.
 
 ## 4. Milestones and schedule
 
