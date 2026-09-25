@@ -4,9 +4,9 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 4 — 2026-09-25 reviewed foundations and newly identified safety/lifecycle gaps |
+| Revision | 9 — 2026-09-25 confirmed stage machine, merged continuity/Java/raw foundations and explicit remaining runtime/producer work |
 | Status | Execution started; no remediation task or submitted claim is yet accepted as complete |
-| Reviewed code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
+| Initial review code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
 ## 0. Current instructions — read before executing this backlog
 
@@ -23,9 +23,13 @@ plan and this review's historical observations:
   architecture. Preserve them as historical references; do not let their
   obsolete architecture or approval gates veto the current goal. Existing
   contracts still explain compatibility obligations and useful tests.
-- The live demo will run **locally using Docker**. OS, CPU, RAM, and available
-  disk for the actual presentation machine are not yet confirmed. Measurements
-  on the current development host are reference measurements only.
+- The live demo will run **locally using Docker on this development machine**,
+  as confirmed by the owner. The [stage-machine record](evidence/2026-09-25-stage-machine/README.md)
+  captures Ubuntu 22.04.5/x86_64, 32 VMware-exposed CPUs, about 62.75 GiB total
+  RAM and 101.91 GiB shared free disk. Only about 7.37 GiB RAM was available in
+  the latest recorded sample and swap was nearly full. Recheck resources and
+  measure actual demo budgets; no offline/performance readiness is established.
+  Earlier reference-only diagnostics retain their original limited scope.
 - Corrective issues and pull requests in `scanipy/scanipy` are authorized;
   merge only after required review and tests pass. This does not authorize
   publishing releases, sending external messages, new spending, or reducing
@@ -42,13 +46,43 @@ All unchecked acceptance items below remain required unless explicitly
 classified optional. An adopted design, recovered historical report, or one
 successful Joern parse does not complete a task or verify a submitted claim.
 
-Reviewed foundations have now landed through main `0223651`: independent
+Reviewed foundations have now landed through main `e79dc54`: independent
 artifact metadata, typed report checking, corrected corpus and dependency
-locks, board/fail-closed hook tooling, and the occurrence/decision contract. See the
+locks, board/fail-closed hook tooling, the occurrence/decision contract, and
+the bounded canonical identity/budget foundation, Java static invocation
+safety, opt-in raw Joern transport and the pure continuity module. Occurrence storage, source
+custody and integrated observation producers remain separate pending scopes;
+none is accepted merely because its
+design or local tests pass. See the
 [bounded merge/evidence record](evidence/2026-09-25-foundation-merges/README.md)
 for exact heads, checks and limitations. Initial defect observations below
 remain historical evidence; do not assume every described defect is still
 present, or mistake a narrow repair for full R-task acceptance.
+
+The handoff preserves the earlier external canonical-review session limit and
+the observed successful recovery: #390, #382 and #389 now have successful exact-head
+canonical APPROVE actions and are merged. Remaining candidates still need their
+own successful review.
+Successful unit/CI checks or an APPROVE word inside a failed review action do
+not satisfy that gate. Continue safe, assigned local work without merging until
+the exact-head review actually completes successfully. Do not weaken feature
+acceptance or retry an exhausted service continuously.
+
+Local-only storage, source custody, typed CPG, Semgrep parsing and legacy
+containment checkpoints now have scoped tests and independent review. They
+remain unmerged; tests from one branch do not validate the combined deployment.
+In particular, refusing unsafe scans is a containment correction, not delivery
+of the promised scan workflow. The next source/authority/semantic contracts
+must bind exact verified capture bytes, accepted rule/model bytes, current
+durable authorization and actual native observations before a real core/oracle
+run can support G1. No caller boolean, fixture signature, graph label or local
+test count satisfies those producer obligations. Shared bounded process
+transport and actual runtime-file verification now have reviewed local code;
+source-syntax parsing, offline Git capture and signature verification have
+reviewed local implementations with separately bounded evidence. Their missing Docker controller, trusted installation
+loader, real operator authority and API/UI integration remain mandatory TODOs.
+All unchecked TODOs below
+remain required; the handoff records exact checkpoints and remaining work.
 
 ## 1. Objective and document boundaries
 
