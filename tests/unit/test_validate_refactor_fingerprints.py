@@ -21,6 +21,7 @@ import json
 from pathlib import Path
 
 import pytest
+import yaml
 from scripts.validate_refactor_fingerprints import (
     CORPUS_CAVEAT,
     EXPECTED_OUTCOME,
@@ -58,6 +59,20 @@ _SEVEN_REFACTORS = {
 }
 
 
+def _corpus_locator(refactor: str, side: str, seed_id: str = "seed-001") -> dict[str, object]:
+    """Source requirements, independent of the legacy harness's loaded pair.
+
+    A fixed-but-retained API has a separate structural comparison in schema 2;
+    these stub tests exercise that comparison, not finding-removal acceptance.
+    """
+    case_id = f"{seed_id}/{refactor}" + ("/structural" if refactor == "genuine-fix" else "")
+    manifest = json.loads((CORPUS_DIR / "case-manifest.json").read_text(encoding="utf-8"))
+    case = next(case for case in manifest["cases"] if case["case_id"] == case_id)
+    locator = case[f"{side}_locator"]
+    assert isinstance(locator, dict)
+    return locator
+
+
 # ---------------------------------------------------------------------------
 # 1. Corpus / ground-truth parsing against the REAL corpus
 # ---------------------------------------------------------------------------
@@ -91,15 +106,15 @@ def test_load_pairs_carries_paths_language_and_sink_line() -> None:
     java = pairs[("seed-001", "alpha-rename-local")]
     assert java.language == "java"
     assert java.finding_class == "injection"
-    assert java.sink_file == "OrderService.java"
-    assert java.before_sink_line == 16
+    assert java.sink_file == _corpus_locator("alpha-rename-local", "before")["file"]
+    assert java.before_sink_line == _corpus_locator("alpha-rename-local", "before")["line"]
     assert java.before_dir == CORPUS_DIR / "seeds" / "seed-001" / "before"
     assert java.after_dir == CORPUS_DIR / "seeds" / "seed-001" / "after" / "alpha-rename-local"
     assert java.before_dir.is_dir() and java.after_dir.is_dir()
 
     python = pairs[("seed-002", "genuine-fix")]
     assert python.language == "python"
-    assert python.sink_file == "order_service.py"
+    assert python.sink_file == _corpus_locator("genuine-fix", "before", "seed-002")["file"]
     assert python.ground_truth == "should-flip"
 
 
@@ -119,14 +134,11 @@ def test_corpus_languages_are_all_joern_mappable() -> None:
 def test_meta_label_disagreeing_with_lock_is_a_hard_error(tmp_path: Path) -> None:
     corpus = _copy_minimal_corpus(tmp_path)
     meta_path = corpus / "seeds" / "seed-001" / "meta.yaml"
-    text = meta_path.read_text(encoding="utf-8")
-    meta_path.write_text(
-        text.replace(
-            "  - after_dir: after/genuine-fix\n    ground_truth_label: should-flip",
-            "  - after_dir: after/genuine-fix\n    ground_truth_label: should-stay",
-        ),
-        encoding="utf-8",
-    )
+    metadata = yaml.safe_load(meta_path.read_text(encoding="utf-8"))
+    pair = next(pair for pair in metadata["refactor_pairs"] if pair["refactor"] == "genuine-fix")
+    assert pair["ground_truth_label"] == "should-flip"
+    pair["ground_truth_label"] = "should-stay"
+    meta_path.write_text(yaml.safe_dump(metadata), encoding="utf-8")
     with pytest.raises(CorpusIntegrityError, match=r"disagrees with corpus\.lock"):
         load_pairs(corpus)
 
@@ -246,8 +258,8 @@ def test_identical_fingerprints_are_stayed_and_meet_a_should_stay_expectation() 
     assert res.expected_outcome == "stayed"
     assert res.matches_expectation is True
     assert res.comparison_validity == "strong"
-    assert res.before_sink_line == 16
-    assert res.after_sink_line == 16
+    assert res.before_sink_line == _corpus_locator("alpha-rename-local", "before")["line"]
+    assert res.after_sink_line == _corpus_locator("alpha-rename-local", "after")["line"]
     assert res.sink_token == "executeQuery"
     assert res.before_locator_agrees is True
 
@@ -262,8 +274,8 @@ def test_differing_fingerprints_are_flipped() -> None:
     # genuine-fix rewrites the sink call site (`st.executeQuery(q)` ->
     # PreparedStatement `st.executeQuery()` one line further down): the after
     # line is LOCATED in the after file, never copied from meta.yaml.
-    assert res.before_sink_line == 16
-    assert res.after_sink_line == 17
+    assert res.before_sink_line == _corpus_locator("genuine-fix", "before")["line"]
+    assert res.after_sink_line == _corpus_locator("genuine-fix", "after")["line"]
 
 
 def test_a_should_stay_pair_that_flips_is_reported_contrary_not_hidden() -> None:

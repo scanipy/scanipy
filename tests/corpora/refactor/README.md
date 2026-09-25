@@ -1,101 +1,119 @@
-# Refactor corpus — CMP-CORP-REFAC-01 (seeded-refactor set)
+# Refactor corpus — CMP-CORP-REFAC-01, version 0.2.0
 
-This corpus is the **refactor-stability falsifier** for `CMP-CORE-02`
-(Algorithm 3, the `slice_fingerprint`). It anchors `AC-CORE-02a` (fingerprint
-invariance under each named refactor) and `AC-CORE-02b` (fingerprint flips on a
-genuine fix and on an aliasing-changing extract), and is the input distribution
-for `TST-INV-5-CORE-02`. Without this corpus, no claim about Algorithm 3 is
-testable (`DOC-CMP-CORP-REFAC-01 §2`). It feeds `tests/falsifier/refac/`.
+This is the corrected source-fixture input for Black Hat refactor-stability
+testing. It defines expected results **before** running an engine. It does not
+contain a successful runtime invariance campaign or prove that G0/R03/R04/R17
+is complete. The active requirements are the Black Hat submission and its
+execution review; older architecture documents provide historical context.
 
-## Status — v0.1.0 (NOT the v1.0.0 release bar)
+The original 50 seeds × seven transforms remain as 350 primary cases. The 50
+seeds still repeat eight base topologies (four finding classes × Java/Python).
+This is **not** a 50-independent-topology or v1.0.0 diversity claim. Additional
+controls test distinct interactions but are reported separately, not counted
+as new independent primary seeds. All source is synthesized; none is sourced
+from a public repository.
 
-This build is **count-complete but topology-thin**. It delivers the full
-`AC-CORP-REFAC-01a` inventory — 50 seeded findings × 7 refactors = **350 pairs**
-with binary `should-stay | should-flip` ground truth — and a reproducible,
-digest-pinned `corpus.lock`. It is shipped at `v0.1.0` rather than `v1.0.0`
-because the 50 seeds are round-robined from **8 base templates** (4 Stage-A
-classes × 2 Stage-A languages), so the corpus contains only **8 distinct
-(class, language) sink-topologies**. A fingerprint implementation that handles
-one `injection/java` seed correctly will behave identically on all
-`injection/java` seeds (they differ only in identifier suffix). The *count* bar
-is met; the *falsifier diversity* is closer to 8 than 50.
+## What changed
 
-`DOC-CMP-CORP-REFAC-01 §4.1` names the seed-selection input as
-"Algorithm 2 / Semgrep + manual curation". Sourcing real, structurally-distinct
-seeds from public repositories is deferred to v1.0.0 — see **CLAR-CORP-17** in
-`WBS.md §17`. Until then, `corpus.lock.distinct_topologies` records the honest
-diversity, and consumers (`TST-AC-CORE-02a/b`) must not read this as a
-50-independent-topology falsifier.
+The old superficial transformations are replaced with actual source operations:
 
-| Track | This build (v0.1.0) | v1.0.0 release bar |
-|---|---|---|
-| Pairs (seeds × refactors) | 350 (50 × 7) — meets AC-CORP-REFAC-01a count | 350 |
-| Distinct (class, language) topologies | 8 | target set by CLAR-CORP-17 |
-| Structurally-distinct seeds | 8 templates | ≥ N distinct, sourced + curated |
+- Two existing independent assignments that both feed the sink are swapped.
+- Pure extraction moves a multi-operand expression into a called helper whose
+  return reconnects to the sink. No unused or identity-only helper substitutes
+  for extraction.
+- Package/module relocation physically moves source and updates a separate
+  importing consumer. Java classes contain their helper methods inside the
+  class body and compile against ordinary JDK APIs.
+- Aliasing negatives call a helper that mutates an aliased value subsequently
+  used by the original sink.
+- Security fixes have explicit removal expectations. Retained sink API calls
+  also have separate structural-comparison cases where a meaningful pair exists.
 
-## What is SOURCED vs SYNTHESIZED
+Python pure fixtures contain an actual exact-built-in type guard, not a type
+annotation masquerading as proof. Java helpers use resolved String/primitive
+operations. These source preconditions are requirements for the analyzer's
+certificate; metadata does **not** issue a purity certificate.
 
-- **SOURCED (real public repos with `source_url` + `commit_sha`):** **none.**
-  This build sources no third-party code. Real-repo seeds are the v1.0.0 work
-  deferred under CLAR-CORP-17.
-- **SYNTHESIZED:** **all 50 seeds** (and all 350 `after/` trees). The bases in
-  `bases/__init__.py` are small closed-world programs authored for this corpus
-  (Apache-2.0), each with exactly one seeded source→sink finding. The `after/`
-  trees are produced by the deterministic transforms in
-  `pipeline/refactor_transforms.py`. Ground truth is **by construction**, not by
-  hand (see `annotation-methodology.md`).
+## Required inventory
 
-## Layout
+| Evidence category | Cases | Required observation |
+|---|---:|---|
+| Structural equality | 270 | Both slices strong; hashes equal; unambiguous corresponding sinks |
+| Structural inequality | 100 | Both slices strong; hashes differ; corresponding sinks |
+| Finding removal | 50 | Completed, adequate-coverage after-scan establishes absence and correct lifecycle handling |
+| Intentional parse failure | 2 | Visible failure; prior finding must not be resolved or suppressed |
+| Total | 422 | Exact manifest inventory; no omitted or duplicated cases |
 
-```
-tests/corpora/refactor/
-├── corpus.lock                 # version + sha256 digest over all pairs (pinned)
-├── annotation-methodology.md   # how ground-truth labels are derived (no hand-labelling)
-├── README.md                   # this file
-├── LICENSES.md                 # provenance + license attestation (all Apache-2.0)
-├── bases/__init__.py           # 8 seeded-vuln base templates (the before/ trees)
-├── pipeline/
-│   ├── build_corpus.py         # (re)generate seeds + corpus.lock; --write / --check
-│   ├── refactor_transforms.py  # the 7 named refactor transforms + ground-truth map
-│   └── test_pipeline.py        # inventory (AC-01a) + determinism self-tests
-└── seeds/
-    └── seed-NNN/
-        ├── before/<file>       # the seeded vuln (baseline)
-        ├── after/<refactor>/<file>   # one per refactor (7)
-        └── meta.yaml           # class, language, sink, per-refactor labels + rationale
-```
+There are 370 structural cases, including 38 retained-sink fix comparisons.
+The 34 named controls cover inline-method (eight), combined extraction/rename/
+relocation (eight), sink-relevant literal changes (eight), argument-order changes
+(two), helper-return changes (two), two-call/multi-assignment extraction (four
+exact sink occurrences), and intentional parse failure (two).
 
-## The 7 refactors and their ground-truth labels
+The historical binary label split for the 350 primary cases is still 250
+`should-stay` / 100 `should-flip`. It is a taxonomy compatibility field, **not**
+the acceptance algorithm: a `genuine-fix` removal must not invent an after-hash
+to satisfy that old binary label. `evidence_type` and `expected_outcome` govern
+schema-2 evaluation.
 
-| Refactor | Label | Algorithm 3 basis |
-|---|---|---|
-| `alpha-rename-local` | should-stay | α-renaming of locals |
-| `pdg-only-formatting` | should-stay | PDG-only formatting |
-| `independent-reordering` | should-stay | canonical topological sort |
-| `pure-extract` | should-stay | summary-inlining (pure extract) |
-| `fqn-move-package-rename` | should-stay | FQN normalization |
-| `genuine-fix` | should-flip | sink removed / made safe (AC-CORE-02b) |
-| `aliasing-changing-extract` | should-flip | impure extract changes aliasing (AC-CORE-02b) |
+## Layout and integration
 
-Full derivation: `annotation-methodology.md §2`.
+`case-manifest.json` is the complete machine-readable inventory;
+`case-manifest.schema.json` defines its types. See [SCHEMA.md](SCHEMA.md) for
+digest framing, path and report-binding rules. Seed `meta.yaml` files and
+`controls/meta.json` hold source-derived requirements. `corpus.lock` binds the
+exact manifest bytes, seed metadata, and every before/after source tree.
 
-## Reproduce / verify
+The pipeline regenerates source from `bases/__init__.py`,
+`pipeline/refactor_transforms.py`, and `pipeline/supplemental_cases.py`.
+`pipeline/validate_fixtures.py` independently checks important transformation
+shapes. `--check` compares current trees and metadata with the versioned
+methodology and recomputes the lock; it does not merely re-hash an old lock.
 
-```
-cd tests/corpora/refactor
-python3 pipeline/build_corpus.py --write    # regenerate seeds + corpus.lock
-python3 pipeline/build_corpus.py --check     # fail on digest drift (CI pattern)
-python3 -m pytest pipeline/test_pipeline.py  # AC-01a inventory + determinism
+The unchanged old lock is archived at `history/0.1.0/corpus.lock`. Its matching
+source remains in Git revision `940d440cb99e23131d28ee5bbb1655ea29d46a58`.
+Old schema-1 reports apply only to that historical corpus, never this revision.
+
+## Reproduce from repository root
+
+Use a supported Python >=3.11 interpreter. Install declared corpus validation
+dependencies into an isolated environment if they are not already available:
+
+```sh
+python3.11 -m venv .venv-corpus
+.venv-corpus/bin/python -m pip install -r tests/corpora/refactor/pipeline/requirements-test.txt
+.venv-corpus/bin/python -B tests/corpora/refactor/pipeline/build_corpus.py --check --syntax
+.venv-corpus/bin/python -m pytest tests/corpora/refactor/pipeline/test_pipeline.py -o addopts='' -q
 ```
 
-The build is hermetic: no network, no RNG, and `built_at`/`built_by` are excluded
-from `corpus_digest`, so two builds produce the same digest.
+For complete source syntax validation, put JDK 17+ `javac` on PATH and run:
 
-## Cross-references
+```sh
+.venv-corpus/bin/python -B tests/corpora/refactor/pipeline/build_corpus.py --check --java --syntax-report /tmp/refactor-syntax-report.json
+```
 
-- `DOC-CMP-CORP-REFAC-01` — implementation contract.
-- `WBS.md §16 CMP-CORP-REFAC-01` — verbatim Purpose + AC-CORP-REFAC-01a/b.
-- `SDD.md §6 CMP-CORE-02` — consumer ACs (AC-CORE-02a/b/c).
-- `PLAN.md §"Algorithm 3"` — the 5 named normalization passes + 2 flip cases.
-- `.claude/rules/01-invariants.md §INV-5` — `fingerprint_class` semantics.
-- `WBS.md §17 CLAR-CORP-17` — topology-diversity expansion (v0.1.0 → v1.0.0).
+The Java check compiles each complete fixture source tree with `--release 17`,
+`-proc:none`, a 256 MiB compiler heap and a per-tree timeout. It does not execute
+the generated programs or annotation processors. The Python check uses `ast.parse`,
+not imports or program execution. Exactly two deliberately malformed after-trees
+are expected to fail their language syntax check. A syntax report is explicitly
+not a Joern parse/export/map or fingerprint acceptance report.
+
+To deliberately regenerate owned fixture data, use `--write`. This replaces
+generated trees and metadata; review the diff, update the version/methodology
+when source meaning changes, and then run `--check`. Generation/checking uses
+no network or randomness. Only `built_at`/`built_by` and the self-digest are
+excluded from the canonical corpus digest.
+
+## Outstanding runtime and diversity work
+
+The report producer must run real production frontend, mapping, slice,
+purity/summary, canonicalization and fingerprint collaborators, independently
+verify per-side strength and correspondence, and retain honest incomplete rows.
+The detector/lifecycle producer must establish removals and parse-failure
+retention with coverage evidence. Neither source validity nor equal weak hashes
+satisfies those requirements. Expand independently sourced/curated topology
+diversity separately; do not drop meaningful Java/Python cases to improve scores.
+
+See [annotation-methodology.md](annotation-methodology.md) and
+[CHANGELOG.md](CHANGELOG.md) for the source rationale and regression impact.

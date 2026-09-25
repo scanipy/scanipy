@@ -1,21 +1,7 @@
-"""Seeded-vulnerability base programs for CMP-CORP-REFAC-01.
+"""Eight ordinary source templates with real, slice-relevant refactor sites.
 
-Each base is a small, self-contained, *closed-world* program that contains
-exactly one seeded finding of a Stage-A core class (injection, path-traversal,
-ssrf, deserialization) in one Stage-A language (java, python). The base is the
-``before/`` tree of every (seed, refactor) pair; the refactor transforms in
-``pipeline/refactor_transforms.py`` produce the ``after/`` tree.
-
-A base is a pure function of a ``seed`` integer so the build is deterministic
-and reproducible (no wall-clock, no RNG state leakage). The ``seed`` only
-varies *names and constant values* — never the taint topology — so that the
-seeded finding (source -> sink dataflow) is identical across instantiations of
-the same template. This keeps the ground-truth label well-defined: a refactor
-that does not change the source->sink slice MUST keep the fingerprint stable.
-
-Synthesis note: every base in this module is SYNTHESIZED (authored for this
-corpus, Apache-2.0). They are not lifted from any external repository, so they
-carry no third-party provenance. See README.md "SOURCED vs SYNTHESIZED".
+All sources are SYNTHESIZED and must not be executed by the corpus pipeline.
+Expected purity metadata is a requirement, never an engine certificate.
 """
 
 from __future__ import annotations
@@ -25,280 +11,256 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Base:
-    """A rendered seeded-vulnerability base program.
-
-    Attributes:
-        cls:       Stage-A core class of the seeded finding.
-        language:  "java" | "python".
-        filename:  the single source file name in ``source/``.
-        source:    full source text (the ``before/`` tree).
-        sink_line: 1-based line of the taint sink (the seeded finding site).
-        source_desc: short human description of the source->sink dataflow.
-    """
-
     cls: str
     language: str
     filename: str
     source: str
     sink_line: int
     source_desc: str
+    class_name: str
+    parameter: str
+    parameter_type: str
+    method_name: str
+    sink_callee: str
+    sink_text: str
+    independent_statements: tuple[str, str]
+    computation_line: str
+    result_name: str
+    result_type: str
+    expression: str
+    helper_parameters: tuple[tuple[str, str, str], ...]
+    helper_expression: str
+    preconditions: tuple[str, ...]
+    auxiliary_files: tuple[tuple[str, str], ...]
+
+    @property
+    def files(self) -> dict[str, str]:
+        return {self.filename: self.source, **dict(self.auxiliary_files)}
 
 
-# Each template is keyed by (class, language). render(seed) returns a Base.
-# The seed perturbs identifiers/constants deterministically; the source->sink
-# dataflow (the seeded finding) is invariant across seeds.
+CLASSES = ("injection", "path-traversal", "ssrf", "deserialization")
+CLASS_NAMES = ("OrderService", "FileService", "FetchService", "SessionService")
+MODULE_NAMES = ("order_service", "file_service", "fetch_service", "session_service")
+METHOD_NAMES = ("lookup", "read", "fetch", "restore")
 
 
-def _ident(stem: str, seed: int) -> str:
-    """Deterministic, valid identifier suffix from a seed (no RNG)."""
-    return f"{stem}{seed:03d}"
-
-
-# ---------------------------------------------------------------------------
-# Java templates
-# ---------------------------------------------------------------------------
-
-
-def _java_injection(seed: int) -> Base:
-    p = _ident("p", seed)
-    q = _ident("query", seed)
-    src = f"""package com.scanipy.corpus.refac;
-
-import java.sql.Connection;
-import java.sql.Statement;
-
-public class OrderService {{
-    private final Connection conn;
-
-    public OrderService(Connection conn) {{
-        this.conn = conn;
-    }}
-
-    public void lookup(String {p}) throws Exception {{
-        String {q} = "SELECT * FROM orders WHERE id = '" + {p} + "'";
-        Statement st = conn.createStatement();
-        st.executeQuery({q});
-    }}
-}}
-"""
-    lines = src.splitlines()
-    sink_line = next(i for i, ln in enumerate(lines, 1) if "executeQuery" in ln)
+def _java(seed: int, kind: int) -> Base:
+    cls, name, method = CLASSES[kind], CLASS_NAMES[kind], METHOD_NAMES[kind]
+    p, left, right, result = (f"{stem}{seed:03d}" for stem in ("input", "left", "right", "value"))
+    parameter_type, result_type = ("byte[]", "int") if kind == 3 else ("String", "String")
+    expression = f"{p}.length - {left} - {right}" if kind == 3 else f"{left} + {p} + {right}"
+    constants = (
+        ('"SELECT * FROM orders WHERE id = \'"', '"\'"'),
+        ('"/var/data/"', '".txt"'),
+        ('"http://"', '"/status"'),
+        ("0", "0"),
+    )[kind]
+    independent = tuple(
+        f"        {result_type} {v} = {c};" for v, c in zip((left, right), constants, strict=True)
+    )
+    computation = f"        {result_type} {result} = {expression};"
+    imports, setup, tail, sink, callee, returns = (
+        (
+            "import java.sql.Connection;\nimport java.sql.Statement;\n",
+            f"    private final Connection conn;\n\n    public {name}(Connection conn) {{\n"
+            "        this.conn = conn;\n    }\n\n",
+            f"        Statement st = conn.createStatement();\n        st.executeQuery({result});\n",
+            f"st.executeQuery({result});",
+            "executeQuery",
+            "void",
+        ),
+        (
+            "import java.io.File;\nimport java.io.FileInputStream;\n",
+            "",
+            f"        File target = new File({result});\n"
+            "        FileInputStream stream = new FileInputStream(target);\n"
+            "        return stream.readAllBytes();\n",
+            "FileInputStream stream = new FileInputStream(target);",
+            "FileInputStream",
+            "byte[]",
+        ),
+        (
+            "import java.net.URL;\nimport java.net.HttpURLConnection;\n",
+            "",
+            f"        URL url = new URL({result});\n"
+            "        HttpURLConnection connection = (HttpURLConnection) url.openConnection();\n"
+            "        return connection.getResponseCode();\n",
+            "HttpURLConnection connection = (HttpURLConnection) url.openConnection();",
+            "openConnection",
+            "int",
+        ),
+        (
+            "import java.io.ByteArrayInputStream;\nimport java.io.ObjectInputStream;\n",
+            "",
+            f"        ByteArrayInputStream bin = new ByteArrayInputStream({p}, {left}, {result});\n"
+            "        ObjectInputStream stream = new ObjectInputStream(bin);\n"
+            "        return stream.readObject();\n",
+            "return stream.readObject();",
+            "readObject",
+            "Object",
+        ),
+    )[kind]
+    source = (
+        f"package com.scanipy.corpus.refac;\n\n{imports}\npublic class {name} {{\n{setup}"
+        f"    public {returns} {method}({parameter_type} {p}) throws Exception {{\n"
+        + "\n".join(independent)
+        + "\n"
+        + computation
+        + "\n"
+        + tail
+        + "    }\n}\n"
+    )
+    filename = f"src/main/java/com/scanipy/corpus/refac/{name}.java"
+    parameters = (
+        (("length", "int", f"{p}.length"), (left, "int", left), (right, "int", right))
+        if kind == 3
+        else ((left, "String", left), (p, "String", p), (right, "String", right))
+    )
+    helper_expression = f"length - {left} - {right}" if kind == 3 else expression
+    auxiliary = (
+        (
+            "src/main/java/com/scanipy/corpus/client/Client.java",
+            f"package com.scanipy.corpus.client;\nimport com.scanipy.corpus.refac.{name};\n"
+            "public final class Client {\n"
+            f"    public static Class<?> serviceType() {{ return {name}.class; }}\n}}\n",
+        ),
+    )
     return Base(
-        "injection",
+        cls,
         "java",
-        "OrderService.java",
-        src,
-        sink_line,
-        f"tainted param `{p}` concatenated into SQL `{q}` and executed",
+        filename,
+        source,
+        next(i for i, line in enumerate(source.splitlines(), 1) if line.strip() == sink),
+        f"untrusted method parameter {p} reaches {callee}",
+        name,
+        p,
+        parameter_type,
+        method,
+        callee,
+        sink,
+        independent,
+        computation,
+        result,
+        result_type,
+        expression,
+        parameters,
+        helper_expression,
+        (
+            "Java String/primitive operations retain operand and exception order.",
+            "Non-null byte array; extraction moves scalar length arithmetic, "
+            "not mutable-array access."
+            if kind == 3
+            else "String operands have resolved String types, not Object.toString conversion.",
+        ),
+        auxiliary,
     )
 
 
-def _java_path_traversal(seed: int) -> Base:
-    p = _ident("name", seed)
-    src = f"""package com.scanipy.corpus.refac;
-
-import java.io.File;
-import java.io.FileInputStream;
-
-public class FileService {{
-    private final String root = "/var/data";
-
-    public byte[] read(String {p}) throws Exception {{
-        File target = new File(root + "/" + {p});
-        FileInputStream in = new FileInputStream(target);
-        return in.readAllBytes();
-    }}
-}}
-"""
-    lines = src.splitlines()
-    sink_line = next(i for i, ln in enumerate(lines, 1) if "FileInputStream(" in ln)
-    return Base(
-        "path-traversal",
-        "java",
-        "FileService.java",
-        src,
-        sink_line,
-        f"tainted param `{p}` flows into File path opened by FileInputStream",
+def _python(seed: int, kind: int) -> Base:
+    cls, name, module, method = (
+        CLASSES[kind],
+        CLASS_NAMES[kind],
+        MODULE_NAMES[kind],
+        METHOD_NAMES[kind],
     )
-
-
-def _java_ssrf(seed: int) -> Base:
-    p = _ident("host", seed)
-    src = f"""package com.scanipy.corpus.refac;
-
-import java.net.URL;
-import java.net.HttpURLConnection;
-
-public class FetchService {{
-    public int fetch(String {p}) throws Exception {{
-        URL url = new URL("http://" + {p} + "/status");
-        HttpURLConnection c = (HttpURLConnection) url.openConnection();
-        return c.getResponseCode();
-    }}
-}}
-"""
-    lines = src.splitlines()
-    sink_line = next(i for i, ln in enumerate(lines, 1) if "openConnection" in ln)
-    return Base(
-        "ssrf",
-        "java",
-        "FetchService.java",
-        src,
-        sink_line,
-        f"tainted param `{p}` flows into URL opened via openConnection",
+    p, left, right, result = (f"{stem}{seed:03d}" for stem in ("input", "left", "right", "value"))
+    constants = (
+        ('"SELECT * FROM orders WHERE id = \'"', '"\'"'),
+        ('"/var/data/"', '".txt"'),
+        ('"http://"', '"/status"'),
+        ("0", "0"),
+    )[kind]
+    independent = tuple(f"        {v} = {c}" for v, c in zip((left, right), constants, strict=True))
+    expression = f"{p}[{left}:length - {right}]" if kind == 3 else f"{left} + {p} + {right}"
+    computation = f"        {result} = {expression}"
+    imports, setup, tail, sink, callee = (
+        (
+            "import sqlite3\n",
+            "    def __init__(self, cursor: sqlite3.Cursor):\n        self.cursor = cursor\n\n",
+            f"        self.cursor.execute({result})\n        return self.cursor.fetchall()\n",
+            f"self.cursor.execute({result})",
+            "execute",
+        ),
+        (
+            "",
+            "",
+            f'        with open({result}, "rb") as stream:\n            return stream.read()\n',
+            f'with open({result}, "rb") as stream:',
+            "open",
+        ),
+        (
+            "import urllib.request\n",
+            "",
+            f"        response = urllib.request.urlopen({result})\n"
+            "        return response.status\n",
+            f"response = urllib.request.urlopen({result})",
+            "urlopen",
+        ),
+        (
+            "import pickle\n",
+            "",
+            f"        data = pickle.loads({result})\n        return data\n",
+            f"data = pickle.loads({result})",
+            "loads",
+        ),
+    )[kind]
+    exact_type = "bytes" if kind == 3 else "str"
+    source = (
+        f'"""Synthetic {cls} fixture; never execute during corpus validation."""\n\n{imports}\n\n'
+        f"class {name}:\n{setup}    def {method}(self, {p}):\n"
+        f"        if type({p}) is not {exact_type}:\n"
+        f'            raise TypeError("exact {exact_type} required")\n'
+        + "\n".join(independent)
+        + "\n"
+        + (f"        length = len({p})\n" if kind == 3 else "")
+        + computation
+        + "\n"
+        + tail
     )
-
-
-def _java_deserialization(seed: int) -> Base:
-    p = _ident("bytes", seed)
-    src = f"""package com.scanipy.corpus.refac;
-
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
-
-public class SessionService {{
-    public Object restore(byte[] {p}) throws Exception {{
-        ByteArrayInputStream bin = new ByteArrayInputStream({p});
-        ObjectInputStream ois = new ObjectInputStream(bin);
-        return ois.readObject();
-    }}
-}}
-"""
-    lines = src.splitlines()
-    sink_line = next(i for i, ln in enumerate(lines, 1) if "readObject" in ln)
-    return Base(
-        "deserialization",
-        "java",
-        "SessionService.java",
-        src,
-        sink_line,
-        f"tainted bytes `{p}` deserialized via ObjectInputStream.readObject",
+    parameters = (
+        ((p, "bytes", p), (left, "int", left), ("length", "int", "length"), (right, "int", right))
+        if kind == 3
+        else ((left, "str", left), (p, "str", p), (right, "str", right))
     )
-
-
-# ---------------------------------------------------------------------------
-# Python templates
-# ---------------------------------------------------------------------------
-
-
-def _py_injection(seed: int) -> Base:
-    p = _ident("user_id", seed)
-    q = _ident("sql", seed)
-    src = f'''"""Order lookup service (seeded SQL injection)."""
-
-
-class OrderService:
-    def __init__(self, cursor):
-        self.cursor = cursor
-
-    def lookup(self, {p}):
-        {q} = "SELECT * FROM orders WHERE id = '" + {p} + "'"
-        self.cursor.execute({q})
-        return self.cursor.fetchall()
-'''
-    lines = src.splitlines()
-    sink_line = next(i for i, ln in enumerate(lines, 1) if ".execute(" in ln)
+    auxiliary = (
+        ("refac/__init__.py", '"""Synthetic fixture package."""\n'),
+        (
+            "consumer.py",
+            f"from refac.{module} import {name}\n\ndef service_type():\n    return {name}\n",
+        ),
+    )
     return Base(
-        "injection",
+        cls,
         "python",
-        "order_service.py",
-        src,
-        sink_line,
-        f"tainted arg `{p}` concatenated into `{q}` passed to cursor.execute",
+        f"refac/{module}.py",
+        source,
+        next(i for i, line in enumerate(source.splitlines(), 1) if line.strip() == sink),
+        f"untrusted exact-{exact_type} parameter {p} reaches {callee}",
+        name,
+        p,
+        exact_type,
+        method,
+        callee,
+        sink,
+        independent,
+        computation,
+        result,
+        exact_type,
+        expression,
+        parameters,
+        expression,
+        (
+            f"Source guard establishes exact built-in {exact_type}; a type hint is not proof.",
+            "Closed fixture module does not rebind type/len/helper names or inspect frames.",
+            "SQLite positional question-mark parameters are the injection fixture API contract."
+            if kind == 0
+            else "Built-in operand ordering, values, and normal/exceptional behavior "
+            "are preserved.",
+        ),
+        auxiliary,
     )
-
-
-def _py_path_traversal(seed: int) -> Base:
-    p = _ident("name", seed)
-    src = f'''"""File read service (seeded path traversal)."""
-
-import os
-
-
-class FileService:
-    root = "/var/data"
-
-    def read(self, {p}):
-        target = os.path.join(self.root, {p})
-        with open(target, "rb") as fh:
-            return fh.read()
-'''
-    lines = src.splitlines()
-    sink_line = next(i for i, ln in enumerate(lines, 1) if "open(target" in ln)
-    return Base(
-        "path-traversal",
-        "python",
-        "file_service.py",
-        src,
-        sink_line,
-        f"tainted arg `{p}` joined into path opened by open()",
-    )
-
-
-def _py_ssrf(seed: int) -> Base:
-    p = _ident("host", seed)
-    src = f'''"""URL fetch service (seeded SSRF)."""
-
-import urllib.request
-
-
-class FetchService:
-    def fetch(self, {p}):
-        url = "http://" + {p} + "/status"
-        resp = urllib.request.urlopen(url)
-        return resp.status
-'''
-    lines = src.splitlines()
-    sink_line = next(i for i, ln in enumerate(lines, 1) if "urlopen(" in ln)
-    return Base(
-        "ssrf",
-        "python",
-        "fetch_service.py",
-        src,
-        sink_line,
-        f"tainted arg `{p}` built into url passed to urllib.request.urlopen",
-    )
-
-
-def _py_deserialization(seed: int) -> Base:
-    p = _ident("blob", seed)
-    src = f'''"""Session restore service (seeded insecure deserialization)."""
-
-import pickle
-
-
-class SessionService:
-    def restore(self, {p}):
-        data = pickle.loads({p})
-        return data
-'''
-    lines = src.splitlines()
-    sink_line = next(i for i, ln in enumerate(lines, 1) if "pickle.loads(" in ln)
-    return Base(
-        "deserialization",
-        "python",
-        "session_service.py",
-        src,
-        sink_line,
-        f"tainted arg `{p}` deserialized via pickle.loads",
-    )
-
-
-# Ordered template registry: index -> renderer. The build cycles through this
-# list to instantiate the requested number of seeds, balanced across classes
-# and languages by construction (8 templates, round-robin).
-TEMPLATES = [
-    _java_injection,
-    _py_injection,
-    _java_path_traversal,
-    _py_path_traversal,
-    _java_ssrf,
-    _py_ssrf,
-    _java_deserialization,
-    _py_deserialization,
-]
 
 
 def render(seed: int) -> Base:
-    """Render the seeded-vuln base for a global seed index (round-robin template)."""
-    return TEMPLATES[seed % len(TEMPLATES)](seed)
+    kind = (seed % 8) // 2
+    return _java(seed, kind) if seed % 2 == 0 else _python(seed, kind)

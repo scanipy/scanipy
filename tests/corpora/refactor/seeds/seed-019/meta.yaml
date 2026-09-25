@@ -1,47 +1,250 @@
-base_sha256: sha256:e8e373451a2429ad1592831101535ba87bb884da3a8ece42e8359afed834ca63
+additional_evidence_cases:
+  - after_dir: seeds/seed-019/after/genuine-fix
+    after_locator:
+      call_text: FileInputStream stream = new FileInputStream(target);
+      callee: FileInputStream
+      column: 38
+      file: src/main/java/com/scanipy/corpus/refac/FileService.java
+      line: 12
+    before_dir: seeds/seed-019/before
+    before_locator: &id001
+      call_text: FileInputStream stream = new FileInputStream(target);
+      callee: FileInputStream
+      column: 38
+      file: src/main/java/com/scanipy/corpus/refac/FileService.java
+      line: 12
+    case_id: seed-019/genuine-fix/structural
+    evidence_type: structural_comparison
+    expected_failure: null
+    expected_outcome: flip
+    expected_preconditions:
+      fixture_syntax: valid
+      transformation_validation: valid
+    finding_class: path-traversal
+    ground_truth_label: should-flip
+    language: java
+    observation_subject: corresponding_sink_slice
+    rationale: Separate sink-slice comparison across a security fix retaining the
+      API call. This is not evidence that a post-fix vulnerability remains, nor a
+      substitute for the primary removal scan.
+    refactor: genuine-fix-structural
+    required_strength: strong_strong
+    seed_id: seed-019
 before_dir: before
 license: Apache-2.0
+preconditions:
+  - Java String/primitive operations retain operand and exception order.
+  - String operands have resolved String types, not Object.toString conversion.
 refactor_pairs:
   - after_dir: after/alpha-rename-local
+    after_locator:
+      call_text: FileInputStream stream = new FileInputStream(target);
+      callee: FileInputStream
+      column: 38
+      file: src/main/java/com/scanipy/corpus/refac/FileService.java
+      line: 12
+    before_dir: seeds/seed-019/before
+    before_locator:
+      call_text: FileInputStream stream = new FileInputStream(target);
+      callee: FileInputStream
+      column: 38
+      file: src/main/java/com/scanipy/corpus/refac/FileService.java
+      line: 12
+    case_id: seed-019/alpha-rename-local
+    evidence_type: structural_comparison
+    expected_failure: null
+    expected_outcome: stay
+    expected_preconditions:
+      fixture_syntax: valid
+      transformation_validation: valid
+    finding_class: path-traversal
     ground_truth_label: should-stay
-    rationale: Consistent alpha-rename of seeded locals/params; slice preserved, fingerprint
-      must stay.
+    language: java
+    observation_subject: corresponding_sink_slice
+    rationale: Bijective rename of bound parameters/locals; no operator or literal
+      change.
     refactor: alpha-rename-local
+    required_strength: strong_strong
+    seed_id: seed-019
   - after_dir: after/pdg-only-formatting
+    after_locator:
+      call_text: FileInputStream stream = new FileInputStream(target);
+      callee: FileInputStream
+      column: 38
+      file: src/main/java/com/scanipy/corpus/refac/FileService.java
+      line: 25
+    before_dir: seeds/seed-019/before
+    before_locator:
+      call_text: FileInputStream stream = new FileInputStream(target);
+      callee: FileInputStream
+      column: 38
+      file: src/main/java/com/scanipy/corpus/refac/FileService.java
+      line: 12
+    case_id: seed-019/pdg-only-formatting
+    evidence_type: structural_comparison
+    expected_failure: null
+    expected_outcome: stay
+    expected_preconditions:
+      fixture_syntax: valid
+      transformation_validation: valid
+    finding_class: path-traversal
     ground_truth_label: should-stay
-    rationale: Whitespace/comment-only churn; no PDG edge changes, fingerprint must
-      stay.
+    language: java
+    observation_subject: corresponding_sink_slice
+    rationale: Only comments and blank lines change; executable statements are identical.
     refactor: pdg-only-formatting
+    required_strength: strong_strong
+    seed_id: seed-019
   - after_dir: after/independent-reordering
+    after_locator:
+      call_text: FileInputStream stream = new FileInputStream(target);
+      callee: FileInputStream
+      column: 38
+      file: src/main/java/com/scanipy/corpus/refac/FileService.java
+      line: 12
+    before_dir: seeds/seed-019/before
+    before_locator:
+      call_text: FileInputStream stream = new FileInputStream(target);
+      callee: FileInputStream
+      column: 38
+      file: src/main/java/com/scanipy/corpus/refac/FileService.java
+      line: 12
+    case_id: seed-019/independent-reordering
+    evidence_type: structural_comparison
+    expected_failure: null
+    expected_outcome: stay
+    expected_preconditions:
+      fixture_syntax: valid
+      transformation_validation: valid
+    finding_class: path-traversal
     ground_truth_label: should-stay
-    rationale: Reorder a PDG-independent statement; canonical topo-sort no-op, fingerprint
-      must stay.
+    language: java
+    observation_subject: corresponding_sink_slice
+    rationale: Swap two existing independent literal assignments that both feed the
+      sink computation; no added/deleted statement.
     refactor: independent-reordering
+    required_strength: strong_strong
+    seed_id: seed-019
   - after_dir: after/pure-extract
+    after_locator:
+      call_text: FileInputStream stream = new FileInputStream(target);
+      callee: FileInputStream
+      column: 38
+      file: src/main/java/com/scanipy/corpus/refac/FileService.java
+      line: 12
+    before_dir: seeds/seed-019/before
+    before_locator:
+      call_text: FileInputStream stream = new FileInputStream(target);
+      callee: FileInputStream
+      column: 38
+      file: src/main/java/com/scanipy/corpus/refac/FileService.java
+      line: 12
+    case_id: seed-019/pure-extract
+    evidence_type: structural_comparison
+    expected_failure: null
+    expected_outcome: stay
+    expected_preconditions:
+      fixture_syntax: valid
+      purity_certificate: proven
+      transformation_validation: valid
+    finding_class: path-traversal
     ground_truth_label: should-stay
-    rationale: Extract a pure alias-stable helper; summary-inlining covers it, fingerprint
-      must stay.
+    language: java
+    observation_subject: corresponding_sink_slice
+    rationale: Move existing multi-operand slice computation into a called helper;
+      bind actuals/formals and reconnect the return to the original sink.
     refactor: pure-extract
+    required_strength: strong_strong
+    seed_id: seed-019
   - after_dir: after/fqn-move-package-rename
+    after_locator:
+      call_text: FileInputStream stream = new FileInputStream(target);
+      callee: FileInputStream
+      column: 38
+      file: src/main/java/com/scanipy/corpus/relocated/refac/FileService.java
+      line: 12
+    before_dir: seeds/seed-019/before
+    before_locator:
+      call_text: FileInputStream stream = new FileInputStream(target);
+      callee: FileInputStream
+      column: 38
+      file: src/main/java/com/scanipy/corpus/refac/FileService.java
+      line: 12
+    case_id: seed-019/fqn-move-package-rename
+    evidence_type: structural_comparison
+    expected_failure: null
+    expected_outcome: stay
+    expected_preconditions:
+      fixture_syntax: valid
+      transformation_validation: valid
+    finding_class: path-traversal
     ground_truth_label: should-stay
-    rationale: Move class/module to a new FQN; FQN normalization covers it, fingerprint
-      must stay.
+    language: java
+    observation_subject: corresponding_sink_slice
+    rationale: Actually move the source file and rename its package/module, updating
+      a separate importing consumer.
     refactor: fqn-move-package-rename
+    required_strength: strong_strong
+    seed_id: seed-019
   - after_dir: after/genuine-fix
+    after_locator: null
+    before_dir: seeds/seed-019/before
+    before_locator: *id001
+    case_id: seed-019/genuine-fix
+    evidence_type: finding_removal
+    expected_failure: null
+    expected_outcome: absent
+    expected_preconditions:
+      fixture_syntax: valid
+      transformation_validation: valid
+    finding_class: path-traversal
     ground_truth_label: should-flip
-    rationale: Seeded sink replaced by a safe/parameterized equivalent for this class;
-      slice changes, fingerprint must flip.
+    language: java
+    observation_subject: finding_lifecycle
+    rationale: Remove the vulnerability by parameter binding, a fixed trusted path/URL,
+      or replacing object deserialization with non-executing data decoding. Requires
+      a completed scan establishing absence, not a missing hash.
     refactor: genuine-fix
+    required_strength: null
+    seed_id: seed-019
   - after_dir: after/aliasing-changing-extract
+    after_locator:
+      call_text: FileInputStream stream = new FileInputStream(target);
+      callee: FileInputStream
+      column: 38
+      file: src/main/java/com/scanipy/corpus/refac/FileService.java
+      line: 15
+    before_dir: seeds/seed-019/before
+    before_locator:
+      call_text: FileInputStream stream = new FileInputStream(target);
+      callee: FileInputStream
+      column: 38
+      file: src/main/java/com/scanipy/corpus/refac/FileService.java
+      line: 12
+    case_id: seed-019/aliasing-changing-extract
+    evidence_type: structural_comparison
+    expected_failure: null
+    expected_outcome: flip
+    expected_preconditions:
+      fixture_syntax: valid
+      purity_certificate: not_proven
+      transformation_validation: valid
+    finding_class: path-traversal
     ground_truth_label: should-flip
-    rationale: Extract routes taint through a freshly-aliased holder; aliasing changes,
-      fingerprint must flip.
+    language: java
+    observation_subject: corresponding_sink_slice
+    rationale: A called helper mutates an aliased holder and its changed value reaches
+      the original sink; not eligible for pure normalization.
     refactor: aliasing-changing-extract
+    required_strength: strong_strong
+    seed_id: seed-019
+schema_version: 2
 seed_finding:
   class: path-traversal
-  description: tainted param `name018` flows into File path opened by FileInputStream
+  description: untrusted method parameter input018 reaches FileInputStream
   language: java
-  sink_file: FileService.java
-  sink_line: 11
+  sink_file: src/main/java/com/scanipy/corpus/refac/FileService.java
+  sink_line: 12
 seed_id: seed-019
 synthesized: true
+template_index: 2
