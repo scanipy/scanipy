@@ -11,19 +11,29 @@ Public surface:
 
 * :func:`check_pins` — pure function; takes the parsed manifest mapping and
   returns the list of missing/empty pin-field paths (empty list ⇒ complete).
-* :func:`main` — thin CLI wrapper resolving ``workers/pins.json`` relative to
-  this file (not the process cwd) and exiting non-zero if any pin is missing.
+* :func:`check_lockfile` — bind the manifest to the exact snapshot lock bytes
+  used by the Dockerfile; a nonempty but stale hash is not a valid pin.
+* :func:`main` — resolve inputs relative to this repository (not the cwd),
+  refusing missing pins, unsafe lock paths, malformed digests or changed bytes.
 """
 
 from __future__ import annotations
 
+import argparse
+import hashlib
 import json
+import re
+import stat
 import sys
 from pathlib import Path
 from typing import Any
 
 # workers/build/verify_pins.py -> repo-root/workers/pins.json
 _DEFAULT_PINS_FILE = Path(__file__).resolve().parent.parent / "pins.json"
+_DEFAULT_REPO_ROOT = _DEFAULT_PINS_FILE.parent.parent
+# This must be the file COPY'd by workers/snapshot/Dockerfile, not any other
+# attacker-selected file whose digest happens to match the manifest.
+SNAPSHOT_LOCKFILE = "workers/snapshot/requirements.txt"
 
 
 def check_pins(pins: dict[str, Any]) -> list[str]:
@@ -65,22 +75,72 @@ def check_pins(pins: dict[str, Any]) -> list[str]:
     return missing
 
 
+def check_lockfile(pins: dict[str, Any], repo_root: Path) -> list[str]:
+    """Validate the declared lock path and SHA256 against actual regular bytes.
+
+    The repository root comes from this trusted tool or an explicit CLI option,
+    never from the untrusted manifest. Symlinks in any lock path component are
+    refused, including ones that resolve to another file inside the repository.
+    """
+    field = "python_packages_lockfile"
+    if pins.get(field) != SNAPSHOT_LOCKFILE:
+        return [f"{field}: must be exactly {SNAPSHOT_LOCKFILE}"]
+    expected = pins.get(f"{field}_sha256")
+    if not isinstance(expected, str) or re.fullmatch(r"[0-9a-f]{64}", expected) is None:
+        return [f"{field}_sha256: must be 64 lowercase hexadecimal characters"]
+    path = repo_root
+    try:
+        if not path.is_dir():
+            return [f"{field}: repository root is not a directory"]
+        for part in Path(SNAPSHOT_LOCKFILE).parts:
+            path = path / part
+            if path.is_symlink():
+                return [f"{field}: symlink path components are forbidden"]
+        if not stat.S_ISREG(path.stat().st_mode):
+            return [f"{field}: lock must be a regular file"]
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError as error:
+        return [f"{field}: cannot read lock: {error}"]
+    if actual != expected:
+        return [f"{field}_sha256: expected {expected}, actual {actual}"]
+    return []
+
+
+def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    """Refuse ambiguous duplicate JSON fields at any manifest depth."""
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate pins manifest key: {key}")
+        result[key] = value
+    return result
+
+
 def main(argv: list[str] | None = None) -> int:
-    """CLI entry point: load the pins manifest and gate on completeness.
+    """Gate completeness and actual bytes; never infer the root from a manifest.
 
     Returns 0 when every required pin is specified, 1 otherwise (the diagnostic
-    on stderr names each missing field). ``argv[0]`` may override the default
-    ``workers/pins.json`` path (used by CI to point at an alternate manifest).
+    on stderr names each invalid field). The optional positional argument selects
+    an alternate pins manifest. ``--repo-root`` explicitly selects its checkout;
+    otherwise the checkout containing this tool is used, even from another cwd.
     """
-    args = sys.argv[1:] if argv is None else argv
-    pins_file = Path(args[0]) if args else _DEFAULT_PINS_FILE
-
-    pins: dict[str, Any] = json.loads(pins_file.read_text(encoding="utf-8"))
-    missing = check_pins(pins)
-
-    if missing:
-        print("ERROR (AC-DEPLOY-02c): pins are incomplete:", file=sys.stderr)
-        for field in missing:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("pins_file", type=Path, nargs="?", default=_DEFAULT_PINS_FILE)
+    parser.add_argument("--repo-root", type=Path, default=_DEFAULT_REPO_ROOT)
+    args = parser.parse_args(argv)
+    try:
+        pins = json.loads(
+            args.pins_file.read_text(encoding="utf-8"), object_pairs_hook=_unique_object
+        )
+        if not isinstance(pins, dict):
+            raise ValueError("pins manifest must be a JSON object")
+    except (OSError, UnicodeError, ValueError) as error:
+        print(f"ERROR (AC-DEPLOY-02c): cannot load pins: {error}", file=sys.stderr)
+        return 1
+    errors = check_pins(pins) + check_lockfile(pins, args.repo_root)
+    if errors:
+        print("ERROR (AC-DEPLOY-02c): pins are incomplete or invalid:", file=sys.stderr)
+        for field in errors:
             print(f"  - {field}", file=sys.stderr)
         return 1
     return 0
