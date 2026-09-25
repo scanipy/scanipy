@@ -161,8 +161,8 @@ required checks and canonical review passing. Keep remote status current; do
 not use that narrow closure to mark a full R-task, claim or gate complete.
 The first #376/#377 synchronization encountered the rate limit again. After
 quota recovery, the merged bounded helper verified membership/field metadata
-and real status changes. Narrow #365/#367/#363/#377/#381/#384/#364 are Done after approved
-merges; #376/#378/#386 and #391–#399 remain In Progress. Initial synchronization failures
+and real status changes. Narrow #365/#367/#363/#377/#381/#384/#364/#386/#376 are Done
+after approved merges; #378 and #391–#400 remain In Progress. Initial synchronization failures
 are not rewritten as successful preflight checks. GitHub unexpectedly closed
 #378 on wording containing a negated closing keyword; root removed the trigger,
 reopened the issue and restored In Progress. Use “#N remains open,” not a
