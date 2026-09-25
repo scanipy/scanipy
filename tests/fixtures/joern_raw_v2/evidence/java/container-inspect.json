@@ -1,0 +1,243 @@
+[
+    {
+        "Id": "eea07077405361f42cf654a8b361f6f8f4c9aadaa4410e28dd6bd0149bb13b0c",
+        "Created": "2026-09-25T09:36:49.910419441Z",
+        "Path": "/usr/bin/timeout",
+        "Args": [
+            "250",
+            "python",
+            "/repo/tests/probes/joern_raw_v2.py",
+            "java"
+        ],
+        "State": {
+            "Status": "exited",
+            "Running": false,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 0,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-09-25T09:36:50.364854155Z",
+            "FinishedAt": "2026-09-25T09:37:28.150556748Z"
+        },
+        "Image": "sha256:911e6f836fcf5e183a0c559e04e1868ba9d1838c35263728fe85dc1e9cce987b",
+        "ResolvConfPath": "/var/lib/docker/containers/eea07077405361f42cf654a8b361f6f8f4c9aadaa4410e28dd6bd0149bb13b0c/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/eea07077405361f42cf654a8b361f6f8f4c9aadaa4410e28dd6bd0149bb13b0c/hostname",
+        "HostsPath": "/var/lib/docker/containers/eea07077405361f42cf654a8b361f6f8f4c9aadaa4410e28dd6bd0149bb13b0c/hosts",
+        "LogPath": "/var/lib/docker/containers/eea07077405361f42cf654a8b361f6f8f4c9aadaa4410e28dd6bd0149bb13b0c/eea07077405361f42cf654a8b361f6f8f4c9aadaa4410e28dd6bd0149bb13b0c-json.log",
+        "Name": "/scanipy-r19-raw-java-final",
+        "RestartCount": 0,
+        "Driver": "overlay2",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "docker-default",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": null,
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "none",
+            "PortBindings": {},
+            "RestartPolicy": {
+                "Name": "no",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": [
+                "ALL"
+            ],
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": null,
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": true,
+            "SecurityOpt": [
+                "no-new-privileges:true"
+            ],
+            "Tmpfs": {
+                "/tmp": "rw,nosuid,nodev,size=256m"
+            },
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 4294967296,
+            "NanoCpus": 2000000000,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": [],
+            "BlkioDeviceReadBps": [],
+            "BlkioDeviceWriteBps": [],
+            "BlkioDeviceReadIOps": [],
+            "BlkioDeviceWriteIOps": [],
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [],
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 4294967296,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": 256,
+            "Ulimits": [],
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "Mounts": [
+                {
+                    "Type": "bind",
+                    "Source": "/tmp/scanipy-r19-raw-SUeKq9",
+                    "Target": "/repo",
+                    "ReadOnly": true
+                },
+                {
+                    "Type": "bind",
+                    "Source": "/tmp/scanipy-r19-final-evidence-nO3lQFvB",
+                    "Target": "/job"
+                }
+            ],
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "GraphDriver": {
+            "Data": {
+                "ID": "eea07077405361f42cf654a8b361f6f8f4c9aadaa4410e28dd6bd0149bb13b0c",
+                "LowerDir": "/var/lib/docker/overlay2/910e4190dc4a60e1c919468a45de8eb08a8ae368de96d8925bef2a7afb87bb94-init/diff:/var/lib/docker/overlay2/dba084828ebef8f6f8df18d9e241931d563f51b6d589ac401ad8521dec47da95/diff:/var/lib/docker/overlay2/3035bcbc57307532c9374723c1b8ef1b41406ed60cbae1ee265bbb3f2cd12ce7/diff:/var/lib/docker/overlay2/21212053c0ae9babaa6631054623d522b104d0f5992b9ddb0ea0b7eb5c618c49/diff:/var/lib/docker/overlay2/a386ce02a2d9a78bb6da4fd7f056d36f9cf821c7d133fe420fba51cfa096d898/diff:/var/lib/docker/overlay2/dbeefb899fd24d4dec5e735035ccb016914a6f704d24b058f41f550b8bf98ae4/diff:/var/lib/docker/overlay2/a2d2bd88a0aa334dff65c63977a3188568249482dbac133bd07d13e314adf6f4/diff:/var/lib/docker/overlay2/abbda6bed33ec02afd8cd9c4540156765c1ec12a4d680b5bf5df43d8c81bb64a/diff:/var/lib/docker/overlay2/103ae1eff2ddfedfdd5a52a53370e93126bd8dd811696f861cceb24634143c0a/diff:/var/lib/docker/overlay2/f49d471573c1e0f13476eb4661017c02ad85a983296bea09cc64f94fed09d274/diff:/var/lib/docker/overlay2/d6a6a6867fc1cd64f8449277ee35c5fea97f8ede0b200dcb5795534d4c1f4373/diff:/var/lib/docker/overlay2/0cbfdb60115eae9e9b69b8edb2b53719f01064152bbade81958c114a6a0cc3b7/diff:/var/lib/docker/overlay2/49b9cf40354ee6dd624a76df9b56e38906ebf45dabe1a96099d32803d4ed1c65/diff:/var/lib/docker/overlay2/ee667581e0b1238a9b2d3ead9fe49721225e87cd69810f2559965600dd8742e6/diff:/var/lib/docker/overlay2/b1bb59a47330ec8c45a4779e42a7f3c80184474be3ae63e15e1201630597179e/diff:/var/lib/docker/overlay2/c81e102daaca330f866d983aa30d37058014e1c18d66f027e837512eebf4e6c8/diff:/var/lib/docker/overlay2/5a2949f17e2cdf275387b96b50ee8df902644eced77a8c2eb80e4af702cc8643/diff:/var/lib/docker/overlay2/87209052c2a214aa0c7e1241b5b91336825ef63eb89859d389c86e8c5a257b01/diff:/var/lib/docker/overlay2/84a11d1f791c9117c904373702cb7850cdba886772e12d5d4971eae98f9b18ff/diff:/var/lib/docker/overlay2/682caf3368aac26e58d06ffff25ea4ac88c06efb2285b261c54d671f89349589/diff",
+                "MergedDir": "/var/lib/docker/overlay2/910e4190dc4a60e1c919468a45de8eb08a8ae368de96d8925bef2a7afb87bb94/merged",
+                "UpperDir": "/var/lib/docker/overlay2/910e4190dc4a60e1c919468a45de8eb08a8ae368de96d8925bef2a7afb87bb94/diff",
+                "WorkDir": "/var/lib/docker/overlay2/910e4190dc4a60e1c919468a45de8eb08a8ae368de96d8925bef2a7afb87bb94/work"
+            },
+            "Name": "overlay2"
+        },
+        "Mounts": [
+            {
+                "Type": "bind",
+                "Source": "/tmp/scanipy-r19-raw-SUeKq9",
+                "Destination": "/repo",
+                "Mode": "",
+                "RW": false,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/tmp/scanipy-r19-final-evidence-nO3lQFvB",
+                "Destination": "/job",
+                "Mode": "",
+                "RW": true,
+                "Propagation": "rprivate"
+            }
+        ],
+        "Config": {
+            "Hostname": "eea070774053",
+            "Domainname": "",
+            "User": "1000:1000",
+            "AttachStdin": false,
+            "AttachStdout": true,
+            "AttachStderr": true,
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PYTHONUNBUFFERED=1",
+                "SCANIPY_PROBE_IMAGE_ID=sha256:911e6f836fcf5e183a0c559e04e1868ba9d1838c35263728fe85dc1e9cce987b",
+                "PYTHONPATH=/repo",
+                "PYTHONDONTWRITEBYTECODE=1",
+                "PATH=/opt/joern/bin:/opt/codeql:/opt/temurin-jre/bin:/usr/bin:/usr/local/bin",
+                "LANG=C.UTF-8",
+                "GPG_KEY=A035C8C19219BA821ECEA86B64E628F8D684696D",
+                "PYTHON_VERSION=3.11.15",
+                "PYTHON_SHA256=272179ddd9a2e41a0fc8e42e33dfbdca0b3711aa5abf372d3f2d51543d09b625",
+                "JAVA_HOME=/opt/temurin-jre"
+            ],
+            "Cmd": [
+                "250",
+                "python",
+                "/repo/tests/probes/joern_raw_v2.py",
+                "java"
+            ],
+            "Image": "sha256:911e6f836fcf5e183a0c559e04e1868ba9d1838c35263728fe85dc1e9cce987b",
+            "Volumes": null,
+            "WorkingDir": "/job",
+            "Entrypoint": [
+                "/usr/bin/timeout"
+            ],
+            "Labels": {
+                "org.opencontainers.image.source": "https://github.com/scanipy/scanipy-v3.2",
+                "org.opencontainers.image.title": "scanipy-snapshot-worker"
+            }
+        },
+        "NetworkSettings": {
+            "SandboxID": "",
+            "SandboxKey": "",
+            "Ports": {},
+            "Networks": {
+                "none": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "e061560912b11ad3e69f11c273282bd73b8eaf203ee221ea8f37652ddb11ff3c",
+                    "EndpointID": "",
+                    "Gateway": "",
+                    "IPAddress": "",
+                    "MacAddress": "",
+                    "IPPrefixLen": 0,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": null
+                }
+            }
+        }
+    }
+]
