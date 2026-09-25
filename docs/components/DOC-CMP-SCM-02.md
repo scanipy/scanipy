@@ -1,5 +1,14 @@
 # DOC-CMP-SCM-02 — GitHub connector
 
+> **Current #395 containment (2026-09-25):** native default Git acquisition is
+> unavailable before staging. The shared process wrapper refuses all Git calls;
+> the snapshot worker and all four provider default clone paths fail explicitly.
+> Trusted injected Python fixture collaborators preserve controlled tests, not
+> production acquisition or no-execution approval. See the current
+> [containment and mandatory replacement contract](../bhmea/GIT-SOURCE-ACQUISITION.md).
+> Historical runnable clone examples below do not override this boundary; the
+> real bounded object-to-capture producer remains required. Other APIs/ACs remain.
+
 > **Source-of-truth:** `SDD.md §3 CMP-SCM-02`. Where this document diverges from `SDD.md` / `PLAN.md`, the upstream document wins; correct this file rather than the upstream.
 > **Status contract:** This doc satisfies `AC-DOC-04` — a code-writing agent reading only this file plus the cross-cutting refs and [`DOC-CMP-SCM-01`](./DOC-CMP-SCM-01.md) can implement `CMP-SCM-02` without re-reading the SDD.
 
@@ -75,7 +84,7 @@ async def register_webhook(
     self, repo_ref: RepoRef, *, target_url: str,
     events: tuple[str, ...], secret: str,
 ) -> WebhookSubscription: ...
-    # POST /repos/{owner}/{repo}/hooks  with config.secret = `secret`,
+    # POST /repos/{owner}/{repo}/hooks with config.secret from the `secret` parameter,
     # content_type = 'json'. Idempotent on (owner, repo, target_url).
 
 def verify_webhook(
