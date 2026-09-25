@@ -139,6 +139,9 @@ revokes applicability. Recompute effective inherited suppression against the
 current policy revision on both writes and reads; revocation removes its
 automatic effect immediately without deleting decisions, links or evidence.
 Reactivation requires a new explicit reviewed event, not a cached old approval.
+Each activation has a new identity. Old link certificates remain ineffective
+after reactivation until explicitly re-adjudicated against that activation;
+turning a registry flag back on must not resurrect old automatic suppression.
 
 The match key includes:
 
@@ -214,6 +217,10 @@ dimension and prior event: revoking suppression does not erase a false-positive
 verdict, references or history. A false-positive verdict does not silently
 activate suppression. Do not reuse machine `fixed` as a human verdict that
 detection has proved absence.
+Direct occurrence decisions override inherited values independently per
+dimension: an explicit clear/unreviewed/inactive state shadows inheritance,
+rather than falling through to an older entity value. Occurrence-only decisions
+never propagate to later scans merely because the occurrence is linked.
 
 Accept decisions through a trusted human-adjudication service, not the LLM
 triage role. Record authenticated principal from server context where available;
@@ -297,3 +304,15 @@ evidence. R08 `component_verified` requires real asynchronous capture/worker/API
 behavior. G2 jointly requires real refactor/rescan history in the live workflow;
 neither task waits for the other's whole-task DONE. No SQLite-only/in-memory
 test, synthetic strong flag, or successful source parse closes these milestones.
+
+## 9. Design review record
+
+An independent agent review on 2026-09-25 identified seven design gaps: cohort
+closure, policy withdrawal, joint revision checks and cleanup fencing, global
+identity ordering, engine-specific absence, separate human verdict/suppression,
+and API-level ranker exclusion. The revised contract addresses each explicitly.
+The agent also read the repository Security Analyst instructions and approved
+this **design for implementation planning only**. No runtime grants, API,
+database, Compose or real refactor acceptance is asserted. Required canonical
+PR review remains separate; security validation must be repeated on implemented
+code with real restricted-principal and concurrency tests.
