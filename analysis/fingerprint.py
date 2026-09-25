@@ -1,87 +1,48 @@
-"""CMP-CORE-02 — Slice fingerprint (Algorithm 3).
+"""CMP-CORE-02 slice identity; BH MEA canonical foundations (R18/R20).
 
-For each :class:`~analysis.ifds.solver.Finding` produced by CMP-CORE-01, this
-module computes the **refactor-stable cross-scan/cross-refactor identity** of the
-finding: a backward interprocedural slice along the realising witness, reduced to
-a normal form by the five named normalisation passes, then canonicalised under
-the shared ``(B, T)`` budget. The output is a ``slice_fingerprint: Sha256`` plus
-a ``fingerprint_class ∈ {strong, weak}`` self-label (the gating field for INV-5's
-conditional-canonicality semantics).
+The reverse witness cone is normalized by the existing minimal-model passes,
+then canonically encoded with direction-aware WL and bounded IR. Strong certifies
+that normalized graph, not completion of the missing real-language purity, alias,
+and binding normalization. Full refactor acceptance remains R02/R06/R19 work.
+Origin stays caller-owned: an oracle finding does not become deterministic-core.
 
-Source-of-truth: ``DOC-CMP-CORE-02``, ``DOC-ALGS §4`` (Algorithm 3),
-``DOC-PARTITION``, ``.claude/rules/02-provenance.md``,
-``.claude/rules/01-invariants.md §INV-5``.
-
-BUILD-AHEAD (CLAR-PROC-01, WBS §17 RESOLVED 2026-06-04).
-  CMP-CORE-02 stays IN-PROGRESS: the corpus-scale empirical halves of
-  ``AC-CORE-02a`` (50 seeded findings, ``CMP-CORP-REFAC-01``), ``AC-CORE-02b``
-  (aliasing-changing-extract seed, ``tests/corpora/refactor/corpus.lock``) and
-  ``AC-CORE-02c`` (``CMP-CORP-CANARY-01`` weak-rate roll-up) are corpus-gated and
-  remain honestly ``xfail``. This module ships the *mechanism* + the hermetic
-  acceptance criteria (TST-INV-5-CORE-02 + synthetic positive/negative/weak/budget
-  controls). Per the three binding CLAR-PROC-01 conditions: (1) only the hermetic
-  subset is asserted green; the corpus halves stay xfail/skip, never faked; (2)
-  upstream values are consumed via the typed CMP-CORE-01/03 interfaces
-  (:class:`~analysis.ifds.solver.Finding`, :func:`~analysis.ordering.canonical_order`),
-  never computed-as-fake; (3) the PR declares prep status and the component stays
-  IN-PROGRESS.
-
-INTERFACE RECONCILE (reported, not invented — same pattern as CLAR-CORE-01).
-  ``DOC-CMP-CORE-02 §3.1`` types the witness parameter as ``witness_path: "Path"``
-  and references ``Finding`` / ``CPG`` placeholders. The **shipped** CMP-CORE-01
-  ``Finding.witness`` (``analysis.ifds.solver.Finding``) is a concrete
-  ``tuple[NodeId, ...]`` — a connected source -> sink node sequence through the
-  supergraph (verified inter-procedurally as of CORE-01 PR2/PR3). This module
-  therefore consumes ``Finding`` and ``CPG`` from the shipped types and treats the
-  witness as that concrete tuple. ``B`` / ``T`` and the ``(B, T)`` budget machinery
-  are shared verbatim with CMP-CORE-03 via :mod:`analysis.ordering` (single
-  source of the budget, the ``BudgetExhausted`` signal, and the
-  ``CPG_ORDER_HASH_ANNOTATION`` constant).
-
-STRUCTURAL INPUT PORT (:class:`SliceRequest`).
-  Algorithm 3 reads exactly one field off its input — the witness node sequence —
-  so the entry point is typed against the structural :class:`SliceRequest`
-  Protocol instead of the nominal ``solver.Finding``. ``solver.Finding``
-  satisfies it structurally (no caller changes), and an **oracle** finding —
-  which must NOT be spelled as a ``solver.Finding``, whose ``origin`` /
-  ``engine`` literals are a deliberate INV-1 honesty guard — can present its own
-  witness carrier (:class:`services.scan.oracle_fingerprint.OracleSliceRequest`).
-  Widening the port does NOT widen any guarantee: the determinism theorem still
-  covers ``origin=deterministic-core`` findings only.
-
-WHY THE FINGERPRINT IS A *CONTENT* HASH, NOT THE CPG-ORDER HASH.
-  CMP-CORE-03's ``cpg_order_hash`` is a hash of node *ids* in canonical order; it
-  is invariant under an alpha-rename only because the ids happen to be identical, not
-  because the renamed content was normalised away. Reusing it as the fingerprint
-  would make refactor-invariance hold for the wrong reason and would mask a broken
-  normalisation pass. This module instead uses :func:`~analysis.ordering.canonical_order`
-  ONLY for the ordering + the strong/weak verdict, and computes its OWN content
-  hash over the *normalised* node labels (in canonical order) and the normalised
-  edge relation. A broken alpha-rename therefore changes the fingerprint — which is
-  exactly what the mutation-verified negative control in the unit tests asserts.
+Strong hashes are explicitly version 2. Source-less callers retain a namespaced
+legacy witness fallback. The typed v2 entry point requires a real snapshot tree
+digest; none is invented. Nested normalization shares B/T. B exhaustion is weak;
+T expiry raises an incomplete attempt instead of selecting different successful
+bytes. Elapsed telemetry is outside the deterministic semantic payload.
 """
 
 from __future__ import annotations
 
 import hashlib
-import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from itertools import pairwise
 from typing import Protocol
 
 from analysis.ordering import (
+    BUDGET_POLICY,
     CPG,
     CPG_ORDER_HASH_ANNOTATION,
     DEFAULT_B,
     DEFAULT_T,
     Annotation,
+    BudgetExhausted,
+    CanonicalizationBudget,
     CPGNode,
     Duration,
     FingerprintClass,
     NodeId,
     Sha256,
     canonical_order,
+    encode_graph,
+    validate_cpg,
 )
+
+SLICE_IDENTITY_NAMESPACE = "scanipy-slice-normal-form/2"
+LEGACY_WITNESS_NAMESPACE = "scanipy-witness-edge-sequence/1"
+SOURCE_WITNESS_NAMESPACE = "scanipy-source-witness/2"
 
 # ---------------------------------------------------------------------------
 # The input port (structural, not nominal)
@@ -121,6 +82,17 @@ class SliceRequest(Protocol):
     def witness(self) -> tuple[NodeId, ...]: ...
 
 
+class SourceScopedSliceRequest(SliceRequest, Protocol):
+    """V2 weak identity requires a REAL digest supplied by the snapshot producer.
+
+    This input is not synthesized from witness IDs, the graph, or a placeholder.
+    The source-less entry point retains explicitly namespaced legacy weak bytes.
+    """
+
+    @property
+    def source_tree_digest(self) -> Sha256: ...
+
+
 # ---------------------------------------------------------------------------
 # Error contracts (DOC-CMP-CORE-02 §7)
 # ---------------------------------------------------------------------------
@@ -149,9 +121,9 @@ class SliceFingerprintResult:
     ``cpg_order_hash_annotation`` is always the literal
     :data:`~analysis.ordering.CPG_ORDER_HASH_ANNOTATION` and MUST be persisted
     adjacent to the fingerprint everywhere it appears (INV-5 / DOC-CMP-CORE-02
-    §5.1). The fingerprint is a true refactor-stable identity (equal across the
-    named refactors) iff ``fingerprint_class == "strong"``; on the ``weak`` path it
-    is the witness-edge-sequence hash — a same-source identity only, which MUST
+    §5.1). Strong certifies a completed canonicalization of the implemented
+    normalized graph. Full named-refactor proofs require the separate semantic
+    normalization work. A weak hash is a same-source identity only, which MUST
     NEVER be auto-suppressed across a refactor (see
     :func:`eligible_for_baseline_suppression`).
     """
@@ -161,6 +133,9 @@ class SliceFingerprintResult:
     budget_exhausted: bool
     elapsed_ms: float
     cpg_order_hash_annotation: Annotation
+    identity_namespace: str = "scanipy-slice-fingerprint/1"
+    budget_policy: str = "scanipy-budget-policy/1"
+    search_states: int = 0
 
 
 # ---------------------------------------------------------------------------
@@ -193,15 +168,11 @@ def _backward_interprocedural_slice(cpg: CPG, witness: tuple[NodeId, ...]) -> _S
     endpoints lie on the cone (all kinds preserved, so AST/structural decoration
     survives for the PDG-only pass to reason over).
 
-    Why a CONE, not just the witness nodes (DOC-ALGS §4.5): the complexity table
-    lists strong as ``O(|slice|)`` and weak as ``O(|witness|)`` *separately*, so the
-    slice is strictly larger than the witness. The witness is a single realising
-    PATH (RHS write-once ``pred`` picks one predecessor per ``(node, fact)``), so a
-    witness-only slice is always a chain — 2-WL resolves every chain node and the
-    bounded-canonicalisation budget is never consulted (the ``weak`` branch would be
-    dead code). The backward cone restores the genuine dataflow structure (e.g.
-    both arms of a branch that both reach the sink), so a structurally-symmetric
-    program drives the real ``(B, T)`` budget and the ``weak`` fallback.
+    A witness records one path, not all dependencies influencing the sink. The
+    cone retains those dependencies, including branches entering intermediate
+    witness nodes. The canonicalizer must see that structure rather than an
+    artificially simplified path. This still does not add missing interprocedural
+    relations to an incomplete upstream model.
 
     The weak-fallback hash is computed over ``self.witness`` (the ``O(|witness|)``
     linearisation), kept verbatim here; the cone only feeds the *strong*-path
@@ -232,12 +203,19 @@ def _backward_interprocedural_slice(cpg: CPG, witness: tuple[NodeId, ...]) -> _S
     # union it explicitly so an inter-proc CALL hop on the witness is never lost).
     sink = witness[-1]
     on_slice: set[NodeId] = set(witness)
+    traversed: set[NodeId] = set()
     stack = [sink]
     while stack:
         cur = stack.pop()
+        if cur in traversed:
+            continue
+        traversed.add(cur)
         for p in preds.get(cur, ()):
-            if p not in on_slice:
-                on_slice.add(p)
+            on_slice.add(p)
+            # Membership is not traversal state: an intermediate witness node
+            # already belongs to the slice but its incoming dependencies must
+            # still be visited. The old membership test dropped those branches.
+            if p not in traversed:
                 stack.append(p)
 
     sliced = CPG()
@@ -303,7 +281,7 @@ def _copy_edges(src: CPG, dst: CPG, remap: dict[NodeId, NodeId]) -> None:
         dst.add_edge(remap[e.src], remap[e.dst], e.kind)
 
 
-def _alpha_rename_locals(slice_cpg: CPG) -> CPG:
+def _alpha_rename_locals(slice_cpg: CPG, *, _budget: CanonicalizationBudget | None = None) -> CPG:
     """Pass 1 — alpha-renaming for locals (DOC §3.2.1).
 
     Every IDENTIFIER node's ``operator_or_literal`` (its local-variable name) is
@@ -317,7 +295,23 @@ def _alpha_rename_locals(slice_cpg: CPG) -> CPG:
     (DOC-CMP-CORE-02 §3.2; the per-language def/use back-end that distinguishes a
     local from a field reference is deferred — see CLAR-CORE-02 below).
     """
-    order = canonical_order(slice_cpg).canonical_order
+    if not any(node.kind == "IDENTIFIER" for node in slice_cpg.nodes):
+        return slice_cpg
+    # Names must not influence the ordering that assigns canonical local names.
+    # This is the minimal model's occurrence-based pass, NOT a claim that fields
+    # or language-level bindings are modeled. Extended model fields fail closed.
+    anonymized = CPG()
+    anonymized_remap = _copy_nodes(
+        slice_cpg,
+        anonymized,
+        rename=lambda node: "" if node.kind == "IDENTIFIER" else node.operator_or_literal,
+    )
+    _copy_edges(slice_cpg, anonymized, anonymized_remap)
+    ordering = canonical_order(anonymized, _budget=_budget)
+    if ordering.fingerprint_class != "strong":
+        raise BudgetExhausted
+    inverse = {mapped: original for original, mapped in anonymized_remap.items()}
+    order = [inverse[node] for node in ordering.canonical_order]
     counter: dict[NodeId, int] = {}
     next_local = 0
     for nid in order:
@@ -433,11 +427,17 @@ _NORMALISATION_PASSES: tuple[Callable[[CPG], CPG], ...] = (
 )
 
 
-def _normalise(slice_cpg: CPG) -> CPG:
+def _normalise(slice_cpg: CPG, *, _budget: CanonicalizationBudget | None = None) -> CPG:
     """Apply the five named passes in the fixed DOC §3.2 order."""
     out = slice_cpg
     for pass_ in _NORMALISATION_PASSES:
-        out = pass_(out)
+        if _budget:
+            _budget.check()
+        out = (
+            _alpha_rename_locals(out, _budget=_budget)
+            if pass_ is _alpha_rename_locals
+            else pass_(out)
+        )
     return out
 
 
@@ -446,40 +446,24 @@ def _normalise(slice_cpg: CPG) -> CPG:
 # ---------------------------------------------------------------------------
 
 
-def _content_hash(normal_slice: CPG, order: list[NodeId]) -> Sha256:
+def _content_hash(
+    normal_slice: CPG, order: list[NodeId], *, budget: CanonicalizationBudget | None = None
+) -> Sha256:
     """sha256 over the NORMALISED node labels (in canonical order) + the
     normalised edge relation (DOC §3.2 step 3 / DOC-ALGS §4.4).
 
-    Unlike CMP-CORE-03's ``cpg_order_hash`` (which hashes node *ids*), this hashes
-    the normalised *content* — ``(kind, operator_or_literal, resolved_fqn,
+    Uses the same v2 framed graph encoding as CMP-CORE-03 with a distinct slice
+    domain. It hashes normalized content — ``(kind, operator_or_literal, resolved_fqn,
     enclosing_decl_fqn)`` per node and ``(edge_kind, src_rank, dst_rank)`` per edge,
     where ``rank`` is the node's position in the canonical order. Hashing content
-    (not ids) is what makes the fingerprint sensitive to a changed sink / added
-    sanitizer (AC-CORE-02b) yet invariant under the alpha-rename/FQN/reorder refactors
-    (their effect is normalised away by the passes BEFORE this hash).
+    (not ids) retains changed graph semantics. Whether a real program refactor
+    maps to an equivalent normalized graph is a separate normalization/fidelity
+    obligation, not something this content encoder can establish.
     ``structural_path`` is intentionally EXCLUDED — it is a parse-position artefact
     a file-move/reorder would perturb without changing dataflow.
     """
-    rank = {nid: i for i, nid in enumerate(order)}
-    node_by_id = {n.node_id: n for n in normal_slice.nodes}
-    h = hashlib.sha256()
-    h.update(b"CMP-CORE-02/slice-fingerprint/v1\n")
-    for nid in order:
-        n = node_by_id[nid]
-        h.update(
-            repr((n.kind, n.operator_or_literal, n.resolved_fqn, n.enclosing_decl_fqn)).encode(
-                "utf-8"
-            )
-        )
-        h.update(b"\x00")
-    h.update(b"|edges|")
-    edge_keys = sorted(
-        (e.kind, rank.get(e.src, 1 << 30), rank.get(e.dst, 1 << 30)) for e in normal_slice.edges
-    )
-    for kind, s, d in edge_keys:
-        h.update(repr((kind, s, d)).encode("utf-8"))
-        h.update(b"\x00")
-    return Sha256(h.digest())
+    encoded = encode_graph(normal_slice, order, budget=budget)
+    return Sha256(hashlib.sha256(b"SCANIPY-SLICE-STRONG/2\n" + encoded).digest())
 
 
 def _witness_edge_sequence_hash(witness: tuple[NodeId, ...]) -> Sha256:
@@ -509,61 +493,102 @@ def compute_slice_fingerprint(
     B: int = DEFAULT_B,  # noqa: N803 ((B, T) budget symbols are the public contract)
     T: Duration = DEFAULT_T,  # noqa: N803
 ) -> SliceFingerprintResult:
-    """Backward interprocedural slice + bounded canonicalisation per Algorithm 3.
+    """V2 strong identity; explicitly legacy weak identity for source-less callers.
 
-    Pure: the same ``(finding, cpg, B, T)`` always yields the same
-    :class:`SliceFingerprintResult` (no I/O, no global state, no randomness).
-
-    The witness is consumed from ``finding.witness`` (a concrete
-    ``tuple[NodeId, ...]`` per the CORE-01 PR2/PR3 reconcile — see the module
-    docstring); it is the ONLY field read off the parameter, which is therefore
-    typed as the structural :class:`SliceRequest` port rather than the nominal
-    ``solver.Finding``. Computing a fingerprint asserts NOTHING about the
-    finding's ``origin`` — see :class:`SliceRequest`. On ``(B, T)`` exhaustion,
-    returns ``fingerprint_class = "weak"``
-    with the witness-edge-sequence hash. A ``weak`` fingerprint MUST NOT be used to
-    auto-suppress a finding across a refactor (AC-CORE-02c; the CORE-02-owned
-    predicate :func:`eligible_for_baseline_suppression` encodes this for the
-    CMP-FND-01 baseline policy to consume).
-
-    Raises :class:`EmptyWitness` if the witness is empty and :class:`WitnessNotInCPG`
-    if a witness node is not in ``cpg`` (DOC §7) — defined error contracts, never a
-    silent degrade.
+    B exhaustion is weak; deadline expiry raises CanonicalizationDeadlineExceeded.
+    The class certifies canonicalization of the implemented normalized graph,
+    not completion of missing language/purity normalization. This function sets
+    no origin. Consumers must preserve identity_namespace with the hash.
     """
-    t0 = time.monotonic()
+    return _compute(finding, cpg, B=B, T=T, source_tree_digest=None)
 
-    # 1. Backward interprocedural slice along the witness.
+
+def compute_slice_fingerprint_v2(
+    finding: SourceScopedSliceRequest,
+    cpg: CPG,
+    *,
+    B: int = DEFAULT_B,  # noqa: N803
+    T: Duration = DEFAULT_T,  # noqa: N803
+) -> SliceFingerprintResult:
+    """Source-aware v2 weak encoding; requires a real upstream tree digest."""
+    digest = finding.source_tree_digest
+    if not isinstance(digest, bytes) or len(digest) != 32:
+        raise ValueError("source_tree_digest must be 32 real digest bytes")
+    return _compute(finding, cpg, B=B, T=T, source_tree_digest=digest)
+
+
+def _source_witness_hash(
+    cpg: CPG,
+    witness: tuple[NodeId, ...],
+    digest: bytes,
+    budget: CanonicalizationBudget,
+) -> Sha256:
+    adjacency: dict[tuple[NodeId, NodeId], list[bytes]] = {}
+    for edge in cpg.edges:
+        budget.check()
+        adjacency.setdefault((edge.src, edge.dst), []).append(edge.kind.encode("utf-8"))
+    h = hashlib.sha256(b"SCANIPY-SLICE-WEAK/2\n" + digest)
+    h.update(len(witness).to_bytes(8, "big"))
+    for node in witness:
+        budget.check()
+        h.update(int(node).to_bytes(8, "big"))
+    for src, dst in pairwise(witness):
+        kinds = sorted(adjacency.get((src, dst), []))
+        if not kinds:
+            raise ValueError("source-scoped witness has a disconnected step")
+        h.update(len(kinds).to_bytes(8, "big"))
+        for kind in kinds:
+            h.update(len(kind).to_bytes(8, "big") + kind)
+    return Sha256(h.digest())
+
+
+def _compute(
+    finding: SliceRequest,
+    cpg: CPG,
+    *,
+    B: int,  # noqa: N803
+    T: Duration,  # noqa: N803
+    source_tree_digest: bytes | None,
+) -> SliceFingerprintResult:
+    budget = CanonicalizationBudget.start(B, T)
+    # Validate before copying: extended semantic fields must not be silently lost.
+    validate_cpg(cpg, budget)
     sliced = _backward_interprocedural_slice(cpg, finding.witness)
-
-    # 2. The five named normalisation passes (fixed order).
-    normal = _normalise(sliced.cpg)
-
-    # 3. Bounded canonicalisation under the SHARED (B, T) budget. canonical_order
-    #    returns the strong/weak verdict: strong iff 2-WL + bounded individualisation
-    #    -refinement converged within (B, T); weak on BudgetExhausted. We reuse its
-    #    verdict + ordering, and compute our OWN content hash over the normalised
-    #    slice (see _content_hash for why a content hash, not cpg_order_hash).
-    order_result = canonical_order(normal, B=B, T=T)
-
-    if order_result.fingerprint_class == "strong":
-        fingerprint = _content_hash(normal, order_result.canonical_order)
-        return SliceFingerprintResult(
-            slice_fingerprint=fingerprint,
-            fingerprint_class="strong",
-            budget_exhausted=False,
-            elapsed_ms=(time.monotonic() - t0) * 1000.0,
-            cpg_order_hash_annotation=CPG_ORDER_HASH_ANNOTATION,
-        )
-
-    # 4. Budget exhausted -> weak fallback (witness-edge-sequence hash). NEVER an
-    #    exception, never a fake "strong" (INV-5 self-label truthfulness).
-    fingerprint = _witness_edge_sequence_hash(sliced.witness)
+    budget.check()
+    # A typed source-aware witness must be connected on every outcome, not only
+    # when its weak hash happens to be used. Retain the computed fallback bytes.
+    source_weak = (
+        _source_witness_hash(cpg, finding.witness, source_tree_digest, budget)
+        if source_tree_digest is not None
+        else None
+    )
+    try:
+        normal = _normalise(sliced.cpg, _budget=budget)
+        ordering = canonical_order(normal, _budget=budget)
+        if ordering.fingerprint_class == "weak":
+            raise BudgetExhausted
+        fingerprint = _content_hash(normal, ordering.canonical_order, budget=budget)
+        klass: FingerprintClass = "strong"
+        namespace = SLICE_IDENTITY_NAMESPACE
+    except BudgetExhausted:
+        budget.check()
+        klass = "weak"
+        if source_tree_digest is None:
+            fingerprint = _witness_edge_sequence_hash(sliced.witness)
+            namespace = LEGACY_WITNESS_NAMESPACE
+        else:
+            assert source_weak is not None
+            fingerprint = source_weak
+            namespace = SOURCE_WITNESS_NAMESPACE
     return SliceFingerprintResult(
-        slice_fingerprint=fingerprint,
-        fingerprint_class="weak",
-        budget_exhausted=True,
-        elapsed_ms=(time.monotonic() - t0) * 1000.0,
-        cpg_order_hash_annotation=CPG_ORDER_HASH_ANNOTATION,
+        fingerprint,
+        klass,
+        klass == "weak",
+        budget.elapsed_ms(),
+        CPG_ORDER_HASH_ANNOTATION,
+        namespace,
+        BUDGET_POLICY,
+        budget.search_states,
     )
 
 
@@ -573,31 +598,26 @@ def compute_slice_fingerprint(
 
 
 def eligible_for_baseline_suppression(result: SliceFingerprintResult) -> bool:
-    """Whether a finding with this fingerprint MAY be auto-suppressed by the
-    CMP-FND-01 baseline-lookup policy across a refactor (INV-5 / AC-CORE-02c).
+    """Necessary slice-side condition, not the complete decision-retention policy.
 
-    This is the **CORE-02-owned typed interface CMP-FND-01 consumes** (build-ahead
-    per CLAR-PROC-01): the baseline-suppression POLICY lives in CMP-FND-01
-    (DOC-CMP-CORE-02 §5.1.3), which is out of this component's file set, but the
-    *rule* that a ``weak``-classed fingerprint is NEVER eligible is CMP-CORE-02's
-    contribution (the truthful flag) and is encoded here so FND-01 reads it from
-    one place rather than re-deriving it. Returns ``False`` for every ``weak``
-    result; ``True`` only for ``strong`` (a true refactor-stable identity, the only
-    class on which a cross-refactor baseline match is sound).
-
-    The never-suppress-``weak`` rule is the operational heart of INV-5's
-    conditional-canonicality: a ``weak`` fingerprint is a same-source identity only,
-    so matching it across a refactor would silently hide a finding whose identity
-    the canonicaliser could not actually establish.
+    Weak and legacy/unrecognized identities are ineligible. The caller must also
+    check the independent graph class, compatible versions/semantic coverage,
+    actual finding correspondence, and explicit user decision. Historical strong
+    labels from the defective v1 algorithm are not upgraded retroactively.
     """
-    return result.fingerprint_class == "strong"
+    return (
+        result.fingerprint_class == "strong"
+        and result.identity_namespace == SLICE_IDENTITY_NAMESPACE
+    )
 
 
 __all__ = [
     "EmptyWitness",
     "SliceFingerprintResult",
     "SliceRequest",
+    "SourceScopedSliceRequest",
     "WitnessNotInCPG",
     "compute_slice_fingerprint",
+    "compute_slice_fingerprint_v2",
     "eligible_for_baseline_suppression",
 ]

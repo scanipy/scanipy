@@ -1,98 +1,103 @@
-"""CMP-CORE-03 — Canonical CPG ordering (Algorithm 5).
+"""Content-binding canonical graph identities (BH MEA R18/R20).
 
-Computes a deterministic, parse-order-independent enumeration of every CPG node
-together with a ``cpg_order_hash`` digest, classified ``strong`` (a true
-canonical form found within the ``(B, T)`` budget) or ``weak`` (the budget was
-exhausted and a deterministic stable-order fallback was used).
-
-This module is the operational owner of **INV-5**: the hash is *canonical* iff
-``fingerprint_class == "strong"``. The literal annotation
-``"canonical iff fingerprint_class = strong"`` is exposed as the single
-module-level constant :data:`CPG_ORDER_HASH_ANNOTATION`; every downstream
-emitter (provenance record, SARIF properties, auditor export) imports that
-constant rather than reconstructing the string from substrings.
-
-Algorithm 5 (verbatim, ``PLAN.md §"Algorithm 5"`` / ``DOC-ALGS §6.4``):
-
-    seed labels ``(kind, operator/literal, resolved FQN,
-    sorted incident-edge-kind multiset)``; 2-WL to fixpoint; residual symmetric
-    classes broken by enclosing-declaration canonical order then bounded
-    individualisation-refinement under the shared ``(B, T)`` budget; on
-    exhaustion, a stable order keyed by
-    ``(declaration-hash, structural-path-from-declaration-root, edge-kind)`` —
-    total, deterministic, parse-order-independent, but **not** a true canonical
-    form.
-
-The ``(B, T)`` defaults are ``B = 2**16`` search-tree nodes and ``T = 200 ms``
-wall-clock (``CLAR-PARAM-01`` RESOLVED 2026-05-23). ``B`` and ``T`` are **both
-hard triggers** (``DOC-CMP-CORE-03 §7.1``): ``B`` is the primary search-tree
-node cap; ``T`` guards against wall-clock skew. Either firing yields the weak
-result via ``BudgetExhausted`` — never an unbounded loop.
-
-Source-of-truth: ``DOC-CMP-CORE-03``, ``DOC-ALGS §6``, ``DOC-PROVENANCE §2.1``,
-``.claude/rules/01-invariants.md §INV-5``.
+V2 uses direction-aware vertex WL refinement and complete bounded IR. Only
+directly certified swap automorphisms prune siblings. A completed search yields
+canonical encoded structure, not a hash of raw IDs. B exhaustion yields a
+deterministic same-source weak result; T exhaustion raises instead of choosing
+another successful identity. Elapsed telemetry is not claimed to be pure.
 """
 
 from __future__ import annotations
 
 import hashlib
+import math
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Final, Literal, NewType
 
 NodeId = NewType("NodeId", int)
-Sha256 = NewType("Sha256", bytes)  # 32 raw bytes
-Duration = NewType("Duration", float)  # seconds
-
+Sha256 = NewType("Sha256", bytes)
+Duration = NewType("Duration", float)
 FingerprintClass = Literal["strong", "weak"]
-
 Annotation = Literal["canonical iff fingerprint_class = strong"]
-
-# INV-5 anchor. The ONE place this string is constructed. Every emitter that
-# writes a record containing ``cpg_order_hash`` imports this constant and never
-# rebuilds it from substrings (DOC-CMP-CORE-03 §5.1, DOC-PROVENANCE §2.1).
 CPG_ORDER_HASH_ANNOTATION: Final[Annotation] = "canonical iff fingerprint_class = strong"
-
-# CLAR-PARAM-01 RESOLVED 2026-05-23: hard (B, T) canonicalisation budget.
-DEFAULT_B: Final[int] = 2**16  # search-tree node cap (hard trigger)
-DEFAULT_T: Final[Duration] = Duration(0.200)  # wall-clock cap, seconds (hard trigger)
-
-
-class BudgetExhausted(Exception):  # noqa: N818  (named verbatim per DOC-CMP-CORE-03 App. A)
-    """Raised internally when the ``(B, T)`` budget is exceeded during the
-    bounded individualisation-refinement phase, triggering the deterministic
-    stable-order fallback. This is **not** an error condition surfaced to the
-    caller — it is the defined ``weak``-class path (DOC-CMP-CORE-03 §7.2)."""
+DEFAULT_B: Final[int] = 2**16
+DEFAULT_T: Final[Duration] = Duration(0.200)
+GRAPH_IDENTITY_NAMESPACE: Final[str] = "scanipy-canonical-graph/2"
+BUDGET_POLICY: Final[str] = "scanipy-budget-policy/2"
 
 
-# ---------------------------------------------------------------------------
-# Minimal CPG model
-# ---------------------------------------------------------------------------
-#
-# CMP-CORE-03 has no upstream component dependency (Wave-1). It depends only on
-# a graph it can enumerate; the production CPG is materialised by CMP-SNAP-01.
-# This module defines the minimal structural surface Algorithm 5 needs so it is
-# self-contained and testable. NodeIds are assigned by construction order
-# (NOT Python ``id()``) so "the same source" yields stable IDs across re-runs.
+def _duration_seconds(value: object) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError("T must be a finite positive duration in seconds")
+    duration = float(value)
+    if not math.isfinite(duration) or duration <= 0:
+        raise ValueError("T must be a finite positive duration in seconds")
+    return duration
+
+
+class BudgetExhausted(Exception):  # noqa: N818
+    """Internal deterministic work exhaustion, not a deadline/malformed graph."""
+
+
+class CanonicalizationDeadlineExceeded(TimeoutError):  # noqa: N818
+    """The invocation is incomplete; no successful strong/weak result exists."""
+
+
+@dataclass
+class CanonicalizationBudget:
+    """Shared work counter/deadline including nested normalization.
+
+    B counts entered search states, including the root. Exactly B may finish;
+    requesting B+1 takes the weak path. Checkpoints cover all phases. A worker
+    watchdog is still needed for preemption: cooperative checks do not promise
+    exact operating-system scheduling latency.
+    """
+
+    state_limit: int
+    duration: float
+    clock: Callable[[], float] = field(repr=False)
+    started_at: float
+    search_states: int = 0
+
+    @classmethod
+    def start(cls, B: int = DEFAULT_B, T: Duration = DEFAULT_T) -> CanonicalizationBudget:  # noqa: N803
+        if isinstance(B, bool) or not isinstance(B, int) or B <= 0:
+            raise ValueError("B must be a positive integer search-state limit")
+        duration = _duration_seconds(T)
+        clock = time.monotonic
+        return cls(B, duration, clock, clock())
+
+    def check(self) -> None:
+        if self.clock() - self.started_at >= self.duration:
+            raise CanonicalizationDeadlineExceeded("canonicalization deadline exceeded")
+
+    def enter_state(self) -> None:
+        self.check()
+        if self.search_states == self.state_limit:
+            raise BudgetExhausted
+        self.search_states += 1
+
+    def elapsed_ms(self) -> float:
+        elapsed = self.clock() - self.started_at
+        if elapsed >= self.duration:
+            raise CanonicalizationDeadlineExceeded("canonicalization deadline exceeded")
+        return elapsed * 1000.0
 
 
 @dataclass(frozen=True)
 class CPGNode:
-    """A CPG node. ``node_id`` is assigned by :meth:`CPG.add_node` from
-    construction order so it is stable across re-runs of the same source."""
-
     node_id: NodeId
-    kind: str  # e.g. "CALL", "IDENTIFIER", "METHOD"
-    operator_or_literal: str  # operator / literal text, "" if none
-    resolved_fqn: str  # resolved fully-qualified name, "" if none
-    enclosing_decl_fqn: str  # FQN of the enclosing declaration (for tie-break)
-    structural_path: str  # deterministic AST traversal path from decl root
+    kind: str
+    operator_or_literal: str
+    resolved_fqn: str
+    enclosing_decl_fqn: str
+    structural_path: str
 
 
 @dataclass(frozen=True)
 class CPGEdge:
-    """A directed CPG edge with a typed kind (e.g. "AST", "CFG", "PDG")."""
-
     src: NodeId
     dst: NodeId
     kind: str
@@ -100,12 +105,7 @@ class CPGEdge:
 
 @dataclass
 class CPG:
-    """Minimal code-property-graph surface consumed by Algorithm 5.
-
-    Build with :meth:`add_node` / :meth:`add_edge`; NodeIds are assigned
-    deterministically from insertion order so that the same source produces the
-    same graph and therefore the same ``cpg_order_hash``.
-    """
+    """Supported minimal model. IDs are lookup keys, never strong identity."""
 
     nodes: list[CPGNode] = field(default_factory=list)
     edges: list[CPGEdge] = field(default_factory=list)
@@ -122,328 +122,315 @@ class CPG:
         node_id = NodeId(len(self.nodes))
         self.nodes.append(
             CPGNode(
-                node_id=node_id,
-                kind=kind,
-                operator_or_literal=operator_or_literal,
-                resolved_fqn=resolved_fqn,
-                enclosing_decl_fqn=enclosing_decl_fqn,
-                structural_path=structural_path,
+                node_id,
+                kind,
+                operator_or_literal,
+                resolved_fqn,
+                enclosing_decl_fqn,
+                structural_path,
             )
         )
         return node_id
 
     def add_edge(self, src: NodeId, dst: NodeId, kind: str) -> None:
-        self.edges.append(CPGEdge(src=src, dst=dst, kind=kind))
-
-
-# ---------------------------------------------------------------------------
-# Result type
-# ---------------------------------------------------------------------------
+        self.edges.append(CPGEdge(src, dst, kind))
 
 
 @dataclass(frozen=True)
 class CanonicalOrderResult:
-    """Output of :func:`canonical_order`. The INV-5 anchor.
-
-    ``annotation`` is always the literal :data:`CPG_ORDER_HASH_ANNOTATION` and
-    MUST be persisted adjacent to ``cpg_order_hash`` everywhere it appears
-    (DOC-CMP-CORE-03 §5.1 / AC-CORE-03c). The hash is a true canonical form
-    (equal for isomorphic-but-differently-written programs) iff
-    ``fingerprint_class == "strong"``; on the ``weak`` path it is deterministic
-    over the same source but not canonical across isomorphism.
-    """
-
     canonical_order: list[NodeId]
     cpg_order_hash: Sha256
     fingerprint_class: FingerprintClass
     annotation: Annotation
     budget_exhausted: bool
     elapsed_ms: float
+    # Old positional/manual constructions remain explicitly legacy. Real v2
+    # producers below always supply namespaces, never these compatibility defaults.
+    identity_namespace: str = "scanipy-cpg-order/1"
+    budget_policy: str = "scanipy-budget-policy/1"
+    search_states: int = 0
 
 
-# ---------------------------------------------------------------------------
-# Algorithm 5 phases
-# ---------------------------------------------------------------------------
+def _u64(value: int) -> bytes:
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value < 2**64:
+        raise ValueError("graph integer must be unsigned 64-bit")
+    return value.to_bytes(8, "big")
 
 
-def _incident_edge_kinds(cpg: CPG) -> dict[NodeId, list[str]]:
-    """Sorted multiset of incident-edge kinds per node (both directions)."""
-    incident: dict[NodeId, list[str]] = {n.node_id: [] for n in cpg.nodes}
-    for e in cpg.edges:
-        if e.src in incident:
-            incident[e.src].append(e.kind)
-        if e.dst in incident:
-            incident[e.dst].append(e.kind)
-    for nid in incident:
-        incident[nid].sort()
-    return incident
+def _text(value: str) -> bytes:
+    if not isinstance(value, str):
+        raise ValueError("graph labels must be strings")
+    encoded = value.encode("utf-8", errors="strict")
+    return _u64(len(encoded)) + encoded
 
 
-def _neighbours(cpg: CPG) -> dict[NodeId, list[tuple[str, NodeId]]]:
-    """Per node, the list of ``(edge_kind, neighbour)`` over incident edges."""
-    nbrs: dict[NodeId, list[tuple[str, NodeId]]] = {n.node_id: [] for n in cpg.nodes}
-    for e in cpg.edges:
-        if e.src in nbrs:
-            nbrs[e.src].append((e.kind, e.dst))
-        if e.dst in nbrs:
-            nbrs[e.dst].append((e.kind, e.src))
-    return nbrs
-
-
-def _hash_label(*parts: object) -> bytes:
-    """Deterministic content hash of a label tuple."""
-    h = hashlib.sha256()
-    h.update(repr(parts).encode("utf-8"))
-    return h.digest()
-
-
-def _seed_labels(cpg: CPG) -> dict[NodeId, bytes]:
-    """Phase 1: ``label_0(n) = hash((kind, operator/literal, resolved_fqn,
-    sorted incident-edge-kind multiset))``."""
-    incident = _incident_edge_kinds(cpg)
-    return {
-        n.node_id: _hash_label(
-            n.kind,
-            n.operator_or_literal,
-            n.resolved_fqn,
-            tuple(incident[n.node_id]),
+def _label(node: CPGNode) -> bytes:
+    return b"".join(
+        _text(value)
+        for value in (
+            node.kind,
+            node.operator_or_literal,
+            node.resolved_fqn,
+            node.enclosing_decl_fqn,
         )
-        for n in cpg.nodes
-    }
-
-
-def _partition_signature(labels: dict[NodeId, bytes]) -> tuple[bytes, ...]:
-    """A canonical signature of the label partition for fixpoint detection.
-
-    Order-independent: built from the sorted multiset of labels so that
-    re-labelling does not change the signature if the partition is unchanged.
-    """
-    return tuple(sorted(labels.values()))
-
-
-def _wl_refine_to_fixpoint(cpg: CPG, labels: dict[NodeId, bytes]) -> dict[NodeId, bytes]:
-    """Phase 2: 2-WL refinement.
-
-    ``label_{k+1}(n) = hash((label_k(n), sorted multiset of
-    (edge_kind, label_k(neighbour)) over incident edges))`` until the partition
-    stops refining. Bounded by ``|nodes|`` iterations (a partition can refine at
-    most ``|nodes|`` times).
-    """
-    nbrs = _neighbours(cpg)
-    prev_sig = _partition_signature(labels)
-    for _ in range(len(cpg.nodes)):
-        new_labels: dict[NodeId, bytes] = {}
-        for nid, lbl in labels.items():
-            neighbour_labels = sorted((kind, labels[other]) for kind, other in nbrs[nid])
-            new_labels[nid] = _hash_label(lbl, tuple(neighbour_labels))
-        new_sig = _partition_signature(new_labels)
-        labels = new_labels
-        if new_sig == prev_sig:
-            break
-        prev_sig = new_sig
-    return labels
-
-
-def _classes_by_label(labels: dict[NodeId, bytes]) -> dict[bytes, list[NodeId]]:
-    """Group node ids by their refined label (the equivalence classes)."""
-    classes: dict[bytes, list[NodeId]] = {}
-    for nid, lbl in labels.items():
-        classes.setdefault(lbl, []).append(nid)
-    return classes
-
-
-def _partition_is_total(labels: dict[NodeId, bytes]) -> bool:
-    """True iff every node has a distinct label (no residual symmetry)."""
-    return len(set(labels.values())) == len(labels)
-
-
-def _break_by_enclosing_decl(cpg: CPG, labels: dict[NodeId, bytes]) -> dict[NodeId, bytes]:
-    """Tie-break residual symmetric classes first by enclosing-declaration
-    canonical order, refining each node's label with its enclosing-decl FQN."""
-    node_by_id = {n.node_id: n for n in cpg.nodes}
-    return {
-        nid: _hash_label(lbl, node_by_id[nid].enclosing_decl_fqn) for nid, lbl in labels.items()
-    }
-
-
-def _individualise_refine(
-    cpg: CPG,
-    labels: dict[NodeId, bytes],
-    *,
-    B: int,  # noqa: N803  (budget symbol B is part of the (B, T) public contract)
-    deadline: float,
-) -> dict[NodeId, bytes]:
-    """Phase 3: bounded individualisation-refinement under the shared ``(B, T)``
-    budget. Pick a representative of a residual symmetric class, individualise
-    it (give it a unique label), re-run 2-WL, and recurse until the partition is
-    total. Each search-tree node visited counts against ``B``; wall-clock is
-    checked against ``deadline``. Raises :class:`BudgetExhausted` on overrun.
-    """
-    search_nodes = 0
-    work = labels
-    while not _partition_is_total(work):
-        search_nodes += 1
-        if search_nodes >= B:
-            raise BudgetExhausted
-        if time.monotonic() >= deadline:
-            raise BudgetExhausted
-        classes = _classes_by_label(work)
-        # Deterministically pick the smallest non-singleton class (by label
-        # bytes), then its lowest-id member as the individualisation target.
-        target_class = min(
-            (lbl for lbl, members in classes.items() if len(members) > 1),
-            key=lambda lbl: (len(classes[lbl]), lbl),
-        )
-        target = min(classes[target_class])
-        individualised = dict(work)
-        individualised[target] = _hash_label(work[target], b"<individualised>", int(target))
-        work = _wl_refine_to_fixpoint(cpg, individualised)
-    return work
-
-
-def _stable_order_fallback(cpg: CPG, labels: dict[NodeId, bytes]) -> list[NodeId]:
-    """Phase 4: deterministic stable-order fallback on budget exhaustion.
-
-    Order keyed by ``(declaration_hash, structural_path_from_declaration_root,
-    edge_kind-proxy, refined_label, node_id)`` where
-    ``declaration_hash := sha256(enclosing_declaration.fqn)``. Total,
-    deterministic, parse-order-independent — but **not** canonical across
-    isomorphic programs (hence ``fingerprint_class = "weak"``).
-    """
-    node_by_id = {n.node_id: n for n in cpg.nodes}
-
-    def key(nid: NodeId) -> tuple[bytes, str, bytes, int]:
-        node = node_by_id[nid]
-        decl_hash = hashlib.sha256(node.enclosing_decl_fqn.encode("utf-8")).digest()
-        return (decl_hash, node.structural_path, labels[nid], int(nid))
-
-    return sorted((n.node_id for n in cpg.nodes), key=key)
-
-
-def _emit_order(labels: dict[NodeId, bytes]) -> list[NodeId]:
-    """Emit a total order from a total partition: sort by (label, node_id)."""
-    return sorted(labels.keys(), key=lambda nid: (labels[nid], int(nid)))
-
-
-def _digest_order(order: list[NodeId]) -> Sha256:
-    """sha256 over the canonical node order (8-byte big-endian per id)."""
-    h = hashlib.sha256()
-    for nid in order:
-        h.update(int(nid).to_bytes(8, "big", signed=False))
-    return Sha256(h.digest())
-
-
-def _result(
-    order: list[NodeId],
-    klass: FingerprintClass,
-    *,
-    budget_exhausted: bool,
-    elapsed_s: float,
-) -> CanonicalOrderResult:
-    return CanonicalOrderResult(
-        canonical_order=order,
-        cpg_order_hash=_digest_order(order),
-        fingerprint_class=klass,
-        annotation=CPG_ORDER_HASH_ANNOTATION,
-        budget_exhausted=budget_exhausted,
-        elapsed_ms=elapsed_s * 1000.0,
     )
+
+
+def validate_cpg(cpg: CPG, budget: CanonicalizationBudget | None = None) -> None:
+    """Reject malformed/extended models instead of silently hashing a projection.
+
+    New semantic fields must deliberately extend/version the encoding and may
+    not disappear in a legacy graph copy or canonical hash.
+    """
+    if getattr(cpg, "model_version", "scanipy-cpg/1") != "scanipy-cpg/1":
+        raise ValueError("unsupported CPG model version for canonical graph encoding")
+    node_fields = {
+        "node_id",
+        "kind",
+        "operator_or_literal",
+        "resolved_fqn",
+        "enclosing_decl_fqn",
+        "structural_path",
+    }
+    seen: set[NodeId] = set()
+    for node in cpg.nodes:
+        if budget:
+            budget.check()
+        if set(vars(node)) != node_fields:
+            raise ValueError("unsupported CPG node fields; update the versioned semantic encoding")
+        _u64(node.node_id)
+        if node.node_id in seen:
+            raise ValueError("duplicate CPG node ID")
+        seen.add(node.node_id)
+        _label(node)
+        _text(node.structural_path)
+    for edge in cpg.edges:
+        if budget:
+            budget.check()
+        if set(vars(edge)) != {"src", "dst", "kind"}:
+            raise ValueError("unsupported CPG edge fields; update the versioned semantic encoding")
+        _u64(edge.src)
+        _u64(edge.dst)
+        if edge.src not in seen or edge.dst not in seen:
+            raise ValueError("CPG edge references a missing node")
+        if not edge.kind:
+            raise ValueError("CPG edge kind must be nonempty")
+        _text(edge.kind)
+
+
+def encode_graph(
+    cpg: CPG, order: list[NodeId], *, budget: CanonicalizationBudget | None = None
+) -> bytes:
+    """Framed labels and directed typed edges, with multiplicity and no IDs."""
+    validate_cpg(cpg, budget)
+    by_id = {node.node_id: node for node in cpg.nodes}
+    if len(order) != len(by_id) or set(order) != set(by_id):
+        raise ValueError("graph encoding requires a complete node permutation")
+    rank = {node: i for i, node in enumerate(order)}
+    parts = [b"SCANIPY-CANONICAL-GRAPH/2\n", _u64(len(order))]
+    for node in order:
+        if budget:
+            budget.check()
+        parts.append(_label(by_id[node]))
+    edges = sorted(
+        (edge.kind.encode("utf-8"), rank[edge.src], rank[edge.dst]) for edge in cpg.edges
+    )
+    parts.append(_u64(len(edges)))
+    for kind, src, dst in edges:
+        if budget:
+            budget.check()
+        parts.append(_u64(len(kind)) + kind + _u64(src) + _u64(dst))
+    result = b"".join(parts)
+    if budget:
+        budget.check()
+    return result
+
+
+def _intern(signatures: dict[NodeId, bytes]) -> dict[NodeId, int]:
+    """Bytewise ranks of exact framed signatures, not hash-based equivalence."""
+    colors = {signature: i for i, signature in enumerate(sorted(set(signatures.values())))}
+    return {node: colors[signature] for node, signature in signatures.items()}
+
+
+@dataclass
+class _GraphIndex:
+    labels: dict[NodeId, bytes]
+    incoming: dict[NodeId, list[tuple[bytes, NodeId]]]
+    outgoing: dict[NodeId, list[tuple[bytes, NodeId]]]
+    pairs: dict[tuple[NodeId, NodeId], tuple[bytes, ...]]
+
+    @classmethod
+    def build(cls, cpg: CPG, budget: CanonicalizationBudget) -> _GraphIndex:
+        validate_cpg(cpg, budget)
+        labels = {node.node_id: _label(node) for node in cpg.nodes}
+        incoming: dict[NodeId, list[tuple[bytes, NodeId]]] = {node: [] for node in labels}
+        outgoing: dict[NodeId, list[tuple[bytes, NodeId]]] = {node: [] for node in labels}
+        pairs: dict[tuple[NodeId, NodeId], list[bytes]] = {}
+        for edge in cpg.edges:
+            budget.check()
+            kind = edge.kind.encode("utf-8")
+            incoming[edge.dst].append((kind, edge.src))
+            outgoing[edge.src].append((kind, edge.dst))
+            pairs.setdefault((edge.src, edge.dst), []).append(kind)
+        return cls(
+            labels,
+            incoming,
+            outgoing,
+            {pair: tuple(sorted(kinds)) for pair, kinds in pairs.items()},
+        )
+
+    def refine(
+        self, markers: dict[NodeId, int], budget: CanonicalizationBudget
+    ) -> dict[NodeId, int]:
+        colors = _intern(
+            {node: label + _u64(markers.get(node, 0)) for node, label in self.labels.items()}
+        )
+        while colors:
+            signatures: dict[NodeId, bytes] = {}
+            for node in colors:
+                budget.check()
+                parts = [_u64(colors[node])]
+                for adjacency in (self.incoming[node], self.outgoing[node]):
+                    neighbors = sorted((kind, colors[other]) for kind, other in adjacency)
+                    parts.append(_u64(len(neighbors)))
+                    parts.extend(_u64(len(kind)) + kind + _u64(color) for kind, color in neighbors)
+                signatures[node] = b"".join(parts)
+            refined = _intern(signatures)
+            if len(set(refined.values())) == len(set(colors.values())):
+                return refined
+            colors = refined
+        return colors
+
+    def swap_is_automorphism(self, a: NodeId, b: NodeId, budget: CanonicalizationBudget) -> bool:
+        """Exact transposition certificate, not a WL/symmetry heuristic.
+
+        Outside vertices are fixed. Every affected directed edge/multiplicity,
+        self-loop, reciprocal edge and semantic label is checked. Callers only
+        compare members of one marker-preserving color cell. Corresponding
+        child trees therefore have identical certificates modulo the swap.
+        """
+        if self.labels[a] != self.labels[b]:
+            return False
+        if self.pairs.get((a, a), ()) != self.pairs.get((b, b), ()):
+            return False
+        if self.pairs.get((a, b), ()) != self.pairs.get((b, a), ()):
+            return False
+        for other in self.labels:
+            budget.check()
+            if other not in (a, b) and (
+                self.pairs.get((a, other), ()) != self.pairs.get((b, other), ())
+                or self.pairs.get((other, a), ()) != self.pairs.get((other, b), ())
+            ):
+                return False
+        return True
+
+
+def _canonical_search(
+    cpg: CPG, index: _GraphIndex, budget: CanonicalizationBudget
+) -> tuple[list[NodeId], bytes]:
+    pending: list[dict[NodeId, int]] = [{}]
+    best: tuple[bytes, tuple[NodeId, ...]] | None = None
+    while pending:
+        budget.enter_state()
+        markers = pending.pop()
+        colors = index.refine(markers, budget)
+        cells: dict[int, list[NodeId]] = {}
+        for node, color in colors.items():
+            cells.setdefault(color, []).append(node)
+        ambiguous = [(len(nodes), color) for color, nodes in cells.items() if len(nodes) > 1]
+        if not ambiguous:
+            order = sorted(colors, key=colors.__getitem__)
+            candidate = (encode_graph(cpg, order, budget=budget), tuple(order))
+            if best is None or candidate < best:
+                best = candidate
+            continue
+        _, target_color = min(ambiguous)
+        representatives: list[NodeId] = []
+        for node in sorted(cells[target_color]):
+            if not any(
+                index.swap_is_automorphism(node, other, budget) for other in representatives
+            ):
+                representatives.append(node)
+        for node in reversed(representatives):
+            budget.check()
+            pending.append({**markers, node: len(markers) + 1})
+    assert best is not None  # Empty graph: one empty leaf.
+    return list(best[1]), best[0]
+
+
+def _stable_order_fallback(cpg: CPG) -> list[NodeId]:
+    """Same-source fallback from untouched input, never a partial search state."""
+    incident: dict[NodeId, list[str]] = {node.node_id: [] for node in cpg.nodes}
+    for edge in cpg.edges:
+        incident[edge.src].append(edge.kind)
+        incident[edge.dst].append(edge.kind)
+    return [
+        node.node_id
+        for node in sorted(
+            cpg.nodes,
+            key=lambda node: (
+                hashlib.sha256(node.enclosing_decl_fqn.encode("utf-8")).digest(),
+                node.structural_path.encode("utf-8"),
+                tuple(sorted(incident[node.node_id])),
+                _label(node),
+                node.node_id,
+            ),
+        )
+    ]
 
 
 def canonical_order(
     cpg: CPG,
     *,
-    B: int = DEFAULT_B,  # noqa: N803  ((B, T) budget symbols are the public contract)
+    B: int = DEFAULT_B,  # noqa: N803
     T: Duration = DEFAULT_T,  # noqa: N803
+    _budget: CanonicalizationBudget | None = None,
 ) -> CanonicalOrderResult:
-    """Compute a deterministic enumeration of ``cpg`` plus ``cpg_order_hash``.
+    """V2 identity or explicit deadline failure; B exhaustion alone is weak.
 
-    Pure: the same ``(cpg, B, T)`` always yields the same
-    :class:`CanonicalOrderResult`. No I/O, no global state, no randomness.
-
-    ``strong`` is returned when 2-WL + bounded individualisation-refinement
-    converged to a total partition within ``(B, T)``; ``weak`` is returned when
-    the budget was exhausted and the stable-order fallback was used. The ``weak``
-    path is a defined success mode, not a failure (DOC-CMP-CORE-03 §7.2): the
-    order is still deterministic over the same source.
-
-    The returned ``annotation`` is always :data:`CPG_ORDER_HASH_ANNOTATION` and
-    MUST be persisted adjacent to the hash everywhere (INV-5 / AC-CORE-03c).
+    ``_budget`` is the internal shared-invocation seam for slice normalization.
+    Strong encoded structure is invariant; its raw-ID mapping is not. Consumers
+    must retain ``identity_namespace`` instead of emitting new hashes as v1.
     """
-    t0 = time.monotonic()
-    deadline = t0 + float(T)
-
-    if len(cpg.nodes) == 0:
-        # Trivial canonical form: the empty order over the empty graph.
-        return _result([], "strong", budget_exhausted=False, elapsed_s=time.monotonic() - t0)
-
-    labels = _seed_labels(cpg)
-    labels = _wl_refine_to_fixpoint(cpg, labels)
-
-    if _partition_is_total(labels):
-        order = _emit_order(labels)
-        return _result(order, "strong", budget_exhausted=False, elapsed_s=time.monotonic() - t0)
-
-    # Tie-break residual symmetry by enclosing-declaration order, then refine.
-    labels = _break_by_enclosing_decl(cpg, labels)
-    labels = _wl_refine_to_fixpoint(cpg, labels)
-    if _partition_is_total(labels):
-        order = _emit_order(labels)
-        return _result(order, "strong", budget_exhausted=False, elapsed_s=time.monotonic() - t0)
-
+    budget = _budget if _budget is not None else CanonicalizationBudget.start(B, T)
+    index = _GraphIndex.build(cpg, budget)
+    klass: FingerprintClass = "strong"
     try:
-        labels = _individualise_refine(cpg, labels, B=B, deadline=deadline)
-        order = _emit_order(labels)
-        return _result(order, "strong", budget_exhausted=False, elapsed_s=time.monotonic() - t0)
+        order, encoded = _canonical_search(cpg, index, budget)
     except BudgetExhausted:
-        order = _stable_order_fallback(cpg, labels)
-        return _result(order, "weak", budget_exhausted=True, elapsed_s=time.monotonic() - t0)
-
-
-# ---------------------------------------------------------------------------
-# INV-5 payload helpers (the payload CMP-FND-01/02/03 splice into their records)
-# ---------------------------------------------------------------------------
-#
-# CMP-CORE-03 does not persist anything itself (DOC-CMP-CORE-03 §4.3). It
-# produces the payload that the downstream emitters write. These helpers are the
-# single canonical shape of that payload: each one carries the hash, the
-# annotation (from the constant), and the fingerprint_class — JSON-adjacent.
-# Downstream components MUST import the annotation constant via these helpers (or
-# the constant directly), never reconstruct it.
+        budget.check()
+        klass = "weak"
+        order = _stable_order_fallback(cpg)
+        encoded = encode_graph(cpg, order, budget=budget)
+    domain = b"SCANIPY-CPG-STRONG/2\n" if klass == "strong" else b"SCANIPY-CPG-WEAK/2\n"
+    digest = Sha256(hashlib.sha256(domain + encoded).digest())
+    return CanonicalOrderResult(
+        order,
+        digest,
+        klass,
+        CPG_ORDER_HASH_ANNOTATION,
+        klass == "weak",
+        budget.elapsed_ms(),
+        GRAPH_IDENTITY_NAMESPACE,
+        BUDGET_POLICY,
+        budget.search_states,
+    )
 
 
 def to_provenance_fields(result: CanonicalOrderResult) -> dict[str, str]:
-    """``provenance_records`` field trio (CMP-FND-03, DOC-PROVENANCE §3.1).
-
-    The annotation is co-resident with the hash in the same record (INV-5).
-    """
+    """Co-resident graph class, annotation and namespace, never silently v1."""
     return {
         "cpg_order_hash": result.cpg_order_hash.hex(),
         "cpg_order_hash_annotation": CPG_ORDER_HASH_ANNOTATION,
         "fingerprint_class": result.fingerprint_class,
+        "cpg_order_namespace": result.identity_namespace,
+        "canonicalization_budget_policy": result.budget_policy,
     }
 
 
 def to_sarif_properties(result: CanonicalOrderResult) -> dict[str, str]:
-    """SARIF ``result.properties`` field trio (CMP-FND-01, DOC-SARIF).
-
-    The annotation key is JSON-adjacent to the hash key in the same block.
-    """
-    return {
-        "cpg_order_hash": result.cpg_order_hash.hex(),
-        "cpg_order_hash_annotation": CPG_ORDER_HASH_ANNOTATION,
-        "fingerprint_class": result.fingerprint_class,
-    }
+    return to_provenance_fields(result)
 
 
 def to_auditor_export_fields(result: CanonicalOrderResult) -> dict[str, str]:
-    """Auditor-export JSON field trio (CMP-FND-03, DOC-PROVENANCE §8.1).
-
-    The annotation is JSON-adjacent to the hash so an auditor encounters it
-    without consulting a separate document (INV-5 / AC-FND-03b).
-    """
-    return {
-        "cpg_order_hash": result.cpg_order_hash.hex(),
-        "cpg_order_hash_annotation": CPG_ORDER_HASH_ANNOTATION,
-        "fingerprint_class": result.fingerprint_class,
-    }
+    return to_provenance_fields(result)
