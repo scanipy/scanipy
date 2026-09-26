@@ -759,7 +759,8 @@ as a completed detector. Every event is canonical closed JSON (<=65536 bytes):
 schema:"scanipy-local-runtime-event/1",attempt_id:UUID,sequence:positive int64,
 previous_event_digest:H|null,event_id:UUID,
 kind:"reserved"|"loaded"|"created"|"started"|"observed"|"released"|
-     "domain-exited"|"cleanup"|"admitted"|"failed"|"orphaned",
+     "domain-exited"|"cleanup"|"admitted"|"failed"|"orphaned"|
+     "call-intent"|"call-result",
 recorded_at:UtcInstant,host_boot_id:UUID,elapsed_ms:int,
 operation_id:UUID,mode:Mode,request_digest:H,
 installation_id:UUID,installation_generation:positive int64,
@@ -815,20 +816,39 @@ Closed payload variants, with no free-form caller-defined metadata:
 
 - `reserved`: `{launch_sha256:H,launch_bytes_ref:BlobRef,input:BlobRef}`.
 - `loaded`: `{metadata:[MetadataRef x4],measurement_elapsed_ms:int,
-  cli_file:FileObservation,socket:SocketObservation,daemon_raw:BlobRef}`.
-- `created`: `{create_call:CallRef,inspect:BlobRef,config_digest:H}`.
+  cli_file:FileObservation,socket:SocketObservation,daemon_calls:[CallRef x2]}`;
+  daemon version then info, retaining their actual invocations and outputs.
+- `created`: `{create_call:CallRef,inspect_call:CallRef,config_digest:H}`.
 - `started`: `{start_call_id:UUID,pid:int,start_ticks:int,control_path:AbsolutePath}`.
-- `observed`: `{sample:KernelObservation,inspect:BlobRef,prerequisite:BlobRef}`.
+- `observed`: `{sample:KernelObservation,inspect_call:CallRef,prerequisite:BlobRef}`.
 - `released`: `{release:BlobRef,prerequisite:BlobRef,published_at:UtcInstant}`.
-- `domain-exited`: `{start_call:CallRef,container_inspect:BlobRef,
+- `domain-exited`: `{start_call:CallRef,container_inspect_call:CallRef,
   domain_result:BlobRef|null,domain_validation:"valid"|"rejected"|"invalid"}`.
 - `cleanup`: `{state:"complete"|"incomplete",calls:[CallRef,...],
-  final_inspect:BlobRef|null,cgroup_empty:bool|null,client_reaped:bool,
+  final_inspect_call:CallRef|null,cgroup_empty:bool|null,client_reaped:bool,
   parent_lease_action:"none",invocation_slot:"held"}`.
 - `admitted`: `{result_digest:H,prerequisite:BlobRef,cleanup_event_digest:H,
   parent_lease_action:"none",invocation_slot:"released"}`.
 - `failed`/`orphaned`: `{phase:Phase,code:FailureCode,calls:[CallRef,...],
   kernel:BlobRef|null,primary_error_id:UUID|null,cleanup_event_digest:H|null}`.
+- `call-intent`: `{call_id:UUID,call_sequence:int,operation:CliOperation,
+  target:string|null,invocation:BlobRef}`.
+- `call-result`: `{intent_event_digest:H,call:CallRef}`.
+
+The last two complete event variants are capped at8192 bytes and share the
+existing512 KiB metadata/32 MiB total attempt budgets. Call sequence is1..16;
+the one operation enum and operation-specific target syntax are defined in
+[PROCESS-EVIDENCE.md](PROCESS-EVIDENCE.md). Persist/read back the requested
+invocation and intent before a CLI call; persist/read back actual result blobs
+before appending call-result. Exact replay is idempotent; changed replay fails.
+Only one execution/result is allowed per call ID. Results can complete out of
+ordinal order while attached start runs concurrently with bounded inspection.
+
+`started.start_call_id` references its preceding start intent; other CallRefs
+reference preceding same-attempt call-result events with matching operations.
+The inspect CallRefs above retain the raw response through actual stdout rather
+than dropping the invocation/failure association. An unresolved call has an
+unmatched durable intent, not fabricated empty output or a completed result.
 
 `BlobRef={sha256:H,size:int,key:Text}` has `key` exactly `blobs/` plus that H
 and refers only to the attempt's
@@ -845,8 +865,18 @@ and bounded stream bytes, not a fabricated inner-process outcome. The serializer
 must preserve optional unknowns, original reason/cleanup, counts/hash/EOF and
 truncation from those actual models; exact raw failures remain private causes.
 No arbitrary environment or exception text appears in user-facing summaries.
-The call serializer's exact schema is an explicit required controller sub-slice,
-not permission to invent a second incompatible transport record here.
+The exact proposed codec, ten-operation enum, acyclic intent/result references,
+stored/live separation, spool custody, loss-graph overflow and bounded future
+store API are in [PROCESS-EVIDENCE.md](PROCESS-EVIDENCE.md). Codec/store/controller
+implementation remains pending. Intended and actual invocation bytes remain
+distinct, including mismatches; diagnostic error graphs are explicitly lossy
+and cannot replace live original exception chains or reconstruct authority.
+The codec additionally binds a directly selected exact transport-error carrier
+(or the root error's immediate explicit carrier cause) to its complete supplied
+outcome; it never searches an arbitrary exception graph for current-call proof.
+Key-inclusive pre-parse bounds and retained-graph semantic validation are
+mandatory even when stored JSON is canonical. Original child handles, notes and
+live primary/cleanup chains remain private and unchanged.
 
 `KernelObservation` is closed:
 
