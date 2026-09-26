@@ -7,6 +7,7 @@ import json
 import os
 from contextlib import contextmanager
 from dataclasses import dataclass, replace
+from itertools import count
 from pathlib import Path, PosixPath
 from threading import Event, Thread, current_thread
 from typing import Any
@@ -254,7 +255,15 @@ def _maximum_history(mode: str) -> History:
 
 
 @pytest.mark.parametrize("mode", evidence._MODES)
-def test_maximum_initial_modes_and_work_reservations(tmp_path: Path, mode: str) -> None:
+def test_maximum_initial_modes_and_work_reservations(
+    tmp_path: Path, mode: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from types import SimpleNamespace
+
+    # Capacity/accounting control with real I/O, not a host-latency assertion.
+    # Isolate this module binding; never mutate the shared stdlib time module.
+    ticks = count(1_000_000_000)
+    monkeypatch.setattr(evidence, "time", SimpleNamespace(monotonic_ns=lambda: next(ticks)))
     history = _maximum_history(mode)
     publisher = evidence._open_diagnostic_publisher(_installation(tmp_path))
     try:
@@ -1586,6 +1595,8 @@ def _fault_invocation(
     cleanup_target: tuple[int, _FaultPoint] | None = None,
     cleanup_when: str = "before",
 ) -> _FilesystemTrace:
+    from types import SimpleNamespace
+
     path.mkdir(mode=0o700)
     installation = _installation(path)
     trace = _FilesystemTrace(path)
@@ -1598,6 +1609,8 @@ def _fault_invocation(
     failure: BaseException | None = None
     result: Any = None
     with pytest.MonkeyPatch.context() as patch:
+        ticks = count(1_000_000_000)
+        patch.setattr(evidence, "time", SimpleNamespace(monotonic_ns=lambda: next(ticks)))
         trace.install(patch)
         try:
             scenario.prepare()
@@ -1612,7 +1625,38 @@ def _fault_invocation(
             if target is None:
                 assert failure is None, failure
             else:
-                assert trace.injected == 1, (phase, target, trace.points)
+                error_kind = {
+                    evidence.RuntimePublicationError: "RuntimePublicationError",
+                    evidence._StoredStateChangedError: "StoredStateChangedError",
+                    KeyboardInterrupt: "KeyboardInterrupt",
+                    SystemExit: "SystemExit",
+                    AssertionError: "AssertionError",
+                    OSError: "OSError",
+                    type(None): "none",
+                }.get(type(failure), "other")
+                safe_reason = "none"
+                if type(failure) in (
+                    evidence.RuntimePublicationError,
+                    evidence._StoredStateChangedError,
+                ):
+                    reason = str(failure)
+                    safe_reason = reason if reason in evidence._REASONS else "other"
+                if trace.injected != 1:
+                    # Keep the structured diagnostic independent of pytest's
+                    # assertion-display truncation and rewriting.
+                    raise AssertionError(
+                        (
+                            "missed-injection",
+                            error_kind,
+                            safe_reason,
+                            phase,
+                            target[0],
+                            target[1].operation,
+                            target[1].ordinal,
+                            len(trace.points),
+                            trace.injected,
+                        )
+                    )
                 assert result is None, "a failing syscall must not return a handle/ack"
                 assert failure is not None
                 assert _error_contains(failure, trace.failure)
@@ -3212,3 +3256,102 @@ def test_history_corrected_normal_close_has_one_attempt_and_no_restore(
     files.finish(None, None)
     assert closed == ([11, "iterator"] if kind == "fd" else ["iterator"])
     assert files.work.fd_count == 0
+
+
+@pytest.mark.parametrize("root_scope", (False, True))
+@pytest.mark.parametrize("offset", (-1, 0, 1))
+def test_publication_deadline_exact_boundary_does_not_reset(
+    monkeypatch: pytest.MonkeyPatch, root_scope: bool, offset: int
+) -> None:
+    from types import SimpleNamespace
+
+    now = [1_000_000_000]
+    monkeypatch.setattr(evidence, "time", SimpleNamespace(monotonic_ns=lambda: now[0]))
+    work = evidence._Work(root=root_scope)
+    started = work.started
+    now[0] = started + (35_000_000_000 if root_scope else 2_000_000_000) + offset
+    if offset < 0:
+        work.check()
+    else:
+        with pytest.raises(evidence.RuntimePublicationError, match=r"^deadline$"):
+            work.check()
+    assert work.started == started == 1_000_000_000
+
+
+def test_systematic_fault_diagnostic_retains_induced_deadline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from types import SimpleNamespace
+
+    phase = "member-refusal"
+    original_time = evidence.time
+    baseline = _fault_invocation(tmp_path / "baseline", phase)
+    assert evidence.time is original_time
+    target = next(
+        (index, point)
+        for index, point in reversed(list(enumerate(baseline.points)))
+        if point.operation == "close"
+    )
+    original_run, original_digest = _FaultScenario.run, evidence._digest
+    deadlines: list[evidence.RuntimePublicationError] = []
+
+    def expired_digest(data: bytes, work: evidence._Work) -> bytes:
+        original_digest(data, work)
+        started = work.started
+        with pytest.MonkeyPatch.context() as patch:
+            patch.setattr(
+                evidence,
+                "time",
+                SimpleNamespace(monotonic_ns=lambda: started + 2_000_000_000),
+            )
+            try:
+                work.check()
+            except evidence.RuntimePublicationError as error:
+                assert work.started == started and str(error) == "deadline"
+                deadlines.append(error)
+                raise
+        raise AssertionError("actual work guard accepted its exact deadline")
+
+    def expired_run(scenario: _FaultScenario) -> Any:
+        # Only the selected run is wrapped, never its preparation/baseline.
+        # Nested patches restore the private invocation clock before cleanup.
+        with pytest.MonkeyPatch.context() as patch:
+            patch.setattr(evidence, "_digest", expired_digest)
+            return original_run(scenario)
+
+    monkeypatch.setattr(_FaultScenario, "run", expired_run)
+    with pytest.raises(AssertionError) as caught:
+        _fault_invocation(
+            tmp_path / "induced-deadline",
+            phase,
+            target=target,
+            when="after",
+            failure_class=KeyboardInterrupt,
+        )
+    assert evidence.time is original_time
+    assert len(deadlines) == 1 and type(deadlines[0]) is evidence.RuntimePublicationError
+    assert len(caught.value.args) == 1
+    diagnostic = caught.value.args[0]
+    assert type(diagnostic) is tuple and len(diagnostic) == 9
+    assert tuple(type(value) for value in diagnostic) == (
+        str,
+        str,
+        str,
+        str,
+        int,
+        str,
+        int,
+        int,
+        int,
+    )
+    assert diagnostic[:7] == (
+        "missed-injection",
+        "RuntimePublicationError",
+        "deadline",
+        phase,
+        target[0],
+        "close",
+        target[1].ordinal,
+    )
+    assert len(diagnostic) == 9 and 0 < diagnostic[7] <= target[0] and diagnostic[8] == 0
+    assert "task-private failure payload" not in str(diagnostic)
