@@ -212,3 +212,41 @@ unresolved until a separately reviewed consumer change uses this classifier
 with the required raw-origin/identity/link/cleanup gates. No source-only result
 here establishes installation, a successful read, replay acknowledgement,
 current authority, native execution, or complete Black Hat acceptance.
+
+## 7. Coordinated qualification composition and fixture ownership
+
+2026-09-26 clarification under
+[DECISION-BHMEA-01](../DECISION-BHMEA-01-current-execution-authority-2026-09-25.md).
+Section5 records the **five-path historical-read owner's allocation**, not the
+complete later qualification PR. Its instruction not to edit the existing
+repository unit module applies to that owner. Root separately allocated both
+shared fixture paths to the canonical fixture owner, then reviewed their
+composition. No author was authorized to overwrite another owner's work.
+
+The root-approved fixture allocation extends Section5's earlier literal-0007
+allowlist-only scope for that separate fixture owner: it also includes explicit
+opt-in administration preparation and append-only controlled tests. The three
+reviewed source slices composing qualification are:
+
+| Slice | Reviewed source commit | Allocated paths |
+| --- | --- | --- |
+| Historical-read owner | `85dea23943d4a1053806a4499ee833cf1031cf2d` | Section5's five paths only |
+| Shared fixture owner | `04f043bdca2b0ef8b05cf168f9f0ecd3e989431d` | `tests/occurrence_store_postgres.py` and `tests/unit/test_accepted_ledger_repository.py` |
+| Required CI selection | `f192547effd2325f7d61ddeb3faf61a3c918ab5c` | `.github/workflows/ci.yml`, `tests/unit/test_accepted_ledger_ci.py`, `docs/workflows/ci.md` |
+
+The fixture-owned unit append tests administration routing, bounded migration
+transport, staged login/OID ownership and cleanup. It preserves the original
+1,914-line unit prefix; it is not an unallocated historical-owner facade edit.
+Administration remains exact-bool opt-in with fixed disposable routing and
+explicit root/isolated-context requirements. Its controlled checks do not prove
+SCRAM authentication, root-peer behavior, a native A2 run or installation.
+The ordinary183-case SQL/security/historical job uses administration=False,
+preserving accepted0006 and occurrence0005 defaults and existing login behavior.
+The opt-in administration setup retains its ten-ticket ceiling in this slice;
+later A2 composition, including its explicit eleventh ticket, is separate work.
+
+This clarification resolves the composed PR's ownership boundary; it changes
+no SQL, Python behavior, thresholds or previous evidence. Earlier source-only
+checkpoints remain dated history. Actual qualification reports and exact-head
+canonical approval must still be read before merge; no full R/C/G completion,
+operator identity, runtime activation or release authority follows.
