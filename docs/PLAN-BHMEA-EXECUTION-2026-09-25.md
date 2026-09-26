@@ -2,8 +2,8 @@
 
 | Field | Value |
 |---|---|
-| Updated | 2026-09-25 |
-| Snapshot | Revision 15; observed 2026-09-25 23:31 UTC, explicit 23:36/23:38 updates; accepted main `0e1b2b9a`; earlier cutoffs preserved |
+| Updated | 2026-09-26 |
+| Snapshot | Revision 16; fixed 2026-09-26 02:14:58 UTC cutoff plus explicit 02:26 update; accepted main `c5c862e3`; earlier observations preserved |
 | Target | FULL_SUBMISSION; all C01–C18 claims and applicable R01–R20 acceptance items |
 | Tracking | [Umbrella issue #362](https://github.com/scanipy/scanipy/issues/362) |
 | Presentation | December 2 or 3, 2026; exact date unconfirmed |
@@ -127,6 +127,10 @@ source custody alone does not make an unsafe checkout trustworthy. See the
 [active safety findings](evidence/2026-09-25-foundation-merges/README.md#other-active-falsifiers-and-next-actions).
 
 ## 3. Work ownership and next actions
+
+**Current queue:** [Revision16, section7](#7-revision-16-execution-queue--021458-utc-september-26).
+The dated queues below are preserved historical observations, not instructions
+to repeat accepted work or silently transfer old test results to newer source.
 
 ### Revision 15 execution queue — observed at 23:31 UTC
 
@@ -687,3 +691,94 @@ Ask only when needed; do not repeatedly ask settled questions:
 Update the ledger and issue links as work lands. Re-run affected checks after
 merges; do not carry evidence across incompatible schema, corpus, tool, source,
 policy, or identity-version changes.
+
+## 7. Revision 16 execution queue — 02:14:58 UTC, September 26
+
+Fixed cutoff: **2026-09-26 02:14:58 UTC**. Accepted main
+`c5c862e3035ac974af82be7f2b69680cf3ea4c70`, tree
+`ea4d36f4e344a250d0ed1df7b9e8fc519c08deff`, contains B resolver #418,
+Revision15 #423, typecheck correction #424, E process-evidence #422 and F
+journal #425. The [evidence append](evidence/2026-09-25-foundation-merges/README.md#revision-16--fixed-021458-utc-cutoff-september-26)
+separates accepted repository scope from local/running work, old failures and
+unmet operational obligations. No R/C/G state or original TODO is removed.
+
+1. **Root / pure administration verifier #426:** exact head `ed4dd545` has
+   5,213 full passes /51 skips, including 164 new controls, 89 actual occurrence
+   PG and 309 journal cases. First malformed root URL caused 62 passes,
+   24 skips and one setup error; corrected full evidence is separate. First
+   push passed hooks but failed with SSH exit141; ordinary retry passed all
+   phases and published at 02:10:51. At cutoff CI36210889992 is running and
+   canonical36210889947 pending. Complete actual exact-head checks, successful
+   canonical APPROVE and merge-artifact verification before accepting it.
+   Gate3's five passes do not replace the absent/skipped canary corpus.
+2. **Root/schema / AL-03:** normal checkpoint/current `7c992e15` has 18 paths,
+   reviewed descriptor access and isolated CI wiring, with 1,570 combined pure
+   passes and 31 offline CI guards. Full85864 started02:11:52 and has no result
+   at cutoff. Preserve its wrapper's bounded before/finally-after catalog
+   equality guard and inspect final XML/cleanup before any next action. Old
+   145 real-PG success belongs to pre-descriptor-fix source, not this head.
+   After fresh full, complete normal push, hosted AL no-skip/role-custody lane,
+   canonical review and accepted-artifact gates. No local SQL test installs a
+   genuine operator/provider or supplies live current authority.
+3. **Schema with root/peer review / A1 fixed-origin custody:** at cutoff the
+   first two independent defects (root-key metadata and final public-leaf
+   reread) are corrected with 283 repo +same2 outside=285 diagnostic passes.
+   The original scandir acquisition-to-cleanup handoff still has a retained
+   one-failure diagnostic (actual iterator close count0) and is being corrected.
+   Finish frozen correction review and then root-approved disposable real-UID
+   custody staging. No real key/UID/fixed-origin fixture, SQL, A1 approval or
+   operator installation is established; later results must not be backdated.
+4. **Corpus/root / G packet codecs:** clean `eba073bc`, tree `7dbfd666`, has
+   1,853 distinct pure unit passes /0 skips on accepted F. Six paths only;
+   old 1,788 and repeated760-host runs remain historical/overlapping. Complete
+   allocated full, actual candidate-bound push, hosted CI/canonical and merged
+   artifact checks. Metadata/requests/intended invocation are structure-only,
+   not verified raw members, runtime input, kernel observations or admission.
+5. **Actual tenant-local path / A2 and runtime owners:** integrate genuine
+   installed current authority, original accepted builtin bytes, ledger/provider
+   and CLI with explicit original-command replay. Operator identities, private
+   custody, restore administration and independent freshness remain open choices
+   or implementation work, not facts supplied by test fixtures. Do not invent
+   cross-scope global/inferred publication as a prerequisite for this target.
+6. **Full source/scan/physical evidence:** continue qualified non-event RES,
+   journal/event/spool/full-history writer and readback, capacity/work isolation,
+   DB orphan/pre-reservation barriers and current factory/kernel/controller.
+   Then bind real bounded CPG/source and accepted rule/model producers to raw
+   occurrences, independent identities, complete signed provenance, decisions
+   and truthful API/UI. Preserve all Java/Python, CodeQL/Semgrep, 422 cases/844
+   uncached sides, comparator/reproduction, G0–G3 and install/rehearsal obligations.
+
+This machine remains the owner-confirmed local Docker presentation target.
+Resource observations are not a reservation or readiness proof. December2 or3
+remains the presentation window, exact day open; there is no October demo lock.
+User app/DB, release/image authority and all original acceptance states remain
+unchanged. The current AL full owns the serialized broad slot; this document
+does not authorize another run, installation, native probe or container change.
+
+### Explicit later update — 02:26 UTC
+
+This supersedes only pending actions whose outcomes changed after the cutoff:
+
+- **#426:** all six CI36210889992 jobs passed. Actual occurrence guard verified
+  89 executed cases/no skips; actual checkout `be8f96c2` has the same complete
+  `b152714d` tree as exact candidate `ed4dd545`. The first canonical review
+  failed with REQUEST-CHANGES (comment5842267656): incorrect CMP-DET-02 label
+  and then-pending CI. Root corrected only title/body to the existing verifier
+  owner CMP-ORCH-03, as already accepted in #418, and recorded actual CI. No
+  candidate bytes changed; first review remains retained. TODO: obtain fresh
+  canonical SUCCESS/final APPROVE, then verify the merge artifact. No merge yet.
+- **A1:** all three finite diagnostic defects are corrected at source `c704d336`.
+  Author and independent peer each passed the same 299 selected cases, not598
+  unique tests. Root/peer correction review passed; this is not whole A1 or real
+  key/UID/kernel acceptance. TODO: review the bounded fixture-context recipe,
+  then separately grant its snapshot/build/ABI smoke and actual disposable
+  custody checks. No copy/build/launch/key/SQL grant is implied by this note.
+- **AL:** full85864 is still running; no count or catalog-after success exists.
+  TODO after it returns: inspect XML and catalog equality, and correct the
+  same misleading DET-02 label in the proposed AL scope before publication,
+  with explicit coordinated schema/CI ownership. Do not edit the running tree.
+
+Board399/362/400 read back In Progress at02:22:57; no status changed. Accepted
+main remains `c5c862e3`. G and all remaining operational/acceptance obligations
+are unchanged. Detailed report hashes and retained failures are in the
+[later evidence note](evidence/2026-09-25-foundation-merges/README.md#explicit-later-update--0226-utc).
