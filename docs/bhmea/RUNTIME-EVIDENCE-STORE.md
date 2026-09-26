@@ -3868,3 +3868,109 @@ review. It is not full regression, native interruption, power-loss, maximum
 memory, current authority or durable acknowledgement qualification. No hook,
 stage, commit, push, process campaign, Docker, PostgreSQL, key or UID operation
 was performed. All original failures and source checkpoints remain preserved.
+
+### 19.7 Maximum-capacity unit clock isolation (issue #437)
+
+September26,2026. The unchanged implementation's2-second operation guard
+refused a late result in the maximum verifier-historical capacity unit during
+the normal documentation pre-push retry. Retry XML2853ae5f53f3f07d36829380ca7ddb837f198730b4eb53b017ccc4e505fb3539
+records4648 passes,7 skips,1 failure and no errors;2609 identities were not
+reached. The earlier full report09511f5a2978a10b1991c44f42d4a036b1928b0524c9d6d7d7ec7143dc2bd8ea
+has7254 passes/11 existing skips. Both reports remain retained; earlier success
+does not cancel the later refusal. No particular CPU/disk/VM/RAM cause is proven.
+
+The four maximum-capacity unit cases now use a test-local, monotonically
+advancing clock only in the evidence module's private time binding. This tests
+logical capacity/accounting independently of host scheduling, while preserving
+every actual temporary-file operation, data size, mode, final byte and work-
+counter assertion. It does not qualify real elapsed time. No shared stdlib
+clock, production guard,2s/35s deadline, limit, retry policy or marker changes.
+Six controlled checks exercise the actual guard immediately below, at and above
+both deadlines; the existing delayed-finalization/history-cleanup refusal
+oracles remain unchanged. Section18.7 remains normative and unmodified.
+
+Focused/full regression, canonical review and real hardware/outer-supervisor
+latency qualification are separate requirements. This correction establishes
+no new runtime authority or full Black Hat acceptance.
+
+### 19.8 Systematic fault-matrix clock and missed-target diagnostics (issue #437)
+
+September26,2026. The subsequent single-module run retained in
+`/tmp/scanipy-runtime-capacity-clock-peer-s8IsJMfF/module.xml`, SHA256
+6c43e7f33173a053762be195284bebe8fea084625e52e75f9b95902b637cae5a,
+contains140 passes/one failure/zero errors or skips,122.124s. Root reported415
+collected before stop-on-first-failure; this is not415 executed cases. The
+failed KeyboardInterrupt/member-refusal control recorded injected0 for trace
+index59, close ordinal27. Its helper caught but did not report the underlying
+exception, and the short traceback truncated the points. A deadline, point
+mismatch or other early failure is not established as its historical cause.
+Both original source snapshots and the actual failed XML remain unchanged.
+
+The approved test-only correction gives each `_fault_invocation` a fresh private
+monotonically advancing1ns clock inside its existing patch context. That clock
+spans prepare, baseline or fault run, scenario close and known test-owned
+uncertain-FD cleanup, then restores the prior evidence-module time binding.
+It does not alter the shared stdlib clock, any production work object's start,
+the real2s/35s checks, filesystem operations or accounting/cleanup limits.
+Every selected point, before/after mode, exception/prior/cleanup identity,
+poisoned-no-I/O, retained-byte and once-close/leak assertion stays in place.
+
+Missed-injection diagnostics put a closed actual exception-type label and the
+whitelisted public reason first, then fixed phase/operation and bounded numeric
+position/count data. They do not include arbitrary exception text, raw task
+payload, path or an unbounded point-list rendering. An unmatched target still
+fails; it is not counted as an injected interruption or silently retried.
+
+One new deterministic control delegates the actual member digest, temporarily
+advances a nested private clock exactly to that work object's2s boundary and
+calls the unchanged `_Work.check`. The genuine deadline error must yield a
+missed-target diagnostic with injected0 while ordinary cleanup still completes.
+This is a deliberately induced example, not reconstruction of the historical
+cause. The nested clock is restored before cleanup and the invocation clock is
+restored on exit. No generic fault callback or production API is introduced.
+
+The four capacity cases, six exact deadline-boundary cases, late-finalization
+and history deadline/cleanup controls remain unchanged. Matrix success under
+its private clock would establish interruption/ownership semantics only, not
+real latency, power-loss, runtime authority or whole-process qualification.
+At this source checkpoint no corrected test or collection has run; focused
+controls and the affected module require separate root grants. All preceding
+section19.7 history, original3870-line prefix and normative section18.7 remain.
+
+#### 19.8.1 Rendered diagnostic test-oracle correction
+
+The first root-granted focused12 run retained in
+`/tmp/scanipy-runtime-fault-clock-correction-xYaUDuXu/focused-12.xml`, SHA256
+eae1e223707a12924f6ae2f84070453a1bb7f5815980ee9be13e50a78ed3e9d4,
+executed two cases: the original interruption case passed; the new induced-
+deadline control failed because pytest assertion rewriting rendered the tuple
+as text. The report records one pass/one failure/zero errors or skips,2.650s;
+the remaining ten selected cases were not observed. This is a new test-oracle
+failure, not a production guard failure or evidence of the older missed target's
+cause. Its original source/doc snapshots and report remain retained unchanged.
+
+Only that new control's extraction now reads the bounded ASCII first line with
+ast.literal_eval, requiring an exact nine-cell tuple and each cell's exact type
+before the original value checks. It is not eval or an untrusted-input API.
+The helper, original guard/error/start/cleanup assertions, production code and
+all earlier tests remain unchanged. No corrected rerun or collection has run
+at this source checkpoint; the same focused12 needs a separate fresh grant.
+
+#### 19.8.2 Structured diagnostic instead of assertion-rendered text
+
+The successor focused12 report in
+`/tmp/scanipy-runtime-fault-oracle-correction-80ssQ1St/focused-oracle-12.xml`,
+SHA2568232f5d830f6d2f314318009c65080508d1928e1da999c1a2678731e5c864e0e,
+again records one pass/one failure, zero errors/skips and ten selected cases
+unobserved. Pytest abbreviates the assertion's rendered tuple with Ellipsis;
+the parsed first line has seven cells, not the original nine. The exact-length
+oracle correctly rejects it. Parsing displayed assertion text was therefore
+not a sufficient correction; both failed source checkpoints/reports remain.
+
+The helper now explicitly raises AssertionError with the same closed nine-cell
+tuple when the unchanged injected-equals-one requirement fails. The control
+reads the exception's original single argument, never pytest's display text,
+and retains exact tuple length, cell types, values, deadline identity, original
+start and cleanup/restoration checks. No production code, real guard, selected
+fault, FD accounting or older case changes. No result is inferred from this
+source change; focused/full tests and canonical review remain separate gates.
