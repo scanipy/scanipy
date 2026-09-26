@@ -229,6 +229,7 @@ class PrivatePostgres:
         self.migration_evidence = []
         self._migration_calls = 0
         self._migration_failed = False
+        self._administration_setup_complete = False
         if administration:
             self.migration_cwd = _administration_path(migration_cwd)
             self.migration_site_packages = _administration_path(migration_site_packages)
@@ -429,7 +430,17 @@ class PrivatePostgres:
         from tools.worker.bounded_process import MemoryOutput, ProcessLimits, run_bounded_process
 
         self._administration_runtime()
-        if self._migration_failed or self._migration_calls >= 10:
+        if self._migration_failed or self._migration_calls >= 11:
+            raise AssertionError("administration migration is unavailable or exhausted")
+        if (target == "20260926_0007" and self._migration_calls < 10) or (
+            self._migration_calls == 10
+            and (
+                not self._administration_setup_complete
+                or action != "upgrade"
+                or target != "20260926_0007"
+                or expect_success is not True
+            )
+        ):
             raise AssertionError("administration migration is unavailable or exhausted")
         self._migration_calls += 1
         self._migration_failed = True
@@ -815,6 +826,10 @@ class PrivatePostgres:
         if self.profile == "accepted":
             self._setup_accepted()
         self._create_logins()
+        if self.administration:
+            if self._migration_calls != 10 or self._migration_failed:
+                raise AssertionError("administration setup migration schedule is incomplete")
+            self._administration_setup_complete = True
 
     def _setup_accepted(self):
         """Only this empty fixture-owned child; failed migration grants no ownership."""

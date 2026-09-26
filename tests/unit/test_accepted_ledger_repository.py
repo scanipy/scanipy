@@ -2907,3 +2907,411 @@ def test_administration_migration_primitives_precede_work_and_callbacks(monkeypa
     with pytest.raises(ValueError):
         cluster.migrate(**{keyword: Poison()})
     assert calls == [] and cluster._migration_calls == 0 and not cluster._migration_failed
+
+
+_ADMINISTRATION_TEN = (
+    ("upgrade", "20260925_0003"),
+    ("upgrade", "20260925_0004"),
+    ("upgrade", "20260925_0005"),
+    ("upgrade", "20260925_0005"),
+    ("downgrade", "20260925_0003"),
+    ("upgrade", "20260925_0005"),
+    ("upgrade", "20260926_0006"),
+    ("upgrade", "20260926_0006"),
+    ("downgrade", "20260925_0005"),
+    ("upgrade", "20260926_0006"),
+)
+
+
+def administration_complete_setup(monkeypatch, *, login_fault=None, migration_fault=None):
+    """Real setup/migrate/login methods; fixed-query DB and owner-transport doubles only."""
+    from contextlib import contextmanager
+
+    from tools.worker import bounded_process as bp
+
+    pg, cluster, login, _previous = administration_login_double(monkeypatch, fault=login_fault)
+    cluster.owned_roles.clear()
+    cluster.roles.clear()
+    state = SimpleNamespace(calls=[], events=[], roles={}, one=None, many=[], login=False)
+
+    class SetupCursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            self.close()
+
+        def close(self):
+            state.events.append("setup-cursor-close")
+
+        def execute(self, query, parameters=()):
+            if type(query) is not str:
+                prefix = query.seq[0].string
+                identifiers = [
+                    item.strings[0] for item in query.seq if isinstance(item, pg.sql.Identifier)
+                ]
+                if prefix.startswith("CREATE ROLE"):
+                    assert identifiers[0] not in state.roles
+                    state.roles[identifiers[0]] = 7000 + len(state.roles)
+                else:
+                    assert prefix.startswith(("CREATE DATABASE", "ALTER DEFAULT PRIVILEGES"))
+                return
+            if query == "SELECT rolname FROM pg_roles WHERE rolname=ANY(%s)":
+                state.many = [(name,) for name in parameters[0] if name in state.roles]
+            elif query == "SELECT oid,datdba FROM pg_database WHERE datname=%s":
+                state.one = (8001, 10)
+            elif query == "SELECT oid FROM pg_roles WHERE rolname=%s":
+                oid = state.roles.get(parameters[0])
+                state.one = (oid,) if oid is not None else None
+            elif query.startswith("SELECT oid FROM pg_roles WHERE rolname='"):
+                state.one = (state.roles[query.split("'")[1]],)
+            elif query == "SELECT rolname,oid FROM pg_roles WHERE rolname=ANY(%s)":
+                state.many = [(name, state.roles[name]) for name in parameters[0]]
+            elif query.startswith("CREATE ROLE "):
+                name = query.split()[2]
+                assert name not in state.roles
+                state.roles[name] = 9000
+            elif query.startswith("DROP ROLE "):
+                del state.roles[query.split()[2]]
+            else:
+                pytest.fail("unexpected fixed setup query")
+
+        def fetchone(self):
+            return state.one
+
+        def fetchall(self):
+            return state.many
+
+    class SetupConnection:
+        def cursor(self):
+            return SetupCursor()
+
+        def commit(self):
+            state.events.append("setup-commit")
+
+        def close(self):
+            state.events.append("setup-close")
+
+    @contextmanager
+    def admin(*, bootstrap=False):
+        if state.login:
+            with cluster._administration_admin(bootstrap=bootstrap) as connection:
+                yield connection
+        else:
+            connection = SetupConnection()
+            try:
+                yield connection
+            finally:
+                connection.close()
+
+    original_connect = pg.psycopg2.connect
+
+    def login_connect(**kwargs):
+        connection = original_connect(**kwargs)
+        original_commit, original_close = connection.commit, connection.close
+
+        def commit():
+            state.events.append(("login-commit", cluster._administration_setup_complete))
+            original_commit()
+
+        def close():
+            state.events.append(("login-close", cluster._administration_setup_complete))
+            original_close()
+
+        connection.commit, connection.close = commit, close
+        return connection
+
+    pg.psycopg2.connect = login_connect
+    original_logins = cluster._create_logins
+
+    def logins():
+        state.events.append(("login-entry", cluster._migration_calls))
+        state.login = True
+        original_logins()
+        state.login = False
+        state.events.append(("login-return", cluster._administration_setup_complete))
+
+    def rows(query, parameters=()):
+        if "SELECT rolname,oid" in query:
+            return [(name, state.roles[name]) for name in parameters[0]]
+        assert query.startswith("SELECT count(*)")
+        if "FROM pg_roles" in query:
+            return [(sum(name in state.roles for name in parameters[0]),)]
+        return [(0,)]  # Fixed empty round-trip schema/ACL observations, not a SQL interpreter.
+
+    def run(argv, **kwargs):
+        state.calls.append((argv, kwargs))
+        ordinal = len(state.calls)
+        expected = (
+            _ADMINISTRATION_TEN[ordinal - 1] if ordinal <= 10 else ("upgrade", "20260926_0007")
+        )
+        assert argv[-2:] == expected
+        assert cluster._migration_calls == ordinal and cluster._migration_failed
+        if migration_fault and ordinal == migration_fault[0]:
+            raise migration_fault[1]
+        refused = ordinal in (3, 7)
+        if not refused:
+            if argv[-2:] == ("downgrade", "20260925_0003"):
+                for name in pg.RESERVED:
+                    del state.roles[name]
+            elif argv[-2:] == ("downgrade", "20260925_0005"):
+                for name in pg.ACCEPTED_RESERVED:
+                    del state.roles[name]
+            elif argv[-1] == "20260925_0005":
+                state.roles.update({name: ordinal * 100 + i for i, name in enumerate(pg.RESERVED)})
+            elif argv[-1] == "20260926_0006":
+                state.roles.update(
+                    {name: ordinal * 100 + i for i, name in enumerate(pg.ACCEPTED_RESERVED)}
+                )
+        stderr = (
+            b"reserved execution role already exists"
+            if ordinal == 3
+            else b"reserved accepted role already exists"
+            if ordinal == 7
+            else b""
+        )
+        return administration_process_outcome(
+            argv, kwargs["env"], kwargs["cwd"], returncode=int(refused), stderr=stderr
+        )
+
+    monkeypatch.setattr(cluster, "admin", admin)
+    monkeypatch.setattr(cluster, "rows", rows)
+    monkeypatch.setattr(
+        cluster, "_check_administration_cluster", lambda: state.events.append("cluster")
+    )
+    monkeypatch.setattr(cluster, "_seed_legacy_history", lambda: None)
+    monkeypatch.setattr(cluster, "_legacy_history", lambda: [("inert legacy row",)])
+    monkeypatch.setattr(cluster, "_legacy_acl", lambda: [("inert legacy ACL",)])
+    monkeypatch.setattr(cluster, "_execution_definitions", lambda: [("inert execution body",)])
+    monkeypatch.setattr(cluster, "_execution_acl", lambda: [("inert execution ACL",)])
+    monkeypatch.setattr(cluster, "_create_logins", logins)
+    monkeypatch.setattr(bp, "run_bounded_process", run)
+    monkeypatch.setattr(pg.subprocess, "run", lambda *_a, **_kw: pytest.fail("unbounded process"))
+    return pg, cluster, state, login
+
+
+def test_final_ticket_real_setup_sequence_arms_only_after_login_close(monkeypatch):
+    pg, cluster, state, login = administration_complete_setup(monkeypatch)
+    assert cluster._administration_setup_complete is False
+    cluster.setup()
+    assert [argv[-2:] for argv, _ in state.calls] == list(_ADMINISTRATION_TEN)
+    assert cluster._migration_calls == len(cluster.migration_evidence) == 10
+    assert cluster._administration_setup_complete and not cluster._migration_failed
+    assert cluster.round_trip_verified and cluster.accepted_round_trip_verified
+    assert state.events[-4:] == [
+        ("login-entry", 10),
+        ("login-commit", False),
+        ("login-close", False),
+        ("login-return", False),
+    ]
+    assert login.commits == login.closed == 1 and len(login.names) == 13
+    assert set(cluster.administration_routes) == set(pg._ADMINISTRATION_ROUTES)
+    assert cluster.migrate("20260926_0007").returncode == 0
+    assert cluster._migration_calls == len(cluster.migration_evidence) == 11
+    assert cluster.migration_target == "20260926_0006"
+    assert not cluster._migration_failed
+    for argv, kwargs in state.calls:
+        assert kwargs["limits"].wall_ms == 60000 and kwargs["limits"].cleanup_reserve_ms == 5000
+        assert kwargs["limits"].combined_output_bytes == 1048576
+        assert kwargs["cwd"] == Path("/controlled/work") and kwargs["stdin"] is None
+        assert argv[5] == pg._MIGRATION_BOOTSTRAP
+    assert sum(kwargs["limits"].wall_ms for _, kwargs in state.calls) == 660000
+    assert sum(kwargs["limits"].combined_output_bytes for _, kwargs in state.calls) == 11534336
+
+
+@pytest.mark.parametrize("ordinal", range(1, 11))
+def test_final_ticket_setup_migration_failure_never_arms(monkeypatch, ordinal):
+    primary = OSError("controlled migration failure")
+    _pg, cluster, state, login = administration_complete_setup(
+        monkeypatch, migration_fault=(ordinal, primary)
+    )
+    with pytest.raises(OSError) as observed:
+        cluster.setup()
+    assert observed.value is primary and cluster._migration_failed
+    assert len(state.calls) == cluster._migration_calls == ordinal
+    assert not cluster._administration_setup_complete and not login.commits
+    with pytest.raises(AssertionError, match="unavailable"):
+        cluster.migrate("20260926_0007")
+    assert len(state.calls) == ordinal
+
+
+@pytest.mark.parametrize("stage", ("proof", "cursor-close", "commit", "close"))
+@pytest.mark.parametrize("kind", (OSError, KeyboardInterrupt, SystemExit))
+def test_final_ticket_login_failure_never_arms_or_promotes(monkeypatch, stage, kind):
+    primary = kind("controlled login cleanup failure")
+    _pg, cluster, state, _login = administration_complete_setup(
+        monkeypatch, login_fault=(stage, primary)
+    )
+    with pytest.raises(kind) as observed:
+        cluster.setup()
+    assert observed.value is primary and len(state.calls) == cluster._migration_calls == 10
+    assert not cluster._administration_setup_complete
+    assert cluster.roles == {} and cluster.administration_routes == {}
+    with pytest.raises(AssertionError, match="exhausted"):
+        cluster.migrate("20260926_0007")
+    assert len(state.calls) == 10
+
+
+@pytest.mark.parametrize("count", range(11))
+def test_final_ticket_arbitrary_calls_do_not_establish_setup(monkeypatch, count):
+    _pg, cluster, calls = administration_transport(monkeypatch)
+    for _ in range(count):
+        cluster.migrate()
+    with pytest.raises(AssertionError, match="exhausted"):
+        cluster.migrate("20260926_0007")
+    assert len(calls) == cluster._migration_calls == count
+    assert not cluster._migration_failed and not cluster._administration_setup_complete
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    (
+        {},
+        {"target": None},
+        {"target": "20260926_0006"},
+        {"target": "20260926_0007", "action": "downgrade"},
+        {"target": "20260926_0007", "expect_success": False},
+        {"target": "head"},
+        {"target": "base"},
+    ),
+)
+def test_final_ticket_only_explicit_successful_upgrade_then_never_twelfth(monkeypatch, kwargs):
+    _pg, cluster, state, _login = administration_complete_setup(monkeypatch)
+    cluster.setup()
+    with pytest.raises((AssertionError, ValueError)):
+        cluster.migrate(**kwargs)
+    assert len(state.calls) == cluster._migration_calls == 10 and not cluster._migration_failed
+    cluster.migrate("20260926_0007")
+    for request in (kwargs, {"target": "20260926_0007"}, {}):
+        with pytest.raises((AssertionError, ValueError)):
+            cluster.migrate(**request)
+    assert len(state.calls) == cluster._migration_calls == 11 and not cluster._migration_failed
+
+
+@pytest.mark.parametrize("kind", (OSError, KeyboardInterrupt, SystemExit))
+def test_final_ticket_transport_failure_is_spent_and_cannot_retry(monkeypatch, kind):
+    primary = kind("controlled final transport")
+    prior = ValueError("controlled previous context")
+    primary.__context__ = prior
+    _pg, cluster, state, _login = administration_complete_setup(
+        monkeypatch, migration_fault=(11, primary)
+    )
+    cluster.setup()
+    with pytest.raises(kind) as observed:
+        cluster.migrate("20260926_0007")
+    assert observed.value is primary and primary.__context__ is prior
+    assert len(state.calls) == cluster._migration_calls == 11 and cluster._migration_failed
+    with pytest.raises(AssertionError, match="unavailable"):
+        cluster.migrate("20260926_0007")
+    assert len(state.calls) == 11
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    (
+        ("reason", "timeout"),
+        ("cleanup", "incomplete"),
+        ("returncode", None),
+        ("returncode", 1),
+        ("returncode", True),
+        ("stdin_sent_bytes", 1),
+    ),
+)
+def test_final_ticket_incomplete_outcome_remains_evidence_not_success(monkeypatch, field, value):
+    from tools.worker import bounded_process as bp
+
+    _pg, cluster, state, _login = administration_complete_setup(monkeypatch)
+    cluster.setup()
+    original = bp.run_bounded_process
+    retained = []
+
+    def corrupt(argv, **kwargs):
+        outcome = original(argv, **kwargs)
+        object.__setattr__(outcome, field, value)
+        retained.append(outcome)
+        return outcome
+
+    monkeypatch.setattr(bp, "run_bounded_process", corrupt)
+    with pytest.raises(AssertionError):
+        cluster.migrate("20260926_0007")
+    assert cluster.migration_evidence[-1] is retained[0]
+    assert len(cluster.migration_evidence) == len(state.calls) == 11 and cluster._migration_failed
+    with pytest.raises(AssertionError, match="unavailable"):
+        cluster.migrate("20260926_0007")
+    assert len(state.calls) == 11
+
+
+@pytest.mark.parametrize("stream", ("stdout", "stderr"))
+@pytest.mark.parametrize(
+    "field,value", (("eof", False), ("truncated", True), ("retained_bytes", 1))
+)
+def test_final_ticket_partial_stream_is_retained_without_retry(monkeypatch, stream, field, value):
+    from tools.worker import bounded_process as bp
+
+    _pg, cluster, state, _login = administration_complete_setup(monkeypatch)
+    cluster.setup()
+    original = bp.run_bounded_process
+
+    def corrupt(argv, **kwargs):
+        outcome = original(argv, **kwargs)
+        object.__setattr__(getattr(outcome, stream).evidence, field, value)
+        return outcome
+
+    monkeypatch.setattr(bp, "run_bounded_process", corrupt)
+    with pytest.raises(AssertionError, match="transport incomplete"):
+        cluster.migrate("20260926_0007")
+    assert len(cluster.migration_evidence) == len(state.calls) == 11
+    assert getattr(getattr(cluster.migration_evidence[-1], stream).evidence, field) == value
+    assert cluster._migration_failed
+    with pytest.raises(AssertionError, match="unavailable"):
+        cluster.migrate("20260926_0007")
+    assert len(state.calls) == 11
+
+
+@pytest.mark.parametrize("interrupt", (None, KeyboardInterrupt, SystemExit))
+def test_final_ticket_owner_partial_exception_retains_exact_outcome(monkeypatch, interrupt):
+    from tools.worker import bounded_process as bp
+
+    _pg, cluster, state, _login = administration_complete_setup(monkeypatch)
+    cluster.setup()
+    original, retained = bp.run_bounded_process, []
+
+    def fail(argv, **kwargs):
+        outcome = original(argv, **kwargs)
+        carrier = bp.ProcessTransportError(outcome)
+        primary = carrier if interrupt is None else interrupt("controlled final interruption")
+        if primary is not carrier:
+            primary.__cause__ = carrier
+        retained.extend((outcome, primary))
+        raise primary
+
+    monkeypatch.setattr(bp, "run_bounded_process", fail)
+    with pytest.raises(bp.ProcessTransportError if interrupt is None else interrupt) as observed:
+        cluster.migrate("20260926_0007")
+    assert observed.value is retained[1] and cluster.migration_evidence[-1] is retained[0]
+    assert len(cluster.migration_evidence) == len(state.calls) == 11
+    with pytest.raises(AssertionError, match="unavailable"):
+        cluster.migrate("20260926_0007")
+    assert len(state.calls) == 11
+
+
+@pytest.mark.parametrize("corruption", ("nine", "eleven", "failed"))
+def test_final_ticket_setup_final_consistency_check_cannot_arm(monkeypatch, corruption):
+    _pg, cluster, state, _login = administration_complete_setup(monkeypatch)
+    original_logins = cluster._create_logins
+
+    def corrupt_after_logins():
+        original_logins()
+        # Explicit private-state fault injection, not evidence of real database state.
+        if corruption == "failed":
+            cluster._migration_failed = True
+        else:
+            cluster._migration_calls = 9 if corruption == "nine" else 11
+
+    monkeypatch.setattr(cluster, "_create_logins", corrupt_after_logins)
+    with pytest.raises(AssertionError, match="schedule is incomplete"):
+        cluster.setup()
+    assert not cluster._administration_setup_complete and len(state.calls) == 10
+    with pytest.raises(AssertionError):
+        cluster.migrate("20260926_0007")
+    assert len(state.calls) == 10
