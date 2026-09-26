@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 14 — 2026-09-25 22:25 UTC snapshot plus explicit 22:30 update; earlier cutoffs preserved; full acceptance unresolved |
+| Revision | 15 — 2026-09-25 23:31 UTC snapshot plus explicit 23:36/23:38 updates and scope clarification; earlier cutoffs preserved; full acceptance unresolved |
 | Status | Execution started; no full R01–R20 task or submitted claim is yet accepted as complete |
 | Initial review code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
@@ -46,8 +46,8 @@ All unchecked acceptance items below remain required unless explicitly
 classified optional. An adopted design, recovered historical report, or one
 successful Joern parse does not complete a task or verify a submitted claim.
 
-**Current work queue:** use Revision 14 in the
-[active handoff](PLAN-BHMEA-EXECUTION-2026-09-25.md#revision-14-execution-queue--observed-at-2225-utc).
+**Current work queue:** use Revision 15 in the
+[active handoff](PLAN-BHMEA-EXECUTION-2026-09-25.md#revision-15-execution-queue--observed-at-2331-utc).
 The dated progress paragraphs that follow retain historical evidence. Their
 older pending statuses do not override the latest queue or require redoing
 accepted merges; the full task-level acceptance TODOs begin in section 5.
@@ -267,6 +267,54 @@ version include 149 AL +36 unchanged occurrence cases. Its 138 PostgreSQL cases
 are collection-only; the new isolated bounded test cluster has not yet run them.
 Facade review and the separately granted smoke/expanded SQL checks remain next.
 No full acceptance state or submitted scope changed.
+
+**Revision 15 — observed 23:31 UTC on September 25:** accepted main
+`0e1b2b9a` includes Revision 14 #419, pure renderer #420 and historical
+provenance compatibility #421. Required exact-head gates preceded those
+merges; the first #421 checklist-only failed review remains retained. Renderer
+merged-artifact checks passed 856; provenance merged-artifact checks passed
+990. These affected selections do not replace their separately attributed
+full suites or establish actual Docker enforcement/live signed findings.
+
+B's corrected `3e1cfc56` has 1,155 local passes, including all 38 diagnostic
+process cases, and its actual normal push was in progress at the cutoff.
+Both earlier hosted failures remain: the second observed a 48,157,564-byte
+static development archive at the unchanged 32 MiB per-file fixture cap.
+The 63-case reviewed correction changes only diagnostic distribution copying,
+not production authority or runtime bounds. E's fresh full is 4,357/51 with
+89 actual occurrence PG cases; no publication yet. F has 1,644 focused checks,
+not a full run. Exact artifacts and report hashes are in the
+[new evidence section](evidence/2026-09-25-foundation-merges/README.md#revision-15--observed-2331-utc-september-25).
+
+AL's original migration-submission setup error, later immutable-read privilege
+and role-cleanup errors, and fixture-composition failure remain separate red
+records. Following reviewed narrow fixes, the same three-node smoke passed
+all three cases, zero skips/errors/failures, with successful bounded cleanup
+confirmation. The 144-case selection is only collection-ready at this cutoff;
+324 offline controls and scoped review do not establish whole SQL, provider or
+runtime acceptance. Root retired only the original failed disposable cluster
+after retaining catalog evidence; the replacement is separately identified.
+
+**Subsequent engineering scope clarification:** the
+[current decision](DECISION-BHMEA-01-current-execution-authority-2026-09-25.md#tenant-local-authority-and-later-publication-extensions)
+preserves the submitted single-tenant target and every C/R/TODO below. Required
+tenant-local accepted builtin publication, current authority, signed provenance
+and real API/UI must not be conflated with later global-to-tenant adoption or
+statistical/LLM inferred-spec publication. Those extensions are not additional
+Black Hat gates; known inferred proposals cannot be relabeled builtin. No guard,
+Gate 4/INV-3 control, original acceptance item, milestone dependency or scope is
+removed. This is root's source-backed engineering clarification, not a new
+human approval, implemented extension or full acceptance decision.
+
+**Explicit later observations:** at 23:36, B's actual normal push had passed
+all four phases and its remote head was verified; corrected hosted gates were
+running. Its actual merge artifact passed 1,251 pure checks, not the process
+suite or a full run. AL144 had started at 23:33:51. At 23:38 it had stopped
+under `-x` after 16 passes and one failed assertion, zero errors/skips,
+203.856s; teardown/catalog checks were clean. A driver-view format comparison
+is under narrow test-only correction. The separate equal-bytes/unequal-views
+diagnostic does not prove the failed row's original bytes; no SQL guard is
+relaxed and neither 144-case nor whole-migration success is claimed.
 
 ## 1. Objective and document boundaries
 

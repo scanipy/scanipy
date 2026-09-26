@@ -83,13 +83,11 @@ repos:
           - starlette==1.3.1
           - anyio==4.14.2
           - pydantic==2.13.4
-        # Scope to the same source dirs CI type-checks (ci.yml runs
-        # `mypy analysis/ detectors/ integrations/ services/`). Tests are
-        # not type-checked in CI; running mypy on them here only fails on
-        # pytest's untyped decorators (pytest is absent from this hook's
-        # isolated venv). db/migrations/ is generated Alembic DDL, also
-        # excluded in pyproject [tool.mypy]. Keeping the hook and CI in
-        # lockstep avoids forcing `git commit --no-verify`.
+        # CI/pre-push check populated analysis, detectors, integrations,
+        # services, workers and tools roots. This hook also checks other staged
+        # Python files except tests and generated Alembic migrations below;
+        # pytest is absent from the isolated hook environment. Migrations are
+        # also excluded in pyproject [tool.mypy]. Do not bypass a failed check.
         exclude: ^(tests/|db/migrations/)
 
   # ---------------------------------------------------------------------------
