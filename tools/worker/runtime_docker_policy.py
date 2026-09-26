@@ -241,6 +241,59 @@ def _invocation(argv: list[str], environment: dict[str, str], cwd: str) -> Froze
         raise RuntimeDockerPolicyError(_ERROR) from error
 
 
+def render_runtime_inner_invocation(
+    *,
+    purpose: str,
+    python_executable: str,
+    worker_path: str,
+    domain_profile_path: str,
+    domain_profile_sha256: bytes,
+    attempt_id: str,
+    stdin_bytes: int,
+    stdin_sha256: bytes,
+) -> FrozenInvocation:
+    """Render intended inner fields, without hashing, observing or launching."""
+    purpose = _text(purpose, 32)
+    _require(purpose in ("accepted-verifier", "python-syntax"))
+    executable = _path(python_executable)
+    worker = _path(worker_path)
+    profile = _path(domain_profile_path)
+    profile_hash = _digest(domain_profile_sha256)
+    attempt = _uuid(attempt_id)
+    size = _integer(stdin_bytes, 2621440 if purpose == "accepted-verifier" else 263244)
+    input_hash = _digest(stdin_sha256)
+    cwd = _WORK + "/" + attempt
+    _require(all(not _overlap(cwd, path) for path in (executable, worker, profile)))
+    argv = [executable, "-I", "-S", "-B", "-X"]
+    if purpose == "accepted-verifier":
+        argv.extend(("utf8", "-X"))
+    argv.extend(("pycache_prefix=" + cwd + "/pycache", worker))
+    environment = {"LANG": "C.UTF-8", "LC_ALL": "C.UTF-8"}
+    if purpose == "accepted-verifier":
+        argv.extend(("--profile", profile, "--profile-sha256", profile_hash.hex()))
+        environment["TZ"] = "UTC"
+    else:
+        # Fixed container-private scratch, not a shared host temporary directory.
+        environment.update(HOME=cwd + "/home", TMPDIR=cwd + "/tmp")  # noqa: S108
+    _require(len(argv) <= 64)
+    sizes = [len(_text(value, 8192).encode("utf-8")) for value in argv]
+    _require(sum(size + 1 for size in sizes) <= 65536)
+    _require(len(environment) <= 16)
+    _require(
+        sum(
+            len(_text(key, 128).encode("utf-8")) + len(_text(value, 8192).encode("utf-8")) + 2
+            for key, value in environment.items()
+        )
+        <= 16384
+    )
+    try:
+        return FrozenInvocation(
+            tuple(argv), tuple(sorted(environment.items())), cwd, size, input_hash
+        )
+    except ProcessValidationError as error:
+        raise RuntimeDockerPolicyError(_ERROR) from error
+
+
 def render_runtime_docker_create(spec: RuntimeDockerCreateSpec) -> FrozenInvocation:
     """Render only the approved create intent; perform no discovery or launch."""
     spec = _copy_spec(spec)

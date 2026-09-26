@@ -18,10 +18,11 @@ import time
 from dataclasses import dataclass, fields, replace
 from datetime import datetime
 from pathlib import PosixPath
-from typing import Any, NoReturn, cast
+from typing import Any, Literal, NoReturn, cast
 from uuid import UUID
 
 from tools.worker import runtime_artifacts as artifacts
+from tools.worker.process_evidence import StoredObject, StoredValue
 from tools.worker.runtime_artifacts import (
     InstalledRuntimeArtifactInventory,
     RuntimeArtifactBindings,
@@ -227,6 +228,19 @@ class LoadedRuntimeInstallation:
     loaded_elapsed_ms: int
 
 
+@dataclass(frozen=True, slots=True, repr=False)
+class RuntimeMetadataDocuments:
+    """Inert supplied-data view, never an installed or measured runtime."""
+
+    installation_bytes: bytes
+    controller_profile_bytes: bytes
+    installation: StoredObject
+    controller_profile: StoredObject
+    bindings: RuntimeArtifactBindings
+    input_bytes: int
+    validation: Literal["input-structure-only"]
+
+
 @dataclass
 class _Budget:
     started: int
@@ -248,12 +262,28 @@ class _Budget:
         return min(30000, remaining)
 
 
-def _preflight(raw: bytes, budget: _Budget) -> None:
+def _checkpoint(budget: _Budget | None) -> None:
+    # Only internal loader state, never a caller callback or public timing flag.
+    if budget is not None:
+        _require(type(budget) is _Budget)
+        _Budget.check(budget)
+
+
+def _preflight(raw: bytes, budget: _Budget | None) -> None:
     depth = count = 0
     quoted = escaped = token = False
+    number_start: int | None = None
+
+    def finish_number(end: int) -> None:
+        if number_start is not None:
+            number = raw[number_start:end]
+            _require(len(number) <= 20)
+            _require(re.fullmatch(rb"-?(0|[1-9][0-9]*)", number) is not None)
+            _parse_int(number.decode("ascii"))
+
     for index, byte in enumerate(raw):
         if index % _CHUNK == 0:
-            budget.check()
+            _checkpoint(budget)
         if quoted:
             if escaped:
                 escaped = False
@@ -262,6 +292,12 @@ def _preflight(raw: bytes, budget: _Budget) -> None:
             elif byte == 34:
                 quoted = False
             continue
+        if number_start is not None:
+            if byte in (9, 10, 13, 32, 44, 58, 91, 93, 123, 125, 34):
+                finish_number(index)
+                number_start = None
+            else:
+                _require(index - number_start < 20)
         if byte == 34:
             quoted = True
             count += 1
@@ -278,15 +314,18 @@ def _preflight(raw: bytes, budget: _Budget) -> None:
         elif not token:
             count += 1
             token = True
+            if byte == 45 or 48 <= byte <= 57:
+                number_start = index
         _require(0 <= depth <= _MAX_DEPTH and count <= _MAX_VALUES, "limit")
+    finish_number(len(raw))
     _require(depth == 0 and not quoted)
 
 
-def _primitive_budget(value: object, maximum: int, budget: _Budget) -> None:
+def _primitive_budget(value: object, maximum: int, budget: _Budget | None) -> None:
     pending = [(value, 0)]
     count = encoded = 0
     while pending:
-        budget.check()
+        _checkpoint(budget)
         current, depth = pending.pop()
         count += 1
         _require(count <= _MAX_VALUES and depth <= _MAX_DEPTH, "limit")
@@ -345,7 +384,7 @@ def _no_number(_value: str) -> NoReturn:
     raise RuntimeProfileError("metadata-invalid")
 
 
-def _decode(raw: bytes, maximum: int, budget: _Budget) -> dict[str, Any]:
+def _decode(raw: bytes, maximum: int, budget: _Budget | None) -> dict[str, Any]:
     _require(type(raw) is bytes and 0 < len(raw) <= maximum, "limit")
     _preflight(raw, budget)
     doc = json.loads(
@@ -363,7 +402,7 @@ def _decode(raw: bytes, maximum: int, budget: _Budget) -> dict[str, Any]:
         ).encode("utf-8")
         == raw
     )
-    budget.check()
+    _checkpoint(budget)
     return cast(dict[str, Any], doc)
 
 
@@ -401,7 +440,7 @@ def _file(value: object) -> RuntimeFileBinding:
     return RuntimeFileBinding(_path_text(doc["path"]), _hex(doc["sha256"]))
 
 
-def _installation(doc: dict[str, Any], anchor: RuntimeInstallationAnchor) -> None:
+def _installation_document(doc: dict[str, Any]) -> None:
     _keys(
         doc,
         (
@@ -424,14 +463,12 @@ def _installation(doc: dict[str, Any], anchor: RuntimeInstallationAnchor) -> Non
         ),
     )
     _require(doc["schema"] == INSTALLATION_SCHEMA)
-    _require(
-        _uuid_text(doc["deployment_id"]) == anchor.deployment_id
-        and _uuid_text(doc["installation_id"]) == anchor.installation_id
-    )
-    _require(_integer(doc["generation"], 1) == anchor.generation)
-    _require(_id(doc["purpose"]) == anchor.purpose)
+    _uuid_text(doc["deployment_id"])
+    _uuid_text(doc["installation_id"])
+    _integer(doc["generation"], 1)
+    _require(_id(doc["purpose"]) in _PURPOSES, "unsupported")
     for name in ("controller_uid", "controller_gid"):
-        _require(_integer(doc[name], 1, 2**31 - 1) == getattr(anchor, name))
+        _integer(doc[name], 1, 2**31 - 1)
     for name in ("controller_profile", "domain_profile", "inventory"):
         _file(doc[name])
     cli = _keys(doc["docker_cli"], ("path", "sha256", "version"))
@@ -449,6 +486,18 @@ def _installation(doc: dict[str, Any], anchor: RuntimeInstallationAnchor) -> Non
     _path_text(doc["host_work_root"])
     _path_text(doc["evidence_root"])
     _utc(doc["installed_at"])
+
+
+def _installation(doc: dict[str, Any], anchor: RuntimeInstallationAnchor) -> None:
+    _installation_document(doc)
+    _require(
+        _uuid_text(doc["deployment_id"]) == anchor.deployment_id
+        and _uuid_text(doc["installation_id"]) == anchor.installation_id
+        and doc["generation"] == anchor.generation
+        and doc["purpose"] == anchor.purpose
+        and doc["controller_uid"] == anchor.controller_uid
+        and doc["controller_gid"] == anchor.controller_gid
+    )
 
 
 def _runtime(value: object, purpose: str, version: str) -> RuntimeArtifactBindings:
@@ -521,9 +570,7 @@ def _runtime(value: object, purpose: str, version: str) -> RuntimeArtifactBindin
     )
 
 
-def _profile(
-    doc: dict[str, Any], installation: dict[str, Any], anchor: RuntimeInstallationAnchor
-) -> RuntimeArtifactBindings:
+def _profile_document(doc: dict[str, Any], installation: dict[str, Any]) -> RuntimeArtifactBindings:
     _keys(
         doc,
         (
@@ -543,7 +590,7 @@ def _profile(
             "config_policy",
         ),
     )
-    _require(doc["schema"] == PROFILE_SCHEMA and doc["purpose"] == anchor.purpose)
+    _require(doc["schema"] == PROFILE_SCHEMA and doc["purpose"] == installation["purpose"])
     _require(_hex(doc["domain_profile_sha256"]) == _file(installation["domain_profile"]).sha256)
     _require(_hex(doc["inventory_sha256"]) == _file(installation["inventory"]).sha256)
     platform = _keys(
@@ -588,8 +635,8 @@ def _profile(
     _fixed(
         doc["container"],
         {
-            "uid": anchor.controller_uid,
-            "gid": anchor.controller_gid,
+            "uid": installation["controller_uid"],
+            "gid": installation["controller_gid"],
             "network": "none",
             "pid": "private",
             "ipc": "private",
@@ -622,7 +669,7 @@ def _profile(
             "noexec": True,
         },
     )
-    verifier = anchor.purpose == "accepted-verifier"
+    verifier = installation["purpose"] == "accepted-verifier"
     memory = 134217728 if verifier else 268435456
     _fixed(
         doc["limits"],
@@ -656,9 +703,57 @@ def _profile(
         },
     )
     _require(doc["config_policy"] == "scanipy-docker29-pipe-config/1")
-    binding = _runtime(doc["runtime"], anchor.purpose, version)
+    binding = _runtime(doc["runtime"], installation["purpose"], version)
     _require(_hex(doc["program_digest"]) == binding.program_digest)
     return binding
+
+
+def _profile(
+    doc: dict[str, Any], installation: dict[str, Any], anchor: RuntimeInstallationAnchor
+) -> RuntimeArtifactBindings:
+    _require(
+        doc.get("purpose") == anchor.purpose
+        and installation["purpose"] == anchor.purpose
+        and installation["controller_uid"] == anchor.controller_uid
+        and installation["controller_gid"] == anchor.controller_gid
+    )
+    return _profile_document(doc, installation)
+
+
+def _stored(value: Any) -> StoredValue:  # noqa: ANN401 -- private, prebounded JSON
+    if type(value) is dict:
+        return ("object", tuple((key, _stored(item)) for key, item in sorted(value.items())))
+    if type(value) is list:
+        return ("array", tuple(_stored(item) for item in value))
+    return cast(StoredValue, value)
+
+
+def decode_runtime_metadata_documents(
+    installation: bytes, controller_profile: bytes
+) -> RuntimeMetadataDocuments:
+    """Validate two supplied documents only; no hashing, clock, I/O or authority."""
+    try:
+        # Admit BOTH byte buffers before parsing even the first document.
+        _require(type(installation) is bytes and type(controller_profile) is bytes)
+        _require(0 < len(installation) <= _CAPS[0], "limit")
+        _require(0 < len(controller_profile) <= _CAPS[1], "limit")
+        document = _decode(installation, _CAPS[0], None)
+        _installation_document(document)
+        profile = _decode(controller_profile, _CAPS[1], None)
+        bindings = _profile_document(profile, document)
+        return RuntimeMetadataDocuments(
+            installation,
+            controller_profile,
+            cast(StoredObject, _stored(document)),
+            cast(StoredObject, _stored(profile)),
+            bindings,
+            len(installation) + len(controller_profile),
+            "input-structure-only",
+        )
+    except RuntimeProfileError:
+        raise
+    except (ValueError, TypeError, RecursionError) as error:
+        raise RuntimeProfileError("metadata-invalid") from error
 
 
 def _overlap(first: PosixPath, second: PosixPath) -> bool:
