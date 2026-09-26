@@ -366,3 +366,250 @@ jobs:
           name: occurrence-store-junit
           path: occurrence-store-junit.xml
           if-no-files-found: error
+
+  # Separate job/runner/service: reserved roles are cluster-global. This hosted
+  # loopback TCP fixture is not the local network-none Unix-socket environment.
+  accepted-ledger-tests:
+    name: Accepted ledger — restricted roles and replay
+    runs-on: ubuntu-latest
+    needs: lint
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    services:
+      accepted-postgres:
+        image: postgres:16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
+        env:
+          POSTGRES_DB: al03_bootstrap
+          POSTGRES_USER: al03_admin
+          # Public disposable CI literal, never an installed/deployed credential.
+          POSTGRES_PASSWORD: accepted_ledger_test # pragma: allowlist secret
+        ports:
+          - "127.0.0.1:5432:5432"
+        options: >-
+          --health-cmd "pg_isready -U al03_admin -d al03_bootstrap"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+          --memory 4294967296
+          --memory-swap 4294967296
+          --cpus 2
+          --pids-limit 256
+          --shm-size 134217728
+          --tmpfs /var/lib/postgresql/data:rw,nosuid,nodev,noexec,size=3221225472,mode=0700
+    env:
+      SCANIPY_ACCEPTED_LEDGER_TEST_URL: # pragma: allowlist secret
+        postgresql://al03_admin:accepted_ledger_test@127.0.0.1:5432/al03_bootstrap
+      SCANIPY_ACCEPTED_LEDGER_TEST_REQUIRED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e ".[dev,http]"
+
+      - name: Run AL tests and compare the actual dedicated-cluster baseline
+        shell: bash
+        run: |
+          # Pass only fixed test routing plus the selected interpreter/source.
+          # All ambient app/occurrence/PG/AWS/pytest/bypass variables disappear.
+          env -i PATH="$PATH" PYTHONPATH="$GITHUB_WORKSPACE" \
+            PYTHONDONTWRITEBYTECODE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 \
+            SCANIPY_ACCEPTED_LEDGER_TEST_URL="$SCANIPY_ACCEPTED_LEDGER_TEST_URL" \
+            SCANIPY_ACCEPTED_LEDGER_TEST_REQUIRED=1 python -B - <<'PY'
+          import json
+          import os
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          import psycopg2
+
+          # One statement/connection before tests, one after their teardown.
+          # Each relation has a 64-row cap plus one overflow sentinel; there is
+          # no unbounded array aggregation, role adoption or cleanup mutation.
+          QUERY = """
+          WITH databases AS MATERIALIZED (
+            SELECT datname::text AS name, oid::text AS id, datdba::text AS owner
+            FROM pg_database ORDER BY datname::text COLLATE "C" LIMIT 65
+          ), roles AS MATERIALIZED (
+            SELECT rolname::text AS name, oid::text AS id, rolsuper, rolinherit,
+              rolcreaterole, rolcreatedb, rolcanlogin, rolreplication, rolbypassrls
+            FROM pg_roles ORDER BY rolname::text COLLATE "C" LIMIT 65
+          ), clients AS MATERIALIZED (
+            SELECT pid FROM pg_stat_activity
+            WHERE backend_type='client backend' AND pid<>pg_backend_pid()
+            ORDER BY pid LIMIT 65
+          )
+          SELECT json_build_object(
+            'databases', (SELECT coalesce(json_agg(json_build_array(name,id,owner)
+              ORDER BY name COLLATE "C"),'[]'::json) FROM databases),
+            'roles', (SELECT coalesce(json_agg(json_build_array(name,id,rolsuper,
+              rolinherit,rolcreaterole,rolcreatedb,rolcanlogin,rolreplication,
+              rolbypassrls) ORDER BY name COLLATE "C"),'[]'::json) FROM roles),
+            'other_clients', (SELECT coalesce(json_agg(pid::text ORDER BY pid),
+              '[]'::json) FROM clients)
+          )::text
+          """
+
+          def require(condition, message):
+              if not condition:
+                  raise AssertionError(message)
+
+          def catalog_shape(value):
+              require(type(value) is dict and set(value) == {
+                  "databases", "roles", "other_clients"
+              }, "catalog schema mismatch")
+              for group in value.values():
+                  require(type(group) is list and len(group) <= 65,
+                          "catalog result exceeded bounded snapshot")
+              for row in value["databases"]:
+                  require(type(row) is list and len(row) == 3 and
+                          all(type(item) is str and len(item) <= 63 for item in row),
+                          "database snapshot shape mismatch")
+                  require(all(item.isascii() and item.isdecimal() for item in row[1:]),
+                          "database OID snapshot mismatch")
+              for row in value["roles"]:
+                  require(type(row) is list and len(row) == 9 and
+                          all(type(item) is str and len(item) <= 63 for item in row[:2]) and
+                          all(type(item) is bool for item in row[2:]),
+                          "role snapshot shape mismatch")
+                  require(row[1].isascii() and row[1].isdecimal(),
+                          "role OID snapshot mismatch")
+              require(all(type(pid) is str and len(pid) <= 10 and pid.isascii() and
+                          pid.isdecimal() for pid in value["other_clients"]),
+                      "client snapshot shape mismatch")
+
+          def snapshot():
+              connection = psycopg2.connect(
+                  os.environ["SCANIPY_ACCEPTED_LEDGER_TEST_URL"],
+                  connect_timeout=2,
+                  application_name="scanipy-al-ci-catalog",
+                  options="-c default_transaction_read_only=on "
+                          "-c statement_timeout=5000 -c lock_timeout=2000",
+              )
+              try:
+                  connection.autocommit = True
+                  cursor = connection.cursor()
+                  try:
+                      cursor.execute(QUERY)
+                      rows = cursor.fetchmany(2)
+                      require(len(rows) == 1 and type(rows[0]) is tuple and
+                              len(rows[0]) == 1 and type(rows[0][0]) is str and
+                              len(rows[0][0]) <= 65536,
+                              "catalog returned unexpected rows or bytes")
+                      value = json.loads(rows[0][0])
+                      catalog_shape(value)
+                      return value
+                  finally:
+                      cursor.close()
+              finally:
+                  # No connection-context commit, close retry or compensating SQL.
+                  connection.close()
+
+          def retain(path, value):
+              raw = json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n"
+              require(len(raw.encode("utf-8")) <= 65536, "catalog artifact too large")
+              with path.open("x", encoding="utf-8") as output:
+                  output.write(raw)
+
+          def baseline_guard(value):
+              catalog_shape(value)
+              require(all(len(group) <= 64 for group in value.values()),
+                      "catalog census overflow")
+              require(value["other_clients"] == [], "dedicated cluster has other clients")
+              databases = value["databases"]
+              require(len(databases) == 4 and {row[0] for row in databases} == {
+                  "al03_bootstrap", "postgres", "template0", "template1"
+              }, "unexpected dedicated bootstrap databases")
+              users = [row for row in value["roles"] if not row[0].startswith("pg_")]
+              require(len(users) == 1 and users[0][0] == "al03_admin" and
+                      users[0][2] and users[0][6], "unexpected dedicated bootstrap roles")
+              require(all(row[2] == users[0][1] for row in databases),
+                      "bootstrap database owners differ")
+
+          before_path = Path("accepted-ledger-catalog-before.json")
+          after_path = Path("accepted-ledger-catalog-after.json")
+          report_path = Path("accepted-ledger-junit.xml")
+          require(not any(path.exists() for path in (before_path, after_path, report_path)),
+                  "refusing stale CI evidence")
+          before = snapshot()
+          retain(before_path, before)
+          baseline_guard(before)
+          try:
+              result = subprocess.run([
+                  sys.executable, "-B", "-m", "pytest", "-c", "pyproject.toml",
+                  "tests/integration/test_accepted_ledger_sql.py",
+                  "tests/integration/test_accepted_ledger_security.py",
+                  "-m", "integration", "-x", "-q", "--tb=short",
+                  "--junitxml=accepted-ledger-junit.xml",
+              ], check=False)
+              print(f"AL pytest exit status: {result.returncode}", flush=True)
+          finally:
+              after = snapshot()
+              retain(after_path, after)
+              baseline_guard(after)
+              require(after == before, "dedicated catalog differs after AL teardown")
+          raise SystemExit(result.returncode)
+          PY
+
+      - name: Require exactly 145 successful executed AL cases
+        if: always()
+        shell: bash
+        run: |
+          env -i PATH="$PATH" PYTHONDONTWRITEBYTECODE=1 python -B - <<'PY'
+          from collections import Counter
+          from pathlib import Path
+          from xml.etree import ElementTree
+
+          def validate_report(data):
+              if type(data) is not bytes or len(data) > 4194304:
+                  raise AssertionError("AL report missing or exceeds 4 MiB")
+              root = ElementTree.fromstring(data)
+              if root.tag not in ("testsuites", "testsuite"):
+                  raise AssertionError("AL report is not a recognized JUnit root")
+              suites = list(root.iter("testsuite"))
+              if len(suites) != 1:
+                  raise AssertionError("AL single invocation requires exactly one testsuite")
+              suite = suites[0]
+              cases = list(suite.iter("testcase"))
+              if cases != list(root.iter("testcase")):
+                  raise AssertionError("AL testcase lies outside its declared testsuite")
+              if suite.get("tests") != str(len(cases)):
+                  raise AssertionError("AL suite declared tests count does not match its cases")
+              expected = {
+                  "tests.integration.test_accepted_ledger_sql": 43,
+                  "tests.integration.test_accepted_ledger_security": 102,
+              }
+              if len(cases) != 145 or Counter(case.get("classname") for case in cases) != expected:
+                  raise AssertionError("AL requires exactly 43 SQL and 102 security cases")
+              if any(not case.get("name") for case in cases):
+                  raise AssertionError("AL report lacks an exact test identity")
+              if len({(case.get("classname"), case.get("name")) for case in cases}) != 145:
+                  raise AssertionError("AL report contains duplicate test identities")
+              if any(case.find(tag) is not None for case in cases
+                     for tag in ("skipped", "failure", "error")):
+                  raise AssertionError("AL acceptance requires no skips, failures or errors")
+              if any(int(suite.get(tag, "-1")) != 0 for tag in ("skipped", "failures", "errors")):
+                  raise AssertionError("AL suite reports a skip, failure or error")
+
+          with Path("accepted-ledger-junit.xml").open("rb") as stream:
+              raw = stream.read(4194305)
+          validate_report(raw)
+          print("Verified 145 executed AL cases: 43 SQL + 102 security; no skips or errors")
+          PY
+
+      - name: Retain AL test and bounded catalog evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: accepted-ledger-junit-and-catalog
+          path: |
+            accepted-ledger-junit.xml
+            accepted-ledger-catalog-before.json
+            accepted-ledger-catalog-after.json
+          if-no-files-found: error
