@@ -78,7 +78,7 @@ echo "pre-push [3/4]: mypy --strict"
 # A failed full check must not be replaced by a successful partial retry.
 # Discovery failure is fatal under set -e, not an empty-scaffold exemption.
 set --
-for source_dir in analysis detectors integrations services workers; do
+for source_dir in analysis detectors integrations services workers tools; do
   [ -d "$source_dir" ] || continue
   first_python=$(find "$source_dir" -name "*.py" -print -quit)
   if [ -n "$first_python" ]; then
