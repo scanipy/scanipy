@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 18 — 2026-09-26 05:01:47 UTC cutoff plus dated updates through05:32:18; actual38-case native custody passed after three preserved failures; local A2 checkpoint, full acceptance unresolved |
+| Revision | 19 — 2026-09-26 07:42:08 UTC cutoff plus dated updates through08:12; historical correction merged; A2 fixture corrected locally; real role migration failed and fixture retained, full acceptance unresolved |
 | Status | Execution started; no full R01–R20 task or submitted claim is yet accepted as complete |
 | Initial review code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
@@ -46,11 +46,81 @@ All unchecked acceptance items below remain required unless explicitly
 classified optional. An adopted design, recovered historical report, or one
 successful Joern parse does not complete a task or verify a submitted claim.
 
-**Current work queue:** use Revision 18 in the
-[active handoff](PLAN-BHMEA-EXECUTION-2026-09-25.md#current-next-actions--053218-utc).
+**Current work queue:** use Revision 19 in the
+[active handoff](PLAN-BHMEA-EXECUTION-2026-09-25.md#current-next-actions--0812-utc).
 The dated progress paragraphs that follow retain historical evidence. Their
 older pending statuses do not override the latest queue or require redoing
 accepted merges; the full task-level acceptance TODOs begin in section 5.
+
+At the 07:42:08 UTC cutoff, accepted main remains `617126d0` (Revision18 #431).
+Historical-read PR #432 has passed all seven new-head hosted CI jobs and Gate3
+at `4041cc3d`, including **183 distinct PostgreSQL passes, no failures/errors/
+skips**, with unchanged before/after catalogs. The first canonical review's
+ownership ambiguity was corrected in documentation. Its replacement canonical
+review is running; the PR is **not merged or approved** at this cutoff.
+
+The restricted-reader role/migration and 246-case CI source are locally committed
+and independently reviewed, but **the 63 new role SQL cases have not run**.
+Their prepared standalone run requires a separate execution grant and actual
+report/catalog readback. Effective SET LOCAL ROLE tests will not prove login
+authentication. Corrected custody source is also locally committed: 270 distinct
+controlled cases pass after preserved terminal-work/preallocation failures;
+that is not native custody, a public reader or current execution authority.
+
+The frozen A2 fixture has 117 passing fake controls and 71 collected native
+cases, **zero executed native cases**. Independent review and root reproduction
+found four failures in two raw connection/cursor-to-wrapper handoffs; a narrow
+fixture-only correction is in progress. Preserve the original failure reports,
+then require independent re-review before any implementation commit or run.
+The earlier 38-case native image predates A2 and cannot qualify it.
+
+See the [Revision19 evidence and action boundary](evidence/2026-09-25-foundation-merges/README.md#revision-19--074208-utc-cutoff-september-26).
+The private restricted connection factory is newly allocated source work; full
+material assembly, original-context R5/R6 checks, actual installed credentials,
+runtime storage/controller, real scan/provenance/decision/API/UI integration and
+the full corpus/offline rehearsals remain required. About 6.5 GiB RAM was available
+and swap was full in the latest sample; do not infer dedicated capacity or launch
+the additional A2 container pair without fresh headroom and a reviewed run plan.
+Every original R01–R20 TODO, C01–C18 status, milestone, DAG edge and shared gate
+below remains unchanged. No technical, release or stage completion is claimed.
+
+**Explicit later update, 07:52 UTC:** PR #432 received an exact-head canonical
+SUCCESS/APPROVE; the complete final comment was read before its normal merge
+at07:47:40. Accepted main is now `b5bff429`, tree `34f93546`, identical to the
+reviewed candidate. All539 affected post-merge unit checks pass, with zero
+failures/errors/skips; #399/#362 remain OPEN/In Progress. Do not repeat the
+historical merge/review or its completed183-case qualification.
+
+The A2 fixture handoff correction passed181 distinct controlled cases in both
+author and independent runs, including the unchanged original six regressions.
+Normal local commit `4d14a370`, tree `5273db56`, preserves the original source
+history/native71 expectations. Its earlier HOLD is resolved for this source
+slice only: **native71 execution, PostgreSQL authentication and image/runner
+qualification remain pending**. The 246-case restricted-role run started once
+at07:51:47 against the existing isolated AL server; it is still running, with
+no passing result or cleanup verdict claimed. This update supersedes only those
+cutoff pending actions, not the original task-level TODOs or acceptance gates.
+The ledger's current R01/R17 `next_action` navigation is refreshed accordingly;
+their acceptance statuses and every historical note remain unchanged.
+
+**Explicit later update, 08:12 UTC:** the standalone246 campaign stopped with
+exit1. Its actual report contains183 passing original SQL/security/historical
+cases and one role testcase with both setup and teardown errors; **none of the
+63 role-test bodies ran**. Migration0008 has a confirmed PL/pgSQL variable/table-
+alias collision (`n.nspacl`). The fixture correctly refused automatic cleanup
+after the unresolved transition. Its child database/roles remain retained;
+before/after catalogs differ. This is not successful246 qualification or clean
+historical qualification merely because its first183 cases passed.
+
+Preserve that failed source/report/catalog state. A separate, minimal private-
+variable rename is allocated with red/green controls and exact predicate/body/
+ACL preservation; it has not run against PostgreSQL. No same-run retry, catalog
+repair or weakening of ambiguity/ownership checks is allowed. The original user
+app/DB remain healthy. The private reader factory is separately frozen with207
+controlled passes on each of Python3.11/3.12; independent review is pending,
+and no real reader, composer, signature/current-authority or native acceptance
+is implied. These facts supersede the07:52 running status only; all original
+full-scope acceptance TODOs and statuses remain unchanged.
 
 At the new05:01:47 UTC cutoff, accepted main `a871c00a` includes Revision17
 documentation #430 after its required gates. Old-image reconciliation/ABI and

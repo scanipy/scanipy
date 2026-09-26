@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Updated | 2026-09-26 |
-| Snapshot | Revision 18; 2026-09-26 05:01:47 UTC cutoff plus dated updates through05:32:18; accepted main `a871c00a`; actual38-case native custody passed after three preserved failures; local A2 checkpoint, full acceptance unresolved |
+| Snapshot | Revision 19; 2026-09-26 07:42:08 UTC cutoff plus dated updates through08:12; accepted main `b5bff429`; historical correction merged; A2 fixture corrected locally; role0008 SQL failed, retained fixture and corrective source work |
 | Target | FULL_SUBMISSION; all C01–C18 claims and applicable R01–R20 acceptance items |
 | Tracking | [Umbrella issue #362](https://github.com/scanipy/scanipy/issues/362) |
 | Presentation | December 2 or 3, 2026; exact date unconfirmed |
@@ -128,7 +128,7 @@ source custody alone does not make an unsafe checkout trustworthy. See the
 
 ## 3. Work ownership and next actions
 
-**Current queue:** [Revision18, section9](#9-revision-18-execution-queue--050147-utc-september-26).
+**Current queue:** [Revision19, current next actions](#current-next-actions--0812-utc).
 The dated queues below are preserved historical observations, not instructions
 to repeat accepted work or silently transfer old test results to newer source.
 
@@ -1037,3 +1037,150 @@ section without rewriting their dated evidence. No completed run should repeat.
 
 Do not add global adoption or inferred publication as new acceptance gates.
 Every original task/claim/milestone/DAG/shared-gate state remains unchanged.
+
+## 10. Revision 19 execution queue — 07:42:08 UTC, September 26
+
+This is the cutoff snapshot; the explicitly dated current actions below
+supersede completed pending instructions without rewriting their results.
+Accepted main at cutoff is `617126d0` after Revision18 #431.
+The [evidence index](evidence/2026-09-25-foundation-merges/README.md#revision-19--074208-utc-cutoff-september-26)
+records exact heads, reports and limitations. #399/#362 were actually In Progress
+at 07:39 UTC; no umbrella is completed by these component checkpoints.
+
+| Slice | Actual state at cutoff | Required next action |
+|---|---|---|
+| Historical-read distinction, #432 | `4041cc3d`; new hosted CI/Gate3 pass, including 183 real SQL cases and equal catalogs; canonical re-review running | Read exact-head SUCCESS/APPROVE and complete comment, resolve findings, then normal merge and accepted-artifact/board checks; first failed verdict remains retained |
+| A2 consumer and fixture | Corrected consumer `8de2f1b1` committed locally; fixture117 fake passes/71 collected native cases; independent handoff failures reproduced | Correct only two fixture adapters; preserve original tests/reports; independently review and commit before rebuilding/pinning or genuinely running A2 |
+| Reader role and CI246 | Role `5c395123`, tests `0bee2833`, CI composition `ee1f4e3d` committed locally; source controls pass, 63 new SQL cases unrun | Run the separately reviewed standalone246 selection once with exact source/service pins and catalog cleanup evidence; then normal repository gates; do not call effective-role tests authentication |
+| Private reader custody | `0e9354cd` committed; terminal-work/preallocation correction independently passes270 controlled cases | Preserve the original failures; implement/review private connection/facade factory, then material assembly and original-context composer; qualify genuine custody/authentication separately |
+| Runtime and submitted workflow | No operational current-authority/complete scan acceptance | Finish #400 physical storage/isolation/DB barriers/controller, actual producers, durable decisions, provenance and asynchronous API/UI/Compose |
+
+### Required actions at cutoff — historical action record
+
+1. **Close only the historical PR gates.** New-head CI is actual evidence, not
+   approval. Canonical run `36227455747` must complete with APPROVE; read its
+   entire final comment. Do not repeat the completed183 local run or borrow an
+   old-head verdict. Recheck the exact accepted tree, affected tests and open
+   umbrella board state after merge. No `Closes` directive for #399/#362.
+2. **Repair A2 fixture ownership.** Place both raw acquisitions and wrapper
+   construction inside guarded ownership. Preserve original primary/prior and
+   cleanup exceptions, close once on failure, transfer sole ownership on
+   success. Preserve original873 unit/4030 resolver prefixes and all71 native
+   expectations; the regression was fixture-only, not a production failure.
+   Then use corrected immutable source/dependency/image pins and a newly
+   reviewed native/PG recipe, actual five-route SCRAM/root-peer controls,
+   maximum bilingual bundle, replay/ambiguity/recovery and bounded retention.
+   Use fail-fast and stop on uncertain cleanup; counters are not child absence.
+3. **Qualify the restricted role.** The prepared246 wrapper adds63 cases to
+   original43+102+38, uses the retained isolated AL cluster, and requires exact
+   before/after catalog equality. It is not the A2 administration fixture.
+   Inspect fresh resources/identity before a separate single-run grant; preserve
+   any partial/failing result and diagnose unknown cleanup without retry/repair.
+4. **Complete the installed reader.** The newly allocated private factory must
+   enforce the fixed PostgreSQL16 catalog and one shared budget, five executes
+   per read, guarded raw connections/cursors and no pooled/admin fallback.
+   Custody alone does not authenticate signed current permission. The later
+   composer must assemble actual R4/R1/R2/R3 material and retain the exact R5
+   context for R6, with public signature/time checks. Do not expose a working
+   public-reader placeholder or clear runtime-unsupported prematurely.
+5. **Deliver every remaining submission TODO.** Finish actual source/model/
+   rule/CPG/witness binding; retain detected occurrences through identity
+   failure; implement durable decision/CAS continuity and verifiable provenance;
+   finish truthful asynchronous API/UI/worker/Compose. Run actual Java/Python,
+   Semgrep/CodeQL/comparator measurements,422 cases/844 sides and G0–G3. A
+   component's narrow green tests do not close an R-task or claim.
+6. **Qualify this machine and installation.** At 07:41 UTC only6654 MiB RAM
+   was available, swap2047 MiB was full and shared free disk was about86 GiB.
+   Existing app/DB remained healthy and untouched. Serialize heavier work;
+   the proposed additional4 GiB PG+2 GiB A2 client needs fresh headroom and
+   a reviewed whole-run/report/cleanup envelope. Resolve operator identities,
+   independent pins and restore/old-parent exclusion before activation. Complete
+   clean install, measured budgets, recovery and two offline rehearsals.
+
+Keep December2/3 and no October lock. Releases/images/video/external messages
+still need separate authority. Global adoption/inferred publication are later
+extensions, not new Black Hat gates. All original R/C/TODO/milestone/DAG/shared
+gate and technical/release/stage statuses remain unchanged.
+
+### Current next actions — 07:52 UTC
+
+PR #432 is now merged as `b5bff429` after exact-head canonical SUCCESS/APPROVE
+and full-comment readback. Its actual merge tree `34f93546` equals the reviewed
+candidate; fresh accepted-artifact539 units pass,0 failures/errors/skips.
+Both umbrellas remain OPEN/In Progress. A2 fixture correction is locally
+committed as `4d14a370` after two overlapping181-pass controlled runs and normal
+hooks. The standalone246 role SQL run started once at07:51:47 and is running.
+These later facts supersede only the corresponding cutoff pending instructions.
+
+1. **Finish the active246 run without restarting it.** Retain the actual report,
+   exact43/102/38/63 distribution, source pins and before/after catalog cleanup.
+   Any failure or unknown cleanup stops productive work for diagnosis; no retry,
+   compensating privilege repair or fixture adoption. Then use normal repository
+   tests/canonical review/merge and accepted-artifact checks. Do not repeat the
+   completed historical183 campaign or historical PR432 merge.
+2. **Qualify A2, not merely its corrected fixtures.** Preserve original four
+   handoff failures and all prior evidence. Pin corrected commit4d14a370 and
+   independently review the enlarged source/dependency/image closure, actual
+   five-route SCRAM/root-peer setup and finite watchdog/report/once-only cleanup
+   owner before separate snapshot/build/run grants. Preserve71 native cases and
+   fail-fast after unknown cleanup;181 controlled passes are not native passes.
+3. **Finish the private reader and current-authority composer.** Complete/review
+   the allocated connection/facade factory, shared work precharges, exact PG16
+   catalog and raw ownership. Then assemble real R4/R1/R2/R3 material and exact
+   original-context R5/R6 with independent signatures/time/custody/role checks.
+   No installed reader, public placeholder or runtime activation is accepted yet.
+4. **Execute all original section5 implementation and acceptance TODOs.** Complete
+   #400 storage/isolation/DB barriers/controller and actual bilingual producers,
+   CPG/witness bindings, durable decisions, provenance and asynchronous API/UI/
+   Compose. Measure Semgrep/CodeQL/comparators,422 cases/844 sides and G0–G3;
+   no narrow component result substitutes for the submission's complete scope.
+5. **Verify local Docker stage readiness on this machine.** Latest07:51 sample:
+   6671MiB available RAM, full2047MiB swap and90053880KiB shared disk free.
+   Existing app/DB remain healthy. The proposed6GiB A2 pair is not admitted:
+   require at least8GiB available RAM and20GiB free shared disk, then freshly
+   assess pressure and the complete campaign budget. These conservative minima
+   are not reserved capacity or latency guarantees. Do not stop user workloads.
+   Resolve installed identities/independent pins/restore and old-parent exclusion,
+   then complete clean install, measured budgets, recovery and two offline runs.
+
+No October lock, additional publication gate, full task/claim promotion or new
+operator/release/external-message authority is introduced by this update.
+
+### Current next actions — 08:12 UTC
+
+The07:52 active-run instruction is superseded: standalone246 exited1 after
+183 original passes, then first-role setup and teardown errors. The new role
+body did not run, and neither did the other62 role bodies. Server logs confirm
+the outer PL/pgSQL record `n` conflicts with a namespace table alias `n`.
+Automatic cleanup refused the unresolved transition; the failed child database
+and fixture roles remain. Original source/reports/catalogs must remain intact.
+
+1. **Fix and independently qualify the actual role migration.** In a separate
+   worktree, rename only the private PL/pgSQL namespace record/references to
+   `v_n`. Preserve every target body, predicate, ACL kind, SQL alias, grant and
+   default; do not set variable_conflict to bypass ambiguity. Require original
+   red/new green controls, exact reversal and independent source review. Only
+   then review a fresh real-PG campaign and its exact resource/cleanup plan.
+   Do not restart the consumed wrapper or reuse its evidence paths.
+2. **Keep failed-fixture disposition explicit.** Retain XML, both catalogs,
+   source pins, actual server error and original exception/cleanup chain. Use
+   read-only diagnosis and exact identities before separately deciding any
+   disposal or new isolated fixture. No role adoption, privilege repair,
+   backend termination, FORCE/CASCADE or blind database cleanup.
+3. **Finish reader review and real composition.** Private factory source is
+   frozen:207 controls pass on each declared Python version,470 with unchanged
+   custody controls; counts overlap. Independent review is pending. Preserve
+   its original lock/oracle/preallocation failures, then complete real material
+   assembly, original R5/R6 context and actual signature/time/custody/PG checks.
+4. **Continue A2 and the complete submitted workflow.** Corrected fixture4d14a370
+   and181 controls remain local source evidence, not native71 qualification.
+   Review its pinned image/runtime/terminal-cleanup recipe and fresh headroom
+   before any native grant. Complete all original section5 TODOs, actual
+   bilingual/source/CPG/decision/provenance/API/UI/Compose integration,422/844,
+   G0–G3, installation/recovery and two offline rehearsals on this machine.
+
+Historical PR432 and its accepted539 checks remain complete; do not repeat that
+merge or substitute its183 report for the failed role campaign. Normal required
+tests, canonical approval and post-merge checks still precede every later merge.
+At08:10 the user app/DB remained healthy; available RAM6395MiB, swap2047MiB full.
+No service, user workload, installed authority, release or full acceptance changed.
