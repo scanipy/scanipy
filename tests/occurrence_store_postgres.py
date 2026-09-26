@@ -8,10 +8,11 @@ it never terminates sessions, uses CASCADE, or drops an unowned resource.
 from __future__ import annotations
 
 import os
+import stat
 import subprocess
 import sys
 from contextlib import contextmanager
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PosixPath, PurePosixPath
 from typing import Literal
 from uuid import UUID, uuid4
 
@@ -32,12 +33,208 @@ ACCEPTED_RESERVED = tuple(
     "scanipy_accepted_" + role
     for role in ("owner", "policy_admin", "publisher", "resolver", "reader")
 )
+ADMINISTRATION_URL = (
+    "postgresql://a2_fixture_admin@:5432/a2_fixture_bootstrap?host=/run/scanipy-a2-postgres"
+)
+_ADMINISTRATION_ROUTES = {
+    "owner": ("accepted_owner", "scanipy_accepted_owner", "altest_a2_owner_"),
+    "policy_admin": ("accepted_policy_admin", "scanipy_accepted_policy_admin", None),
+    "publisher": ("accepted_publisher", "scanipy_accepted_publisher", None),
+    "admin_reader": ("accepted_admin_reader", "scanipy_accepted_reader", "altest_a2_admin_reader_"),
+    "publisher_reader": (
+        "accepted_publisher_reader",
+        "scanipy_accepted_reader",
+        "altest_a2_pub_reader_",
+    ),
+}
+_ADMIN_OPTIONS = "-c statement_timeout=15000 -c lock_timeout=2000"
+_DIRECTORY_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+_MIGRATION_BOOTSTRAP = """
+import os, sys
+assert sys.flags.isolated and sys.flags.no_site and sys.dont_write_bytecode
+assert sys.platform == 'linux' and os.getresuid() == (0, 0, 0) and os.getresgid() == (0, 0, 0)
+assert len(sys.argv) == 5
+root, dependencies, action, target = sys.argv[1:]
+assert action in ('upgrade', 'downgrade')
+assert target in ('20260925_0003', '20260925_0004', '20260925_0005',
+                  '20260926_0006', '20260926_0007')
+assert all(p.startswith('/') and '\\x00' not in p and len(p.encode()) <= 4096
+           for p in (root, dependencies))
+sys.path[:0] = [root, dependencies]
+from alembic import command
+from alembic.config import Config
+config = Config(os.path.join(root, 'alembic.ini'))
+config.set_main_option('script_location', os.path.join(root, 'db', 'migrations'))
+config.set_main_option('prepend_sys_path', root)
+{'upgrade': command.upgrade, 'downgrade': command.downgrade}[action](config, target)
+"""
+_ADMIN_LOGIN_PROOF = """SELECT r.rolname::text,r.oid,r.rolcanlogin,r.rolsuper,
+r.rolinherit,r.rolcreaterole,r.rolcreatedb,r.rolreplication,r.rolbypassrls,
+(r.rolpassword LIKE 'SCRAM-SHA-256$%%'),g.rolname::text,g.oid,a.grantor,
+a.admin_option,a.inherit_option,a.set_option,
+pg_has_role(r.oid,'scanipy_accepted_owner','MEMBER'),
+pg_has_role(r.oid,'scanipy_accepted_policy_admin','MEMBER'),
+pg_has_role(r.oid,'scanipy_accepted_publisher','MEMBER'),
+pg_has_role(r.oid,'scanipy_accepted_reader','MEMBER'),
+pg_has_role(r.oid,g.oid,'SET'),pg_has_role(r.oid,g.oid,'USAGE')
+FROM pg_authid r LEFT JOIN pg_auth_members a ON a.member=r.oid
+LEFT JOIN pg_roles g ON g.oid=a.roleid
+WHERE r.oid=ANY(%s) ORDER BY r.rolname::text,g.rolname::text,a.grantor LIMIT 6"""
+
+
+def _administration_path(value):
+    if type(value) is not PosixPath:
+        raise ValueError("administration requires exact absolute paths")
+    try:
+        raw = object.__getattribute__(value, "_raw_paths")
+    except AttributeError:
+        raw = object.__getattribute__(value, "_parts")
+    if type(raw) is not list or not 1 <= len(raw) <= 128:
+        raise ValueError("invalid administration path")
+    parts = tuple(raw[:129])
+    if len(parts) > 128 or any(type(part) is not str or len(part) > 4096 for part in parts):
+        raise ValueError("invalid administration path")
+    if sum(len(part.encode("utf-8")) for part in parts) > 4096:
+        raise ValueError("invalid administration path")
+    text = "/".join(parts).replace("//", "/", 1) if parts[0] == "/" else "/".join(parts)
+    if (
+        not text.startswith("/")
+        or "\x00" in text
+        or len(text.encode("utf-8")) > 4096
+        or any(part in ("", ".", "..") for part in text.split("/")[1:])
+    ):
+        raise ValueError("invalid administration path")
+    return PosixPath(text)
+
+
+def _administration_errors(primary, failures):
+    if primary is None and failures:
+        primary = failures.pop(0)
+    if primary is not None:
+        prior = primary.__cause__ if primary.__cause__ is not None else primary.__context__
+        evidence = ([prior] if prior is not None else []) + failures
+        if failures:
+            primary.__cause__ = BaseExceptionGroup("administration fixture cleanup", evidence)
+            primary.__suppress_context__ = True
+        raise primary
+
+
+def _close_administration_slot(owned, index, *, descriptor=False):
+    if owned[index] is not None:
+        try:
+            if descriptor:
+                os.close(owned[index])
+            else:
+                owned[index].close()
+        finally:
+            owned[index] = None
+
+
+@contextmanager
+def _administration_cursor(connection):
+    owned, primary, failures = [None], None, []
+    try:
+        owned[0] = connection.cursor()
+        yield owned[0]
+    except BaseException as error:
+        primary = error
+    finally:
+        try:
+            _close_administration_slot(owned, 0)
+        except BaseException as error:
+            failures.append(error)
+    _administration_errors(primary, failures)
+
+
+def _administration_directory(path, *, private=False, empty=False):
+    owned, scan, primary, failures = [None, None], [None], None, []
+    try:
+        owned[0] = os.open("/", _DIRECTORY_FLAGS)
+        for part in path.parts[1:]:
+            owned[1] = os.open(part, _DIRECTORY_FLAGS, dir_fd=owned[0])
+            _close_administration_slot(owned, 0, descriptor=True)
+            owned[0], owned[1] = owned[1], None
+        info = os.fstat(owned[0])
+        mode = stat.S_IMODE(info.st_mode)
+        if (
+            not stat.S_ISDIR(info.st_mode)
+            or info.st_uid != 0
+            or (mode != 0o700 if private else bool(mode & 0o022))
+        ):
+            raise ValueError("unsafe administration directory")
+        if empty:
+            scan[0] = os.scandir(owned[0])
+            if next(scan[0], None) is not None:
+                raise ValueError("administration working directory is not empty")
+    except BaseException as error:
+        primary = error
+    finally:
+        for slots, index, descriptor in ((scan, 0, False), (owned, 1, True), (owned, 0, True)):
+            try:
+                _close_administration_slot(slots, index, descriptor=descriptor)
+            except BaseException as error:
+                failures.append(error)
+    _administration_errors(primary, failures)
+
+
+def _administration_rows(cursor, query, parameters=(), *, maximum, columns, budget=None):
+    cursor.execute(query, parameters)
+    rows = cursor.fetchmany(maximum + 1)
+    if type(rows) is not list or len(rows) > maximum:
+        raise AssertionError("administration catalog row bound")
+    budget = [0] if budget is None else budget
+    for row in rows:
+        if type(row) is not tuple or len(row) != columns:
+            raise AssertionError("administration catalog shape")
+        for value in row:
+            values = value if type(value) is list else [value]
+            if len(values) > 4:
+                raise AssertionError("administration catalog array bound")
+            for item in values:
+                if item is None or type(item) is bool:
+                    budget[0] += 8
+                elif type(item) is int and -(2**63) <= item < 2**63:
+                    budget[0] += 24
+                elif type(item) is str and len(item) <= 4096:
+                    budget[0] += len(item.encode("utf-8")) + 8
+                else:
+                    raise AssertionError("administration catalog primitive")
+                if budget[0] > 16384:
+                    raise AssertionError("administration catalog byte bound")
+    return rows
 
 
 class PrivatePostgres:
-    def __init__(self, url: str, *, profile: Literal["occurrence", "accepted"] = "occurrence"):
+    def __init__(
+        self,
+        url: str,
+        *,
+        profile: Literal["occurrence", "accepted"] = "occurrence",
+        administration: bool = False,
+        migration_cwd: Path | None = None,
+        migration_site_packages: Path | None = None,
+    ):
+        if type(administration) is not bool:
+            raise ValueError("invalid administration mode")
+        if not administration and (
+            migration_cwd is not None or migration_site_packages is not None
+        ):
+            raise ValueError("administration paths require explicit mode")
         if type(profile) is not str or profile not in ("occurrence", "accepted"):
             raise ValueError("unknown dedicated database profile")
+        if administration and profile != "accepted":
+            raise ValueError("invalid administration mode")
+        self.administration = administration
+        self.administration_routes = {}
+        self.migration_evidence = []
+        self._migration_calls = 0
+        self._migration_failed = False
+        if administration:
+            self.migration_cwd = _administration_path(migration_cwd)
+            self.migration_site_packages = _administration_path(migration_site_packages)
+            if type(url) is not str or url != ADMINISTRATION_URL:
+                raise ValueError("administration requires its exact peer bootstrap URL")
+            self._administration_runtime()
         self.profile = profile
         self.reserved = RESERVED + (ACCEPTED_RESERVED if profile == "accepted" else ())
         self.migration_target = "20260926_0006" if profile == "accepted" else "20260925_0005"
@@ -97,8 +294,371 @@ class PrivatePostgres:
         self.owned_roles: dict[str, int] = {}
         self.database_identity = None
 
+    def _administration_runtime(self):
+        if (
+            sys.platform != "linux"
+            or os.getresuid() != (0, 0, 0)
+            or os.getresgid() != (0, 0, 0)
+            or not sys.flags.isolated
+            or not sys.flags.no_site
+            or not sys.dont_write_bytecode
+        ):
+            raise ValueError("administration requires isolated root fixture runtime")
+        forbidden = (
+            "DATABASE_URL",
+            "SCANIPY_DATABASE_URL",
+            "SCANIPY_TEST_DATABASE_URL",
+            "SCANIPY_ACCEPTED_LEDGER_TEST_URL",
+            "SCANIPY_ACCEPTED_LEDGER_TEST_REQUIRED",
+            "SCANIPY_OCCURRENCE_TEST_URL",
+            "SCANIPY_OCCURRENCE_TEST_REQUIRED",
+        )
+        if any(key in os.environ for key in forbidden) or any(
+            key.startswith(("PG", "AWS_")) for key in os.environ
+        ):
+            raise ValueError("ambient administration database/credential selectors are forbidden")
+        self.migration_cwd = _administration_path(self.migration_cwd)
+        self.migration_site_packages = _administration_path(self.migration_site_packages)
+        if self.migration_cwd in (self.migration_site_packages, ROOT):
+            raise ValueError("administration working directory must be separate")
+        _administration_directory(self.migration_cwd, private=True, empty=True)
+        _administration_directory(self.migration_site_packages)
+        _administration_path(PosixPath(sys.executable))
+
+    @contextmanager
+    def _administration_admin(self, *, bootstrap=False):
+        self._administration_runtime()
+        owned, primary, failures = [None], None, []
+        try:
+            owned[0] = psycopg2.connect(
+                **(self.base if bootstrap else self.child),
+                connect_timeout=2,
+                options=_ADMIN_OPTIONS,
+                application_name="scanipy-a2-fixture-setup",
+            )
+            yield owned[0]
+        except BaseException as error:
+            primary = error
+        finally:
+            try:
+                _close_administration_slot(owned, 0)
+            except BaseException as error:
+                failures.append(error)
+        _administration_errors(primary, failures)
+
+    def _check_administration_cluster(self):
+        with self.admin(bootstrap=True) as connection, _administration_cursor(connection) as cursor:
+            settings = _administration_rows(
+                cursor,
+                "SELECT current_setting('server_version_num')::integer,"
+                "left(current_setting('listen_addresses'),64),"
+                "left(current_setting('password_encryption'),64),"
+                "session_user::text,current_user::text,r.rolcanlogin,r.rolsuper,"
+                "left(current_setting('statement_timeout'),64),"
+                "left(current_setting('lock_timeout'),64) "
+                "FROM pg_roles r WHERE r.rolname::text=session_user::text",
+                maximum=1,
+                columns=9,
+            )
+            if (
+                len(settings) != 1
+                or type(settings[0][0]) is not int
+                or not 160000 <= settings[0][0] < 170000
+                or type(settings[0][5]) is not bool
+                or type(settings[0][6]) is not bool
+                or settings[0][1:7]
+                != (
+                    "",
+                    "scram-sha-256",
+                    "a2_fixture_admin",
+                    "a2_fixture_admin",
+                    True,
+                    True,
+                )
+                or settings[0][7] not in ("15s", "15000ms")
+                or settings[0][8] not in ("2s", "2000ms")
+            ):
+                raise AssertionError("administration bootstrap configuration differs")
+            budget = [0]
+            hba = _administration_rows(
+                cursor,
+                "SELECT left(type,64),"
+                "CASE WHEN cardinality(database)=1 THEN ARRAY[left(database[1],64)] "
+                "ELSE ARRAY['invalid-array'] END,"
+                "CASE WHEN cardinality(user_name)=1 THEN ARRAY[left(user_name[1],64)] "
+                "ELSE ARRAY['invalid-array'] END,left(address,64),left(netmask,64),"
+                "left(auth_method,64),CASE WHEN options IS NULL THEN NULL "
+                "WHEN cardinality(options)=1 THEN ARRAY[left(options[1],64)] "
+                "ELSE ARRAY['invalid-array'] END,"
+                "CASE WHEN error IS NULL THEN NULL ELSE 'invalid-rule' END "
+                "FROM pg_hba_file_rules ORDER BY rule_number NULLS LAST,line_number LIMIT 5",
+                maximum=4,
+                columns=8,
+                budget=budget,
+            )
+            ident = _administration_rows(
+                cursor,
+                "SELECT left(map_name,64),left(sys_name,64),left(pg_username,64),"
+                "CASE WHEN error IS NULL THEN NULL ELSE 'invalid-map' END "
+                "FROM pg_ident_file_mappings "
+                "ORDER BY map_number NULLS LAST,line_number LIMIT 2",
+                maximum=1,
+                columns=4,
+                budget=budget,
+            )
+            if hba != [
+                (
+                    "local",
+                    ["all"],
+                    ["a2_fixture_admin"],
+                    None,
+                    None,
+                    "peer",
+                    ["map=a2_root_setup"],
+                    None,
+                ),
+                ("local", ["all"], ["all"], None, None, "scram-sha-256", None, None),
+                ("host", ["all"], ["all"], "0.0.0.0", "0.0.0.0", "reject", None, None),
+                ("host", ["all"], ["all"], "::", "::", "reject", None, None),
+            ] or ident != [("a2_root_setup", "root", "a2_fixture_admin", None)]:
+                raise AssertionError("administration peer/SCRAM files differ")
+            # Catalog views describe current files, NOT the last loaded version.
+            # A separately reviewed startup recipe and real auth controls remain required.
+
+    def _migrate_administration(self, target_url, action, target, expect_success):
+        from tools.worker.bounded_process import MemoryOutput, ProcessLimits, run_bounded_process
+
+        self._administration_runtime()
+        if self._migration_failed or self._migration_calls >= 10:
+            raise AssertionError("administration migration is unavailable or exhausted")
+        self._migration_calls += 1
+        self._migration_failed = True
+        argv = (
+            sys.executable,
+            "-I",
+            "-S",
+            "-B",
+            "-c",
+            _MIGRATION_BOOTSTRAP,
+            str(ROOT),
+            str(self.migration_site_packages),
+            action,
+            target,
+        )
+        environment = {
+            "LANG": "C.UTF-8",
+            "LC_ALL": "C.UTF-8",
+            "PGPASSFILE": "/dev/null",
+            "PGCONNECT_TIMEOUT": "2",
+            "PGOPTIONS": _ADMIN_OPTIONS,
+            "SCANIPY_DATABASE_URL": target_url.render_as_string(hide_password=False).replace(
+                "%", "%%"
+            ),
+        }
+        try:
+            outcome = run_bounded_process(
+                argv,
+                stdin=None,
+                env=environment,
+                cwd=self.migration_cwd,
+                limits=ProcessLimits(0, 1048576, 1048576, 1048576, 60000, 5000),
+            )
+        except BaseException as error:
+            # Retain actual owner's partial outcome, including beneath its exact interruption.
+            from tools.worker.bounded_process import ProcessTransportError
+
+            partial = error if type(error) is ProcessTransportError else error.__cause__
+            if type(partial) is ProcessTransportError:
+                self.migration_evidence.append(partial.outcome)
+            raise
+        self.migration_evidence.append(outcome)
+        outputs = (outcome.stdout, outcome.stderr)
+        if (
+            outcome.reason != "exited"
+            or outcome.cleanup != "completed"
+            or type(outcome.returncode) is not int
+            or outcome.stdin_sent_bytes != 0
+            or any(
+                type(output) is not MemoryOutput
+                or not output.evidence.eof
+                or output.evidence.truncated
+                or output.evidence.observed_bytes != len(output.data)
+                or output.evidence.retained_bytes != len(output.data)
+                for output in outputs
+            )
+            or sum(len(output.data) for output in outputs) > 1048576
+        ):
+            raise AssertionError("administration migration transport incomplete")
+        expected = 0 if expect_success else 1
+        if outcome.returncode != expected:
+            raise AssertionError("administration migration exit differs")
+        result = subprocess.CompletedProcess(
+            argv,
+            outcome.returncode,
+            outcome.stdout.data.decode("utf-8", errors="replace"),
+            outcome.stderr.data.decode("utf-8", errors="replace"),
+        )
+        self._migration_failed = False
+        return result
+
+    def _check_administration_logins(self, cursor, created_roles, created_logins):
+        expected = {}
+        for route, (key, group, _prefix) in _ADMINISTRATION_ROUTES.items():
+            name = created_logins[key][0]
+            expected[name] = (created_roles[name], group, route != "owner")
+        rows = _administration_rows(
+            cursor,
+            _ADMIN_LOGIN_PROOF,
+            ([value[0] for value in expected.values()],),
+            maximum=5,
+            columns=22,
+        )
+        if len(rows) != 5 or len({row[0] for row in rows}) != 5:
+            raise AssertionError("administration login inventory differs")
+        groups = (*ACCEPTED_RESERVED[:3], ACCEPTED_RESERVED[4])
+        for row in rows:
+            if row[0] not in expected:
+                raise AssertionError("administration login identity differs")
+            oid, group, inherit = expected[row[0]]
+            if (
+                type(row[1]) is not int
+                or row[1] != oid
+                or any(type(row[index]) is not bool for index in (*range(2, 10), *range(13, 22)))
+                or row[2:10] != (True, False, inherit, False, False, False, False, True)
+                or row[10] != group
+                or type(row[11]) is not int
+                or row[11] <= 0
+                or type(row[12]) is not int
+                or row[12] <= 0
+                or row[13:16] != (False, inherit, True)
+                or row[16:20] != tuple(candidate == group for candidate in groups)
+                or row[20:22] != (True, inherit)
+            ):
+                raise AssertionError("administration login privilege proof differs")
+
+    def _create_administration_logins(self):
+        created_roles, created_logins = {}, {}
+        selected = {
+            row[0]: (route, row[1], row[2]) for route, row in _ADMINISTRATION_ROUTES.items()
+        }
+        suffixes = (
+            "request",
+            "detector",
+            "identity",
+            "cleanup",
+            "read",
+            "legacy_triage",
+            "accepted_policy_admin",
+            "accepted_publisher",
+            "accepted_resolver",
+            "accepted_reader",
+            "accepted_owner",
+            "accepted_admin_reader",
+            "accepted_publisher_reader",
+        )
+        with self.admin() as connection:
+            with _administration_cursor(connection) as cursor:
+                cursor.execute("SELECT current_setting('max_identifier_length')::integer")
+                limit = cursor.fetchone()
+                if (
+                    type(limit) is not tuple
+                    or len(limit) != 1
+                    or type(limit[0]) is not int
+                    or limit[0] <= 0
+                ):
+                    raise AssertionError("invalid server identifier limit")
+                cursor.execute(
+                    "SET LOCAL password_encryption='scram-sha-256'"  # pragma: allowlist secret
+                )
+                for suffix in suffixes:
+                    route, group, fixed_prefix = selected.get(suffix, (None, None, None))
+                    prefix = fixed_prefix or (
+                        ("altest_" if suffix.startswith("accepted_") else "occurrence_")
+                        + suffix
+                        + "_"
+                    )
+                    token = uuid4().hex
+                    if (
+                        type(token) is not str
+                        or len(token) != 32
+                        or any(ch not in "0123456789abcdef" for ch in token)
+                    ):
+                        raise AssertionError("invalid administration login UUID")
+                    name = prefix + token
+                    if not name.isascii() or not 0 < len(name) <= min(63, limit[0]):
+                        raise AssertionError("test login exceeds server identifier limit")
+                    password = uuid4().hex  # pragma: allowlist secret
+                    if (
+                        type(password) is not str
+                        or len(password) != 32
+                        or any(ch not in "0123456789abcdef" for ch in password)
+                    ):
+                        raise AssertionError("invalid administration fixture credential")
+                    inherit = (" NOINHERIT" if route == "owner" else " INHERIT") if route else ""
+                    cursor.execute(
+                        sql.SQL(
+                            "CREATE ROLE {} LOGIN PASSWORD %s NOSUPERUSER NOCREATEDB "
+                            "NOCREATEROLE NOREPLICATION NOBYPASSRLS" + inherit
+                        ).format(sql.Identifier(name)),
+                        (password,),
+                    )
+                    cursor.execute(
+                        "SELECT rolname::text,oid FROM pg_roles WHERE rolname::text=%s", (name,)
+                    )
+                    identity = cursor.fetchone()
+                    if (
+                        type(identity) is not tuple
+                        or len(identity) != 2
+                        or type(identity[0]) is not str
+                        or identity[0] != name
+                        or type(identity[1]) is not int
+                        or identity[1] <= 0
+                    ):
+                        raise AssertionError(
+                            "created login identity differs from exact requested name"
+                        )
+                    if route:
+                        options = (
+                            "ADMIN FALSE",
+                            "INHERIT FALSE" if route == "owner" else "INHERIT TRUE",
+                            "SET TRUE",
+                        )
+                    else:
+                        group = (
+                            "scanipy_triage"
+                            if suffix == "legacy_triage"
+                            else (
+                                "scanipy_" + suffix
+                                if suffix.startswith("accepted_")
+                                else "scanipy_exec_" + suffix
+                            )
+                        )
+                        options = (None,)
+                    for option in options:
+                        cursor.execute(
+                            sql.SQL(
+                                "GRANT {} TO {}" + (" WITH " + option if option else "")
+                            ).format(
+                                sql.Identifier(group),
+                                sql.Identifier(name),
+                            )
+                        )
+                    created_roles[name] = identity[1]
+                    created_logins[suffix] = name, password
+                self._check_administration_logins(cursor, created_roles, created_logins)
+            connection.commit()
+        self.owned_roles.update(created_roles)
+        self.roles.update(created_logins)
+        self.administration_routes = {
+            route: row[0] for route, row in _ADMINISTRATION_ROUTES.items()
+        }
+
     @contextmanager
     def admin(self, *, bootstrap=False):
+        if self.administration:
+            with self._administration_admin(bootstrap=bootstrap) as connection:
+                yield connection
+            return
         connection = psycopg2.connect(**(self.base if bootstrap else self.child))
         try:
             yield connection
@@ -106,11 +666,13 @@ class PrivatePostgres:
             connection.close()
 
     def migrate(self, target=None, *, expect_success=True, action="upgrade"):
+        if self.administration and (type(action) is not str or type(expect_success) is not bool):
+            raise ValueError("invalid administration migration primitives")
         if action not in ("upgrade", "downgrade"):
             raise ValueError("unsupported migration test action")
         target = self.migration_target if target is None else target
         permitted = ("20260925_0003", "20260925_0004", "20260925_0005") + (
-            ("20260926_0006",) if self.profile == "accepted" else ()
+            ("20260926_0006", "20260926_0007") if self.profile == "accepted" else ()
         )
         if type(target) is not str or target not in permitted:
             raise ValueError("unsupported dedicated migration target")
@@ -119,6 +681,8 @@ class PrivatePostgres:
         for field in ("host", "port", "dbname", "user"):
             if str(resolved.get(field)) != str(self.child[field]):
                 raise AssertionError("migration driver target differs from owned child")
+        if self.administration:
+            return self._migrate_administration(target_url, action, target, expect_success)
         result = subprocess.run(
             [sys.executable, "-m", "alembic", action, target],
             cwd=ROOT,
@@ -138,6 +702,8 @@ class PrivatePostgres:
         return result
 
     def setup(self):
+        if self.administration:
+            self._check_administration_cluster()
         with self.admin(bootstrap=True) as connection:
             connection.autocommit = True
             with connection.cursor() as cursor:
@@ -399,6 +965,8 @@ class PrivatePostgres:
             self.owned_roles.update(created)
 
     def _create_logins(self):
+        if self.administration:
+            return self._create_administration_logins()
         created_roles = {}
         created_logins = {}
         with self.admin() as connection:
