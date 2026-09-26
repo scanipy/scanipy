@@ -549,3 +549,113 @@ def test_actual_role_read_body_uses_closed_distinct_single_use_transactions(read
     assert events == expected
     assert len(transactions) == (2 if read == "recheck" and not fail_first_close else 1)
     assert all(item.closed and item.used for item in transactions)
+
+
+_SCHEMA_SERVICE_ROLES = (
+    "scanipy_exec_owner",
+    "scanipy_exec_request",
+    "scanipy_exec_detector",
+    "scanipy_exec_identity",
+    "scanipy_exec_cleanup",
+    "scanipy_exec_read",
+    "scanipy_accepted_owner",
+    "scanipy_accepted_policy_admin",
+    "scanipy_accepted_publisher",
+    "scanipy_accepted_resolver",
+    "scanipy_accepted_reader",
+    "scanipy_accepted_execution_reader",
+)
+_PROTECTED_SCHEMAS = ("accepted_schema_oid", "execution_schema_oid")
+
+
+def _schema_service_owner_guard(sql):
+    """Admit the literal SQL shape, not a replacement PostgreSQL executor."""
+    match = re.search(
+        r"IF EXISTS\(SELECT 1 FROM pg_catalog\.pg_roles AS protected_owner\s+"
+        r"WHERE protected_owner\.oid=v_n\.nspowner AND protected_owner\.rolname IN \("
+        r"(?P<names>.*?)\)\) THEN\s+"
+        r"RAISE EXCEPTION 'execution reader protected schema service owner'; END IF;",
+        sql,
+        flags=re.DOTALL,
+    )
+    assert match is not None, "missing exact protected-schema owner eligibility predicate"
+    literals = match.group("names")
+    names = tuple(re.findall(r"'([a-z_]+)'", literals))
+    assert re.sub(r"'[a-z_]+'", "", literals).replace(",", "").strip() == ""
+    assert len(names) == len(set(names)) == 12
+    return match.group(), names
+
+
+def test_schema_service_owner_set_matches_both_original_role_creators():
+    roles = []
+    for filename in ("20260925_0005_execution_security.py", "20260926_0006_accepted_ledger.py"):
+        declarations = [
+            node.value
+            for node in ast.parse((VERSIONS / filename).read_text()).body
+            if isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name) and target.id == "ROLES" for target in node.targets
+            )
+        ]
+        assert len(declarations) == 1
+        # Only the two trusted, fixed tuple expressions; no migration import/DDL.
+        values = eval(
+            compile(ast.Expression(declarations[0]), filename, "eval"),
+            {"__builtins__": {}, "tuple": tuple},
+        )
+        assert type(values) is tuple and all(type(value) is str for value in values)
+        roles.extend(values)
+    assert (*roles, ROLE) == _SCHEMA_SERVICE_ROLES
+    for remember in (True, False):
+        _, names = _schema_service_owner_guard(migration()._objects(remember=remember))
+        assert names == _SCHEMA_SERVICE_ROLES
+
+
+@pytest.mark.parametrize("forward", (True, False))
+def test_schema_owner_eligibility_precedes_effects_and_final_snapshot(forward):
+    m = migration()
+    sql = m._migration_sql(forward=forward)
+    guards = []
+    for remember in (True, False):
+        objects = m._objects(remember=remember)
+        guard, _ = _schema_service_owner_guard(objects)
+        guards.append(guard)
+        loop = objects.index("FOR v_n IN SELECT * FROM pg_catalog.pg_namespace")
+        selected = objects.index("WHERE oid IN (accepted_schema_oid,execution_schema_oid)", loop)
+        admitted = objects.index(guard, selected)
+        snapshot = objects.index("'kind','schema','properties',to_jsonb(v_n)-'nspacl'", admitted)
+        assert loop < selected < admitted < objects.index("schema ACL overflow") < snapshot
+    assert guards[0] == guards[1] and sql.count(guards[0]) == 2
+    effects = list(re.finditer(r"^\s*EXECUTE '", sql, re.MULTILINE))
+    assert effects
+    assert sql.index(guards[0]) < effects[0].start()
+    assert effects[-1].start() < sql.rindex(guards[0])
+    assert sql.rindex(guards[0]) < sql.index("IF after_objects IS DISTINCT FROM before_objects")
+
+
+@pytest.mark.parametrize("schema", _PROTECTED_SCHEMAS)
+@pytest.mark.parametrize("role", _SCHEMA_SERVICE_ROLES)
+def test_closed_schema_owner_predicate_refuses_each_service_role(schema, role):
+    # Finite truth table for the admitted equality/IN predicate, not a SQL test.
+    objects = migration()._objects(remember=True)
+    _, names = _schema_service_owner_guard(objects)
+    assert f"WHERE oid IN ({','.join(_PROTECTED_SCHEMAS)})" in objects
+    assert schema in _PROTECTED_SCHEMAS
+    catalog = tuple((100 + index, name) for index, name in enumerate(_SCHEMA_SERVICE_ROLES))
+    owner_oid = {name: oid for oid, name in catalog}[role]
+    assert any(oid == owner_oid and name in names for oid, name in catalog)
+
+
+@pytest.mark.parametrize("schema", _PROTECTED_SCHEMAS)
+@pytest.mark.parametrize(
+    "owner", ("migration_admin_a", "migration_admin_b", "scanipy_exec_owner_other", "custom_owner")
+)
+def test_schema_owner_policy_does_not_invent_an_administrator_identity(schema, owner):
+    objects = migration()._objects(remember=False)
+    guard, names = _schema_service_owner_guard(objects)
+    assert schema in _PROTECTED_SCHEMAS
+    catalog = ((999, owner), *((100 + index, name) for index, name in enumerate(names)))
+    assert not any(oid == 999 and name in names for oid, name in catalog)
+    assert "LIKE" not in guard and "current_user" not in guard and "rolsuper" not in guard
+    assert "pg_database" not in guard and "to_regrole" not in guard
+    assert "protected_owner.oid=v_n.nspowner" in guard

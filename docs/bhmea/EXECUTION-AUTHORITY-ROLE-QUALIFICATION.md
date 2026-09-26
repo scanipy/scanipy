@@ -380,3 +380,100 @@ pins from the prior62-path wrapper inventory remain exact, including every
 production/SQL/migration/harness/workflow/baseline file. Ruff check/format and
 diff-check pass. Actual corrected-source PG qualification remains pending;
 no hook, commit, retry, service mutation or shared-gate promotion occurred.
+
+## 9. Protected-schema service-role ownership — corrective allocation
+
+2026-09-26. Root ratifies the following narrow eligibility rule for both
+`scanipy_accepted_inputs` and `scanipy_execution`: neither schema may be owned
+by any of these twelve exact application service roles:
+
+- `scanipy_exec_owner`, `scanipy_exec_request`, `scanipy_exec_detector`,
+  `scanipy_exec_identity`, `scanipy_exec_cleanup`, `scanipy_exec_read`;
+- `scanipy_accepted_owner`, `scanipy_accepted_policy_admin`,
+  `scanipy_accepted_publisher`, `scanipy_accepted_resolver`,
+  `scanipy_accepted_reader`, `scanipy_accepted_execution_reader`.
+
+These are the exact six occurrence roles from0005, five accepted roles from0006,
+and the new0008 reader. Use a fixed identifier set, not a prefix match or caller
+list. In the existing two-schema object loop, reject an owner OID matching one
+of these catalog roles before taking the schema snapshot. The same check runs
+before first CREATE/GRANT/REVOKE/DROP in both directions and during final object
+validation. Preserve all existing ACL, PUBLIC, function, dependency, role and
+before/after object checks; no grant, reassignment, scrub or repair is added.
+
+This eligibility policy does not identify the original migration administrator.
+The original0004/0006 migrations created schemas as their creator; function
+ownership was reassigned separately. Do not require schema ownership to equal
+the function owner, current_user, current database owner, or a superuser flag.
+There is no new persistent administrator-name/OID anchor and no guarantee that
+every prior administrator-owner substitution is detected. Trusted migration
+administration and exclusive DDL custody remain prerequisites.
+
+The actual239-case campaign on immutable3950c657 produced238 passes,1 failure,
+0 errors/skips in1166.440 seconds. The failed existing inverse-guard case changes
+the accepted schema owner to `scanipy_accepted_reader`, then invokes the actual
+inverse DO in that same transaction. It reported DID NOT RAISE at line304.
+The old object check snapshots the already changed nspowner, and the old role
+guard forbids ownership only by the new execution-reader role. That is not the
+earlier recheck test-lifetime defect. Preserve this existing negative and all63
+role/246 integration identities; its finally rolls the mutation back.
+
+Original actual JUnit SHA256:
+`619b261be99fd68afb3ef9e7d9f973803a31c25e4cacb674543e749d3dd04019`.
+Both1203-byte before/after catalogs equal
+`94dd8b9019afd5518e7c296e5b2b624d4341915ec852910a007f0c2fd046e2b4`.
+The old183 module cases plus55 role cases passed, one role case failed, and
+seven role cases were not reached. This is not successful246 qualification.
+
+Root allocated only0008's `_objects` predicate, additive role-unit controls and
+this append in a fresh worktree based on3950c657. Keep the entire prior382-line
+document and551-line unit prefixes, complete integration module, other migration
+helpers, six TARGETS and DDL lists exact. Retain red-first source controls where
+feasible, followed by controlled/static results and preservation evidence.
+No SQL/PG/Docker execution, fixture retry, normal commit, full suite or publication
+is authorized by this correction. Source truth tables do not prove SQL behavior;
+independent source/security review and actual qualification remain required.
+
+### 9.1. Controlled correction evidence and unchanged scope
+
+Before adding the predicate, the two new generated-source controls failed in
+both directions on the missing eligibility check: 2 failures, 0 errors/skips,
+1.278 seconds JUnit, SHA256
+`7a7c9308c94703f43dbb00d8decdb2f81d586fbfc49a2dba9b47345079b1f536`.
+The original migration, red-control source and doc-first allocation are retained
+separately. The exact two control bodies and predicate recognizer remain
+unchanged in the corrected test source. This is an offline source regression,
+not a newly executed PostgreSQL failure.
+
+The correction inserts one fixed predicate in `_objects`; generated forward and
+inverse SQL each contain it twice. Both existing selected schemas are checked
+before the first role/ACL effect and again before the final snapshot comparison.
+Removing only that literal block restores the entire original migration bytes
+and both original generated SQL strings. All ten other migration function ASTs,
+six TARGETS, CREATE/GRANT/REVOKE/DROP statements, old checks and stored-body
+comparisons are exact. No ownership reassignment or additional DDL is introduced.
+
+All 128 controlled role-unit cases pass: the original 93 identities in their
+original order, plus 35 additions; 0 failures/errors/skips, 1.351 seconds JUnit,
+SHA256 `2b869340fe7e500c28a4d295ef223798d56968293e36642e60ca81f17230d876`.
+The additions check the exact six-plus-five-plus-one role inventory from the
+actual original role declarations, both-direction pre/final ordering, all 24
+schema/service-role combinations and eight non-service-owner examples. The
+latter are finite equality/IN truth tables after strict source-shape admission,
+not an SQL engine or proof that an otherwise invalid administrator is accepted.
+Existing actual SQLAlchemy/Alembic offline emission controls also remain green.
+
+The original 551-line unit prefix and all 24 old top-level function ASTs are
+exact; the original 382-line document prefix and subsequent doc-first allocation
+are exact. All 59 unaffected paths from the existing 62-pin wrapper inventory
+remain exact, including the entire four integration modules, harness, accepted
+ledger guard, old migrations, workflow and secrets baseline. Therefore the
+retained ordered 246 integration identities (43/102/38/63) are unchanged by
+source identity; no fresh collection or integration body ran in this checkpoint.
+
+Ruff check/format and diff-check pass. Initial Ruff findings were three styling
+issues confined to appended controls; their formatting/comprehension correction
+did not change either original red control or any prior unit body. No baseline,
+secret suppression, production owner API or execution profile changed. Independent
+source/security review, separately authorized normal commit and genuine corrected
+PostgreSQL qualification remain pending; the prior 239-case failure is retained.

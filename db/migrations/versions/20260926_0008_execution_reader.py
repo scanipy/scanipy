@@ -340,6 +340,14 @@ def _objects(*, remember: bool) -> str:
       FOR v_n IN SELECT * FROM pg_catalog.pg_namespace
         WHERE oid IN (accepted_schema_oid,execution_schema_oid) ORDER BY oid
       LOOP
+        IF EXISTS(SELECT 1 FROM pg_catalog.pg_roles AS protected_owner
+          WHERE protected_owner.oid=v_n.nspowner AND protected_owner.rolname IN (
+            'scanipy_exec_owner','scanipy_exec_request','scanipy_exec_detector',
+            'scanipy_exec_identity','scanipy_exec_cleanup','scanipy_exec_read',
+            'scanipy_accepted_owner','scanipy_accepted_policy_admin',
+            'scanipy_accepted_publisher','scanipy_accepted_resolver',
+            'scanipy_accepted_reader','scanipy_accepted_execution_reader')) THEN
+          RAISE EXCEPTION 'execution reader protected schema service owner'; END IF;
         IF coalesce(cardinality(v_n.nspacl),0)>64 THEN
           RAISE EXCEPTION 'execution reader schema ACL overflow'; END IF;
         IF EXISTS(SELECT 1 FROM pg_catalog.aclexplode(
