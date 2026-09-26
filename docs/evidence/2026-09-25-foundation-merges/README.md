@@ -16,7 +16,9 @@ Revision 14 appends the observed **22:25 UTC** cutoff on accepted main
 historical, not directions to repeat already completed work.
 Owner: root engineering coordinator, umbrella #362.
 
-Current pointer: [Revision16](#revision-16--fixed-021458-utc-cutoff-september-26),
+Current pointer: [Revision17](#revision-17--0345-utc-cutoff-september-26),
+2026-09-26 03:45 UTC with explicit03:48 update, accepted `ecc34161`; no feature acceptance.
+Historical pointer: [Revision16](#revision-16--fixed-021458-utc-cutoff-september-26),
 fixed 2026-09-26 02:14:58 UTC with an explicit later02:26 note, on accepted `c5c862e3`. Revision15 and all older
 observations below remain historical; later results are not backdated.
 
@@ -1247,3 +1249,206 @@ also requires a reviewed correction to the worker-input boundary with explicit
 coordinated schema/CI scope after this run, not a historical acceptance claim.
 G and the full tenant-local runtime/source/provenance/UI acceptance queue remain
 unchanged. None of these later observations promotes R/C/G or release/stage state.
+
+## Revision 17 — 03:45 UTC cutoff, September 26
+
+This is a new dated observation, not a rewrite of Revision16's pending statuses.
+The draft clock read was03:46:01 UTC; only outcomes available by03:45 are used.
+Accepted main is `ecc341613731254f84145bd8058b8cee4529385d`, tree
+`bafba3fd014dbced7cf64664acfb0bbe8ed0db3a`. Root retains coordinated ownership;
+no task/claim/milestone/DAG/shared-gate status or old checklist is promoted.
+The submitted single-tenant target, all Java/Python/oracle/provenance/lifecycle/
+UI requirements and separate release/stage obligations remain intact.
+
+### Accepted administration, documentation and AL foundations
+
+[Pure administrative verification #426](https://github.com/scanipy/scanipy/pull/426)
+merged as `4504e741ab9068127d9c1ff5d266339e6ccf23ef` at02:45:14 UTC after
+the existing six-job CI36210889992 and fresh
+[canonical36212167151](https://github.com/scanipy/scanipy/actions/runs/36212167151),
+final [APPROVE5842421256](https://github.com/scanipy/scanipy/pull/426#issuecomment-5842421256).
+The original REQUEST-CHANGES5842267656 remains in Revision16: correction was
+actual CMP-ORCH-03 scope/CI metadata, not new source, component reassignment or
+CLAR resolution. [Revision16 #427](https://github.com/scanipy/scanipy/pull/427)
+is accepted as `84d08691ace4f1383a2eb699d41ce1d49b67e864`; its historical
+snapshots remain unchanged below this current pointer. Neither closes a full R/C.
+
+[AL #428](https://github.com/scanipy/scanipy/pull/428) has all seven jobs in
+[CI36213389189](https://github.com/scanipy/scanipy/actions/runs/36213389189)
+SUCCESS by03:07:07. Its first canonical36213389169 REQUEST-CHANGES on
+CI/checklist/board timing is retained in
+[comment5842582209](https://github.com/scanipy/scanipy/pull/428#issuecomment-5842582209).
+Only the body changed before successful
+[canonical36214026407](https://github.com/scanipy/scanipy/actions/runs/36214026407),
+final [APPROVE5842665586](https://github.com/scanipy/scanipy/pull/428#issuecomment-5842665586).
+The actual gate parsed APPROVE at03:18:09.9140078 and recorded RULE-10 PASS
+at03:18:09.9140947. No failed action is counted as approval.
+
+AL merged at03:21:28 as `2aa401dad9c305418ddb98930a158761b80c4cd2`, tree
+`3b1cbfb69e8d170cc35a49da3a018ed88e49b356`, parents84d08691/0e972f75.
+The entire tree equals hosted checkout
+`afa14212d5fd2e5449e0abbdc5a3f523a838d722`; all18 AL paths equal the reviewed
+candidate, with the four Revision16 documents separately inherited unchanged.
+Its primary worker-input owner is CMP-ORCH-03 with coordinated CMP-CP-03 schema
+and ordinary CMP-CI-01 coverage, not historical detector-registry completion.
+CLAR-BHMEA-01/02 stay OPEN; no umbrella closing keyword or Done promotion.
+
+Actual AL artifact10896128892 has **145 unique passes /0 failures/errors/skips**,
+384.935s:43 SQL +102 security. XML SHA256
+`408f850522ed669b38840152facc01451a639b39d2127149333b76f31530d398`.
+Its before/after catalogs are byte-equal1203 bytes, SHA256
+`94dd8b9019afd5518e7c296e5b2b624d4341915ec852910a007f0c2fd046e2b4`:
+four exact DB/OID/owner rows, unchanged roles with expected al03_admin/OID10,
+and no other clients. Actual occurrence **89 passes /0 skips**,24.742s,
+XML SHA256 `582430120cfb116cb7b174337743401eb8c51a9d3355ca761721c6452530be28`.
+Attestor core5 passed but its actual canary corpus was absent/skipped; do not
+infer full Gate3 or500-canary acceptance from that separate check.
+
+The completed earlier root full85864 on exact7c992e15 contains **5,713 passes /
+51 existing skips /0 failures/errors**,1370.956s, including actual145 AL,
+89 occurrence and519 AL units. Report
+`/tmp/scanipy-al03-full-wrapper-HZOnWQGE/full-regression-junit.xml`, SHA256
+`64b2ee29cf5503f703cb303c28b85a4a88fb6986c890e67f5565a881976de9f6`;
+both catalog observations equal94dd8b90 above. Earlier smoke/fixture/capacity/
+descriptor and review failures remain in the owning contract and the retained
+`/tmp/scanipy-al03-publication-handoff-O3HcNNqo/AL03-PUBLICATION-HANDOFF.md`.
+Post-accepted run20918 separately passed **709 unique /0 failures/errors/skips**,
+28.948s:286 AL-command +233 AL-repository +164 administrative +26
+execution-state checker cases. Report
+`/tmp/scanipy-al03-accepted-428.xml`, SHA256
+`6a4d4a6d4f2b336d40bf770337f7b7c50683bb5d6060244fb3c6ca8eb83f1200`.
+This is not another full or PostgreSQL run; counts across reports overlap.
+
+### Accepted G packet codecs and actual hosted artifact readback
+
+[G #429](https://github.com/scanipy/scanipy/pull/429) at exact
+`b0d4107ba81c8697daf54c29e0d4e79f8cd97919` passed all seven jobs in
+[CI36214691204](https://github.com/scanipy/scanipy/actions/runs/36214691204)
+by03:34:09. [Canonical36214691089](https://github.com/scanipy/scanipy/actions/runs/36214691089)
+completed SUCCESS at03:29:45 with full
+[APPROVE5842747489](https://github.com/scanipy/scanipy/pull/429#issuecomment-5842747489).
+Actual enforcement parsed APPROVE at03:29:40.9053188 and RULE-10 PASS at
+03:29:40.9053902. The review's numerical wording760+346 is a typo: G has
+414 packet +346 profile controls, **760 total**, not1,106 or new coverage.
+
+Actual checkout logs for canonical, AL, occurrence, unit and integration name
+`b3a76b9105c6e6a646dbac852d6fa6de52563fd4`, parents2aa401d/b0d4107,
+tree`bafba3fd014dbced7cf64664acfb0bbe8ed0db3a`. The entire merge delta is the
+six G paths, each Git blob byte-equal to headb0d4107; all other base paths,
+including accepted AL, are preserved. G merged03:39:19 as
+`ecc341613731254f84145bd8058b8cee4529385d` with this same tree and parents.
+Pure packet/profile values are not installed or current execution authority.
+
+Independent download/parse of actual hosted artifacts, not local inference:
+
+- AL artifact10896509746: **145 unique passes /0 failures/errors/skips**,
+  357.721s,43 SQL +102 security. XML SHA256
+  `d55c3546dbed462a459d373e8a061437c0d0173224d2b658a3717bc4eac02ed2`.
+  Before/after catalogs are byte-equal94dd8b90 above, preserving all four DB
+  identities,15 role rows including pg builtins/al03_admin, and no other clients.
+- Occurrence artifact10897285289: **89 unique passes /0 failures/errors/skips**,
+  24.336s. XML SHA256
+  `b8c616d87b2fc9d6cf829f9cc563faaf859d61889363c3eb9fa333b09d739af6`.
+  No separate occurrence catalog artifact exists; AL catalog evidence is not
+  attributed to that job. Both jobs' actual enforcement logs confirm execution.
+
+Readback files are retained under `/tmp/scanipy-g429-hosted-review-T03V9b7y`:
+complete canonical comment SHA256
+`33be0832b876c295217bf02f52bc124284d932b77c07187c5cf48818b29517a3`,
+actual enforce-step log
+`9e08fa7c1f71e19c334cb5f9ccf4963264eac93b1bdd7d109e59b1a060d1b24d`
+and six-file composition JSON
+`a860d75d65295d60014dd674d667113fac91b3619bf1efa0992ad89a68043416`.
+
+Root's distinct accepted-tree run85364 passed **2,536 unique /0 failures/errors/
+skips**,62.192s, independently parsed from
+`/tmp/scanipy-g-packet-accepted-429.xml`, SHA256
+`6f2e17b5d01df2085a50cc88fd5d07808cbb5ddc3290438186c88267fad3a986`.
+Its16 unit modules include G414+346, AL519 and administrative164, not extra
+tests beyond2,536. Earlier full5973/51 atb0d4107 remains a separate prior-base
+report, not a relabeled full/PG result on accepted AL/G composition. Quiet hosted
+unit/application success is not assigned an inferred unique total.
+
+### Local A1 native-test checkpoint and retained build refusal
+
+Native-test candidate `fa2d209e465a1e099e2176d5acada82e5617ba32` was normally
+committed with applicable hooks passing. Integration SHA256
+`0a8f026affec37a23842d5aee502f7a6da365485fd16307a5436e1e14594f4b5`
+and resolver SHA256
+`414acc94b0bb59fc03307e713f55620fe89db51b8f13e4da990135d32ba63fe3`
+retain all11 native test ASTs/38 cases; production owner66ac28e5 is unchanged.
+Independent correction review and **48 synthetic passes /0 failures/errors/
+skips**,0.610s, are recorded in
+`/tmp/scanipy-native-custody-peer-PlLJeDVi/correction-peer-48.xml`, SHA256
+`a3c8d0a46eb19329751b8d70ec7af622d7c84d6c281c07582977c784f50de49d`.
+The author48 repeat overlaps. Original duplicate-cleanup and post-acquisition
+interruption reds remain preserved; the sole cleanup owner now retains original
+primary/cleanup evidence. **All38 native cases remain unexecuted.** No real
+UID/key/lock/fsync success or installed/operator authority follows from fakes.
+
+The actual bounded snapshot manifest `de5b602a` succeeded. Build-only68174
+failed on the first read-only base-label projection; no build/name/create call
+occurred. Its old `build-run/base.json` hash is
+`e88bcd3765c00c198585ab6805bbe0f0aa7e0ddbc6bdcd94234648678d0db16b`.
+After scoped formatter review, the bounded read-only projection probe passed;
+`/tmp/scanipy-a1-watchdog-execution2-K2bI1AnV/base-probe/base.json` SHA256
+`258471c6324f26bd379885f1e5793fb5b910ce137b744b8ee8eeac849ee0e4f4`.
+Second actual invocation17413 retained Docker build exited/code0,
+cleanup completed,24,212ms, stdout1,480/stderr209 bytes, EOF/untruncated.
+Its `build-run/build.json` SHA256 is
+`0520220db9c58d647030a9578f1e05a33cfedb94ada57648a5453c2f87165745`.
+The driver nevertheless **exited1** when iid mode0664 failed exact custody;
+`build-run/build-state-unknown.json` SHA256
+`2fec45e78efd74ccad66dc5d4d406bf68aaf67c898467cf758532155e77e716c`
+retains `BUILD-STATE-UNKNOWN`. There is no final-image inspection/result or
+smoke/native acceptance. Keep the actual image/context and all old evidence;
+Docker's successful return does not repair the watchdog's failure.
+
+At this cutoff, exact-owned reconciliation and scoped umask/optional-Mounts
+corrections are **preparation only**, not executed recovery, a new build or a
+smoke grant. The reviewed ABI-only image plan is distinct from a new pinned
+context needed for the38 real fixed-origin custody cases. A2 dependency
+integration in the separate `RJLQcFmW` worktree is in progress; no A2 source
+implementation or real builtin publication has occurred.
+
+### Required continuation without status promotion
+
+Root must review/authorize reconciliation, corrected driver and any separately
+pinned smoke; then review a new38-case context and grant the actual isolated
+custody fixture. In parallel after dependency checks and explicit source
+allocation, implement/unit-test the reviewed seven-path A2 tenant-local builtin
+administration/provider/CLI against real owners, preserving prior policy reads,
+original signed bytes, replay/currentness and independent DB/head/ack recovery.
+Real custody/PostgreSQL/operator gates precede enablement and acceptance, not
+safe source/unit implementation. Identities, pins and restore policy remain
+explicit owner choices.
+Continue qualified RES/event/spool/full-reader, physical capacity/work isolation,
+DB barriers and actual current factory/kernel/controller/source/database/native
+integration. Finish occurrences, independent identities, provenance, decisions,
+API/UI and every original submission gate/rehearsal. Do not insert later global
+adoption or inferred publication as new acceptance prerequisites.
+
+Root rechecked #400/#362 In Progress around03:36 before G acceptance; no board
+change is performed here. Current host/owner facts, untracked user files, app/DB,
+December2/3 window with exact day open and separate release/image permission
+remain unchanged. This draft runs no native work and grants no installation,
+execution, release, stage VERIFIED, task Done or shared-gate PASS.
+
+### Explicit later update — 03:48 UTC
+
+Root reports completed dependency preparation; direct readback confirms clean
+`/tmp/scanipy-builtin-administration-a2-RJLQcFmW` at
+`dc0c7f63dce9fbac0ba77a2d17250a8fb00d67b6`, tree
+`e357b2303478d6f5f3c97766d77ef4e7f861b1f0`, parents
+`fa2d209e465a1e099e2176d5acada82e5617ba32` and accepted
+`ecc341613731254f84145bd8058b8cee4529385d`. The24 incoming accepted files
+equal ecc34161; four A1 files equal the native-test checkpoint. No A2 source
+implementation is added or allocated by this integration.
+
+Distinct report `/tmp/scanipy-a2-dependency-check-DfC3ePYx/unit-976.xml`, SHA256
+`8b5b6b2b7d3b914bc2281ea57d6c1faab8a3965f2c92d32a61c32e5d35963f34`,
+independently parses as **976 unique passes /0 failures/errors/skips**,31.591s.
+It is dependency-unit evidence, not another full/native/PG run or new installed
+authority. It does not backdate completion into the03:45 snapshot or add to the
+overlapping48/709/2,536 totals. Reconciliation/scoped driver correction, pinned
+smoke, actual38-case custody, operator choices and the real A2 path remain gated.
