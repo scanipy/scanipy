@@ -19,7 +19,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import PosixPath
-from typing import Any, Literal, TypeAlias, cast
+from typing import Any, Literal, Protocol, TypeAlias, cast
 from uuid import UUID
 
 from tools.worker.process_evidence import (
@@ -31,9 +31,11 @@ from tools.worker.process_evidence import (
 )
 from tools.worker.runtime_journal import (
     JournalRecordKind,
+    JournalStructureReport,
     ParsedJournalRecord,
     decode_journal_record,
     encode_journal_record,
+    replay_journal,
 )
 
 _MIB = 1048576
@@ -1864,3 +1866,720 @@ def open_runtime_publication_reader(
     installation: RuntimeEvidenceInstallation,
 ) -> RuntimePublicationReader:
     return RuntimePublicationReader(_Core(_installation(installation), writer=False))
+
+
+# Section 19: a separate one-shot recipe. No old publisher/root meter is reused.
+@dataclass(frozen=True, slots=True, repr=False)
+class VisibleAttemptHistory:
+    visibility: Literal["verified-visible-prefix"]
+    key: _ScopeKey
+    report: JournalStructureReport
+
+
+_HISTORY_SCRATCH = 16 * 4096 + 4096 + 4 * 4096 + 8192
+_HISTORY_DIRS = ("events", "blobs", "spool-registrations", "staging")
+_HISTORY_LIMITS = {
+    "read": 128 * _MIB,
+    "write": 0,
+    "hash": 256 * _MIB,
+    "copies": 192 * _MIB,
+    "os_calls": 8192,
+    "observations": 4096,
+    "owner_calls": 403,
+}
+
+
+class _HistoryWork(_Work):
+    """One private lifetime, with admission distinct from actual transfer charges."""
+
+    def __init__(self) -> None:
+        # Start before public primitive snapshots or any filesystem work.
+        self.started = time.monotonic_ns()
+        self.last = self.started
+        self.totals = None
+        self.read = self.write = self.hash = 0
+        self.copies = 16 * _MIB
+        self.os_calls = self.observations = self.owner_calls = 0
+        self.slots = self.peak_slots = _HISTORY_SCRATCH
+        self.buffers = self.peak_buffers = 4 * _MIB + 16 * 4096 + 2 * _CHUNK
+        self.fd_count = self.peak_fds = 0
+        self.effects_started = False
+        self.cleanup_uncertain = False
+        self.final_remaining = 128
+        self.finalizing = False
+        self.names_seen = self.components = 0
+
+    def check(self) -> None:
+        now = time.monotonic_ns()
+        _need(type(now) is int and self.last <= now < self.started + 2000000000, "deadline")
+        self.last = now
+
+    def reserve(self, name: str, amount: int) -> None:
+        _need(
+            type(amount) is int
+            and amount >= 0
+            and name in _HISTORY_LIMITS
+            and getattr(self, name) + amount <= _HISTORY_LIMITS[name],
+            "limit",
+        )
+
+    def retain(self, *, slots: int = 0, buffers: int = 0) -> None:
+        _need(0 <= slots <= 262144 and 0 <= buffers <= 96 * _MIB, "limit")
+        # These are absolute retained high-water reservations, never a reset.
+        self.slots = self.peak_slots = max(self.slots, slots)
+        self.buffers = self.peak_buffers = max(self.buffers, buffers)
+
+    def geometry(self, components: int, events: int, blobs: int, registrations: int) -> None:
+        _need(1 <= events <= 128 and 0 <= blobs <= 256 and 0 <= registrations <= 16, "limit")
+        intents = 1 + events + blobs + registrations
+        leaves = 2 * intents + 1
+        _need(4 * components + 6 * leaves + 96 <= 4096, "limit")
+        _need(8 * components + 10 * leaves + 768 <= 8192, "limit")
+        self.components = components
+        self.final_remaining = 4 * components + 2 * leaves + 96
+        self.retain(slots=_HISTORY_SCRATCH + 24 * leaves + 24 * intents + 12 * components)
+
+    def call(self, *, cleanup: bool = False) -> None:
+        if not cleanup:
+            self.check()
+            remaining = (
+                max(0, self.final_remaining - 1) if self.finalizing else self.final_remaining
+            )
+            _need(self.os_calls + 1 + remaining + 128 <= 8192, "limit")
+        self.charge("os_calls", 1)
+        if not cleanup and self.finalizing:
+            self.final_remaining = max(0, self.final_remaining - 1)
+
+    def name_advance(self) -> None:
+        # Includes EOF and one rejected sentinel; fixed name/copy storage is prepaid.
+        self.retain(slots=_HISTORY_SCRATCH + 12 * (self.names_seen + 1) + 12 * self.components)
+        self.observation()
+        self.call()
+
+
+def _history_chain(
+    primary: BaseException, prior: BaseException | None, errors: list[BaseException]
+) -> None:
+    members = [prior] if prior is not None and prior is not primary else []
+    for error in errors:
+        if error is not primary and all(error is not old for old in members):
+            members.append(error)
+    if members:
+        primary.__cause__ = BaseExceptionGroup("private history cleanup failures", members)
+
+
+class _HistoryIterator(Protocol):
+    def __next__(self) -> os.DirEntry[str]: ...
+
+    def close(self) -> None: ...
+
+
+class _HistoryFiles:
+    """Fixed owned slots include acquisitions before any fallible bookkeeping."""
+
+    def __init__(self, work: _HistoryWork) -> None:
+        self.work = work
+        self.slots: list[int | None] = [None] * 12
+        self.scanner: _HistoryIterator | None = None
+
+    def fd(self, index: int) -> int:
+        value = self.slots[index]
+        _need(type(value) is int and value >= 0, "storage")
+        return cast(int, value)
+
+    def open(
+        self, index: int, name: str, *, parent: int | None = None, directory: bool = False
+    ) -> None:
+        _need(self.slots[index] is None and self.work.fd_count < 128, "limit")
+        flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC
+        if directory:
+            flags |= os.O_DIRECTORY
+        self.work.call()
+        self.slots[index] = os.open(name, flags, dir_fd=parent)
+        # finish scans slots, not this diagnostic counter, after an interruption.
+        self.work.fd_count += 1
+        self.work.peak_fds = max(self.work.peak_fds, self.work.fd_count)
+        self.work.check()
+
+    def close(self, index: int, *, cleanup: bool = False) -> None:
+        if self.slots[index] is None:
+            return
+        self.work.call(cleanup=cleanup)
+        descriptor: int | None = None
+        attempted = False
+        try:
+            descriptor, self.slots[index] = self.slots[index], None
+            # One guarded line: preattempt interruption restores, entered close never retries.
+            # fmt: off
+            attempted = True; os.close(cast(int, descriptor))  # noqa: E702
+        # fmt: on
+        except BaseException:
+            if attempted:
+                self.work.cleanup_uncertain = True
+            elif descriptor is not None:
+                self.slots[index] = descriptor
+            raise
+        finally:
+            self.work.fd_count = sum(value is not None for value in self.slots) + (
+                self.scanner is not None
+            )
+
+    def close_scanner(self) -> None:
+        if self.scanner is None:
+            return
+        self.work.call(cleanup=True)
+        iterator: _HistoryIterator | None = None
+        attempted = False
+        try:
+            iterator, self.scanner = self.scanner, None
+            # fmt: off
+            attempted = True; iterator.close()  # noqa: E702
+        # fmt: on
+        except BaseException:
+            if attempted:
+                self.work.cleanup_uncertain = True
+            elif iterator is not None:
+                self.scanner = iterator
+            raise
+        finally:
+            self.work.fd_count = sum(value is not None for value in self.slots) + (
+                self.scanner is not None
+            )
+
+    def finish(self, primary: BaseException | None, prior: BaseException | None) -> None:
+        errors: list[BaseException] = []
+        try:
+            self.close_scanner()
+        except BaseException as error:
+            errors.append(error)
+        for index in range(len(self.slots)):
+            try:
+                self.close(index, cleanup=True)
+            except BaseException as error:
+                errors.append(error)
+        if primary is not None:
+            if errors:
+                _history_chain(primary, prior, errors)
+            raise primary
+        if errors:
+            primary = next((error for error in errors if not isinstance(error, Exception)), None)
+            if primary is None:
+                primary = RuntimePublicationError("cleanup-incomplete")
+            prior = primary.__cause__ if primary.__cause__ is not None else primary.__context__
+            _history_chain(primary, prior, errors)
+            raise primary
+
+    def names(self, index: int, kind: str, maximum: int) -> tuple[str, ...]:
+        result: list[str] = []
+        primary: BaseException | None = None
+        prior: BaseException | None = None
+        _need(self.scanner is None and self.work.fd_count < 128, "limit")
+        try:
+            self.work.call()
+            self.scanner = os.scandir(self.fd(index))
+            self.work.fd_count += 1
+            self.work.peak_fds = max(self.work.peak_fds, self.work.fd_count)
+            while True:
+                self.work.name_advance()
+                try:
+                    entry = next(self.scanner)
+                except StopIteration:
+                    break
+                _need(len(result) < maximum, "limit")
+                name = entry.name
+                _history_name(kind, name)
+                self.work.names_seen += 1
+                result.append(name)
+            self.work.check()
+        except BaseException as error:
+            primary = error
+            prior = error.__cause__ if error.__cause__ is not None else error.__context__
+        try:
+            self.close_scanner()
+        except BaseException as error:
+            if primary is None:
+                raise
+            _history_chain(primary, prior, [error])
+        if primary is not None:
+            raise primary
+        return tuple(sorted(result))
+
+
+def _history_name(kind: str, name: str) -> None:
+    _need(type(name) is str and 0 < len(name) <= 128 and name.isascii(), "unsafe-path")
+    if kind == "root":
+        valid = name in ("attempts", "refusals", "root.json", "writer.lock")
+    elif kind == "attempt":
+        valid = name in (*_HISTORY_DIRS, "manifest.json")
+    elif kind == "events":
+        valid = re.fullmatch(r"[0-9]{6}\.json", name) is not None
+    elif kind == "blobs":
+        valid = _HEX.fullmatch(name) is not None
+    else:
+        valid = (
+            kind in ("spool-registrations", "staging")
+            and name.endswith(".json")
+            and _UUID.fullmatch(name[:-5]) is not None
+        )
+    _need(valid, "unsafe-path")
+
+
+def _history_walk(
+    slot: int, path: PosixPath, installation: RuntimeEvidenceInstallation, files: _HistoryFiles
+) -> tuple[tuple[int, ...], ...]:
+    work = files.work
+    chain: list[tuple[int, ...]] = []
+    components = path.parts[1:]
+    files.open(slot, "/", directory=True)
+    for index, name in enumerate(components):
+        files.open(10, name, parent=files.fd(slot), directory=True)
+        observed = _fstat(files.fd(10), work)
+        _need(stat.S_ISDIR(observed.full_mode), "unsafe-path")
+        if index == len(components) - 1:
+            _directory(observed, installation)
+        else:
+            trusted_tmp = (
+                index == 0
+                and name == "tmp"
+                and observed.uid == 0
+                and bool(observed.full_mode & stat.S_ISVTX)
+            )
+            _need(
+                observed.uid in (0, installation.owner_uid)
+                and (not observed.full_mode & 0o022 or trusted_tmp),
+                "unsafe-path",
+            )
+        _stable(_identity(_member(files.fd(slot), name, work)) == _identity(observed))
+        chain.append(_identity(observed))
+        # Old ancestor remains in its shared slot until the close helper owns it.
+        files.close(slot)
+        files.slots[slot], files.slots[10] = files.slots[10], None
+    return tuple(chain)
+
+
+def _history_scan(data: bytes, work: _HistoryWork) -> tuple[bool, int]:
+    """Conservative allocation discovery only; leading comma/colon are candidates."""
+    nodes = 1
+    first: int | None = None
+    for offset in range(0, len(data), _CHUNK):
+        work.check()
+        end = min(offset + _CHUNK, len(data))
+        for token in (b",", b":", b"[", b"{"):
+            nodes += data.count(token, offset, end)
+        if first is None:
+            for index in range(offset, end):
+                if data[index] not in b" \t\r\n":
+                    first = data[index]
+                    break
+    work.check()
+    return len(data) <= _MIB and (first is None or first in b',:{["-0123456789tfn'), nodes
+
+
+@dataclass(frozen=True, slots=True)
+class _HistoryPlan:
+    physical: int
+    records: int
+    controls: int
+    candidates: int
+    largest_candidate: int
+    nodes: int
+    copies: int
+    buffers: int
+    slots: int
+
+
+def _history_plan(
+    rows: dict[str, EvidenceBlob],
+    event_names: tuple[str, ...],
+    blob_names: tuple[str, ...],
+    intents: int,
+    components: int,
+    work: _HistoryWork,
+) -> _HistoryPlan:
+    physical = sum(len(blob.data) for blob in rows.values())
+    controls = sum(
+        len(blob.data)
+        for name, blob in rows.items()
+        if name == "root.json" or name.startswith("staging/")
+    )
+    records = len(rows["manifest.json"].data)
+    _, record_nodes = _history_scan(rows["manifest.json"].data, work)
+    largest_record = records
+    for name in event_names:
+        raw = rows["events/" + name].data
+        records += len(raw)
+        largest_record = max(largest_record, len(raw))
+        _, nodes = _history_scan(raw, work)
+        record_nodes += nodes
+    _need(records <= 524288, "limit")
+    candidate_bytes = candidate_nodes = largest_candidate = 0
+    for name in blob_names:
+        raw = rows["blobs/" + name].data
+        candidate, nodes = _history_scan(raw, work)
+        if candidate:
+            candidate_bytes += len(raw)
+            candidate_nodes += nodes
+            largest_candidate = max(largest_candidate, len(raw))
+    nodes = record_nodes + 7 * candidate_nodes
+    coefficient = 3 * records + 7 * candidate_bytes + 16 * largest_candidate + controls
+    copies = 4 * physical + 64 * coefficient + 16 * _MIB
+    n = len(blob_names) + len(event_names) + 1
+    opaque = min(4096, 18 * len(blob_names))
+    slots = (
+        6 * nodes
+        + _HISTORY_SCRATCH
+        + 12 * opaque
+        + 12 * n
+        + 96 * len(event_names)
+        + 96 * len(blob_names)
+        + 24 * len(rows)
+        + 24 * intents
+        + 12 * components
+    )
+    largest = max(len(blob.data) for blob in rows.values())
+    transient = max(4096, largest_record, largest_candidate)
+    buffers = (
+        4 * _MIB
+        + physical
+        + 4 * coefficient
+        + max(largest + 2 * _CHUNK, 16 * transient + 2 * _CHUNK)
+    )
+    _need(copies <= 192 * _MIB, "limit")
+    work.retain(slots=slots, buffers=buffers)
+    return _HistoryPlan(
+        physical,
+        records,
+        controls,
+        candidate_bytes,
+        largest_candidate,
+        nodes,
+        copies,
+        buffers,
+        slots,
+    )
+
+
+class _HistoryRead:
+    def __init__(
+        self, installation: RuntimeEvidenceInstallation, identity: UUID, files: _HistoryFiles
+    ) -> None:
+        self.installation, self.identity, self.files, self.work = (
+            installation,
+            identity,
+            files,
+            files.work,
+        )
+        self.rows: dict[str, EvidenceBlob] = {}
+        self.stamps: dict[str, tuple[int, str, _FileStamp]] = {}
+        self.directories: dict[int, tuple[int, str, _FileStamp]] = {}
+        self.memberships: dict[int, tuple[str, int, tuple[str, ...]]] = {}
+        self.physical = self.root_size = self.largest = 0
+        self.device = 0
+
+    def names(self, slot: int, kind: str, maximum: int) -> tuple[str, ...]:
+        names = self.files.names(slot, kind, maximum)
+        self.memberships[slot] = kind, maximum, names
+        return names
+
+    def directory(self, slot: int, parent: int, name: str) -> None:
+        self.files.open(slot, name, parent=self.files.fd(parent), directory=True)
+        observed = _fstat(self.files.fd(slot), self.work)
+        _directory(observed, self.installation)
+        _need(observed.device == self.device, "unsafe-path")
+        _stable(_member(self.files.fd(parent), name, self.work) == observed)
+        self.directories[slot] = parent, name, observed
+
+    def read(self, parent: int, name: str, path: str, maximum: int) -> None:
+        files, work = self.files, self.work
+        files.open(9, name, parent=files.fd(parent))
+        before = _fstat(files.fd(9), work)
+        _regular(before, self.installation)
+        _need(before.device == self.device, "unsafe-path")
+        _need(0 <= before.size <= maximum, "limit")
+        proposed = self.physical + before.size
+        root_size = before.size if path == "root.json" else self.root_size
+        _need(proposed - root_size <= 32 * _MIB, "limit")
+        largest = max(self.largest, before.size)
+        work.retain(buffers=4 * _MIB + proposed + max(largest + 2 * _CHUNK, 16 * 4096 + 2 * _CHUNK))
+        work.charge("copies", 3 * before.size)
+        self.physical, self.root_size, self.largest = proposed, root_size, largest
+        assembled = bytearray(before.size)
+        digest = hashlib.sha256()
+        offset = 0
+        while offset < before.size:
+            amount = min(_CHUNK, before.size - offset)
+            work.reserve("read", amount)
+            work.reserve("hash", amount)
+            work.call()
+            piece = os.read(files.fd(9), amount)
+            _need(type(piece) is bytes and 0 < len(piece) <= amount, "storage")
+            work.charge("read", len(piece))
+            work.charge("hash", len(piece))
+            work.check()
+            digest.update(piece)
+            assembled[offset : offset + len(piece)] = piece
+            offset += len(piece)
+        work.reserve("read", 1)
+        work.call()
+        last = os.read(files.fd(9), 1)
+        _need(type(last) is bytes and len(last) <= 1, "storage")
+        work.charge("read", len(last))
+        _stable(last == b"")
+        _stable(
+            _fstat(files.fd(9), work) == before and _member(files.fd(parent), name, work) == before
+        )
+        self.rows[path] = EvidenceBlob(bytes(assembled), digest.digest())
+        self.stamps[path] = parent, name, before
+        files.close(9)
+        work.check()
+
+    def decode(self, kind: JournalRecordKind, path: str) -> ParsedJournalRecord:
+        raw = self.rows[path].data
+        self.work.check()
+        self.work.charge("copies", 64 * len(raw))
+        self.work.charge("hash", 2 * len(raw) + 128)
+        self.work.charge("owner_calls", 1)
+        record = decode_journal_record(kind, raw)
+        self.work.check()
+        return record
+
+    def open(self) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
+        files, work, installation = self.files, self.work, self.installation
+        components = (
+            len(installation.evidence_root.parts) + len(installation.host_work_root.parts) - 2
+        )
+        work.geometry(components, 1, 0, 0)
+        work.call()
+        _need(os.geteuid() == installation.owner_uid, "unsupported")
+        work.call()
+        _need(os.getegid() == installation.owner_gid, "unsupported")
+        self.root_chain = _history_walk(0, installation.evidence_root, installation, files)
+        self.work_chain = _history_walk(1, installation.host_work_root, installation, files)
+        self.root_stamp, self.work_stamp = _fstat(files.fd(0), work), _fstat(files.fd(1), work)
+        self.device = self.root_stamp.device
+        _need(
+            self.names(0, "root", 4) == ("attempts", "refusals", "root.json", "writer.lock"),
+            "conflict",
+        )
+        self.refusals_stamp = _member(files.fd(0), "refusals", work)
+        _directory(self.refusals_stamp, installation)
+        _need(self.refusals_stamp.device == self.device, "unsafe-path")
+        files.open(2, "writer.lock", parent=files.fd(0))
+        self.lock_stamp = _fstat(files.fd(2), work)
+        _regular(self.lock_stamp, installation, (0o600,))
+        _need(self.lock_stamp.device == self.device and self.lock_stamp.size == 0, "unsafe-path")
+        work.reserve("read", 1)
+        work.call()
+        last = os.read(files.fd(2), 1)
+        _need(type(last) is bytes and len(last) <= 1, "storage")
+        work.charge("read", len(last))
+        _stable(last == b"" and _member(files.fd(0), "writer.lock", work) == self.lock_stamp)
+        self.directory(3, 0, "attempts")
+        self.directory(4, 3, str(self.identity))
+        _need(
+            self.names(4, "attempt", 5) == tuple(sorted((*_HISTORY_DIRS, "manifest.json"))),
+            "conflict",
+        )
+        for slot, name in enumerate(_HISTORY_DIRS, 5):
+            self.directory(slot, 4, name)
+        events = self.names(5, "events", 128)
+        _need(
+            events == tuple(f"{index:06d}.json" for index in range(1, len(events) + 1))
+            and bool(events),
+            "conflict",
+        )
+        blobs = self.names(6, "blobs", 256)
+        registrations = self.names(7, "spool-registrations", 16)
+        intents = self.names(8, "staging", 401)
+        work.geometry(components, len(events), len(blobs), len(registrations))
+        _need(len(intents) == 1 + len(events) + len(blobs) + len(registrations), "conflict")
+        return events, blobs, registrations, intents
+
+    def verify(
+        self,
+        events: tuple[str, ...],
+        blobs: tuple[str, ...],
+        registrations: tuple[str, ...],
+        intents: tuple[str, ...],
+    ) -> JournalStructureReport:
+        work, installation = self.work, self.installation
+        plan = _history_plan(self.rows, events, blobs, len(intents), work.components, work)
+        root = self.decode("root", "root.json")
+        _need(root.sha256 == installation.root_record_sha256, "conflict")
+        row = _plain(root.document)
+        for key in ("deployment_id", "store_id", "evidence_root", "host_work_root"):
+            _need(row[key] == str(getattr(installation, key)), "conflict")
+        for key in ("owner_uid", "owner_gid", "artifact_domain"):
+            _need(row[key] == getattr(installation, key), "conflict")
+        retained: dict[str, dict[str, Any]] = {}
+        for name in intents:
+            record = self.decode("publication-intent", "staging/" + name)
+            row = _plain(record.document)
+            destination = row["destination"]
+            _need(
+                row["publication_id"] + ".json" == name
+                and row["store_id"] == str(installation.store_id)
+                and row["scope_kind"] == "attempt"
+                and row["scope_id"] == str(self.identity),
+                "conflict",
+            )
+            _need(
+                destination in self.rows
+                and destination not in retained
+                and destination != "root.json"
+                and not destination.startswith("staging/"),
+                "conflict",
+            )
+            blob = self.rows[destination]
+            expected_role = (
+                "manifest"
+                if destination == "manifest.json"
+                else "event"
+                if destination.startswith("events/")
+                else "blob"
+                if destination.startswith("blobs/")
+                else "spool-registration"
+            )
+            _need(
+                row["role"] == expected_role
+                and row["size"] == len(blob.data)
+                and row["sha256"] == blob.sha256.hex(),
+                "conflict",
+            )
+            retained[destination] = row
+        work.check()
+        work.charge(
+            "copies",
+            plan.physical
+            + 64 * (3 * plan.records + 7 * plan.candidates + 16 * plan.largest_candidate),
+        )
+        work.charge("hash", 86 * _MIB)
+        work.charge("owner_calls", 1)
+        report = replay_journal(
+            self.rows["manifest.json"].data,
+            tuple(self.rows["events/" + name].data for name in events),
+            blobs=tuple(self.rows["blobs/" + name] for name in blobs),
+        )
+        work.check()
+        manifest = _plain(report.manifest.document)
+        _need(
+            manifest["store_id"] == str(installation.store_id)
+            and manifest["deployment_id"] == str(installation.deployment_id)
+            and manifest["artifact_domain"] == "diagnostic"
+            and manifest["attempt_id"] == str(self.identity),
+            "conflict",
+        )
+        _need(retained["manifest.json"]["expected_previous_event_digest"] is None, "conflict")
+        event_digests = {event.schema_digest.hex() for event in report.events}
+        expected_registrations: set[str] = set()
+        for name, event in zip(events, report.events, strict=True):
+            work.check()
+            row = _plain(event.document)
+            _need(
+                retained["events/" + name]["expected_previous_event_digest"]
+                == row["previous_event_digest"],
+                "conflict",
+            )
+            if row["kind"] == "spool-registered":
+                payload = row["payload"]
+                destination = "spool-registrations/" + payload["call_id"] + ".json"
+                _need(
+                    destination not in expected_registrations and destination in self.rows,
+                    "conflict",
+                )
+                expected_registrations.add(destination)
+                _need(
+                    self.rows[destination].data
+                    == self.rows["blobs/" + payload["registration"]["sha256"]].data,
+                    "conflict",
+                )
+        _need(
+            expected_registrations == {"spool-registrations/" + name for name in registrations},
+            "conflict",
+        )
+        for destination, row in retained.items():
+            if destination.startswith(("blobs/", "spool-registrations/")):
+                previous = row["expected_previous_event_digest"]
+                _need(previous is None or previous in event_digests, "conflict")
+        intent_bytes = plan.controls - len(root.data)
+        _need(report.accounting.logical_metadata_bytes + intent_bytes <= 524288, "limit")
+        work.check()
+        return report
+
+    def finalize(self) -> None:
+        files, work = self.files, self.work
+        work.finalizing = True
+        for slot, (kind, maximum, names) in self.memberships.items():
+            _stable(files.names(slot, kind, maximum) == names)
+        for parent, name, observed in self.stamps.values():
+            _stable(_member(files.fd(parent), name, work) == observed)
+        for slot, (parent, name, observed) in self.directories.items():
+            _stable(
+                _fstat(files.fd(slot), work) == observed
+                and _member(files.fd(parent), name, work) == observed
+            )
+        _stable(
+            _fstat(files.fd(2), work) == self.lock_stamp
+            and _member(files.fd(0), "writer.lock", work) == self.lock_stamp
+        )
+        _stable(_identity(_member(files.fd(0), "refusals", work)) == _identity(self.refusals_stamp))
+        for slot, path, chain, observed in (
+            (0, self.installation.evidence_root, self.root_chain, self.root_stamp),
+            (1, self.installation.host_work_root, self.work_chain, self.work_stamp),
+        ):
+            _stable(_history_walk(11, path, self.installation, files) == chain)
+            _stable(_fstat(files.fd(slot), work) == observed)
+            files.close(11)
+        work.check()
+
+
+def _history_read_owned(
+    installation: RuntimeEvidenceInstallation, identity: UUID, work: _HistoryWork
+) -> VisibleAttemptHistory:
+    files = _HistoryFiles(work)
+    primary: BaseException | None = None
+    prior: BaseException | None = None
+    result: VisibleAttemptHistory | None = None
+    try:
+        reader = _HistoryRead(installation, identity, files)
+        events, blobs, registrations, intents = reader.open()
+        reader.read(0, "root.json", "root.json", 4096)
+        reader.read(4, "manifest.json", "manifest.json", 16384)
+        for slot, prefix, names, maximum in (
+            (5, "events/", events, 65536),
+            (6, "blobs/", blobs, 32 * _MIB),
+            (7, "spool-registrations/", registrations, 16384),
+            (8, "staging/", intents, 4096),
+        ):
+            for name in names:
+                reader.read(slot, name, prefix + name, maximum)
+        report = reader.verify(events, blobs, registrations, intents)
+        reader.finalize()
+        result = VisibleAttemptHistory(
+            "verified-visible-prefix", _ScopeKey("attempt", identity), report
+        )
+        files.finish(None, None)
+    except BaseException as error:
+        primary = error
+        prior = error.__cause__ if error.__cause__ is not None else error.__context__
+        # Only still-owned slots survive a preattempt interruption or partial finish.
+        files.finish(primary, prior)
+    work.check()
+    assert result is not None
+    return result
+
+
+def read_diagnostic_attempt_history(
+    installation: RuntimeEvidenceInstallation, attempt_id: UUID
+) -> VisibleAttemptHistory:
+    """One stable diagnostic visible prefix, never durable or current authority."""
+    work = _HistoryWork()
+    try:
+        frozen, identity = _installation(installation), _uuid(attempt_id)
+        work.check()
+        return _history_read_owned(frozen, identity, work)
+    except Exception as error:
+        mapped = _mapped(error)
+        if mapped is error:
+            raise
+        raise mapped from error

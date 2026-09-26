@@ -1962,3 +1962,1253 @@ def test_iterator_close_uncertainty_at_real_owner_boundaries(
                     iterator.release_test_owned_iterator()
                 assert iterator.real_close_calls == 1
                 assert iterator.close_attempts == 1
+
+
+def _history_tree(
+    tmp_path: Path, history: History
+) -> tuple[evidence.RuntimeEvidenceInstallation, Path, dict[str, Path]]:
+    """Trusted completed-visible fixture, not writer/durability evidence."""
+    installation = _installation(tmp_path)
+    directory = installation.evidence_root / "attempts" / history.m["attempt_id"]
+    directory.mkdir(mode=0o700)
+    for name in ("events", "blobs", "spool-registrations", "staging"):
+        (directory / name).mkdir(mode=0o700)
+    manifest, events, blobs = history.snapshot()
+    rows = [("manifest", "manifest.json", manifest, None)]
+    rows.extend(
+        ("event", f"events/{index + 1:06d}.json", raw, event["previous_event_digest"])
+        for index, (raw, event) in enumerate(zip(events, history.events, strict=True))
+    )
+    rows.extend(("blob", "blobs/" + blob.sha256.hex(), blob.data, None) for blob in blobs)
+    for event in history.events:
+        if event["kind"] == "spool-registered":
+            payload = event["payload"]
+            rows.append(
+                (
+                    "spool-registration",
+                    "spool-registrations/" + payload["call_id"] + ".json",
+                    history.data[payload["registration"]["sha256"]],
+                    None,
+                )
+            )
+    paths = {}
+    for index, (role, name, raw, previous) in enumerate(rows):
+        path = directory / name
+        path.write_bytes(raw)
+        path.chmod(0o400)
+        publication_id = uid(5000 + index)
+        intent = wire(
+            {
+                "schema": "scanipy-runtime-publication-intent/1",
+                "publication_id": publication_id,
+                "store_id": history.m["store_id"],
+                "scope_kind": "attempt",
+                "scope_id": history.m["attempt_id"],
+                "role": role,
+                "destination": name,
+                "size": len(raw),
+                "sha256": hashlib.sha256(raw).hexdigest(),
+                "expected_previous_event_digest": previous,
+            }
+        )
+        evidence.decode_journal_record("publication-intent", intent)
+        intent_path = directory / "staging" / (publication_id + ".json")
+        intent_path.write_bytes(intent)
+        intent_path.chmod(0o400)
+        paths[name] = intent_path
+    return installation, directory, paths
+
+
+@pytest.mark.parametrize("mode", evidence._MODES)
+def test_history_reader_retains_actual_reserved_owner_report(tmp_path: Path, mode: str) -> None:
+    history = History(mode)
+    installation, _, _ = _history_tree(tmp_path, history)
+    visible = evidence.read_diagnostic_attempt_history(installation, UUID(history.m["attempt_id"]))
+    assert visible.visibility == "verified-visible-prefix"
+    assert visible.report == history.replay()
+    assert visible.report.validation == "local-structure-only"
+    assert visible.report.opaque_owner_values
+    assert visible.key == evidence._ScopeKey("attempt", UUID(history.m["attempt_id"]))
+    assert not hasattr(visible, "completion")
+
+
+def _history_work_spy(monkeypatch: pytest.MonkeyPatch) -> list[evidence._HistoryWork]:
+    retained: list[evidence._HistoryWork] = []
+    original = evidence._HistoryWork.__init__
+
+    def initialize(work: evidence._HistoryWork) -> None:
+        original(work)
+        retained.append(work)
+
+    monkeypatch.setattr(evidence._HistoryWork, "__init__", initialize)
+    return retained
+
+
+@pytest.mark.parametrize("mode", evidence._MODES)
+@pytest.mark.parametrize("phase", ("loaded", "created", "admitted"))
+def test_history_reader_preserves_complete_useful_reports(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mode: str, phase: str
+) -> None:
+    from tests.unit.test_runtime_journal import admitted
+
+    history = History(mode)
+    if phase == "admitted":
+        admitted(history)
+    else:
+        getattr(history, phase)()
+    expected = history.replay()
+    installation, _, intents = _history_tree(tmp_path, history)
+    observed = _history_work_spy(monkeypatch)
+    actual = evidence.read_diagnostic_attempt_history(installation, UUID(history.m["attempt_id"]))
+    assert actual.report == expected
+    assert actual.report.blobs == expected.blobs
+    work = observed[0]
+    assert work.owner_calls == len(intents) + 2
+    assert 86 * 1048576 < work.hash <= 256 * 1048576
+    assert work.copies <= 192 * 1048576
+    assert work.peak_slots <= 262144 and work.peak_buffers <= 96 * 1048576
+    assert work.fd_count == 0 and work.peak_fds <= 32
+    assert work.observations <= 4096 and work.os_calls <= 8192 and work.write == 0
+
+
+@pytest.mark.parametrize("phase", ("unresolved", "missing", "spool", "orphaned", "recovery"))
+def test_history_reader_preserves_nonhealthy_owner_evidence(tmp_path: Path, phase: str) -> None:
+    from tests.unit.test_runtime_journal import collect, failure, recovery, register
+
+    history = History()
+    call = history.intent("daemon-version")
+    if phase == "missing":
+        history.result(call, absent=True)
+    elif phase == "spool":
+        registered = register(history, call)
+        collect(history, call, registered, "stdout", b"retained diagnostic bytes")
+        collect(history, call, registered, "stderr", b"")
+    elif phase in ("orphaned", "recovery"):
+        failure(history, "orphaned")
+        if phase == "recovery":
+            recovery(history)
+    expected = history.replay()
+    installation, _, _ = _history_tree(tmp_path, history)
+    actual = evidence.read_diagnostic_attempt_history(installation, UUID(history.m["attempt_id"]))
+    assert actual.report == expected
+
+
+@pytest.mark.parametrize("change", ("domain", "uuid", "subclass", "digest", "path", "uid"))
+def test_history_rejects_public_primitives_before_filesystem(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change: str
+) -> None:
+    installation = _installation(tmp_path)
+    identity: Any = UUID(uid(3))
+    if change == "domain":
+        installation = replace(installation, artifact_domain="operational")
+    elif change == "uuid":
+        identity = uid(3)
+    elif change == "subclass":
+
+        class Derived(evidence.RuntimeEvidenceInstallation):
+            pass
+
+        installation = Derived(*(getattr(installation, field) for field in installation.__slots__))
+    elif change == "digest":
+        installation = replace(installation, root_record_sha256=b"x")
+    elif change == "path":
+        installation = replace(installation, host_work_root=installation.evidence_root)
+    else:
+        installation = replace(installation, owner_uid=True)
+    monkeypatch.setattr(os, "open", lambda *_a, **_k: pytest.fail("primitive failure reached open"))
+    with pytest.raises(evidence.RuntimePublicationError):
+        evidence.read_diagnostic_attempt_history(installation, identity)
+
+
+@pytest.mark.parametrize(
+    "change",
+    (
+        "missing-event",
+        "event-gap",
+        "unknown",
+        "data",
+        "symlink",
+        "directory",
+        "mode",
+        "link",
+        "missing-intent",
+        "duplicate-intent",
+        "bad-intent",
+        "wrong-scope",
+        "wrong-role",
+        "wrong-size",
+        "wrong-hash",
+        "manifest-previous",
+        "event-previous",
+        "blob-previous",
+        "sidecar-extra",
+        "no-events",
+    ),
+)
+def test_history_rejects_incomplete_or_inconsistent_visible_namespace(
+    tmp_path: Path, change: str
+) -> None:
+    history = History()
+    installation, directory, intents = _history_tree(tmp_path, history)
+    leaf = directory / "events" / "000001.json"
+    if change == "missing-event":
+        leaf.unlink()
+    elif change == "event-gap":
+        leaf.rename(leaf.with_name("000002.json"))
+    elif change == "unknown":
+        (directory / "unexpected").write_bytes(b"")
+    elif change == "data":
+        (directory / "staging" / (uid(9999) + ".data")).write_bytes(b"")
+    elif change == "symlink":
+        leaf.unlink()
+        leaf.symlink_to(directory / "manifest.json")
+    elif change == "directory":
+        leaf.unlink()
+        leaf.mkdir(mode=0o700)
+    elif change == "mode":
+        leaf.chmod(0o600)
+    elif change == "link":
+        os.link(leaf, tmp_path / "second-link")
+    elif change == "missing-intent":
+        intents["manifest.json"].unlink()
+    elif change == "duplicate-intent":
+        raw = json.loads(intents["manifest.json"].read_bytes())
+        raw["publication_id"] = uid(9999)
+        path = directory / "staging" / (uid(9999) + ".json")
+        path.write_bytes(wire(raw))
+        path.chmod(0o400)
+    elif change == "sidecar-extra":
+        (directory / "spool-registrations" / (uid(9999) + ".json")).write_bytes(b"{}")
+    elif change == "no-events":
+        for path in (directory / "events").iterdir():
+            path.unlink()
+    else:
+        destination = (
+            "events/000001.json"
+            if change == "event-previous"
+            else next(key for key in intents if key.startswith("blobs/"))
+            if change == "blob-previous"
+            else "manifest.json"
+        )
+        path = intents[destination]
+        raw = json.loads(path.read_bytes())
+        key, value = {
+            "bad-intent": ("schema", "unsupported"),
+            "wrong-scope": ("scope_id", uid(8888)),
+            "wrong-role": ("role", "blob"),
+            "wrong-size": ("size", 0),
+            "wrong-hash": ("sha256", "a" * 64),
+            "manifest-previous": ("expected_previous_event_digest", "a" * 64),
+            "event-previous": ("expected_previous_event_digest", "a" * 64),
+            "blob-previous": ("expected_previous_event_digest", "a" * 64),
+        }[change]
+        raw[key] = value
+        path.chmod(0o600)
+        path.write_bytes(wire(raw))
+        path.chmod(0o400)
+    with pytest.raises(evidence.RuntimePublicationError):
+        evidence.read_diagnostic_attempt_history(installation, UUID(history.m["attempt_id"]))
+
+
+def test_history_non_event_predecessor_is_retained_declaration_not_chronology(
+    tmp_path: Path,
+) -> None:
+    history = History()
+    installation, _, intents = _history_tree(tmp_path, history)
+    checksum = history.replay().events[-1].schema_digest.hex()
+    path = intents[next(key for key in intents if key.startswith("blobs/"))]
+    row = json.loads(path.read_bytes())
+    row["expected_previous_event_digest"] = checksum
+    path.chmod(0o600)
+    path.write_bytes(wire(row))
+    path.chmod(0o400)
+    assert (
+        evidence.read_diagnostic_attempt_history(installation, UUID(history.m["attempt_id"])).report
+        == history.replay()
+    )
+
+
+@pytest.mark.parametrize(
+    "change", ("append", "delete", "same-bytes-inode", "in-place", "ancestor", "root", "directory")
+)
+def test_history_finalization_detects_drift_after_one_replay(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change: str
+) -> None:
+    history = History()
+    installation, directory, _ = _history_tree(tmp_path, history)
+    original = evidence.replay_journal
+    calls = []
+
+    def replay(*args: Any, **kwargs: Any) -> Any:
+        result = original(*args, **kwargs)
+        calls.append(result)
+        leaf = directory / "events" / "000001.json"
+        if change == "append":
+            (directory / "events" / "000002.json").write_bytes(b"{}")
+        elif change == "delete":
+            leaf.unlink()
+        elif change == "same-bytes-inode":
+            raw = leaf.read_bytes()
+            replacement = tmp_path / "replacement-inode"
+            replacement.write_bytes(raw)
+            replacement.chmod(0o400)
+            assert replacement.stat().st_ino != leaf.stat().st_ino
+            replacement.replace(leaf)
+        elif change == "in-place":
+            raw = leaf.read_bytes()
+            leaf.chmod(0o600)
+            leaf.write_bytes(raw)
+            leaf.chmod(0o400)
+        elif change == "ancestor":
+            installation.evidence_root.rename(tmp_path / "old-evidence")
+            installation.evidence_root.mkdir(mode=0o700)
+        elif change == "root":
+            (installation.evidence_root / "root.json").chmod(0o600)
+        else:
+            (directory / "events").chmod(0o750)
+        return result
+
+    monkeypatch.setattr(evidence, "replay_journal", replay)
+    with pytest.raises(evidence.RuntimePublicationError):
+        evidence.read_diagnostic_attempt_history(installation, UUID(history.m["attempt_id"]))
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("size", (1, 7, 127))
+def test_history_positive_short_reads_preserve_actual_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, size: int
+) -> None:
+    history = History()
+    installation, _, _ = _history_tree(tmp_path, history)
+    original = os.read
+    monkeypatch.setattr(os, "read", lambda fd, amount: original(fd, min(amount, size)))
+    observed = _history_work_spy(monkeypatch)
+    if size == 1:
+        with pytest.raises(evidence.RuntimePublicationError, match=r"^limit$"):
+            evidence.read_diagnostic_attempt_history(installation, UUID(history.m["attempt_id"]))
+        assert observed[0].os_calls < 8192 and observed[0].fd_count == 0
+    else:
+        assert (
+            evidence.read_diagnostic_attempt_history(
+                installation, UUID(history.m["attempt_id"])
+            ).report
+            == history.replay()
+        )
+
+
+@pytest.mark.parametrize("name,maximum", tuple(evidence._HISTORY_LIMITS.items()))
+def test_history_counter_n_and_n_plus_one(name: str, maximum: int) -> None:
+    work = evidence._HistoryWork()
+    already = getattr(work, name)
+    work.charge(name, maximum - already)
+    assert getattr(work, name) == maximum
+    with pytest.raises(evidence.RuntimePublicationError, match=r"^limit$"):
+        work.charge(name, 1)
+    assert getattr(work, name) == maximum
+
+
+@pytest.mark.parametrize("field,maximum", (("slots", 262144), ("buffers", 96 * 1048576)))
+def test_history_retained_admission_n_plus_one_and_no_refund(field: str, maximum: int) -> None:
+    work = evidence._HistoryWork()
+    work.retain(**{field: maximum})
+    work.retain(**{field: 0})
+    assert getattr(work, field) == maximum
+    with pytest.raises(evidence.RuntimePublicationError, match=r"^limit$"):
+        work.retain(**{field: maximum + 1})
+
+
+@pytest.mark.parametrize(
+    "event_count,blob_count,registration_count",
+    ((0, 0, 0), (129, 0, 0), (1, 257, 0), (1, 0, 17), (128, 256, 16)),
+)
+def test_history_geometry_refuses_before_content_work(
+    event_count: int, blob_count: int, registration_count: int
+) -> None:
+    work = evidence._HistoryWork()
+    with pytest.raises(evidence.RuntimePublicationError, match=r"^limit$"):
+        work.geometry(12, event_count, blob_count, registration_count)
+    assert work.read == work.hash == work.owner_calls == work.os_calls == 0
+
+
+@pytest.mark.parametrize(
+    "first", (b",", b":", b"{", b"[", b'"', b"-", b"0", b"t", b"f", b"n", b"", b" \t\n\r")
+)
+def test_history_candidate_discovery_pays_malformed_and_empty(first: bytes) -> None:
+    candidate, nodes = evidence._history_scan(
+        first + (b"{}" if first.strip() else b""), evidence._HistoryWork()
+    )
+    assert candidate and nodes >= 1
+
+
+def test_history_candidate_all_initial_bytes_match_actual_lexical_rejection() -> None:
+    from tools.worker import process_evidence, runtime_journal
+
+    for number in range(256):
+        raw = bytes([number]) + b"{}"
+        candidate, _ = evidence._history_scan(raw, evidence._HistoryWork())
+        if not candidate:
+            for owner in (runtime_journal, process_evidence):
+                with pytest.raises(ValueError):
+                    owner._lexical(raw, (1048576, 32, 4096))
+
+
+def test_history_old_private_non_event_limits_are_unchanged() -> None:
+    old = evidence._Work()
+    assert old.owner_limit == 16
+    old.observations = 512
+    with pytest.raises(evidence.RuntimePublicationError):
+        old.observation()
+    assert evidence._Work(refusal_final=True).owner_limit == 24
+
+
+@pytest.mark.parametrize("kind", ("open", "scanner"))
+@pytest.mark.parametrize("exception_type", (KeyboardInterrupt, SystemExit))
+@pytest.mark.parametrize("close_fails", (False, True))
+def test_history_acknowledged_acquisition_is_owned_during_bookkeeping(
+    monkeypatch: pytest.MonkeyPatch,
+    kind: str,
+    exception_type: type[BaseException],
+    close_fails: bool,
+) -> None:
+    """One normal Python line handoff, not a universal opcode/signal guarantee."""
+    import inspect
+    import sys
+    from types import SimpleNamespace
+
+    primary = exception_type("controlled acquisition")
+    prior = ValueError("original context")
+    primary.__context__ = prior
+    cleanup = OSError("controlled uncertain close")
+    closed: list[str | int] = []
+    work = evidence._HistoryWork()
+    files = evidence._HistoryFiles(work)
+
+    def close(fd: int) -> None:
+        closed.append(fd)
+        if close_fails:
+            raise cleanup
+
+    class Scanner:
+        def __next__(self) -> Any:
+            raise StopIteration
+
+        def close(self) -> None:
+            closed.append("scanner")
+            if close_fails:
+                raise cleanup
+
+    native = SimpleNamespace(**vars(os))
+    native.open = lambda *_a, **_k: 17
+    native.close = close
+    native.scandir = lambda *_a: Scanner()
+    monkeypatch.setattr(evidence, "os", native)
+    method = evidence._HistoryFiles.open if kind == "open" else evidence._HistoryFiles.names
+    source, start = inspect.getsourcelines(method)
+    target = start + next(
+        index for index, line in enumerate(source) if "self.work.fd_count += 1" in line
+    )
+    fired = False
+
+    def trace(frame: Any, event: str, _arg: Any) -> Any:
+        nonlocal fired
+        if event == "line" and frame.f_code is method.__code__ and frame.f_lineno == target:
+            fired = True
+            sys.settrace(None)
+            raise primary
+        return trace
+
+    if kind == "scanner":
+        files.slots[0] = 19
+        work.fd_count = 1
+    saved = sys.gettrace()
+    try:
+        sys.settrace(trace)
+        with pytest.raises(exception_type) as captured:
+            try:
+                if kind == "open":
+                    files.open(0, "fixed")
+                else:
+                    files.names(0, "root", 4)
+            except BaseException as error:
+                files.finish(
+                    error, error.__cause__ if error.__cause__ is not None else error.__context__
+                )
+        assert captured.value is primary
+    finally:
+        sys.settrace(saved)
+    assert fired and files.scanner is None and all(fd is None for fd in files.slots)
+    assert closed == ([17] if kind == "open" else ["scanner", 19])
+    assert _error_contains(primary, prior)
+    if close_fails:
+        assert _error_contains(primary, cleanup)
+
+
+@pytest.mark.parametrize("exception_type", (KeyboardInterrupt, SystemExit))
+def test_history_ancestor_remains_owned_until_close_helper_entry(
+    monkeypatch: pytest.MonkeyPatch, exception_type: type[BaseException]
+) -> None:
+    from types import SimpleNamespace
+
+    native = SimpleNamespace(**vars(os))
+    opened, closed = [], []
+    native.open = lambda *_a, **_k: opened.append(20 + len(opened)) or opened[-1]
+    native.close = closed.append
+    monkeypatch.setattr(evidence, "os", native)
+    installation = evidence.RuntimeEvidenceInstallation(
+        UUID(uid(2)),
+        UUID(uid(1)),
+        "diagnostic",
+        PosixPath("/evidence"),
+        PosixPath("/work"),
+        1000,
+        1000,
+        b"x" * 32,
+    )
+    stamp = evidence._FileStamp(1, 1, 0o40700, 1000, 1000, 2, 0, 0, 0)
+    monkeypatch.setattr(evidence, "_fstat", lambda *_a: stamp)
+    monkeypatch.setattr(evidence, "_member", lambda *_a: stamp)
+    files = evidence._HistoryFiles(evidence._HistoryWork())
+    close = files.close
+    primary = exception_type("before owned close helper")
+
+    def interrupted(index: int, *, cleanup: bool = False) -> None:
+        if not cleanup:
+            raise primary
+        close(index, cleanup=True)
+
+    monkeypatch.setattr(files, "close", interrupted)
+    with pytest.raises(exception_type) as captured:
+        try:
+            evidence._history_walk(0, installation.evidence_root, installation, files)
+        except BaseException as error:
+            files.finish(error, None)
+    assert captured.value is primary and closed == opened
+
+
+@pytest.mark.parametrize("primary_present", (False, True))
+def test_history_finish_attempts_each_owned_close_once_preserving_chain(
+    monkeypatch: pytest.MonkeyPatch, primary_present: bool
+) -> None:
+    from types import SimpleNamespace
+
+    work = evidence._HistoryWork()
+    files = evidence._HistoryFiles(work)
+    files.slots[0:3] = [11, 12, 13]
+    work.fd_count = 3
+    first, second = OSError("first close"), OSError("second close")
+    prior = ValueError("prior")
+    primary = KeyboardInterrupt("original") if primary_present else None
+    if primary is not None:
+        primary.__context__ = prior
+    seen = []
+
+    def close(fd: int) -> None:
+        seen.append(fd)
+        if fd == 11:
+            raise first
+        if fd == 12:
+            raise second
+
+    monkeypatch.setattr(evidence, "os", SimpleNamespace(**(vars(os) | {"close": close})))
+    with pytest.raises(BaseException) as captured:
+        files.finish(primary, prior if primary_present else None)
+    assert seen == [11, 12, 13] and work.fd_count == 0
+    assert _error_contains(captured.value, first) and _error_contains(captured.value, second)
+    if primary is not None:
+        assert captured.value is primary and _error_contains(primary, prior)
+    else:
+        assert type(captured.value) is evidence.RuntimePublicationError
+        assert captured.value.reason == "cleanup-incomplete"
+    files.finish(None, None)
+    assert seen == [11, 12, 13]
+
+
+@pytest.mark.parametrize("kind", ("late-replay", "late-close", "backwards"))
+def test_history_single_deadline_includes_owner_and_cleanup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
+) -> None:
+    from types import SimpleNamespace
+
+    history = History()
+    installation, _, _ = _history_tree(tmp_path, history)
+    now = [100]
+    monkeypatch.setattr(evidence, "time", SimpleNamespace(monotonic_ns=lambda: now[0]))
+    work = _history_work_spy(monkeypatch)
+    if kind == "late-close":
+        original = evidence._HistoryFiles.finish
+
+        def finish(*args: Any) -> None:
+            original(*args)
+            now[0] += 2000000000
+
+        monkeypatch.setattr(evidence._HistoryFiles, "finish", finish)
+    else:
+        original_replay = evidence.replay_journal
+
+        def replay(*args: Any, **kwargs: Any) -> Any:
+            result = original_replay(*args, **kwargs)
+            now[0] = 99 if kind == "backwards" else 2000000100
+            return result
+
+        monkeypatch.setattr(evidence, "replay_journal", replay)
+    with pytest.raises(evidence.RuntimePublicationError, match=r"^deadline$"):
+        evidence.read_diagnostic_attempt_history(installation, UUID(history.m["attempt_id"]))
+    assert work[0].fd_count == 0 and work[0].hash >= 86 * 1048576
+
+
+@pytest.mark.parametrize("counter", ("hash", "copies", "owner_calls"))
+def test_history_root_decode_is_refused_before_actual_owner_when_precharge_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, counter: str
+) -> None:
+    history = History()
+    installation, _, _ = _history_tree(tmp_path, history)
+    original = evidence._HistoryRead.decode
+    observed = _history_work_spy(monkeypatch)
+
+    def decode(reader: evidence._HistoryRead, kind: Any, path: str) -> Any:
+        setattr(reader.work, counter, evidence._HISTORY_LIMITS[counter])
+        return original(reader, kind, path)
+
+    monkeypatch.setattr(evidence._HistoryRead, "decode", decode)
+    monkeypatch.setattr(
+        evidence, "decode_journal_record", lambda *_a: pytest.fail("unpaid decoder")
+    )
+    with pytest.raises(evidence.RuntimePublicationError, match=r"^limit$"):
+        evidence.read_diagnostic_attempt_history(installation, UUID(history.m["attempt_id"]))
+    assert observed[0].fd_count == 0
+
+
+@pytest.mark.parametrize("first", (b",", b":"))
+def test_history_malformed_candidate_has_complete_precharge_before_owning_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, first: bytes
+) -> None:
+    history = History()
+    previous = history.m["request"]["sha256"]
+    history.m["request"] = history.add(first + b"{}")
+    del history.data[previous]
+    installation, _, intents = _history_tree(tmp_path, history)
+    work = _history_work_spy(monkeypatch)
+    original = evidence.replay_journal
+    calls = []
+
+    def replay(*args: Any, **kwargs: Any) -> Any:
+        calls.append(work[0].hash)
+        assert work[0].hash >= 86 * 1048576
+        assert work[0].owner_calls == len(intents) + 2
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(evidence, "replay_journal", replay)
+    with pytest.raises(evidence.RuntimePublicationError):
+        evidence.read_diagnostic_attempt_history(installation, UUID(history.m["attempt_id"]))
+    assert len(calls) == 1 and work[0].hash == calls[0] and work[0].fd_count == 0
+
+
+@pytest.mark.parametrize(
+    "kind,maximum", (("events", 128), ("blobs", 256), ("spool-registrations", 16), ("staging", 401))
+)
+@pytest.mark.parametrize("extra", (False, True))
+def test_history_name_n_plus_one_admission_includes_iterator_and_eof(
+    monkeypatch: pytest.MonkeyPatch, kind: str, maximum: int, extra: bool
+) -> None:
+    from types import SimpleNamespace
+
+    names = [
+        f"{index + 1:06d}.json"
+        if kind == "events"
+        else f"{index:064x}"
+        if kind == "blobs"
+        else uid(index) + ".json"
+        for index in range(maximum + int(extra))
+    ]
+    closed = []
+
+    class Scanner:
+        def __init__(self) -> None:
+            self.iterator = iter(names)
+
+        def __next__(self) -> Any:
+            return SimpleNamespace(name=next(self.iterator))
+
+        def close(self) -> None:
+            closed.append(True)
+
+    monkeypatch.setattr(
+        evidence, "os", SimpleNamespace(**(vars(os) | {"scandir": lambda *_a: Scanner()}))
+    )
+    work = evidence._HistoryWork()
+    files = evidence._HistoryFiles(work)
+    files.slots[0] = 99
+    work.fd_count = 1
+    if extra:
+        with pytest.raises(evidence.RuntimePublicationError, match=r"^limit$"):
+            files.names(0, kind, maximum)
+    else:
+        assert files.names(0, kind, maximum) == tuple(names)
+    assert closed == [True] and work.observations == maximum + 1
+    assert work.os_calls == maximum + 3 and work.fd_count == 1
+
+
+def test_history_direct_and_nested_work_is_paid_before_every_actual_owner(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from types import SimpleNamespace
+
+    from tests.unit.test_runtime_journal import admitted
+    from tools.worker import process_evidence, runtime_journal
+
+    history = History("python-syntax")
+    admitted(history)
+    installation, _, intents = _history_tree(tmp_path, history)
+    works = _history_work_spy(monkeypatch)
+    actual_calls = []
+    original_os = SimpleNamespace(**vars(os))
+    plan_holder = []
+    original_plan = evidence._history_plan
+    original_decode = evidence.decode_journal_record
+    original_decoder_method = evidence._HistoryRead.decode
+    prior_decode = []
+    hashes = [0, 0]
+    original_sha = hashlib.sha256
+
+    def attempted(label: str) -> None:
+        work = works[0]
+        assert work.os_calls == len(actual_calls) + 1, label
+        actual_calls.append(label)
+
+    def operation(name: str) -> Any:
+        original = getattr(original_os, name)
+
+        def run(*args: Any, **kwargs: Any) -> Any:
+            attempted(name)
+            return original(*args, **kwargs)
+
+        return run
+
+    class Scanner:
+        def __init__(self, fd: int) -> None:
+            attempted("scandir")
+            self.inner = original_os.scandir(fd)
+
+        def __next__(self) -> Any:
+            attempted("advance")
+            return next(self.inner)
+
+        def close(self) -> None:
+            attempted("scan-close")
+            self.inner.close()
+
+    namespace = vars(original_os).copy()
+    for name in ("open", "read", "close", "fstat", "stat", "geteuid", "getegid"):
+        namespace[name] = operation(name)
+    namespace["scandir"] = Scanner
+    monkeypatch.setattr(evidence, "os", SimpleNamespace(**namespace))
+
+    def plan(*args: Any) -> Any:
+        result = original_plan(*args)
+        plan_holder.append(result)
+        return result
+
+    def decoder_method(reader: Any, kind: Any, path: str) -> Any:
+        prior_decode[:] = [reader.work.hash, reader.work.copies, reader.work.owner_calls]
+        return original_decoder_method(reader, kind, path)
+
+    def decode(kind: Any, data: bytes) -> Any:
+        work = works[0]
+        assert [work.hash, work.copies, work.owner_calls] == [
+            prior_decode[0] + 2 * len(data) + 128,
+            prior_decode[1] + 64 * len(data),
+            prior_decode[2] + 1,
+        ]
+        return original_decode(kind, data)
+
+    def sha(data: bytes = b"", **kwargs: Any) -> Any:
+        hashes[0] += 1
+        hashes[1] += len(data)
+        assert hashes[1] <= 86 * 1048576
+        return original_sha(data, **kwargs)
+
+    original_replay = evidence.replay_journal
+
+    def replay(*args: Any, **kwargs: Any) -> Any:
+        work, measured = works[0], plan_holder[0]
+        assert work.copies == measured.copies
+        assert (
+            work.hash
+            == measured.physical + 2 * measured.controls + 128 * (len(intents) + 1) + 86 * 1048576
+        )
+        assert work.peak_slots >= measured.slots and work.peak_buffers >= measured.buffers
+        with monkeypatch.context() as patch:
+            patch.setattr(runtime_journal, "hashlib", SimpleNamespace(sha256=sha))
+            patch.setattr(process_evidence, "hashlib", SimpleNamespace(sha256=sha))
+            return original_replay(*args, **kwargs)
+
+    monkeypatch.setattr(evidence, "_history_plan", plan)
+    monkeypatch.setattr(evidence._HistoryRead, "decode", decoder_method)
+    monkeypatch.setattr(evidence, "decode_journal_record", decode)
+    monkeypatch.setattr(evidence, "replay_journal", replay)
+    result = evidence.read_diagnostic_attempt_history(installation, UUID(history.m["attempt_id"]))
+    assert result.report.declared_phase == "admitted"
+    work, measured = works[0], plan_holder[0]
+    assert work.os_calls == len(actual_calls)
+    assert work.observations == sum(name in ("fstat", "stat", "advance") for name in actual_calls)
+    assert work.read == measured.physical and work.fd_count == 0
+    assert hashes[0] > 100 and hashes[1] < 86 * 1048576
+
+
+@pytest.mark.parametrize("extra", (False, True))
+@pytest.mark.parametrize("recovered", (False, True))
+def test_history_retains_actual_sixteen_call_limit_and_recovery_scope(
+    tmp_path: Path, extra: bool, recovered: bool
+) -> None:
+    from tests.unit.test_runtime_journal import begin_cleanup, recovery
+
+    history = History()
+    history.created()
+    for _ in range(7):
+        history.call("container-inspect-id")
+    if recovered:
+        recovery(history)
+    else:
+        begin_cleanup(history)
+    for _ in range(4):
+        history.call("container-inspect-id")
+    expected = history.replay()
+    assert expected.accounting.call_count == 16
+    if extra:
+        prior = next(row for row in reversed(history.events) if row["kind"] == "call-intent")
+        history.event("call-intent", dict(prior["payload"], call_id=uid(99999), call_sequence=17))
+    installation, _, _ = _history_tree(tmp_path, history)
+    if extra:
+        with pytest.raises(evidence.RuntimePublicationError):
+            evidence.read_diagnostic_attempt_history(installation, UUID(history.m["attempt_id"]))
+    else:
+        result = evidence.read_diagnostic_attempt_history(
+            installation, UUID(history.m["attempt_id"])
+        )
+        assert result.report == expected
+
+
+@pytest.mark.parametrize("boundary", ("copies", "slots"))
+def test_history_static_admission_refuses_before_any_semantic_decoder(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, boundary: str
+) -> None:
+    history = History()
+    # These are charged candidates even though an eventual owning replay would
+    # reject the extra unreferenced bytes. No generic JSON is used for discovery.
+    history.add(b" " * 200000 if boundary == "copies" else b"," * 6000)
+    installation, _, _ = _history_tree(tmp_path, history)
+    monkeypatch.setattr(evidence, "decode_journal_record", lambda *_a: pytest.fail("unpaid codec"))
+    monkeypatch.setattr(evidence, "replay_journal", lambda *_a, **_k: pytest.fail("unpaid replay"))
+    with pytest.raises(evidence.RuntimePublicationError, match=r"^limit$"):
+        evidence.read_diagnostic_attempt_history(installation, UUID(history.m["attempt_id"]))
+
+
+@pytest.mark.parametrize("boundary", ("physical", "direct-copies"))
+def test_history_raw_admission_precedes_assembly_allocation(
+    monkeypatch: pytest.MonkeyPatch, boundary: str
+) -> None:
+    from types import SimpleNamespace
+
+    installation = evidence.RuntimeEvidenceInstallation(
+        UUID(uid(2)),
+        UUID(uid(1)),
+        "diagnostic",
+        PosixPath("/evidence"),
+        PosixPath("/work"),
+        1000,
+        1000,
+        b"x" * 32,
+    )
+    work = evidence._HistoryWork()
+    files = evidence._HistoryFiles(work)
+    files.slots[0] = 17
+    work.fd_count = 1
+    read = evidence._HistoryRead(installation, UUID(uid(3)), files)
+    read.device = 1
+    size = 32 * 1048576 + 1 if boundary == "physical" else 1
+    stamp = evidence._FileStamp(1, 1, 0o100400, 1000, 1000, 1, size, 0, 0)
+    monkeypatch.setattr(evidence, "_fstat", lambda *_a: stamp)
+    monkeypatch.setattr(
+        evidence,
+        "os",
+        SimpleNamespace(
+            **(
+                vars(os)
+                | {"open": lambda *_a, **_k: 18, "read": lambda *_a: pytest.fail("unadmitted read")}
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        evidence, "bytearray", lambda *_a: pytest.fail("unadmitted assembly"), raising=False
+    )
+    if boundary == "direct-copies":
+        work.copies = 192 * 1048576
+    with pytest.raises(evidence.RuntimePublicationError, match=r"^limit$"):
+        read.read(0, "fixed", "blobs/" + "a" * 64, 32 * 1048576)
+    assert work.read == work.hash == 0
+
+
+def test_history_fd_and_short_read_finalization_reserves_are_preadmitted(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from types import SimpleNamespace
+
+    work = evidence._HistoryWork()
+    files = evidence._HistoryFiles(work)
+    work.fd_count = 128
+    monkeypatch.setattr(
+        evidence,
+        "os",
+        SimpleNamespace(
+            **(vars(os) | {"open": lambda *_a, **_k: pytest.fail("FD admission too late")})
+        ),
+    )
+    with pytest.raises(evidence.RuntimePublicationError, match=r"^limit$"):
+        files.open(0, "fixed")
+    assert work.os_calls == 0
+    work.geometry(12, 1, 0, 0)
+    work.os_calls = 8192 - work.final_remaining - 129
+    work.call()
+    value = work.os_calls
+    with pytest.raises(evidence.RuntimePublicationError, match=r"^limit$"):
+        work.call()
+    assert work.os_calls == value
+    work.finalizing = True
+    for _ in range(work.final_remaining):
+        work.call()
+    assert work.os_calls == 8192 - 128
+    for _ in range(128):
+        work.call(cleanup=True)
+    with pytest.raises(evidence.RuntimePublicationError, match=r"^limit$"):
+        work.call(cleanup=True)
+
+
+@pytest.mark.parametrize("mode", ("zero", "growth", "read-error"))
+def test_history_eof_zero_progress_and_read_failure_release_owned_files(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mode: str
+) -> None:
+    from types import SimpleNamespace
+
+    history = History()
+    installation, _, _ = _history_tree(tmp_path, history)
+    original = os.read
+    original_open = os.open
+    names = {}
+
+    def opened(name: str, *args: Any, **kwargs: Any) -> int:
+        fd = original_open(name, *args, **kwargs)
+        names[fd] = name
+        return fd
+
+    def read(fd: int, size: int) -> bytes:
+        if names.get(fd) == "manifest.json":
+            if mode == "read-error":
+                raise InterruptedError("controlled read failure")
+            if mode == "zero" and size > 1:
+                return b""
+            if mode == "growth" and size == 1:
+                return b"x"
+        return original(fd, size)
+
+    monkeypatch.setattr(
+        evidence, "os", SimpleNamespace(**(vars(os) | {"open": opened, "read": read}))
+    )
+    works = _history_work_spy(monkeypatch)
+    with pytest.raises(evidence.RuntimePublicationError):
+        evidence.read_diagnostic_attempt_history(installation, UUID(history.m["attempt_id"]))
+    assert works[0].fd_count == 0 and works[0].owner_calls == 0
+
+
+def test_history_renamed_scope_cannot_rebind_another_attempt(tmp_path: Path) -> None:
+    history = History()
+    installation, directory, _ = _history_tree(tmp_path, history)
+    directory.rename(directory.with_name(uid(8888)))
+    with pytest.raises(evidence.RuntimePublicationError, match=r"^conflict$"):
+        evidence.read_diagnostic_attempt_history(installation, UUID(uid(8888)))
+
+
+def test_history_reader_never_requests_any_mutating_filesystem_operation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from types import SimpleNamespace
+
+    history = History()
+    installation, _, _ = _history_tree(tmp_path, history)
+    namespace = vars(os).copy()
+
+    def forbidden(*_args: Any, **_kwargs: Any) -> Any:
+        pytest.fail("diagnostic reader requested a mutation")
+
+    for name in (
+        "write",
+        "mkdir",
+        "unlink",
+        "link",
+        "rename",
+        "fchmod",
+        "fchown",
+        "fsync",
+        "truncate",
+    ):
+        namespace[name] = forbidden
+    original = os.open
+
+    def opened(name: str, flags: int, *args: Any, **kwargs: Any) -> int:
+        assert flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC | os.O_APPEND) == 0
+        assert flags & os.O_NOFOLLOW and flags & os.O_CLOEXEC and flags & os.O_NONBLOCK
+        return original(name, flags, *args, **kwargs)
+
+    namespace["open"] = opened
+    monkeypatch.setattr(evidence, "os", SimpleNamespace(**namespace))
+    monkeypatch.setattr(evidence, "fcntl", SimpleNamespace(flock=forbidden))
+    assert (
+        evidence.read_diagnostic_attempt_history(installation, UUID(history.m["attempt_id"])).report
+        == history.replay()
+    )
+
+
+@pytest.mark.parametrize("link", ("cause", "context"))
+def test_history_cleanup_primary_retains_its_original_causal_link(
+    monkeypatch: pytest.MonkeyPatch, link: str
+) -> None:
+    from types import SimpleNamespace
+
+    primary = KeyboardInterrupt("cleanup primary")
+    prior, secondary = ValueError("prior"), OSError("later close")
+    if link == "cause":
+        primary.__cause__ = prior
+    else:
+        primary.__context__ = prior
+    files = evidence._HistoryFiles(evidence._HistoryWork())
+    files.slots[:2] = [11, 12]
+
+    def close(fd: int) -> None:
+        if fd == 11:
+            raise primary
+        raise secondary
+
+    monkeypatch.setattr(evidence, "os", SimpleNamespace(**(vars(os) | {"close": close})))
+    with pytest.raises(KeyboardInterrupt) as captured:
+        files.finish(None, None)
+    assert captured.value is primary
+    assert _error_contains(primary, prior) and _error_contains(primary, secondary)
+
+
+def _history_cleanup_boundary(function: Any, boundary: str) -> int:
+    """Locate the same finite semantic boundary in old and corrected layouts."""
+    import ast
+    import inspect
+    import textwrap
+
+    lines, start = inspect.getsourcelines(function)
+    tree = ast.parse(textwrap.dedent("".join(lines)))
+    if boundary == "successful-finish":
+        calls = sorted(
+            node.lineno
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Expr)
+            and isinstance(node.value, ast.Call)
+            and isinstance(node.value.func, ast.Attribute)
+            and node.value.func.attr == "finish"
+        )
+        assert calls
+        return start + calls[0] - 1
+    transfers = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Assign)
+        and len(node.targets) == 1
+        and isinstance(node.targets[0], ast.Tuple)
+        and any(
+            isinstance(target, (ast.Attribute, ast.Subscript)) for target in node.targets[0].elts
+        )
+    ]
+    assert len(transfers) == 1
+    following = min(
+        node.lineno
+        for node in ast.walk(tree)
+        if isinstance(node, ast.stmt) and node.lineno > transfers[0].end_lineno
+    )
+    return start + following - 1
+
+
+@contextmanager
+def _history_cleanup_interrupt(function: Any, line: int, primary: BaseException) -> Any:
+    import sys
+
+    fired = []
+
+    def trace(frame: Any, event: str, _arg: Any) -> Any:
+        if event == "line" and frame.f_code is function.__code__ and frame.f_lineno == line:
+            fired.append(True)
+            sys.settrace(None)
+            raise primary
+        return trace
+
+    previous = sys.gettrace()
+    try:
+        sys.settrace(trace)
+        yield fired
+    finally:
+        sys.settrace(previous)
+
+
+@pytest.mark.parametrize("exception_type", (KeyboardInterrupt, SystemExit))
+@pytest.mark.parametrize("boundary", ("before-finish", "inside-finalize", "inside-close"))
+@pytest.mark.parametrize("link", ("cause", "context"))
+@pytest.mark.parametrize("cleanup_fails", (False, True))
+def test_history_corrected_successful_finish_handoff(
+    monkeypatch: pytest.MonkeyPatch,
+    exception_type: type[BaseException],
+    boundary: str,
+    link: str,
+    cleanup_fails: bool,
+) -> None:
+    """Fake resources; no actual open, read, iterator, or report verification."""
+    from types import SimpleNamespace
+
+    primary = exception_type("finite successful-finish handoff")
+    prior, secondary = ValueError("retained prior"), OSError("remaining close")
+    setattr(primary, "__" + link + "__", prior)
+    closed, held = [], []
+
+    def close(descriptor: int) -> None:
+        closed.append(descriptor)
+        if descriptor == 11 and boundary == "inside-close":
+            raise primary
+        if descriptor == 12 and cleanup_fails:
+            raise secondary
+
+    class Reader:
+        def __init__(self, _installation: Any, _identity: Any, files: Any) -> None:
+            self.files = files
+            held.append(files)
+
+        def open(self) -> tuple[Any, ...]:
+            self.files.slots[:2] = [11, 12]
+            self.files.work.fd_count = 2
+            return (), (), (), ()
+
+        def read(self, *_args: Any) -> None:
+            pass
+
+        def verify(self, *_args: Any) -> Any:
+            return object()
+
+        def finalize(self) -> None:
+            if boundary == "inside-finalize":
+                raise primary
+
+    monkeypatch.setattr(evidence, "os", SimpleNamespace(**(vars(os) | {"close": close})))
+    monkeypatch.setattr(evidence, "_HistoryRead", Reader)
+    function = evidence._history_read_owned
+    target = _history_cleanup_boundary(function, "successful-finish")
+    if boundary != "before-finish":
+        target = -1
+    with _history_cleanup_interrupt(function, target, primary) as fired:
+        with pytest.raises(exception_type) as captured:
+            function(None, UUID(int=1), evidence._HistoryWork())
+    assert captured.value is primary and _error_contains(primary, prior)
+    assert bool(fired) is (boundary == "before-finish")
+    assert closed == [11, 12]
+    assert held[0].work.fd_count == 0
+    assert held[0].scanner is None and all(slot is None for slot in held[0].slots)
+    if cleanup_fails:
+        assert _error_contains(primary, secondary)
+    held[0].finish(None, None)
+    assert closed == [11, 12]
+
+
+@pytest.mark.parametrize("exception_type", (KeyboardInterrupt, SystemExit))
+@pytest.mark.parametrize("kind", ("fd", "iterator"))
+@pytest.mark.parametrize("boundary", ("after-transfer", "inside-close"))
+@pytest.mark.parametrize("link", ("cause", "context"))
+@pytest.mark.parametrize("cleanup_fails", (False, True))
+def test_history_corrected_local_close_handoff(
+    monkeypatch: pytest.MonkeyPatch,
+    exception_type: type[BaseException],
+    kind: str,
+    boundary: str,
+    link: str,
+    cleanup_fails: bool,
+) -> None:
+    from types import SimpleNamespace
+
+    primary = exception_type("finite local close handoff")
+    prior, secondary = ValueError("retained prior"), OSError("remaining close")
+    setattr(primary, "__" + link + "__", prior)
+    closed = []
+    files = evidence._HistoryFiles(evidence._HistoryWork())
+    resource = 11 if kind == "fd" else "iterator"
+
+    def close(value: Any) -> None:
+        closed.append(value)
+        if value == resource and boundary == "inside-close":
+            raise primary
+        if value == 12 and cleanup_fails:
+            raise secondary
+
+    monkeypatch.setattr(evidence, "os", SimpleNamespace(**(vars(os) | {"close": close})))
+    files.slots[1] = 12
+    if kind == "fd":
+        files.slots[0] = 11
+        function = evidence._HistoryFiles.close
+    else:
+        files.scanner = SimpleNamespace(close=lambda: close("iterator"))
+        function = evidence._HistoryFiles.close_scanner
+    files.work.fd_count = 2
+    target = _history_cleanup_boundary(function, "after-transfer")
+    if boundary != "after-transfer":
+        target = -1
+    with _history_cleanup_interrupt(function, target, primary) as fired:
+        with pytest.raises(exception_type) as captured:
+            try:
+                if kind == "fd":
+                    files.close(0)
+                else:
+                    files.close_scanner()
+            except BaseException as error:
+                # Capture without disrupting the original exception/cleanup path.
+                caught_state = (files.work.fd_count, files.work.cleanup_uncertain)
+                files.finish(
+                    error, error.__cause__ if error.__cause__ is not None else error.__context__
+                )
+    assert captured.value is primary and _error_contains(primary, prior)
+    assert bool(fired) is (boundary == "after-transfer")
+    assert closed == [resource, 12]
+    assert caught_state == ((2, False) if boundary == "after-transfer" else (1, True))
+    assert files.work.fd_count == 0 and files.scanner is None
+    assert all(slot is None for slot in files.slots)
+    if cleanup_fails:
+        assert _error_contains(primary, secondary)
+    files.finish(None, None)
+    assert closed == [resource, 12]
+
+
+@pytest.mark.parametrize("kind", ("fd", "iterator"))
+def test_history_corrected_normal_close_has_one_attempt_and_no_restore(
+    monkeypatch: pytest.MonkeyPatch, kind: str
+) -> None:
+    from types import SimpleNamespace
+
+    closed = []
+    files = evidence._HistoryFiles(evidence._HistoryWork())
+    monkeypatch.setattr(evidence, "os", SimpleNamespace(**(vars(os) | {"close": closed.append})))
+    if kind == "fd":
+        files.slots[0] = 11
+        files.scanner = SimpleNamespace(close=lambda: closed.append("iterator"))
+        files.work.fd_count = 2
+        files.close(0)
+        assert files.work.fd_count == 1
+        assert closed == [11]
+        files.close(0)
+    else:
+        files.scanner = SimpleNamespace(close=lambda: closed.append("iterator"))
+        files.work.fd_count = 1
+        files.close_scanner()
+        assert closed == ["iterator"]
+        files.close_scanner()
+    assert not files.work.cleanup_uncertain
+    files.finish(None, None)
+    assert closed == ([11, "iterator"] if kind == "fd" else ["iterator"])
+    assert files.work.fd_count == 0

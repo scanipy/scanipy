@@ -3008,3 +3008,863 @@ and corrected-ancestor composition with the actual PE/journal prerequisites,
 fresh configured full regression, normal push, exact remote tests and canonical
 SUCCESS/final APPROVE. No event writer, installation, runtime controller,
 database orphan barrier, current authority or native execution is enabled.
+
+
+## 19. Diagnostic one-attempt visible-history reader — September 26
+
+Root engineering implementation approval now covers the exact four paths in
+ROOT-HISTORY-SOURCE-ALLOCATION.md, based on clean eba0a2c5288fa75010645f1092583539d9d5aa7f.
+This is not separate human approval, installed authority, durability, capacity,
+controller enablement or completion of #400. The existing 3010-line prefix and
+all previous source/test bodies remain preserved. Current owner-role documents
+will be composed separately before publication; they do not change these owners.
+
+The complete reviewed inputs follow verbatim for a self-contained contract.
+Their original proposal/status and past composition statements are retained as
+history: source implementation is now allocated, but none of their runtime or
+maximum-input outcomes is promoted. Accounting02 closes draft01 section6;
+mandatory accounting03 overrides ONLY02's candidate prefix, including comma and
+colon.02 alone is rejected. Root and independent peer approved the combined
+design at review af315ca42793716d66831faca6d8e68c79676ee1930cec18e8b077b31412cc63.
+
+The only new callable is read_diagnostic_attempt_history(installation, attempt_id).
+It returns the exact actual replay report inside frozen VisibleAttemptHistory
+only after its owned physical finalization succeeds. Its private whole-history
+meter permits4096 observations/403 owners without changing any old16/24/512
+recipe, and pays full86MiB before the one actual replay. No callbacks, writer,
+spool traversal, process launch, current grant, recovery or root census is added.
+Focused trusted controls and fresh ordinary-UID small-filesystem tests are
+allocated; native/crash/PG/process/full tests, hooks and publication are not.
+
+### 19.1 Retained draft01, completed by19.2–19.3
+
+# RES diagnostic history reader — concrete draft 01
+
+Status: outside-source engineering proposal, not source allocation or runtime
+acceptance. Owner: root #400/#362. The tenant-local submitted path remains the
+target. No global-adoption or inferred-publication prerequisite is introduced.
+This draft does not amend a repository contract until root explicitly approves
+its completed accounting and source allocation. Later corrections append a new
+section/version; retain this original proposal and contrary evidence.
+
+## 1. Dependency composition, not new implementation
+
+New private outer: `/tmp/scanipy-runtime-history-compose-i8DzOVBc` (0700).
+Worktree: its `source` child; branch `bhmea/runtime-history-composition`.
+HEAD remains `3194baa1e4a3002854f754c212006bc132adac20`; MERGE_HEAD is
+`9ef9fe88bf4c942dc9a1b9aa07b528c1c9b068e4`. Normal `merge --no-commit --no-ff`
+stopped on three add/add conflicts. After root reviewed both sides and approved
+the exact selection, apply_patch retained the full core RES document and the
+exact accepted-main profile/Docker-policy sources. The accepted 2137-line RES
+document is byte-exact at the start of the retained 3010-line document.
+
+Staged tree: `7b74563ecc26d330c781224fd76d5285c826b66f`.
+Against accepted main the complete difference is exactly three core paths,
+4703 added lines and no deletions: source1866, unit1964, contract873. No unmerged
+or unstaged tracked differences remain. There is no merge commit, hook/test run,
+push, installation, database or process qualification from this preparation.
+
+Preserved SHA256 pins:
+
+| Path | SHA256 |
+|---|---|
+| tools/worker/runtime_evidence.py | c01df000b92e88b035db5e0184d88a4ff2bfee7af921ca84df32c91cd34247bd |
+| tests/unit/test_runtime_evidence.py | 691a057e056f2f7dbf11d912dbbd43b1c791116aa58e0c84fa9fe7156beb009c |
+| docs/bhmea/RUNTIME-EVIDENCE-STORE.md | 784ac4ac69e7affc99e4f90355a0911ef85d489370a7fb104160b479394bb572 |
+| tools/worker/bounded_process.py | 6a4ec17d2f4a3b04f94ff24a7e213a2be45ac1781fdd885c115756f7fc1f1d34 |
+| tools/worker/process_evidence.py | 601fef04b641b28c6f7e3abe948490bd7507287c103194a42b2cc7f943ac0fe8 |
+| tools/worker/runtime_journal.py | 51e56785a7ef0d19ad9fc67f677161a69a93729217cd98570cfecd5b152b705e |
+| tools/worker/runtime_artifacts.py | 8accd2e2e32cd12ef90f0bb29946ad8197cc1a56c895f848525a44f40e87d05a |
+| tools/worker/runtime_profiles.py | 03491134eb0cac62800aa8968f599e909855ec1f7838e746903e525b521e9c01 |
+| tools/worker/runtime_docker_policy.py | aa5ad9783a04298408531825841185a47103c78c5c65a0597111708a0c5f0862 |
+| tools/worker/runtime_packets.py | b23dfe8398b8b70406bf0e81986519e48d575c5913f3633bcc7124e824589be3 |
+
+The accepted owner files in the last seven rows are byte-exact in the staged
+tree. The full-tree comparison establishes preservation of all other accepted
+paths too, not just this selected list. The three original core paths are exact.
+An initial unsupported `mktemp -m` invocation created nothing; ordinary mktemp
+then created the checked0700 outer. A truncated source retrieval was rejected
+before any patch; complete retrieval and final hashes established exactness.
+Neither preparation issue was a product test or runtime failure.
+
+## 2. Smallest coherent API proposal
+
+Add one synchronous, one-shot, diagnostic-only read function to the existing
+module, plus one exact frozen/slotted/non-content-repr result wrapper:
+
+```text
+read_diagnostic_attempt_history(
+    installation: RuntimeEvidenceInstallation, attempt_id: UUID
+) -> VisibleAttemptHistory
+
+VisibleAttemptHistory(
+    visibility: Literal['verified-visible-prefix'],
+    key: _ScopeKey,  # exact attempt kind and requested UUID
+    report: JournalStructureReport
+)
+```
+
+The wrapper retains the actual complete owning report, including raw manifest,
+events, blobs, unresolved calls and `opaque_owner_values`; it never drops those
+obligations or substitutes a locally reconstructed report. The inner validation
+literal stays `local-structure-only`. A recorded declared phase of `admitted`
+is historical structure, not fresh authority. The wrapper is not JournalReceipt,
+_PublicationAck, Durable*, a SQL result, an installed reader, or a callable.
+
+Exact installation and UUID primitive snapshots precede filesystem access.
+No caller path beyond the existing installation record, root discovery, FD,
+clock, budget, mode switch, decoder/runner callback or prevalidated report is
+accepted. Operational-domain installation is refused. The function closes its
+entire owned lifetime before returning; cleanup failure returns no result.
+
+This separate one-shot entrypoint avoids changing the old publication reader's
+meaning or teaching the non-event writer to accept events through publish_member.
+Existing publisher, final-file reader, formats, body guards and tests stay exact.
+No event append, registration creation, collection, recovery mutation, capacity
+claim, CLI invocation or slot release is implemented by this proposal.
+
+## 3. Exact scope and read recipe
+
+The proposed read scope is one explicitly named attempt, not a root audit or
+capacity census. Open and recheck the existing root.json, held evidence/work
+roots, their normalized ancestors and fixed attempts parent using the existing
+ownership/nofollow/nonblocking rules. Preserve actual nonroot UID/GID checks.
+No writer flock, fsync, chmod, chown, link, unlink, repair, adoption or creation.
+No other attempt's raw content is opened; no whole-root/capacity assertion follows.
+Root-wide writer census and its35-second budget remain unchanged and unavailable
+as a shortcut to this read. Root must approve this explicit scoped-reader
+distinction; it does not weaken the existing publisher's root audit.
+
+Only fixed names below `attempts/<canonical UUID>/` are eligible: manifest.json,
+events, blobs, spool-registrations and staging. Event names are six digits plus
+`.json`; selected events are a nonempty contiguous prefix1..N, N<=128. Blobs use
+lowercase64-hex names, at most256; registrations use canonical call UUIDs,
+at most16. Do not traverse host-work spools or any URL named by retained bytes.
+
+Use one bounded enumeration, a private immutable membership/index snapshot,
+one content pass through nofollow descriptors, actual owner replay, and final
+membership/leaf/root identity rechecks. Require the selected membership to stay
+identical; a concurrently changing suffix returns conflict rather than retrying
+or splicing heads. No automatic second replay/read or reopen loop exists.
+Published leaves must be regular owner0400/nlink1 with full pre/post stamps,
+expected sizes, complete EOF and actual raw hashes. Known two-link or partial
+publication states remain ambiguous, not acknowledged or repaired by a reader.
+
+Permanent publication intents cannot be discarded or silently ignored. The
+history-specific census must validate every accepted retained intent's fixed
+scope/destination/raw identity/predecessor mapping, reject duplicate/new-ID
+adoption and account its bytes/names. Full-history intent maxima and checks are
+not the obsolete initial17-intent bound. Malformed/unknown/unfinished residue
+returns conflict/unsupported with no successful clean-history claim. The exact
+intent/control census recipe and its owner-call costs are a pre-code gate in§6.
+
+Read all required bytes from this owned namespace; supply the actual immutable
+bytes and sorted unique EvidenceBlob tuple to replay_journal exactly once.
+Its existing structural/closure/metadata/call/spool/recovery checks remain the
+owner: no cloned transition engine, decoded arbitrary raw packet, live outcome
+reconstruction, hidden prepare_call_result or signature/domain validation.
+Every return must match root store/deployment/domain and selected attempt IDs.
+Unexpected/unreferenced or cross-scope evidence fails, not partial success.
+
+## 4. Reviewed hash-only admission
+
+Root and the independent peer reviewed the ONE-invocation source schedule at
+the pinned journal/PE versions. This is a static SHA-input bound, not a measurement
+or approval of allocation/physical I/O/time. Let MiB=1048576. Reserve and consume
+the entire90177536 bytes (86MiB) before entering replay_journal, no refund on any
+failure. If another invocation is ever separately allocated, it pays again.
+
+```text
+supplied-blob hashing                          <= 32MiB
+manifest+events: 2*524288 +129*128              <= 1MiB+16512
+four cached local record kinds:
+  2*256*(16384+16384+4096+4096) +1024*128       <= 20MiB+131072
+16 PE intent preparations, 2*1MiB each         <= 32MiB
+request schema-domain hashing                 <= 65536+128
+TOTAL                                         <= 89342208
+86MiB margin                                  = 835328
+```
+
+Pool cache keys are(kind,digest), not digest alone. Only the four listed local
+kinds are reachable. Failed decoding/preparation aborts replay, without a retry.
+The PE1MiB canonical bound precedes its first SHA; the512KiB combined check is
+AFTER that first SHA. Retain1MiB per hash, including malformed/failing work.
+Stored PE decoders and FrozenInvocation validation have no SHA. Live output/
+result packing is unreachable here and is not hidden in this reservation.
+
+Do not reserve512MiB merely because _Pool.hash has that internal ceiling: it is
+not the full nested-work meter. Do not reinterpret the86MiB charge as the entire
+physical method. Direct hashes, root/intent codec hashes and any other owners
+are additional precharged work against the same256MiB method ceiling.
+Reducing input bytes alone does not establish nested-work accounting. A returned
+post-hoc cost record cannot replace admission or failure charging; no new public
+meter/callback/accounted-owner API is proposed for this hash closure.
+
+## 5. Unchanged hard limits and direct-read accounting
+
+One function invocation uses one monotonic lifetime before the first filesystem
+operation and through close, at most2000ms cooperative, without renewal. Root
+open35s is not added to this one-shot deadline. This may legitimately refuse a
+large history; no guaranteed maximum-input latency, RSS or blocking-syscall
+duration follows. A separately reviewed outer supervisor remains required for
+real deployment. This proposal creates no process/concurrency admission system.
+
+| Counter | Hard ceiling for this one-shot read |
+|---|---:|
+| Bytes actually read, including EOF failures | 134217728 |
+| Bytes written / sync / mutation | 0 / none / none |
+| All direct and delegated SHA input bytes | 268435456 |
+| Cumulative owned/generated byte copies | 201326592 |
+| Live raw buffers | 100663296 |
+| Live implementation slots | 262144 |
+| Held FDs, including acquisition/cleanup | 128 |
+| Observations: entries/stat/membership, cumulatively | 4096 |
+| Application OS attempts, cleanup included | 8192 |
+| Chunk bytes / relative ASCII name / absolute UTF-8 path | 65536 /128 /4096 |
+
+These use existing RES ceilings; no implicit per-file, per-codec, per-role or
+failure reset/refund. Independent read lifetimes are not an aggregate memory
+or concurrency guarantee. Logical summary metadata remains512KiB, retained
+raw32MiB,128 events/256 blobs/16 calls; publication-control metadata still counts.
+Scope/path/raw-length checks precede large conversion. New history admission
+may refuse a legal wire combination whose complete cost exceeds these limits;
+such refusal is explicit `limit`, not silent truncation or full-support evidence.
+
+Reuse the actual direct-read charging: reserve next read/hash before each read;
+charge actual bytes and EOF probes; reserve3*N cumulative copies and2*N+2*65536
+live buffers before a file's assembly; release temporary buffers only after
+their last owning reference. Retained report/input buffers remain live, not
+recharged as new physical files and not released while still owned. Known equal
+bytes do not discount separate reads or hashes. Stat, membership, enumeration,
+iterator acquisition/close, descriptor handoff and uncertain-close paths count.
+Keep the existing cleanup-attempt reserve and one-close primary/cause/context
+discipline; no numeric-FD retry, background I/O or uncertain cleanup adoption.
+
+## 6. Required closure before source allocation
+
+Hash review does NOT close the following. Do not implement the entrypoint merely
+with an86MiB ticket and an unmetered owner call. The next review must freeze:
+
+1. Full-history intent/registration/staging membership recipe, direct-file and
+   observation/OS-attempt schedule, including final rechecks and failing reads.
+   The old initial17-intent/50-file census cannot be reused. Derive the maximum
+   geometry admitted by4096 observations/8192 attempts BEFORE expensive work.
+2. Complete replay primitive/UTF-8/canonical-copy and simultaneous-slot bound,
+   including cached local/PE records, parsed-event tuples, report construction,
+   temporary owners, largest offending decoded item and output lifetime.
+   A public call count is not a bound on its nested allocations. No generic
+   JSON decoder, duplicated semantic codec or hidden relaxed value cap may be
+   invented for discovery. Exact safe admission must precede the work it covers.
+3. Whole invocation R/H/copy/live-slot schedule: direct bytes + root/intent
+   codecs + the full replay ticket + final readback/cleanup. Demonstrate useful
+   genuine histories within the existing limits and disclose any unsupported
+   maximum combination; no array/input truncation or public-cap increase.
+
+These are concrete outstanding arithmetic/recipe gates, not asserted solved
+ceilings or permission to weaken the owning formats. If they cannot close using
+the existing public owners, bring the exact conflict to root before proposing
+a narrowly owned additional admission interface. No such interface is allocated.
+
+## 7. Proposed tests and boundaries
+
+After contract/source allocation, author tests only in the existing core unit
+module and new `tests/integration/test_runtime_evidence.py`, plus the core source
+and append-only RES contract. Keep all old tests/owners unchanged. Reuse actual
+journal diagnostic History vectors and PE codecs, not fake transition success.
+
+Trusted small-filesystem controls use fresh task-owned temporary directories,
+the current ordinary nonroot UID/GID, real fixed modes/nofollow/EOF/flock where
+applicable, and real file/dir descriptors; no host/etc, mount/quota setup, keys,
+Docker, PG, external source/build execution, installed-authority claim or VM
+power-loss claim. Fault-injection tests are labelled controlled; later separately
+granted native crash/platform qualification remains necessary. No tests run here.
+
+Cover all four unchanged modes;128/129 events,256/257 blobs, metadata/raw bounds,
+16/17 calls; no-event/incomplete/terminal/recovery/orphan histories; missing,
+extra, duplicated, malformed, cross-scope and inconsistent refs; full original
+outcomes/unknown retention; exact intent/destination mapping; visible-not-durable
+and unresolved owner obligations; appended/deleted/substituted names and equal-
+byte inode swaps; nlink2/unknown staging refusal; no write/repair; every read,
+hash, buffer, slot, observation, FD, deadline and cleanup boundary. Instrument
+actual nested helpers separately for maximal valid and late-malformed inputs;
+unused precharge slack must not mask an uncharged operation. Test all old
+publication/writer guards and operational unsupported behavior remain exact.
+
+Current-authority custody0e9354c/factory6059ed3/composerf7185b7 are separately
+local/unpublished foundations, not dependencies of this diagnostic reader.
+Qualified capacity/backing/isolation, installed provenance/current owners,
+DB-BAR, writer events/spools, controller/kernel/transport and genuine domain
+execution remain required later. This slice accepts no C/R/G gate or full#400.
+
+### 19.2 Complete accounting02 (prefix corrected by19.3)
+
+# RES diagnostic history: closed admission schedule 02
+
+Prepared 2026-09-26, after the retained 257-line draft01. This is a concrete
+source-allocation proposal for root/peer review, not reader implementation or
+native acceptance. It closes draft01 §6; all its diagnostic-only/unsupported,
+same-attempt, no-write, no-root-capacity and two-second qualifications remain.
+Retain draft01 SHA5f92ec14b0a6be6d93c4ed84cba2e48c38954e83aee636a733f8ccc70662548a.
+
+## 1. Frozen owners and composition
+
+The dependency merge is now normally committed at
+eba0a2c5288fa75010645f1092583539d9d5aa7f, tree
+7b74563ecc26d330c781224fd76d5285c826b66f, parents3194baa1 and9ef9fe88.
+Root's LOCAL-COMMIT.md records applicable merge-conflict hook scope, not a full
+regression. The worktree is `/tmp/scanipy-runtime-history-compose-i8DzOVBc/source`.
+All ten draft01 pins remain exact. Main's later9a999b8c owner-role documentation
+does not alter these code owners; compose it separately before publication.
+
+Actual owners here are RES c01df000, RJ51e56785 and PE601fef04, not copies of
+their decoders. Source anchors: RES _read561/_names899/_walk974; RJ _decode487,
+decode_journal_record731/_Pool1122/_Replay1267/replay_journal2037; PE _decode354,
+_snapshot_json236/_canonical286/prepare_call_intent525/_graph_fields855.
+The already reviewed ONE replay SHA ticket remains exactly86MiB; no re-review
+or extension of that hash-only decision is claimed by this appendix.
+
+## 2. Closed completed-visible geometry
+
+Let E=events(1..128), B=unique blob files(0..256), R=registration sidecars(0..16),
+G=1+E+B+R, I=G completed intent files and L=2G+1 regular content files including
+root.json. Writer.lock is separate, zero-length. A is the sum of normalized
+non-root components of both configured absolute paths, computed before walking.
+All counts are exact private integers, not caller budget inputs.
+
+Accepted names are exactly root's four fixed names; selected attempt's five
+fixed names; contiguous six-digit event names1..E; lowercase64hex blob names;
+canonical call-UUID.json registrations; and canonical publication-UUID.json
+intents. There is one intent per final destination, never an additional ID for
+the same destination. Staging contains exactly those I .json files and NO .data,
+unknown suffix, extra directory, symlink or unfinished pair. No other attempt,
+refusal contents or host-work spool is traversed. The work root is checked as a
+held configured root, not represented as empty or independently capacity-safe.
+
+Every intent and final content inode is regular, correct owner/group,0400,
+nlink1, same admitted filesystem and stable complete stamp/EOF. Each intent is
+decoded once by actual decode_journal_record('publication-intent'). Its filename,
+publication ID, store, attempt scope, role, fixed destination, size and raw SHA
+must match the observed final member. Root uses its actual owning decoder and
+installed digest. No data-only file or intent-only declaration yields a report.
+
+Manifest intent predecessor is null. Event intent predecessor equals the actual
+owning parsed event's previous_event_digest (null exactly for event1). Blob and
+registration intent predecessors are null OR an actual schema_digest in this
+verified same-attempt event prefix. This is a validated retained declaration,
+NOT physical first-use/publication chronology, durable acknowledgement or writer
+recovery evidence. Root explicitly accepted that distinction during this draft.
+Old core-generated non-event intents remain null; no old writer guard changes.
+
+After the ONE actual replay, each registration sidecar is byte-equal to the
+actual blob named by exactly one owning spool-registered event with the same
+call ID. Every such event has its sidecar. Do not decode sidecar semantics again
+or follow relative_directory to the work filesystem. Actual replay owns the
+registration/input/result/collection binding. Use fixed destination/digest maps,
+not a cloned replay graph or opaque BlobRef discovery. All B blobs still go to
+the actual owner's unreferenced/cycle closure; no opaque obligation is removed.
+
+Snapshot initial membership/full leaf stamps, read content once, replay once,
+then enumerate the same six directories once more and compare exact names,
+held directory identities, all L final leaf stamps and configured ancestors.
+Equal-byte inode substitution, changed suffix or altered stamps conflicts.
+No second replay/reread retry is hidden in finalization. Complete visible content
+is not fsync evidence and grants no reusable publication/quota credit.
+
+## 3. Filesystem admission, including errors and short reads
+
+Before walking, admit A and minimum geometry. Before retaining each enumerated
+name, reserve its slot/name bytes plus next-advance observation/application-FS
+attempt; include EOF and the one over-limit sentinel. Stop immediately on an
+unknown entry. When geometry is known, before content/owner work require:
+
+```text
+O_plan = 4*A + 6*L + 96             <= 4096 observations
+FS_full_chunks = 8*A + 10*L + 768   <= 8192 application FS attempts
+```
+
+The second expression is a conservative full-requested-chunk admission plan,
+NOT an assertion that regular-file read always returns the requested amount.
+All actual attempts, including positive short reads, consume the same8192
+counter. Before each additional read keep the remaining mandatory final checks
+and existing128 cleanup attempts reserved; if it cannot fit, return limit before
+that syscall. No counter refund, partial-record success or retry/reopen. Zero
+progress fails. This bounds every failure path by8192 even when the nominal
+full-chunk plan is exceeded. Short reads do not increase byte/hash/copy limits.
+
+The source schedule behind those expressions is:
+
+| Fixed phase | Application attempts | Observations |
+|---|---:|---:|
+| Initial and final walks of both roots, closes, four held-root fstats | 8A+12 | 4A+4 |
+| Six direct directories: open, initial/final fstat+membership, close | 36 | 24 |
+| Zero-length writer.lock: open/check/EOF/final check/close, NO flock | 7 | 4 |
+| Actual effective UID/GID | 2 | 0 |
+| Each content file: open, fstat, Q reads, EOF, poststat/member, close, final member | Q+7L | 4L |
+| Two enumerations of root/attempt/events/blobs/registrations/staging | 2L+50 | 2L+26 |
+
+There are2L+14 successful entry yields and12 EOF advances in those enumerations.
+Each scandir acquisition and close is an attempt too. Successful full chunks
+have Q<=513+L at P<=32MiB+4096. The sum is8A+10L+620;128 reserved cleanup plus20
+spare fixed attempts gives768. Observation sum4A+6L+58 leaves38 fixed sentinels/
+guard observations inside96. No fallback repeatedly consumes that spare.
+
+An iterator's possible internal duplicate descriptor is included in FD admission;
+application attempts are not a universal libc/getdents/kernel syscall count.
+Hold root/work/lock plus six direct directories and at most one content FD,
+one iterator duplicate, two walking ancestors and one acknowledged handoff.
+Even a conservative32 simultaneous owned descriptors is below128. Acquisition,
+registration, iteration and cleanup share guarded ownership; acknowledged FDs
+cannot fall between an unguarded return and registration. Close each once, retain
+the original primary and prior cause/context plus cleanup failures, never retry
+an uncertain close. Do not silently rewrite old core descriptor methods.
+
+## 4. Static byte/shape admission, not a decoder
+
+Let S be raw manifest+event bytes (<=524288). Let J be root.json plus all actual
+intent bytes. Let P be all L regular content bytes, counting sidecars/intent
+duplicates physically, even if equal to a blob. Require P-root_size<=32MiB.
+After owning replay also require its logical_metadata_bytes + intent bytes
+<=524288. This is observed structure, not writer credit or a root-capacity audit.
+
+For raw d define v(d)=1+count(',')+count(':')+count('[')+count('{'). Counting
+punctuation inside strings deliberately overestimates. JSON grammar gives one
+root plus separators/container starts as an upper bound for parsed key/value/
+container nodes, including a partial tree before malformed/duplicate rejection.
+This is four bounded bytes.count scans with integer accumulation, not JSON/schema
+parsing. A small no-copy prefix scan classifies a blob as a possible metadata
+candidate only when len<=1MiB and its first non-ASCII-whitespace byte is one of
+`{["-0123456789tfn`, OR it is empty/all whitespace. Both actual lexical owners
+reject other prefixes or oversized inputs before generic JSON/UTF-8 decoding.
+Never treat a candidate as valid because it passes this admission scan.
+
+Use64KiB scan ranges (no sliced raw copies), check the same deadline between
+ranges. At most five raw byte visits per byte, <=5P, aside from existing owner
+work. A JSON-looking opaque blob may conservatively consume admission/refuse;
+do not relax its role or feed it into a new decoder. Invalid UTF-8 is charged.
+
+Let Cb=sum candidate lengths, M=max candidate length or0 and Vb=sum v(candidate).
+Let Vr=sum v(manifest/events), V=Vr+7Vb, and define:
+
+```text
+C = 3*S + 7*Cb + 16*M + J
+Copies = 4*P + 64*C + 16MiB <= 192MiB
+```
+
+The seven candidate occurrences pay all four possible journal cache kinds and
+three PE cache kinds, including an eventual wrong-kind failure. Cache key is
+(kind,digest); do not assume digest-only or successful-schema uniqueness. The16M
+term pays sequential actual prepare_call_intent invocations independently,
+including failure. The actual decoded canonical invocation is re-encoded by that
+owner; it cannot generate an invocation larger than its admitted source bytes.
+Fixed new payload fields remain capped2048 per call and paid in the fixed term.
+
+Three S occurrences separately cover (1) journal parse/canonical/tag and local
+field validation, (2) embedded PE payload/ref canonicalization and replay's
+plain/intent-view work, (3) the reader's bounded owning-report projection for
+scope/event/registration/intent comparisons. The third pass must not invoke
+replay again. Reuse/discard one plain event view at a time.
+
+64 bytes of copy allowance per byte-occurrence is conservative over these actual
+representations: lexical token slices<=N; UTF-8 input/decoded scalar storage
+<=8N; tag/plain preflight string encodes<=4N; one JSON fragment+joined-Unicode+
+UTF-8 pass<=9N; closed field/path/FrozenInvocation revalidation<=16N; a nested
+PE canonical/input pass<=20N; remaining scalar/escaping/base64 slices<=6N.
+These sum64N. Embedded disjoint ref subtrees sum to at most their source event;
+repeated encoded fields count as repeated source bytes. PE error graph's<=32
+mini-canonicalizations operate on disjoint argument subtrees; its offending
+argument is included even though the2048 cumulative test follows construction.
+No live _Graph/_Pack/prepare_call_result/MemoryOutput hashing is reachable here.
+
+The fixed16MiB pays bounded names/hex/schema-prefix/compact-row copies and small
+generated controls: all<=4096 graph/reference attempts, <=16 generated2048-byte
+intent payloads and <=32 decoded4096-byte raw output paths, plus path/census
+snapshots. It is consumed once at entry, not another per-file allowance. Direct
+read's three explicit N copies are paid3P; the fourth P covers possible pool
+prefix concatenations. Internal allocator relocation, interpreter object/RSS
+overhead and kernel copies are not represented as measured bytes by this meter.
+
+## 5. Slots, raw-buffer lifetime and owner calls
+
+Let n=B+E+1 and O=min(4096,18B). There are17 reachable empty-path owner roles
+(refusal-raw is unreachable) plus admission's one field path, hence18B, not an
+assumption that every role has only one path. Reserve:
+
+```text
+Slots = 6*V + 16*4096 + 4096 + 4*4096 + 8192
+        + 12*O + 12*n + 96*E + 96*B + 24*L + 24*I + 12*A
+Slots <= 262144
+```
+
+Slot units are logical owned container fields/references, not CPython allocated
+capacity. A complete tagged tree requires<=2v slots; a plain tree<=v. Tags plus
+plain cached data and retained call-intent views fit6V. One active decoder and
+generated PE preparation use the existing conservative16v+4096 scratch shape,
+with v<=4096 (actual invocation<=2048); they are sequential, not16 simultaneous.
+This scratch is held through failure/cleanup. No whole-history decoder cache is
+freed on paper while still owned.
+
+Graph sets need<=4096 entries; DFS pending pairs need<=3*(4096+2n) references;
+graph/colors/heights dictionaries bring that to4*4096+12n. Opaque set/path,
+sort-key tuples/path keys, sorted references and output records peak within12O.
+96B covers fixed blob copies/maps and all seven cache-key/pair/record headers;
+96E covers event/call/identity/prerequisite/charge/registration/collection maps
+and headers (their nested metadata is already V). The8192 fixed remainder pays
+small loop/record/cleanup structures.24L pays original/final membership indices,
+stamps and active row views;24I pays compact ten-field intent/destination maps;
+12A pays both five-field ancestor snapshots with indexing. Keep census raw
+storage within its separately retained4MiB, not unbounded Python DirEntry lists.
+
+Let Nmax be the largest content file, and T=max(4096, largest manifest/event,
+M), so T<=1MiB. At all stages preadmit:
+
+```text
+Live = 4MiB + P + 4*C + max(Nmax+131072, 16*T+131072) <= 96MiB
+```
+
+P is retained raw content.4C covers retained decoded Unicode/derived scalars.
+Reading one new N-byte file has previously retained P-N plus assembly/final2N
+and two64KiB chunks. The replay's largest pool hash-prefix copy is at most Nmax;
+later metadata/canonical/PE transient representations fit16T plus two chunks.
+These phases are sequential; don't add their mutually exclusive peaks or release
+P prematurely. Since Copies implies C<=2.75MiB, P<=32MiB+4096, Nmax<=32MiB,
+this live expression is conservatively below80MiB even without correlating the
+stronger P/C tradeoff. The report's actual raw buffers stay owned through final
+rechecks/cleanup and transfer to its caller; returning is not a claim of freeing
+them. Retained traceback objects likewise are not a process-global memory quota.
+
+Direct root/intent calls are exactly I+1, then one replay: I+2<=403. This is a
+new private whole-history recipe bound, NOT a raise of the old non-event16/24
+call limits or their512-observation meter. The proposed history branch uses
+only the already deferred4096 observation and existing8192/byte/slot/FD ceilings.
+No metadata owner, encoded-value property or public callback is unmetered.
+
+## 6. Payment order, final result and useful feasibility
+
+Start the one2s monotonic lifetime before filesystem work; bounded exact public
+primitive snapshots have fixed prepaid slots. Pay fixed16MiB copy/4MiB census
+and scratch reservations once. Enumerate/admit geometry incrementally. At each
+opened leaf's fstat, admit N into P, direct3N copies and assembly/live bounds
+BEFORE allocation/read. Charge read/hash chunks before use, actual transferred
+bytes after, EOF work even on failure. Positive short reads never reset counters.
+
+Before each root/intent decoder consume64N copies and2N+128 hash input, its owner
+call and scratch slots. Keep only compact intent rows plus bounded raw snapshots.
+Before ONE replay consume the whole86MiB SHA ticket, remaining P copy allowance,
+64*(3S+7Cb+16M) delegated copies and all V/graph/live reservations; no failure or
+unused branch refund. Remaining counters obey:
+
+```text
+Read <= P+L <=128MiB
+Hash <= P + 2J +128*(I+1) +86MiB <=256MiB
+Write = sync = mutation =0
+```
+
+Every actual owner/scan/filesystem phase checks deadline before and after.
+Existing synchronous owner work is not preempted mid-call: a late return fails
+before result publication. Preserve original exceptions/cleanup evidence; no
+hard blocking-syscall or aggregate process/concurrency guarantee is asserted.
+
+All final matching and full-stamp checks must finish before returning the exact
+actual JournalStructureReport inside VisibleAttemptHistory. The wrapper cannot
+answer current permission, durability, installation, capacity or recovery.
+
+The final small pure probe uses actual existing diagnostic History and replay/
+PE owners, four modes × reserved/loaded/created/admitted plus one registered
+spool prefix. Each completed-intent shape is also accepted by the actual codec.
+At A=12, all17 fit. The largest demonstrated case is python-syntax admitted:
+28events/35blobs/9calls,64intents/129leaves, P116041B, C406314B, V12862,
+918 observations,2154 full-chunk FS plan,116170 read bound,90361087 hash bound,
+43245476 copy bound,6136817 live bound,190532 slots. These are proposed admission
+calculations over small supplied bytes, not observed filesystem/syscall/memory.
+Actual replay there used116 SHA calls/167720 input bytes,31 journal decodes,
+52 PE decodes,9 real prepares,147 observed canonical calls/120416 output bytes.
+The full86MiB ticket is still consumed, not reduced to that observed usage.
+
+All four admitted cases retain actual9-call histories and opaque obligations;
+the spool prefix retains1registration/2collections and an unresolved call, not
+an invented healthy result. Max wire E128/B256/R16 gives803leaves and4962
+observations at A12: explicit limit refusal, not support for every valid wire
+combination. A32MiB physical input plus C1MiB also exceeds192MiB copies. No cap
+increase or truncation is needed for the useful demonstrated histories.
+
+## 7. Requested next source allocation and required controls
+
+After root/independent accounting review only: additive history API/private
+recipe in tools/worker/runtime_evidence.py; append tests/unit/test_runtime_evidence.py;
+append this owning contract to docs/bhmea/RUNTIME-EVIDENCE-STORE.md; new trusted
+small-filesystem tests/integration/test_runtime_evidence.py. Preserve all old
+public bodies/tests/owner pins and unsupported operational paths. No writer,
+event append, controller, provider, root reconciliation or environment API.
+
+Implementation must instrument each named phase before its allocations/owner/
+OS effects, with separate malformed/wrong-kind/late-failure and accounting-limit
+tests; fixed prepaid work must not mask uncharged operations. Include actual
+positive short reads, growth/EOF, N/N+1 names, all caps, equal-byte inode swaps,
+KI/SystemExit at acknowledged acquisition/cleanup, and finalization exhaustion.
+Use actual small temp files only after an explicit test grant, ordinary current
+UID/GID and diagnostic roots; no scanned source, mounts, keys, Docker, PG or
+runtime authority. Current probes exercised no physical reader or real history.
+
+### 19.3 Mandatory leading-delimiter correction03
+
+# RES history accounting: leading-delimiter correction 03
+
+This short amendment supersedes only the candidate-prefix claim in §4 of
+HISTORY-ACCOUNTING-02.md SHA18a352927a060aae0ad83881cc8efd82db098651c375b12b6dd0ef6110d120a8.
+The306-line original, its prior draft, probes,32-pass reports and freeze index
+remain unchanged. The full proposal still requires root/independent review;
+there is no implemented history reader or new runtime permission.
+
+## 1. Actual contrary evidence and normative replacement
+
+Root identified that both RJ._lexical and PE._lexical permit leading comma and
+colon before generic JSON/UTF-8 work, although JSON later rejects the document.
+The original filter wrongly classified those prefixes as noncandidates.
+Four actual-owner controlled regressions (two delimiters × both owners) first
+confirmed generic JSON received the complete decoded string, then failed the
+original candidate-admission assertion:4 failures,0 errors/skips. This is a
+real accounting-proposal omission, not an accepted owner decoder defect.
+
+Replace the §4 candidate byte set with exactly:
+
+```text
+len(d) <=1048576 AND
+(d is empty/all ASCII whitespace OR
+ first byte after ASCII whitespace is in b',:{["-0123456789tfn')
+```
+
+Whitespace is exactly space/tab/CR/LF. The added comma and colon are candidate
+starters, not skipped by this classifier. Do not infer validity from the set.
+Both owners fail first on every other initial byte: unmatched `]`/`}` fails
+negative depth; unsupported token starters fail their literal/number/string/
+container branch. Initial ASCII whitespace is skipped only conservatively for
+PE (RJ may reject sooner). Both owners reject bytes beyond their actual cap
+before generic decoding. Consequently noncandidate blobs cannot reach generic
+JSON/UTF-8 allocation, while all candidate bytes count in Cb/M/Vb BEFORE replay.
+All-whitespace/empty input remains charged despite containing no valid document.
+
+No counter/ceiling,86MiB ticket, slot/copy formula, useful-history semantic result,
+filesystem recipe, owner API or source pin changes. Candidate admission is only
+a conservative prerequisite; actual owning schema/canonical validation remains.
+
+## 2. Preserved and corrected controls
+
+Original regression source:
+`/tmp/scanipy-history-accounting-bc9w8hQb/test_leading_delimiters.py`
+SHA4f3992a1d816d7d2a76c3f2291a4a0271f8ccf0dd5bc58abad1e4851aad9902c.
+Original red XML `leading-delimiters-original.xml` in that directory:
+SHA9dc5a35fee41747187cddddcf85fbd691a32dd98953b44e97bfefc1ee94c233d.
+LEADING-DELIMITERS-ORIGINAL.txt retains the complete actual failure output.
+
+The corrected probe is a separate file in
+`/tmp/scanipy-history-accounting03-UNFOB2ZG/probe_accounting.py`, SHA
+220ab4788540171af5ee17bc4ae3ea865513b414b7d64b8d4acd949d013b9ec1.
+It differs from preserved5805e2bb solely by the two added literal prefix bytes.
+The original32 controls and four regression bodies were copied byte-exact.
+Twelve further pure controls check all256 initial byte values, with and without
+leading whitespace, against each actual lexical owner for six tiny suffixes.
+They are finite supporting vectors, not a universal semantic-decoder proof.
+
+Configured final run:48 unique passed,0 failures/errors/skips. It is32 existing
+controls + the SAME four formerly red controls +12 first-byte controls, not
+48 native tests. Report `accounting-prefix-final-48.xml` SHA
+7a848afacebdca57e5ce3cdc3a7f0f0441e7d81caa633e3cda07c86460f1b89d.
+The corrected17-history probe output is byte-exact to the original final output,
+SHAfac0ab959429094a9b4a973b1fe88871414963e640f64b0e1ebdf52dc4995eae;
+the useful small examples and conservative numerical admissions are unchanged.
+
+The run uses the exact clean Python3.11 environment/owner tree in the original
+ACCOUNTING-FREEZE.md, but PYTHONPATH's outside directory and all three selected
+test paths point to scanipy-history-accounting03-UNFOB2ZG and the fresh48 XML.
+No source/index, native filesystem history, PostgreSQL, process runner or key
+was touched. All original files/reports remain available; no implementation or
+maximum-memory probe was executed.
+
+### 19.4 Implemented diagnostic reader and bounded author qualification
+
+September 26, 2026. The four-path source allocation above is now implemented
+locally, pending independent implementation review. This is not a current
+authority, writer/controller, full #400, or operational acceptance statement.
+The API returns the actual complete `JournalStructureReport`, wrapped only in
+the frozen `VisibleAttemptHistory`. A recorded `admitted` phase remains recorded
+structure. It retains unresolved calls, original outcomes, opaque values, every
+supplied blob and all actual owner accounting; it cannot grant execution.
+
+The new `_HistoryWork` recipe is independent of the old `_Work` initializer,
+root35-second route and16/24-call/512-observation limits. Its single two-second
+cooperative lifetime begins before primitive snapshots and extends through
+cleanup. Fixed shared descriptor slots own acknowledged opens immediately;
+scandir is guarded from acquisition through bookkeeping, iteration and close.
+Finalization allowance remains reserved during short reads, alongside128 cleanup
+attempts. No uncertain close is retried. Full held inode stamps, exact six
+memberships, configured ancestor security identities and root bindings are
+checked before success. The extra fixed refusals-directory metadata check does
+not enumerate its contents; its two observations/calls fit the accounting02
+fixed spare. Other attempts and work-spool contents are never traversed.
+
+The final content pass pays direct byte/assembly costs before allocation. Static
+candidate discovery includes mandatory comma/colon correction03 and uses no
+semantic decoder. The complete copy/live/slot plan precedes every semantic
+owner. Each root/intent decoder pays its exact private recipe, and the one
+actual replay consumes86MiB SHA plus all separate physical/control costs before
+entry, including malformed/failing histories. There is no reset or refund.
+Tests instrument each actual application OS attempt/observation and owner
+boundary independently; an unused large replay reservation is not their oracle.
+
+Author evidence is retained outside the worktree in
+`/tmp/scanipy-history-reader-evidence-Yd79GqH3`. Exact results are distinct runs,
+not additive coverage claims:
+
+| Checkpoint | Actual result | JUnit SHA256 |
+|---|---|---|
+| Missing new API baseline |4 failures; AttributeError construction baseline, not an old-owner defect|f23c877b3a780893fbb79ef7cc706d735e6880aced29c7f8eb181340ffa74328|
+| First implemented four-mode reserved histories |4 passed|d1b6619a8774cbb2897df202f55123841a4027b9fac9d69fd5d2888bfd8862d5|
+| First expanded controls |80 passed,6 failed; five invalid fixture operation literals and one wrong private-helper call signature|603d3fd02feb68f8ae614e18432fe182c07a074463b4d78775fe3f1b89bb93b9|
+| Corrected expanded controls |100 passed|e0b5029d22e3d3422f2912467e8b05597523994c80b4794e124d4bed799677c5|
+| Acquisition/accounting expansion |129 passed|44d2acfce029b0a33837f17a3404b8bcbf8331b3154d076473ba731ea3b2f93e|
+| Full new controls before final cleanup correction |143 passed|4d8d99eecb5311851b7e3324884e329fa2086c5e1b1636177ccffd64ada8b20b|
+| New controls plus23 unchanged old guards |166 passed|d11ff6ed370a7440112f2456bb5691611389d19254f3650a026b034f847d2dc9|
+| New cleanup-primary causal control |1 failure,1 pass|778f313d7e61dd7bc2c139d0e8a0acdf62fbac882c2f21d8d7c5d9c141461037|
+| Final controlled selection |168 unique passed,0 failures/errors/skips;12.730s JUnit|5fd69504947c4e70733afb127f7a423d1c06924137592a7e08a2f0535a35184a|
+| Separate small measured history |1 passed,0 failures/errors/skips;1.246s JUnit|7679ebcb1bae691909532c2088fd458f5a7b5d46be3b1269d44adc603fca7169|
+
+The cleanup-primary failure was a genuine new-source finding at
+`d83b136e3ddea5e04e5e17ee4cfe142e3cbfdf069407f4f02d08205e6a35d2a7`:
+when a cleanup KeyboardInterrupt became primary and a later close failed, its
+explicit prior cause could be overwritten. That complete original source and
+the contrary XML are retained. The new finish helper now carries the chosen
+primary's original cause-or-context into aggregation. Both original controls
+pass unchanged in the final selection. This correction touches no old owner.
+
+The final168 are131 additive unit cases,14 new small ordinary-UID filesystem
+cases and23 unchanged old guards, with197 other old unit cases deselected.
+The separate measurement overlaps these semantics; it is not another feature
+or native gate. Coverage includes actual16-call/recovery histories and17-call
+refusal, all four modes through actual admitted reports, unresolved/missing/
+orphan/spool evidence, duplicate/malformed/cross-scope intent refusal, exact
+name and numeric limits, positive short reads and zero/EOF failure, same-byte
+different-inode replacement, no writes/flock, late owner/cleanup deadlines,
+and controlled KeyboardInterrupt/SystemExit acquisition/close failures. Native
+crash, mount/quota, hostile-host, power-loss and maximum-memory guarantees are
+not inferred from these finite Python/source and small filesystem tests.
+
+The separate real small python-syntax admitted fixture observed28 events,
+35 blobs,9 calls,64 intents and129 leaves at A=10. Its retained physical bytes
+were116137 and C=406410, with V=12862. Path-length-dependent root bytes explain
+the difference from the earlier pure prototype; this is not a bound increase.
+
+| Meter | Actual reserved/observed value |
+|---|---:|
+| Read bytes / write bytes |116137 /0|
+| Direct plus delegated SHA reservation |90361375|
+| Cumulative copy reservation |43252004|
+| Retained logical slots / raw-buffer peak reservation |190508 /6137297|
+| Application OS attempts / observations |1478 /874|
+| Root+intent+replay owner entries |66|
+| Peak held FDs / final owned FDs |11 /0|
+
+The OS/observation counts are actual application attempts, not universal libc
+or kernel syscall counts. Slots/copies/buffers are the reviewed source-derived
+logical reservation units, not RSS measurements. The synchronous decoder can
+return late and then be refused; no hard preemption/blocking-syscall guarantee
+is claimed. All same-invocation raw content remains retained through cleanup
+and transfers to the actual returned report. Independent invocations are not
+an aggregate process/concurrency memory limit. Simultaneous wire maxima may
+explicitly limit-refuse; this checkpoint does not claim maximum support.
+
+The original57 source definitions,65 test definitions,1964-line unit prefix
+and3010-line contract prefix remain exact; only necessary imports and additive
+history declarations/tests were added. All seven dependent PE/journal/process/
+profile/Docker/packet/artifact sources remain pinned unchanged. There has been
+no full regression, hook, commit, push, Docker, PostgreSQL, process launch,
+installation, key generation, UID change or operational activation here.
+
+### 19.5 Finite cleanup ownership correction contract
+
+September 26, 2026. Root allocated this narrow correction after independent
+review of source743025fe. The original four-file checkpoint, 168 passing
+controls and prior findings remain historical. Canonical's unchanged twelve
+fake-only controls reproduce six failures and six healthy comparisons: two
+successful-result-to-finish handoffs and four shared-slot-to-local-close
+handoffs lose acknowledged ownership. Their report is
+`/tmp/scanipy-history-implementation-peer-SEuu6ENe/cleanup-handoffs-original.xml`,
+SHA77d66a4c961c80b153c08a1afc1674fd6c6ee042bd0dc10be179c43748475ac8.
+
+The successful finish call must run inside the active read/verify/finalize
+exception guard. A failure there snapshots the exact primary and its explicit
+cause, otherwise context, before the remaining-owned cleanup fallback. That
+fallback scans the same slots and scanner; it cannot retry a consumed close.
+No result is returned on any primary/cleanup failure or late deadline.
+
+Each descriptor/scanner close starts its guard before clearing shared ownership.
+A preinitialized local owner plus an attempt flag records the transfer. A
+failure before the actual attempt restores the acknowledged local resource to
+the same shared slot; an entered close remains consumed and uncertain, never
+restored or retried. Attempt claiming and the native call occupy one guarded
+Python line for these finite line-boundary controls. This is not arbitrary
+opcode/signal atomicity or immunity to another interruption during fallback.
+The diagnostic FD count is recomputed from surviving shared ownership, including
+an existing scanner. All original cleanup causal links remain retained.
+
+These are only new-suffix cleanup changes. All old publisher/reader/root bodies,
+seven owner pins, integration bytes, original unit oracles, existing 2-second
+lifetime and every byte/hash/copy/slot/FD/observation/attempt limit remain.
+Preattempt failed work remains charged; restoration does not refund an attempt
+reservation. Fallback remains inside the existing 128 cleanup reserve and the
+8192 aggregate limit. No new syscall, owner replay, authority, retry policy,
+publication acknowledgement or runtime qualification is introduced. Preserve
+original 1964/3010 prefixes and the complete pre-correction 2994/3780 prefixes.
+Separately named semantic successors must select the actual successful finish
+and first normal line after ownership transfer, demonstrate red on preserved
+743025fe, then green corrected without changing the exact ownership oracle.
+
+### 19.6 Cleanup correction author evidence, pending independent review
+
+The two allocated defects are corrected only in `_HistoryFiles.close`,
+`_HistoryFiles.close_scanner` and `_history_read_owned`. The original four
+files are retained byte-exact in
+`/tmp/scanipy-history-cleanup-correction-90Nsx5H0/ORIGINAL-*`. The integration
+file is unchanged. All 97 pre-correction unit definitions and the complete
+2994-line unit prefix remain exact, including all original 65 definitions.
+The 3780-line document prefix (and original 3010 lines) remains exact. Replacing
+only those three new function spans reconstructs source743025fe byte-exact;
+all 57 old source definitions, seven owner files and three embedded proposals
+remain exact. No changed assertion or selector is called an unchanged peer run.
+
+The appended 58 fake-only cases select the first successful finish call and
+the first normal statement after the actual shared ownership transfer. They
+retain exact primary/cause-or-context, subsequent cleanup evidence, remaining
+ownership, FD counts and once-only attempted closes. They use only substituted
+OS/iterator close operations and small in-memory reader doubles, not real
+descriptor acquisition or semantic owner verification. Original peer twelve
+controls/report remain unchanged; the semantic successor is a separately
+named expanded suite, not an unmodified rerun of the old layout locators.
+
+| Distinct report in the correction evidence directory | Actual result | SHA256 |
+|---|---|---|
+| semantic-original.xml, source743025fe |58 unique:24 failed/34 passed/0 errors/skips,3.979s|f76905c270d8c5c6c0b9fafb1d0bf29544609ea134ee9086a29039255c5848c6|
+| semantic-corrected.xml, pre-static correction |58 unique passed/0 errors/skips,1.746s|c1b0d1ca2bf5647ed9003126cd61decdd055dacfa794ebfc1226e752815c75ee|
+| history-corrected-focused.xml, final sourcebed822cd/unit6ab152f1 |226 unique passed/0 failures/errors/skips,14.330s JUnit,14.84s console|cf154ff7c5ecbe622332213b7026392814dc999dba7509aea500a34e704cb4e2|
+
+The 24 new original-source failures are eight successful-finish and sixteen
+post-transfer variants. Every failure reaches the exact missing-close
+assertion after confirming the original primary/prior; no import, API or
+locator failure is represented as a product defect. All 58 successor case
+identities and bodies persist in the final run. Final226 equals the prior168
+ordered identities plus58 successors:189 new unit,14 unchanged small-filesystem
+integration and23 unchanged old guards;197 other cases remain deselected.
+Overlapping runs are not cumulative independent feature coverage.
+
+Initial scoped static checks found one new test line needing wrapping and one
+redundant iterator cast; those were corrected without changing the oracle or
+close schedule. Final Ruff/format checks pass for the two changed Python files,
+and strict Mypy with silent imported-module following passes the source file.
+Existing removed ANN101/ANN102 warnings remain; no typing/config/baseline rule
+was relaxed. The final focused run followed these static corrections. The raw
+inverse/AST/prefix/report checker also passes, as does `git diff --check`.
+
+This is author evidence for two finite cleanup fixes, pending root/independent
+review. It is not full regression, native interruption, power-loss, maximum
+memory, current authority or durable acknowledgement qualification. No hook,
+stage, commit, push, process campaign, Docker, PostgreSQL, key or UID operation
+was performed. All original failures and source checkpoints remain preserved.
