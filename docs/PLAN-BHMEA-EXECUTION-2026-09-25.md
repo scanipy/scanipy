@@ -49,6 +49,15 @@ has confirmed the current host as the presentation machine. Use the
 [measured stage profile and remaining checks](evidence/2026-09-25-stage-machine/README.md);
 do not infer dedicated capacity, safe parallel native runs or offline readiness.
 
+**Later owner direction, September 26 — VM RAM/restart:** the owner will add RAM
+and reboot after source work is complete, not now; the amount is unspecified.
+Continue safe source work and keep the user app/DB intact, without reasking to
+free workloads. Follow the [remaining checkpoint and post-reboot TODOs](DECISION-BHMEA-01-current-execution-authority-2026-09-25.md#vm-ram-and-restart--owner-clarification-september-26):
+verify durable source/evidence before handoff; defer actual clock qualification
+and A2 native admission to fresh post-reboot identities and measured headroom.
+The 8 GiB available RAM /20 GiB free-disk minima remain; no source-complete,
+reboot-ready, complete-backup or acceptance claim updates this dated snapshot.
+
 ## 2. Decisions and remaining design work
 
 These are root-agent engineering decisions within the authorized task, not
