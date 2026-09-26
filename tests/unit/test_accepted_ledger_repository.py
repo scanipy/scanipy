@@ -1912,3 +1912,998 @@ def test_detector_run_snapshot_compares_exact_bytes_across_driver_views(
         (run_id,),
     )
     assert calls == [expected_call, expected_call]
+
+
+@pytest.mark.parametrize("value", (None, 1, "yes"))
+def test_administration_mode_requires_exact_boolean_before_url(monkeypatch, value):
+    from tests import occurrence_store_postgres as pg
+
+    monkeypatch.setattr(pg, "make_url", lambda *_: pytest.fail("URL parsing preceded mode gate"))
+    with pytest.raises(ValueError, match="administration"):
+        pg.PrivatePostgres("not a URL", administration=value)
+
+
+def test_administration_mode_is_accepted_only_before_url(monkeypatch):
+    from tests import occurrence_store_postgres as pg
+
+    monkeypatch.setattr(pg, "make_url", lambda *_: pytest.fail("URL parsing preceded profile gate"))
+    with pytest.raises(ValueError, match="administration"):
+        pg.PrivatePostgres("not a URL", administration=True)
+
+
+def test_accepted_migration_allows_explicit_0007_without_changing_default(monkeypatch):
+    from tests import occurrence_store_postgres as pg
+
+    cluster = pg.PrivatePostgres("postgresql://controlled@localhost/bootstrap", profile="accepted")
+    calls = []
+
+    def recorded(argv, **kwargs):
+        calls.append((argv, kwargs))
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(pg.subprocess, "run", recorded)
+    cluster.migrate("20260926_0007")
+    cluster.migrate()
+    assert [argv[-1] for argv, _ in calls] == ["20260926_0007", "20260926_0006"]
+
+
+def administration_fixture(monkeypatch):
+    """Only private OS/driver doubles; never a root identity or connection."""
+    from tests import occurrence_store_postgres as pg
+
+    fake_os = SimpleNamespace(**vars(pg.os))
+    fake_os.environ = {}
+    fake_os.getresuid = fake_os.getresgid = lambda: (0, 0, 0)
+    fake_sys = SimpleNamespace(**vars(pg.sys))
+    fake_sys.flags = SimpleNamespace(isolated=1, no_site=1)
+    fake_sys.dont_write_bytecode = True
+    fake_sys.executable = "/controlled/python"
+    monkeypatch.setattr(pg, "os", fake_os)
+    monkeypatch.setattr(pg, "sys", fake_sys)
+    checked = []
+    monkeypatch.setattr(
+        pg, "_administration_directory", lambda path, **kw: checked.append((path, kw))
+    )
+    monkeypatch.setattr(
+        pg, "psycopg2", SimpleNamespace(connect=lambda **_: pytest.fail("real connect"))
+    )
+    monkeypatch.setattr(pg, "uuid4", lambda: UUID(int=933))
+    cluster = pg.PrivatePostgres(
+        pg.ADMINISTRATION_URL,
+        profile="accepted",
+        administration=True,
+        migration_cwd=Path("/controlled/work"),
+        migration_site_packages=Path("/controlled/deps"),
+    )
+    return pg, cluster, checked
+
+
+@pytest.mark.parametrize("keyword", ("migration_cwd", "migration_site_packages"))
+def test_administration_paths_require_explicit_mode_without_callbacks(monkeypatch, keyword):
+    from tests import occurrence_store_postgres as pg
+
+    monkeypatch.setattr(pg, "make_url", lambda *_: pytest.fail("unexpected parse"))
+    with pytest.raises(ValueError, match="administration"):
+        pg.PrivatePostgres("unused", **{keyword: object()})
+
+
+@pytest.mark.parametrize(
+    "value", (None, "/controlled", Path("relative"), Path("/a/../b"), Path("/"))
+)
+def test_administration_path_shape_refuses_before_filesystem(value):
+    from tests import occurrence_store_postgres as pg
+
+    with pytest.raises(ValueError):
+        pg._administration_path(value)
+
+
+def test_administration_path_snapshot_ignores_caller_cache_and_rejects_custom_storage():
+    from tests import occurrence_store_postgres as pg
+
+    value = Path("/controlled/work")
+    object.__setattr__(value, "_str", "/wrong/cache")
+    assert str(pg._administration_path(value)) == "/controlled/work"
+    attribute = "_raw_paths" if hasattr(value, "_raw_paths") else "_parts"
+
+    class Poison(list):
+        def __iter__(self):
+            pytest.fail("caller iteration")
+
+    object.__setattr__(value, attribute, Poison(["/controlled/work"]))
+    with pytest.raises(ValueError):
+        pg._administration_path(value)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    (
+        ("getresuid", (10001, 10001, 10001)),
+        ("getresgid", (10001, 10001, 10001)),
+        ("platform", "win32"),
+        ("isolated", 0),
+        ("no_site", 0),
+        ("dont_write_bytecode", False),
+    ),
+)
+def test_administration_runtime_facts_fail_before_more_directory_checks(monkeypatch, field, value):
+    pg, cluster, checked = administration_fixture(monkeypatch)
+    checked.clear()
+    if field.startswith("getres"):
+        setattr(pg.os, field, lambda: value)
+    elif field in ("isolated", "no_site"):
+        setattr(pg.sys.flags, field, value)
+    else:
+        setattr(pg.sys, field, value)
+    with pytest.raises(ValueError, match="root fixture"):
+        cluster._administration_runtime()
+    assert checked == []
+
+
+@pytest.mark.parametrize(
+    "selector",
+    (
+        "DATABASE_URL",
+        "SCANIPY_DATABASE_URL",
+        "SCANIPY_ACCEPTED_LEDGER_TEST_URL",
+        "SCANIPY_OCCURRENCE_TEST_REQUIRED",
+        "AWS_SESSION_TOKEN",
+        "PGPASSFILE",
+        "PGOPTIONS",
+    ),
+)
+def test_administration_never_inherits_ambient_database_or_credential_selector(
+    monkeypatch, selector
+):
+    pg, cluster, checked = administration_fixture(monkeypatch)
+    checked.clear()
+    pg.os.environ[selector] = "public-diagnostic"
+    with pytest.raises(ValueError, match="ambient"):
+        cluster._administration_runtime()
+    assert checked == []
+
+
+@pytest.mark.parametrize(
+    "url",
+    (
+        "postgresql://a2_fixture_admin@localhost/a2_fixture_bootstrap",
+        "postgresql://a2_fixture_admin@:5433/a2_fixture_bootstrap?host=/run/scanipy-a2-postgres",
+        "postgresql://other@:5432/a2_fixture_bootstrap?host=/run/scanipy-a2-postgres",
+    ),
+)
+def test_administration_requires_literal_disposable_route(monkeypatch, url):
+    pg, _cluster, checked = administration_fixture(monkeypatch)
+    checked.clear()
+    with pytest.raises(ValueError, match="exact peer"):
+        pg.PrivatePostgres(
+            url,
+            profile="accepted",
+            administration=True,
+            migration_cwd=Path("/work"),
+            migration_site_packages=Path("/deps"),
+        )
+    assert checked == []
+
+
+def administration_login_double(monkeypatch, *, fault=None, transform=None):
+    pg, cluster, _checked = administration_fixture(monkeypatch)
+    state = SimpleNamespace(
+        calls=[],
+        names=[],
+        memberships={},
+        closed=0,
+        cursor_closed=0,
+        commits=0,
+        rows=[],
+        one=None,
+        connects=[],
+        encrypted=False,
+    )
+    previous = ({"previous_owned": 99}, {"previous": ("previous_owned", "public-fixture")})
+    cluster.owned_roles, cluster.roles = map(dict, previous)
+
+    def failure(stage):
+        if fault and fault[0] == stage:
+            raise fault[1]
+
+    class LoginCursor:
+        def execute(self, query, parameters=()):
+            state.calls.append((query, parameters))
+            if type(query) is str:
+                if "max_identifier_length" in query:
+                    state.one = (63,)
+                elif query.startswith("SET LOCAL password_encryption"):
+                    state.encrypted = True
+                elif query.startswith("SELECT rolname::text,oid"):
+                    failure("readback")
+                    state.one = (parameters[0], 1000 + state.names.index(parameters[0]))
+                elif query == pg._ADMIN_LOGIN_PROOF:
+                    failure("proof")
+                    groups = (*pg.ACCEPTED_RESERVED[:3], pg.ACCEPTED_RESERVED[4])
+                    rows = []
+                    for route, (_key, group, prefix) in pg._ADMINISTRATION_ROUTES.items():
+                        if prefix is None:
+                            prefix = "altest_" + _key + "_"
+                        name = next(name for name in state.names if name.startswith(prefix))
+                        inherited = route != "owner"
+                        rows.append(
+                            (
+                                name,
+                                1000 + state.names.index(name),
+                                True,
+                                False,
+                                inherited,
+                                False,
+                                False,
+                                False,
+                                False,
+                                True,
+                                group,
+                                2000 + groups.index(group),
+                                10,
+                                False,
+                                inherited,
+                                True,
+                                *(candidate == group for candidate in groups),
+                                True,
+                                inherited,
+                            )
+                        )
+                    state.rows = transform(rows) if transform else rows
+                else:
+                    pytest.fail("unexpected administration query")
+                return
+            prefix = query.seq[0].string
+            identifiers = [
+                item.strings[0] for item in query.seq if isinstance(item, pg.sql.Identifier)
+            ]
+            if prefix.startswith("CREATE ROLE"):
+                failure("create")
+                assert state.encrypted
+                state.names.append(identifiers[0])
+            else:
+                assert prefix.startswith("GRANT")
+                failure("grant")
+                state.memberships.setdefault(identifiers[1], []).append(
+                    (identifiers[0], str(query))
+                )
+
+        def fetchone(self):
+            return state.one
+
+        def fetchmany(self, count):
+            assert count == 6
+            return state.rows
+
+        def close(self):
+            state.cursor_closed += 1
+            failure("cursor-close")
+
+    class LoginConnection:
+        def cursor(self):
+            failure("cursor")
+            return LoginCursor()
+
+        def commit(self):
+            state.at_commit = (
+                dict(cluster.owned_roles),
+                dict(cluster.roles),
+                dict(cluster.administration_routes),
+            )
+            state.commits += 1
+            failure("commit")
+
+        def close(self):
+            state.closed += 1
+            failure("close")
+
+    def connect(**kwargs):
+        state.connects.append(kwargs)
+        failure("connect")
+        return LoginConnection()
+
+    pg.psycopg2.connect = connect
+    return pg, cluster, state, previous
+
+
+def test_administration_thirteen_logins_five_routes_exact_fifty_two_executions(monkeypatch):
+    pg, cluster, state, previous = administration_login_double(monkeypatch)
+    cluster._create_logins()
+    assert len(state.calls) == 52 and len(state.names) == 13
+    assert len(cluster.roles) == len(cluster.owned_roles) == 14  # plus preexisting diagnostic row
+    assert state.at_commit == (*previous, {})
+    assert state.commits == state.closed == state.cursor_closed == 1
+    assert all(len(name) <= 63 and name.endswith(UUID(int=933).hex) for name in state.names)
+    names = [cluster.roles[key][0] for key in cluster.administration_routes.values()]
+    assert len(names) == len(set(names)) == 5
+    for route, key in cluster.administration_routes.items():
+        name, _password = cluster.roles[key]
+        memberships = state.memberships[name]
+        assert len(memberships) == 3
+        assert all(group == pg._ADMINISTRATION_ROUTES[route][1] for group, _ in memberships)
+        assert "ADMIN FALSE" in memberships[0][1]
+        assert ("INHERIT FALSE" if route == "owner" else "INHERIT TRUE") in memberships[1][1]
+        assert "SET TRUE" in memberships[2][1]
+    assert state.connects == [
+        {
+            **cluster.child,
+            "connect_timeout": 2,
+            "options": pg._ADMIN_OPTIONS,
+            "application_name": "scanipy-a2-fixture-setup",
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    "stage",
+    (
+        "connect",
+        "cursor",
+        "create",
+        "readback",
+        "grant",
+        "proof",
+        "cursor-close",
+        "commit",
+        "close",
+    ),
+)
+@pytest.mark.parametrize("kind", (OSError, KeyboardInterrupt, SystemExit))
+def test_administration_failure_never_promotes_login_maps(monkeypatch, stage, kind):
+    failure = kind("controlled fixture failure")
+    _pg, cluster, state, previous = administration_login_double(monkeypatch, fault=(stage, failure))
+    with pytest.raises(kind) as observed:
+        cluster._create_logins()
+    assert observed.value is failure and failure.__traceback__ is not None
+    assert (cluster.owned_roles, cluster.roles) == previous and cluster.administration_routes == {}
+    assert state.closed == (0 if stage == "connect" else 1)
+    assert state.cursor_closed == (0 if stage in ("connect", "cursor") else 1)
+
+
+@pytest.mark.parametrize("column", tuple(range(2, 10)) + tuple(range(13, 22)))
+def test_administration_each_login_flag_and_membership_option_is_independent(monkeypatch, column):
+    def mutate(rows):
+        row = list(rows[0])
+        row[column] = not row[column]
+        return [tuple(row), *rows[1:]]
+
+    _pg, cluster, state, previous = administration_login_double(monkeypatch, transform=mutate)
+    with pytest.raises(AssertionError, match="privilege proof"):
+        cluster._create_logins()
+    assert (cluster.owned_roles, cluster.roles) == previous and state.commits == 0
+
+
+@pytest.mark.parametrize("mutation", ("missing", "extra", "duplicate", "oid", "shape", "oversize"))
+def test_administration_login_proof_is_complete_exact_and_bounded(monkeypatch, mutation):
+    def mutate(rows):
+        if mutation == "missing":
+            return rows[:-1]
+        if mutation == "extra":
+            return rows + rows[:1]
+        if mutation == "duplicate":
+            return [rows[0], rows[0], *rows[2:]]
+        row = list(rows[0])
+        if mutation == "oid":
+            row[1] = True
+        elif mutation == "shape":
+            row.pop()
+        else:
+            row[0] = "x" * 4097
+        return [tuple(row), *rows[1:]]
+
+    _pg, cluster, state, previous = administration_login_double(monkeypatch, transform=mutate)
+    with pytest.raises(AssertionError):
+        cluster._create_logins()
+    assert (cluster.owned_roles, cluster.roles) == previous and state.commits == 0
+
+
+def administration_process_outcome(argv, env, cwd, *, returncode=0, stderr=b""):
+    from tools.worker import bounded_process as bp
+
+    def output(data):
+        evidence = bp.StreamEvidence(
+            len(data), len(data), hashlib.sha256(data).digest(), True, False
+        )
+        return bp.MemoryOutput(evidence, data)
+
+    invocation = bp.FrozenInvocation(
+        argv, tuple(sorted(env.items())), str(cwd), 0, hashlib.sha256(b"").digest()
+    )
+    return bp.ProcessOutcome(
+        invocation, "exited", 321, 321, returncode, 0, output(b""), output(stderr), 1, "completed"
+    )
+
+
+def administration_transport(monkeypatch, *, transform=None, failure=None):
+    from tools.worker import bounded_process as bp
+
+    pg, cluster, _checked = administration_fixture(monkeypatch)
+    calls = []
+
+    def run(argv, **kwargs):
+        calls.append((argv, kwargs))
+        if failure:
+            raise failure
+        outcome = administration_process_outcome(argv, kwargs["env"], kwargs["cwd"])
+        return transform(outcome) if transform else outcome
+
+    monkeypatch.setattr(bp, "run_bounded_process", run)
+    monkeypatch.setattr(pg.subprocess, "run", lambda *_a, **_kw: pytest.fail("unbounded runner"))
+    return pg, cluster, calls
+
+
+def test_administration_migration_uses_actual_owner_fixed_limits_and_no_environment_fallback(
+    monkeypatch,
+):
+    pg, cluster, calls = administration_transport(monkeypatch)
+    result = cluster.migrate()
+    argv, kwargs = calls[0]
+    assert argv[:5] == ("/controlled/python", "-I", "-S", "-B", "-c")
+    assert argv[5:] == (
+        pg._MIGRATION_BOOTSTRAP,
+        str(pg.ROOT),
+        "/controlled/deps",
+        "upgrade",
+        "20260926_0006",
+    )
+    assert len(argv[5].encode()) <= 8192
+    assert kwargs["stdin"] is None and kwargs["cwd"] == Path("/controlled/work")
+    assert vars(kwargs["limits"]) == {
+        "stdin_bytes": 0,
+        "stdout_bytes": 1048576,
+        "stderr_bytes": 1048576,
+        "combined_output_bytes": 1048576,
+        "wall_ms": 60000,
+        "cleanup_reserve_ms": 5000,
+    }
+    assert set(kwargs["env"]) == {
+        "LANG",
+        "LC_ALL",
+        "PGPASSFILE",
+        "PGCONNECT_TIMEOUT",
+        "PGOPTIONS",
+        "SCANIPY_DATABASE_URL",
+    }
+    assert kwargs["env"]["PGPASSFILE"] == "/dev/null"
+    assert kwargs["env"]["PGOPTIONS"] == pg._ADMIN_OPTIONS
+    assert cluster.database in kwargs["env"]["SCANIPY_DATABASE_URL"]
+    assert result.returncode == 0 and result.stdout == result.stderr == ""
+    assert len(cluster.migration_evidence) == 1 and cluster._migration_calls == 1
+
+
+def test_administration_migration_ten_tickets_no_refund_or_implicit_0007(monkeypatch):
+    _pg, cluster, calls = administration_transport(monkeypatch)
+    for _ in range(10):
+        cluster.migrate()
+    with pytest.raises(AssertionError, match="exhausted"):
+        cluster.migrate()
+    assert len(calls) == len(cluster.migration_evidence) == 10
+    assert {argv[-1] for argv, _ in calls} == {"20260926_0006"}
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    (
+        ("reason", "timeout"),
+        ("cleanup", "incomplete"),
+        ("returncode", None),
+        ("returncode", True),
+        ("returncode", -9),
+        ("stdout", None),
+        ("stdin_sent_bytes", 1),
+    ),
+)
+def test_administration_incomplete_outcome_poisoning_prevents_more_migrations(
+    monkeypatch, field, value
+):
+    def mutate(outcome):
+        object.__setattr__(outcome, field, value)
+        return outcome
+
+    _pg, cluster, calls = administration_transport(monkeypatch, transform=mutate)
+    with pytest.raises(AssertionError):
+        cluster.migrate()
+    with pytest.raises(AssertionError, match="unavailable"):
+        cluster.migrate()
+    assert len(calls) == len(cluster.migration_evidence) == 1
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    (("eof", False), ("truncated", True), ("observed_bytes", 1), ("retained_bytes", None)),
+)
+def test_administration_never_accepts_partial_stream_evidence(monkeypatch, field, value):
+    def mutate(outcome):
+        object.__setattr__(outcome.stdout.evidence, field, value)
+        return outcome
+
+    _pg, cluster, calls = administration_transport(monkeypatch, transform=mutate)
+    with pytest.raises(AssertionError):
+        cluster.migrate()
+    assert len(calls) == 1 and cluster._migration_failed
+
+
+@pytest.mark.parametrize("kind", (OSError, KeyboardInterrupt, SystemExit))
+def test_administration_transport_primary_is_exact_and_no_retry(monkeypatch, kind):
+    failure = kind("private transport diagnostic")
+    prior = ValueError("private earlier failure")
+    failure.__context__ = prior
+    _pg, cluster, calls = administration_transport(monkeypatch, failure=failure)
+    with pytest.raises(kind) as observed:
+        cluster.migrate()
+    assert observed.value is failure and observed.value.__context__ is prior
+    with pytest.raises(AssertionError, match="unavailable"):
+        cluster.migrate()
+    assert len(calls) == 1
+
+
+def test_administration_expected_refusal_requires_completed_exact_nonzero(monkeypatch):
+    def mutate(outcome):
+        object.__setattr__(outcome, "returncode", 1)
+        return outcome
+
+    _pg, cluster, calls = administration_transport(monkeypatch, transform=mutate)
+    assert cluster.migrate("20260926_0006", expect_success=False).returncode == 1
+    with pytest.raises(AssertionError, match="exit differs"):
+        cluster.migrate("20260926_0006")
+    assert len(calls) == 2 and cluster._migration_failed
+
+
+@pytest.mark.parametrize("context_only", (False, True))
+@pytest.mark.parametrize("kind", (KeyboardInterrupt, SystemExit, ValueError))
+def test_administration_cursor_keeps_primary_prior_and_one_uncertain_close(context_only, kind):
+    from tests import occurrence_store_postgres as pg
+
+    primary, prior, cleanup = kind("primary"), ValueError("prior"), OSError("close")
+    if context_only:
+        primary.__context__ = prior
+    else:
+        primary.__cause__ = prior
+    closed = []
+
+    def close():
+        closed.append(1)
+        raise cleanup
+
+    connection = SimpleNamespace(cursor=lambda: SimpleNamespace(close=close))
+    with pytest.raises(kind) as observed:
+        with pg._administration_cursor(connection):
+            raise primary
+    assert observed.value is primary and closed == [1]
+    assert isinstance(primary.__cause__, BaseExceptionGroup)
+    assert primary.__cause__.exceptions == (prior, cleanup)
+
+
+@pytest.mark.parametrize("context_only", (False, True))
+def test_administration_connection_is_close_only_and_keeps_primary_context(
+    monkeypatch, context_only
+):
+    pg, cluster, _ = administration_fixture(monkeypatch)
+    primary, prior, cleanup = KeyboardInterrupt("primary"), ValueError("prior"), OSError("close")
+    if context_only:
+        primary.__context__ = prior
+    else:
+        primary.__cause__ = prior
+    closed = []
+
+    def close():
+        closed.append(1)
+        raise cleanup
+
+    pg.psycopg2.connect = lambda **_: SimpleNamespace(close=close)
+    with pytest.raises(KeyboardInterrupt) as observed:
+        with cluster.admin():
+            raise primary
+    assert observed.value is primary and closed == [1]
+    assert primary.__cause__.exceptions == (prior, cleanup)
+
+
+def administration_directory_double(
+    monkeypatch, *, mode=0o700, uid=0, entry=None, close_fault=None
+):
+    from tests import occurrence_store_postgres as pg
+
+    os_local = SimpleNamespace(**vars(pg.os))
+    state = SimpleNamespace(opened=[], closed=[], scan_closed=0, scan_calls=0)
+
+    def opened(name, flags, **kwargs):
+        assert flags & pg.os.O_NOFOLLOW and flags & pg.os.O_CLOEXEC
+        fd = 10 + len(state.opened)
+        state.opened.append((fd, name, flags, kwargs))
+        return fd
+
+    def closed(fd):
+        assert fd not in state.closed
+        state.closed.append(fd)
+        if close_fault == fd:
+            raise OSError("uncertain close")
+
+    class Scan:
+        def __iter__(self):
+            return self
+
+        def __next__(self):
+            state.scan_calls += 1
+            if entry is None:
+                raise StopIteration
+            return entry
+
+        def close(self):
+            state.scan_closed += 1
+
+    os_local.open, os_local.close = opened, closed
+    os_local.fstat = lambda _: SimpleNamespace(st_mode=0o040000 | mode, st_uid=uid)
+    os_local.scandir = lambda _: Scan()
+    monkeypatch.setattr(pg, "os", os_local)
+    return pg, state
+
+
+@pytest.mark.parametrize(
+    "mode,uid,entry,accepted",
+    (
+        (0o700, 0, None, True),
+        (0o755, 0, None, False),
+        (0o700, 1000, None, False),
+        (0o700, 0, "existing", False),
+    ),
+)
+def test_administration_directory_checks_and_closes_every_acknowledged_slot(
+    monkeypatch, mode, uid, entry, accepted
+):
+    pg, state = administration_directory_double(monkeypatch, mode=mode, uid=uid, entry=entry)
+    if accepted:
+        pg._administration_directory(Path("/controlled/work"), private=True, empty=True)
+    else:
+        with pytest.raises(ValueError):
+            pg._administration_directory(Path("/controlled/work"), private=True, empty=True)
+    assert sorted(state.closed) == [fd for fd, *_ in state.opened]
+    assert state.scan_closed == state.scan_calls <= 1
+
+
+@pytest.mark.parametrize(
+    "mode,accepted", ((0o755, True), (0o555, True), (0o775, False), (0o777, False))
+)
+def test_administration_dependency_directory_never_accepts_group_world_write(
+    monkeypatch, mode, accepted
+):
+    pg, state = administration_directory_double(monkeypatch, mode=mode)
+    if accepted:
+        pg._administration_directory(Path("/deps"))
+    else:
+        with pytest.raises(ValueError):
+            pg._administration_directory(Path("/deps"))
+    assert sorted(state.closed) == [10, 11]
+
+
+@pytest.mark.parametrize("close_fd", (10, 11, 12))
+def test_administration_directory_uncertain_close_is_not_retried(monkeypatch, close_fd):
+    pg, state = administration_directory_double(monkeypatch, close_fault=close_fd)
+    with pytest.raises(OSError, match="uncertain close"):
+        pg._administration_directory(Path("/controlled/work"), private=True, empty=True)
+    assert len(state.closed) == len(set(state.closed)) == len(state.opened)
+
+
+@pytest.mark.parametrize("kind", (KeyboardInterrupt, SystemExit))
+@pytest.mark.parametrize("acknowledged", (1, 2))
+def test_administration_directory_acquisition_is_already_guarded(monkeypatch, kind, acknowledged):
+    import sys as real_sys
+
+    pg, state = administration_directory_double(monkeypatch)
+    prior_trace = real_sys.gettrace()
+    primary = kind("acknowledged acquisition")
+    fired = []
+
+    def trace(frame, event, _arg):
+        if (
+            frame.f_code is pg._administration_directory.__code__
+            and event == "line"
+            and len(state.opened) == acknowledged
+            and not fired
+        ):
+            fired.append(frame.f_lineno)
+            raise primary
+        return trace
+
+    try:
+        real_sys.settrace(trace)
+        with pytest.raises(kind) as observed:
+            pg._administration_directory(Path("/controlled/work"), private=True)
+    finally:
+        real_sys.settrace(prior_trace)
+    assert fired and observed.value is primary and primary.__traceback__ is not None
+    assert sorted(state.closed) == [fd for fd, *_ in state.opened]
+
+
+def administration_cluster_rows():
+    return [
+        [
+            (
+                160009,
+                "",
+                "scram-sha-256",
+                "a2_fixture_admin",
+                "a2_fixture_admin",
+                True,
+                True,
+                "15s",
+                "2s",
+            )
+        ],
+        [
+            (
+                "local",
+                ["all"],
+                ["a2_fixture_admin"],
+                None,
+                None,
+                "peer",
+                ["map=a2_root_setup"],
+                None,
+            ),
+            ("local", ["all"], ["all"], None, None, "scram-sha-256", None, None),
+            ("host", ["all"], ["all"], "0.0.0.0", "0.0.0.0", "reject", None, None),
+            ("host", ["all"], ["all"], "::", "::", "reject", None, None),
+        ],
+        [("a2_root_setup", "root", "a2_fixture_admin", None)],
+    ]
+
+
+def test_administration_cluster_qualification_is_three_fixed_bounded_reads(monkeypatch):
+    pg, cluster, _ = administration_fixture(monkeypatch)
+    rows, calls, closed = administration_cluster_rows(), [], []
+
+    class Catalog:
+        def execute(self, query, parameters=()):
+            calls.append((query, parameters))
+
+        def fetchmany(self, count):
+            assert count == (2, 5, 2)[len(calls) - 1]
+            return rows.pop(0)
+
+        def close(self):
+            closed.append("cursor")
+
+    pg.psycopg2.connect = lambda **_: SimpleNamespace(
+        cursor=Catalog, close=lambda: closed.append("connection")
+    )
+    cluster._check_administration_cluster()
+    assert not rows and closed == ["cursor", "connection"] and len(calls) == 3
+    assert all(query.startswith("SELECT") and not parameters for query, parameters in calls)
+    assert "left(" in calls[0][0] and "LIMIT 5" in calls[1][0] and "LIMIT 2" in calls[2][0]
+    assert "invalid-rule" in calls[1][0] and "invalid-map" in calls[2][0]
+
+
+@pytest.mark.parametrize(
+    "which,column,value",
+    (
+        (0, 0, 170000),
+        (0, 1, "*"),
+        (0, 2, "md5"),
+        (0, 3, "postgres"),
+        (0, 5, 1),
+        (0, 6, False),
+        (0, 7, "0"),
+        (0, 8, "0"),
+        (1, 5, "trust"),
+        (1, 6, ["map=other"]),
+        (1, 7, "invalid-rule"),
+        (2, 1, "anyone"),
+        (2, 2, "other"),
+        (2, 3, "invalid-map"),
+    ),
+)
+def test_administration_cluster_mismatch_refuses_before_any_mutation(
+    monkeypatch, which, column, value
+):
+    pg, cluster, _ = administration_fixture(monkeypatch)
+    rows = administration_cluster_rows()
+    changed = list(rows[which][0])
+    changed[column] = value
+    rows[which][0] = tuple(changed)
+    calls = []
+    cursor = SimpleNamespace(
+        execute=lambda query, _p=(): calls.append(query),
+        fetchmany=lambda _n: rows.pop(0),
+        close=lambda: None,
+    )
+    pg.psycopg2.connect = lambda **_: SimpleNamespace(cursor=lambda: cursor, close=lambda: None)
+    with pytest.raises(AssertionError):
+        cluster.setup()
+    assert calls and all(query.startswith("SELECT") for query in calls)
+    assert cluster.database_identity is None and cluster.owned_roles == {}
+
+
+@pytest.mark.parametrize("which", (0, 1, 2))
+def test_administration_cluster_extra_rows_never_hide_behind_limit(monkeypatch, which):
+    pg, cluster, _ = administration_fixture(monkeypatch)
+    rows = administration_cluster_rows()
+    rows[which].append(rows[which][0])
+    cursor = SimpleNamespace(
+        execute=lambda *_: None, fetchmany=lambda _n: rows.pop(0), close=lambda: None
+    )
+    pg.psycopg2.connect = lambda **_: SimpleNamespace(cursor=lambda: cursor, close=lambda: None)
+    with pytest.raises(AssertionError, match="row bound"):
+        cluster._check_administration_cluster()
+
+
+def test_administration_catalog_aggregate_budget_does_not_reset_between_reads():
+    from tests import occurrence_store_postgres as pg
+
+    row = ("a" * 4000,) * 4
+    cursor = SimpleNamespace(execute=lambda *_: None, fetchmany=lambda _: [row])
+    budget = [0]
+    pg._administration_rows(cursor, "controlled", maximum=1, columns=4, budget=budget)
+    with pytest.raises(AssertionError, match="byte bound"):
+        pg._administration_rows(cursor, "controlled", maximum=1, columns=4, budget=budget)
+
+
+@pytest.mark.parametrize("length,accepted", ((1048576, True), (1048577, False)))
+def test_administration_combined_raw_output_exact_cap(monkeypatch, length, accepted):
+    from tools.worker import bounded_process as bp
+
+    def mutate(outcome):
+        data = b"x" * length
+        stream = bp.MemoryOutput(
+            bp.StreamEvidence(length, length, hashlib.sha256(data).digest(), True, False), data
+        )
+        object.__setattr__(outcome, "stdout", stream)
+        return outcome
+
+    _pg, cluster, calls = administration_transport(monkeypatch, transform=mutate)
+    if accepted:
+        assert len(cluster.migrate().stdout) == length
+    else:
+        with pytest.raises(AssertionError, match="transport incomplete"):
+            cluster.migrate()
+    assert len(calls) == len(cluster.migration_evidence) == 1
+
+
+@pytest.mark.parametrize("interrupt", (False, True))
+def test_administration_retains_actual_owner_partial_outcome(monkeypatch, interrupt):
+    from tools.worker import bounded_process as bp
+
+    _pg, cluster, calls = administration_transport(monkeypatch)
+    saved = []
+
+    def failed(argv, **kwargs):
+        outcome = administration_process_outcome(argv, kwargs["env"], kwargs["cwd"])
+        transport_error = bp.ProcessTransportError(outcome)
+        error = KeyboardInterrupt("primary") if interrupt else transport_error
+        if interrupt:
+            error.__cause__ = transport_error
+        saved.extend((outcome, error))
+        raise error
+
+    monkeypatch.setattr(bp, "run_bounded_process", failed)
+    with pytest.raises(KeyboardInterrupt if interrupt else bp.ProcessTransportError) as observed:
+        cluster.migrate()
+    assert observed.value is saved[1] and cluster.migration_evidence == saved[:1]
+    assert cluster._migration_failed and calls == []
+
+
+@pytest.mark.parametrize("kind", (KeyboardInterrupt, SystemExit))
+@pytest.mark.parametrize("resource", ("cursor", "connection"))
+def test_administration_acknowledged_driver_acquisition_has_active_cleanup(
+    monkeypatch, kind, resource
+):
+    import sys as real_sys
+
+    pg, cluster, _ = administration_fixture(monkeypatch)
+    acknowledged, closed, fired = [], [], []
+    primary = kind("acknowledged driver resource")
+
+    def acquire(*_args, **_kwargs):
+        acknowledged.append(1)
+        return SimpleNamespace(close=lambda: closed.append(1))
+
+    if resource == "cursor":
+
+        def manager():
+            return pg._administration_cursor(SimpleNamespace(cursor=acquire))
+
+        code = pg._administration_cursor.__wrapped__.__code__
+    else:
+        pg.psycopg2.connect = acquire
+        manager = cluster._administration_admin
+        code = pg.PrivatePostgres._administration_admin.__wrapped__.__code__
+
+    def trace(frame, event, _arg):
+        if frame.f_code is code and event == "line" and acknowledged and not fired:
+            fired.append(frame.f_lineno)
+            raise primary
+        return trace
+
+    previous = real_sys.gettrace()
+    try:
+        real_sys.settrace(trace)
+        with pytest.raises(kind) as observed, manager():
+            pytest.fail("interruption did not precede yield")
+    finally:
+        real_sys.settrace(previous)
+    assert observed.value is primary and len(fired) == 1 and closed == [1]
+
+
+def test_administration_bootstrap_literal_has_no_site_or_plugin_activation():
+    import ast
+
+    from tests import occurrence_store_postgres as pg
+
+    tree = ast.parse(pg._MIGRATION_BOOTSTRAP)
+    imports = {
+        alias.name
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Import)
+        for alias in node.names
+    }
+    assert imports == {"os", "sys"}
+    from_imports = {node.module for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)}
+    assert from_imports == {"alembic", "alembic.config"}
+    assert "site.addsitedir" not in pg._MIGRATION_BOOTSTRAP
+    assert (
+        "script_location" in pg._MIGRATION_BOOTSTRAP
+        and "prepend_sys_path" in pg._MIGRATION_BOOTSTRAP
+    )
+    assert "SCRAM-SHA-256$%%" in pg._ADMIN_LOGIN_PROOF
+    assert pg._ADMIN_LOGIN_PROOF.count("%s") == 1
+
+
+@pytest.mark.parametrize("target", ("20260926_0007", "head", "base"))
+def test_occurrence_still_refuses_new_or_unbounded_target(monkeypatch, target):
+    from tests import occurrence_store_postgres as pg
+
+    cluster = pg.PrivatePostgres("postgresql://controlled@localhost/bootstrap")
+    monkeypatch.setattr(pg.subprocess, "run", lambda *_a, **_kw: pytest.fail("unexpected launch"))
+    with pytest.raises(ValueError, match="unsupported"):
+        cluster.migrate(target)
+
+
+def test_administration_does_not_change_fixed_setup_migration_census():
+    import ast
+    import inspect
+    import textwrap
+
+    from tests import occurrence_store_postgres as pg
+
+    calls = []
+    for function in (pg.PrivatePostgres.setup, pg.PrivatePostgres._setup_accepted):
+        tree = ast.parse(textwrap.dedent(inspect.getsource(function)))
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "migrate"
+            ):
+                calls.append(node.args[0].value)
+    assert len(calls) == 10 and set(calls) == {
+        "20260925_0003",
+        "20260925_0004",
+        "20260925_0005",
+        "20260926_0006",
+    }
+
+
+def test_administration_profile_exact_type_precedes_caller_comparison(monkeypatch):
+    from tests import occurrence_store_postgres as pg
+
+    class Poison(str):
+        def __ne__(self, _other):
+            pytest.fail("caller profile comparison")
+
+    monkeypatch.setattr(pg, "make_url", lambda *_: pytest.fail("unexpected URL parser"))
+    with pytest.raises(ValueError):
+        pg.PrivatePostgres("unused", profile=Poison("accepted"), administration=True)
+
+
+@pytest.mark.parametrize("keyword", ("action", "expect_success"))
+def test_administration_migration_primitives_precede_work_and_callbacks(monkeypatch, keyword):
+    _pg, cluster, calls = administration_transport(monkeypatch)
+
+    class Poison:
+        def __eq__(self, _other):
+            pytest.fail("caller migration comparison")
+
+        def __bool__(self):
+            pytest.fail("caller migration truthiness")
+
+    with pytest.raises(ValueError):
+        cluster.migrate(**{keyword: Poison()})
+    assert calls == [] and cluster._migration_calls == 0 and not cluster._migration_failed
