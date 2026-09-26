@@ -68,19 +68,19 @@ jobs:
 
       - name: Mypy strict
         run: |
-          # Type-check only the source dirs that actually contain .py files.
-          # A per-component branch contains only a subset of these dirs; handing
-          # mypy a dir that is absent or empty makes it error ("Duplicate module
-          # __main__" / "no .py files in directory"). Build the list dynamically
-          # so the job matches the resilient pre-push hook and stays green during
-          # incremental Phase-2 landings.
-          DIRS=""
-          for d in analysis detectors integrations services workers; do
-            if find "$d" -name "*.py" 2>/dev/null | grep -q .; then DIRS="$DIRS $d"; fi
+          # Match pre-push: include worker tooling, skip only absent/empty roots,
+          # and fail on discovery errors instead of treating them as scaffolds.
+          set -e
+          set --
+          for source_dir in analysis detectors integrations services workers tools; do
+            [ -d "$source_dir" ] || continue
+            first_python=$(find "$source_dir" -name '*.py' -print -quit)
+            if [ -n "$first_python" ]; then
+              set -- "$@" "$source_dir"
+            fi
           done
-          if [ -n "$DIRS" ]; then
-            echo "mypy on:$DIRS"
-            mypy --config-file pyproject.toml $DIRS
+          if [ "$#" -gt 0 ]; then
+            mypy --config-file pyproject.toml "$@"
           else
             echo "No Python source files yet — mypy skipped (scaffold phase)"
           fi
