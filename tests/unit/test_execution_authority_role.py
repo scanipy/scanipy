@@ -441,3 +441,111 @@ def test_outer_row_variables_do_not_shadow_catalog_relation_aliases(forward):
     assert len(variables) == 2
     assert {"p", "r", "n", "c"} <= aliases
     assert variables.isdisjoint(aliases), variables & aliases
+
+
+@pytest.mark.parametrize("read", ("current", "recheck"))
+@pytest.mark.parametrize("fail_first_close", (False, True))
+def test_actual_role_read_body_uses_closed_distinct_single_use_transactions(read, fail_first_close):
+    from types import SimpleNamespace
+
+    source = ROOT / "tests/integration/test_execution_authority_role.py"
+    name = "test_six_actual_reads_with_explicit_effective_role"
+    functions = [
+        node
+        for node in ast.parse(source.read_text()).body
+        if isinstance(node, ast.FunctionDef) and node.name == name
+    ]
+    assert len(functions) == 1
+    body = functions[0]
+    body.decorator_list = []  # Never import/activate the integration plugin or fixture.
+    binding, admission, role_pg = object(), object(), object()
+    prior = (
+        SimpleNamespace(binding=binding),
+        bytes(bytearray(b"controlled original LIVE bytes")),
+        "2026-09-26T00:00:00Z",
+    )
+    events, transactions = [], []
+    close_error = RuntimeError("controlled first transaction close")
+    previous = ValueError("controlled prior cause")
+    close_error.__cause__ = previous
+
+    class Ledger:
+        def __init__(self, pg):
+            assert pg is role_pg
+
+        def activate(self):
+            events.append("activate")
+            return self
+
+        def create(self):
+            events.append("create")
+            return self
+
+        def seal(self):
+            events.append("seal")
+            return self
+
+        def authorize(self):
+            events.append("authorize")
+
+    def inputs(ledger):
+        assert type(ledger) is Ledger
+        return binding, admission
+
+    class Transaction:
+        def __init__(self, ledger):
+            assert type(ledger) is Ledger
+            assert len(transactions) < 2
+            assert all(item.closed for item in transactions)
+            self.index, self.used, self.closed = len(transactions), False, False
+            transactions.append(self)
+
+        def __enter__(self):
+            events.append(("enter", self.index))
+            return self
+
+        def __exit__(self, kind, value, traceback):
+            self.closed = True
+            events.append(("close", self.index))
+            if fail_first_close and self.index == 0:
+                assert value is None
+                raise close_error
+
+        def use(self, expected_binding, expected_admission):
+            assert not self.closed
+            assert not self.used, "single-use repository reused"
+            assert expected_binding is binding and expected_admission is admission
+            self.used = True
+
+        def read_execution_authority(self, expected_binding, expected_admission):
+            self.use(expected_binding, expected_admission)
+            assert self.index == 0
+            events.append("R5")
+            return prior
+
+        def recheck_execution_authority(self, expected_binding, expected_admission, *original):
+            self.use(expected_binding, expected_admission)
+            assert self.index == 1 and transactions[0].closed
+            assert len(original) == 3
+            assert all(actual is expected for actual, expected in zip(original, prior, strict=True))
+            events.append("R6")
+            return None
+
+    namespace = {
+        "SqlLedger": Ledger,
+        "current_inputs": inputs,
+        "reader_transaction": Transaction,
+    }
+    exec(compile(ast.Module(body=[body], type_ignores=[]), str(source), "exec"), namespace)
+    if fail_first_close:
+        with pytest.raises(RuntimeError) as observed:
+            namespace[name](role_pg, read)
+        assert observed.value is close_error and observed.value.__cause__ is previous
+    else:
+        namespace[name](role_pg, read)
+    expected = ["activate", "create", "seal", "authorize", ("enter", 0), "R5", ("close", 0)]
+    if read == "recheck" and not fail_first_close:
+        expected.extend((("enter", 1), "R6", ("close", 1)))
+    assert events == expected
+    assert len(transactions) == (2 if read == "recheck" and not fail_first_close else 1)
+    assert all(item.closed and item.used for item in transactions)

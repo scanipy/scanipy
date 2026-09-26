@@ -309,3 +309,74 @@ Same-settings detect-secrets1.5 API inspection found no findings in the three
 allocated paths; no annotation, baseline or scanner-setting change was needed.
 No hook, commit, migration, database connection, fixture cleanup or native
 operation ran for this correction. Real PG qualification is still pending.
+
+## 8. Recheck transaction lifetime — test-only correction allocation
+
+2026-09-26. Root allocated only the existing role integration/unit modules and
+this append in a new isolated tree based on
+`f78f9fdf1ef46c78bbe514d6ef102fa59cea5324`. Preserve this document's first311
+lines, all prior unit controls, the six positive read parameter IDs and all63
+role/246 composed integration identities. No production facade, migration,
+grant, guard, harness or workflow change is authorized by this correction.
+
+The actual corrected-namespace campaign started09:39:51 UTC and exited1 at
+09:57:35:190 unique cases,189 passes,1 failure,0 errors/skips,1053.229 seconds.
+The original43 SQL+102 security+38 historical cases and six role cases passed;
+the seventh role case, the recheck positive, failed. The remaining56 role
+cases did not execute. JUnit SHA256:
+`5934d17909a7699d26dccf8d8ac8700dab097a191a3867c3c476d6e548b95108`.
+The fresh provision baseline and before/after catalogs are byte-identical,
+SHA256 `94dd8b9019afd5518e7c296e5b2b624d4341915ec852910a007f0c2fd046e2b4`.
+This is not successful246 qualification, authentication, native acceptance,
+fixture removal or authorization for another campaign.
+
+The original positive invokes R5 and R6 on one deliberately single-use
+AcceptedLedgerRepository. Its unchanged `_call` guard refuses the second
+operation before recheck SQL. Move only R6 into a second reader_transaction
+after the first context has closed, matching the existing negative cases.
+Pass the exact original binding, admission and R5 ledger/LIVE/reference values;
+retain the original result assertions and real transaction role checks.
+
+Add small hermetic controls which execute that actual integration function's
+AST with all setup and transaction globals replaced by finite test doubles.
+Enforce one operation per repository, at most two nonoverlapping transactions,
+exact prior-object identity, and propagation of first-context close failure
+without opening the recheck transaction. Preserve a genuine original-body
+failure before applying the correction. These controls do not execute SQL or
+establish role/authentication acceptance. Record corrected-source results and
+preservation checks separately after they occur. Original wrapper, source,
+failed report and retained running fixture remain untouched.
+
+### 8.1. Observed controlled result and preservation
+
+The unchanged new control first failed on the original recheck body with the
+explicit single-use assertion:1 failure,0 errors/skips,0.300 seconds JUnit,
+SHA256 `2d0445f6183b6934f9648c2a7802602ed955395670bacccb5cd841aee7f2f960`.
+The earlier four-vector run had2 passes/2 failures: the normal recheck failed
+at that same guard; its close-fault variant then also failed the double's
+successful-body precondition. The latter is not a separate product defect.
+Both original reports and the exact red/green control bytes are retained.
+
+After the integration-only lifetime correction, all89 prior role-unit cases
+and four new controlled cases pass:93 unique passes,0 failures/errors/skips,
+1.315 seconds JUnit, SHA256
+`9e455a6202a38b669464017a655a968d5cc1932f0a65a5c3c395b0732f31ea06`.
+The new controls prove exact R5 object identity reaches R6, distinct single-use
+repositories, first-context completion before the second opens, and unchanged
+first-close exception/cause propagation without a second context. They use
+no real ledger, database, key, process or native fixture.
+
+Collect-only retains exactly the prior ordered246 identities,43/102/38/63;
+the retained2.14-second collection SHA256 is
+`70db586dbdd1effb4d6674d347efa7450589d94a95de345cbbdb577384dd6f3b`.
+The first console-only collection1.66 seconds overlaps this and is not extra
+coverage. Neither collection ran a fixture or integration test body.
+
+Exact reverse substitution restores the entire original integration source.
+All14 other top-level function ASTs, every original decorator/assertion and
+the real effective-role transaction helper remain unchanged. The original
+443-line unit and311-line document prefixes are byte-exact. All59 unaffected
+pins from the prior62-path wrapper inventory remain exact, including every
+production/SQL/migration/harness/workflow/baseline file. Ruff check/format and
+diff-check pass. Actual corrected-source PG qualification remains pending;
+no hook, commit, retry, service mutation or shared-gate promotion occurred.

@@ -180,8 +180,9 @@ def test_six_actual_reads_with_explicit_effective_role(role_pg, read):
         else:
             prior = repository.read_execution_authority(binding, admission)
             assert prior[0].binding == binding and type(prior[1]) is bytes and prior[2]
-            if read == "recheck":
-                assert repository.recheck_execution_authority(binding, admission, *prior) is None
+    if read == "recheck":
+        with reader_transaction(ledger) as repository:
+            assert repository.recheck_execution_authority(binding, admission, *prior) is None
 
 
 @pytest.mark.parametrize("changed", ("binding", "policy", "namespace"))
