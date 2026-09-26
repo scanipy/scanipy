@@ -1732,3 +1732,196 @@ actually completed. These task-local JUnit/coverage files are diagnostic
 evidence, not portable signed acceptance artifacts. Remaining durable registry,
 publication, restore admission, live reader and controller work in §§11–13 is
 still required.
+
+## 15. Pure tenant-local administrative verification allocation
+
+2026-09-26. Root and independent review approved the administration V2 design
+(`48cb40b4c8bdcb79e3acb1ccc7c5cd14b0cf3413e8335145f793362c51d056ba`)
+plus its V3 amendment
+(`5f0e3a971ec7cbf4c3c3f68c265b0542a4a6f3eeee0db235b140e5fab4e03b69`).
+The first implementation allocation is only this append, the existing
+`services/scan/accepted_inputs/verify.py`, and the new
+`tests/unit/test_accepted_administration.py`, based on accepted commit
+`0e53e188c37805f95fd1121067c3146149cf735a`. Prior sections and their historical
+checkpoints remain unchanged. This allocation is not approval of an installed
+operator, private key, admission checkpoint, SQL publication or native launch.
+
+### 15.1 Exact API and result boundary
+
+All five public functions live in the existing verifier module. `Signed` below
+is notation for an **exact** two-element `tuple[bytes, bytes]`, not a new model.
+All named input and result classes are the existing accepted-input owners.
+
+```python
+verify_admin_policy(policy: Signed, *, trust: InstalledTrust,
+                    root_spki: bytes, previous: Signed | None) -> None
+verify_admin_admission(checkpoint: Signed, *, trust: InstalledTrust,
+                       root_spki: bytes, policy: Signed,
+                       previous: Signed | None) -> None
+verify_admin_current(live: bytes, *, trust: InstalledTrust, root_spki: bytes,
+                     expected: AdmissionExpectation,
+                     reference_time: str) -> VerifiedCurrentPolicy
+verify_admin_publication(bundle: AcceptedBundleBytes, publication_input: bytes,
+                         *, trust: InstalledTrust,
+                         expected_bundle: BundleExpectation,
+                         admission: AdmissionExpectation,
+                         reference_time: str) -> VerificationChecks
+verify_admin_publication_receipt(bundle: AcceptedBundleBytes,
+                                 publication_input: bytes, receipt: bytes,
+                                 *, trust: InstalledTrust,
+                                 expected_bundle: BundleExpectation,
+                                 publisher_artifact_digest: str
+                                 ) -> VerificationChecks
+```
+
+The new ingress is customer/builtin only. Existing B modes, global structural
+support, signature profile and unconditional operational-runner refusal remain
+unchanged. No AL-02/03 imports, alternate owner models, fake VerifierRequest or
+SEALED frame, callback, filesystem, clock, network, SQL or process is introduced.
+The accepted B codec remains the authority for raw framing, canonical metadata,
+closed scalar/record shapes, and raw content hashes. The actual semantic decoder
+checks every rule/model pair in every declared language, including Java schema
+decoding without claiming Java execution support. Original content is not rewritten.
+
+Policy verification checks root signatures, namespace, initial revision 1 or
+the exact adjacent predecessor, immutable grant identities, tombstone evolution
+and all newly admitted grant intervals. It does not accept skipped revisions as
+an administrative successor. Admission checks signed current/previous checkpoints
+and policy, deployment/administrator/namespace, exact policy domain/revision,
+initial generation 1 or adjacent predecessor, and owning lifetime constraints.
+Both admit and block are legal signed structures; verification does not install
+them or authorize block-to-admit restore recovery.
+
+Current verification checks the exact four-role LIVE frame, both root signatures,
+all five AdmissionExpectation fields and validity at the supplied instant. Its
+permission expiry is the minimum policy/checkpoint expiry, not an arbitrarily
+selected issuer grant. This is material consistency relative to supplied pins
+and time, not proof that those pins were installed or that a supplied head is live.
+
+Publication preflight shares the original bundle, approval, policy and admission
+checks, returning the existing publication-preflight-shaped VerificationChecks.
+Receipt verification additionally binds every exact PUBLICATION field to the
+original input, including actor/artifact, all raw-versus-domain digest meanings,
+approval/publication identities and checkpoint generation/epoch. It uses the
+original `published_at` as its verification instant, never the current invocation
+time. The result has that `verified_at`, the original content/approval fields and
+PUBLICATION domain digest; qualified/execution/current-policy/checkpoint/epoch/
+permission fields are null. Neither a receipt-shaped record nor this return value
+proves a SQL commit, exact-command replay, installed currentness or launch authority.
+Only a later actual mutation response can report its own `replayed` boolean.
+
+### 15.2 Fixed logical-work ceilings and helper reservations
+
+Each public call allocates one private V meter, with ceilings of 100,000 explicit
+SHA invocations, 134,217,728 SHA input bytes, eight DER public-key loads and twelve
+RSA verifications; no signing. Full conservative work is charged before each
+delegate, including malformed inputs, nested helper work and repeated reads.
+There are no refunds, hidden nested public-call resets or dedup discounts.
+Limit exhaustion uses the existing fixed `invalid-input` error. RSA-internal
+hashing is separately bounded by the RSA operation/message caps, not mislabeled
+as an explicit hashlib invocation or proof of measured CPU/RSS/time behavior.
+
+Let M/D/R be model/detector/rule counts; U the model byte total; T all supplied
+spec/detector/rule bytes; W detector+rule bytes; A=1,048,576; O=65,536;
+p=37 (the actual accepted-content schema plus LF); and
+q=len(`scanipy-rule-semantics-binding/1`)+1. Reservations are:
+
+| Actual owner helper | Explicit SHA calls / input-byte upper bound |
+|---|---|
+| `decode_spec` count discovery | 20,000 / spec length, before discovering M |
+| Fresh `AcceptedBundleBytes` construction or `validate_bundle_layout` | M / U, each invocation |
+| `accepted_content_digest` | M+3+D+R / U+T+2(A+p) |
+| `qualified_members` | 3M+3+2D+3R / 3U+T+W+2(A+p)+R(O+q) |
+| Each actual rule/language `decode_bound_rule` | 2 / rule length+model length |
+| Frame decode | Exact owning role count / full bounded frame length |
+| `_key` | 1 / exact SPKI length, plus one load |
+| `_policy` | One RSA verification |
+| `_checkpoint` | One POLICY domain hash plus one RSA verification |
+| `_approval` | POLICY and INVENTORY domain hashes, issuer-SPKI and adoption raw hashes; one load/one RSA verification |
+| `_admission_expected` | POLICY and ADMISSION domain hashes |
+| Adjacent `_policy_evolution` | One predecessor POLICY domain hash |
+| Other explicit raw/domain digest | One / exact input length, including schema+LF for domain hashes |
+
+Existing raw byte/count/depth/key/signature limits apply before these delegates.
+Original caller model slots are snapshotted with exact class/type/shape checks;
+UUID integer storage is validated before formatting a fresh UUID. A poisoned
+constructor argument or mutated frozen record cannot invoke a caller formatter
+or survive as a retained alias. No installed provenance is inferred from these
+data-only snapshots. Missing/invalid slots fail with existing typed errors.
+
+### 15.3 Verification gates and remaining work
+
+The allocated unit tests must exercise actual disposable fixture RSA signatures,
+all five APIs and typed results, every historical receipt link, malformed and
+poisoned input, adjacent and rejected policy/checkpoint evolution, time and
+customer/builtin fences, exact limit boundaries/no refunds, and actual helper
+precharge instrumentation including malformed and multi-member/all-language
+paths. The existing B unit regressions remain required. Tests do not install keys
+or operate the application database or worker runtime.
+
+At this allocation checkpoint no final implementation review, full suite,
+remote gate, persistent key/independent highwater provider, privileged CLI,
+private custody/restart protocol, AL publication integration, installed identity,
+restore procedure or runtime controller acceptance is claimed. Those require
+their separately allocated implementations, actual operator choices and tests.
+
+### 15.4 Author checkpoint, pending independent implementation review
+
+The allocated implementation and tests are frozen for root/peer review at raw
+source SHA `830bedb2b2428a717fd75cb08b8c071b6383eda2591fdfd5eed2356ce0949460`
+and test SHA `0044d84dc4a55642ab998e5dc1eb77f154aacd66d8b08101a278b1712e0ebbce`.
+These are local code evidence, not installed or operational authority.
+
+| Bounded configured selection | Actual result | Retained author evidence |
+|---|---|---|
+| Initial new API cases, before coverage expansion | 128 passed; 0 failed/errors/skipped; 8.501 s | `/tmp/scanipy-admin-verification-first.xml`, SHA `ec502d2b1298ada9ad58b5a67d04241409dda2352e067bf5da9d19b46c768695` |
+| Expanded new cases + unchanged verifier module | 207 passed; 0 failed/errors/skipped; 16.349 s | `/tmp/scanipy-admin-verification-expanded.xml`, SHA `dc027b7f801b6a8ed8ed132b61ac7d013cb6fc057d6002b02330050baa0eda7b` |
+| Final 164 new cases + 198 unchanged B codec/model/schema/verifier cases | 362 passed; 0 failed/errors/skipped; 19.254 s | `/tmp/scanipy-admin-verification-final-owned.xml`, SHA `df9e17fd520d4f928c0b9ffc7e4458e6881fbe2cbfb38c04330fa615913babd8` |
+
+These selections overlap and must not be summed. No failing functional test
+was observed in these runs. Initial Ruff checks reported one, then five C408
+test-only literal-style findings; they were corrected without disabling rules.
+Final two-file Ruff/format and strict source mypy passed. All runs used the
+existing declared Python 3.11 environment with explicit task PYTHONPATH,
+`PYTHONDONTWRITEBYTECODE=1`/`python -B` and cleared app/PG/AWS/hook-bypass inputs.
+No diagnostic process-verifier selection, broad/full suite, database, network,
+installed key, hook, commit, push or runtime launch was performed.
+
+Actual instrumentation checks prepayment before every observed SHA/key load/RSA
+on the five success routes, and per-helper allowances on malformed specification,
+last model/rule hash and last semantic-member paths. Two models/two detectors/four
+bilingual rules exercise every declared language. A valid global B publication
+still verifies through its original mode while the new customer-only ingress
+rejects it. Statistical/inferred material, block/expired LIVE and receipt-link
+tampering fail; historical receipts retain original time and null current fields.
+All original top-level verifier function/class ASTs except the explicitly
+refactored `_bundle` wrapper are unchanged; model/schema/codec and original test
+files retain accepted bytes. The entire pre-§15 document prefix is byte-identical.
+Independent code review, broader acceptance and all §15.3 remaining work are open.
+
+### 15.5 Independent pure-slice review — 2026-09-26
+
+Root and the independent reviewer read the complete production delta, all1,011
+new test lines and this append against the approved V2/V3 contract and actual B
+owners. Both approve this bounded pure slice; no concrete implementation blocker
+was found. Source830bedb2 and test0044d84d remain the exact §15.4 bytes. The
+other23 original top-level verifier definitions, original model/schema/codec/
+bound-rule/fixture/test files and the original1,734-line contract prefix remain
+unchanged. This is not canonical remote approval or installed authority.
+
+Independent configured verification passed370 cases, zero skips/errors/failures,
+27.607s:164 new +198 unchanged B +8 outside per-reservation controls. Report
+`/tmp/scanipy-admin-verification-peer-370.xml`, SHA256
+`02b878a075272b810871b8d1128846e610fec5d8585e4f7d131d84ccd2aa5afc`.
+The eight independent controls are
+`/tmp/scanipy-admin-peer-review-20s71exb/test_admin_peer_precharge.py`, SHA256
+`c95d5dc0621c50f7018c847925beb5aaf15e8cd97f402150754dbf9ad0af30a4`.
+They reset local SHA/load/RSA allowance at every actual reservation across all
+five APIs, adjacent policy/admission and multilingual publication; earlier
+discovery slack cannot hide a missing later precharge. One meter is retained.
+Root independently read the controls and parsed the complete result counts.
+These370 overlap the author362 and are not additive unique coverage.
+
+No functional red, repository edit, PG/process/native/broad run, hook, commit
+or publication occurred in that independent check. All full-suite/normal-hook/
+exact-head CI/canonical gates and every §15.3 operational TODO remain required.

@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from pathlib import PosixPath
 from tempfile import TemporaryDirectory
-from typing import Any, cast
+from typing import Any, TypeVar, cast
 from uuid import UUID, uuid4
 
 from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
@@ -215,12 +215,21 @@ def _admission_expected(
 
 
 def _bundle(request: m.VerifierRequest) -> None:
-    manifest = c.validate_bundle_layout(request.bundle)
-    expected = m.record_dict(request.expected_bundle)
+    _bundle_material(request.bundle, m.record_dict(request.expected_bundle))
+
+
+def _bundle_material(
+    bundle: m.AcceptedBundleBytes, expected: dict[str, Any], work: _AdminWork | None = None
+) -> None:
+    if work is not None:
+        work.layout()
+    manifest = c.validate_bundle_layout(bundle)
     _namespace(manifest, expected)
     _same(manifest, expected, ("bundle_id", "S_version"))
+    if work is not None:
+        work.content()
     s.require(
-        c.accepted_content_digest(request.bundle) == expected["accepted_content_digest"],
+        c.accepted_content_digest(bundle) == expected["accepted_content_digest"],
         "content-mismatch",
     )
     # Use the actual integrated semantic decoder for every declared language;
@@ -228,9 +237,13 @@ def _bundle(request: m.VerifierRequest) -> None:
     from analysis.ifds.bound_rules import decode_bound_rule
 
     try:
-        for key, detector_raw, rule_raw, model_raw in c.qualified_members(request.bundle):
+        if work is not None:
+            work.members()
+        for key, detector_raw, rule_raw, model_raw in c.qualified_members(bundle):
             detector = c.decode_document(detector_raw, s.DETECTOR, canonical=False)
             for language in detector["languages"]:
+                if work is not None:
+                    work.reserve(hashes=2, size=len(rule_raw) + len(model_raw))
                 bound = decode_bound_rule(
                     rule_raw, model_raw, key=key, language=language, limits=ScalarLimits()
                 )
@@ -601,6 +614,434 @@ def verify_request(request: m.VerifierRequest) -> m.VerificationChecks:
         permission,
     )
     s.validate_checks(m.record_dict(result), request.mode)
+    return result
+
+
+class _AdminWork:
+    """One private V ticket; reservations are conservative and never refunded.
+
+    Explicit SHA work is separate from RSA's internal hashing. Composite codec
+    reservations include their nested owner calls, including failed paths.
+    This is not a caller-configurable limit or an operational authority token.
+    """
+
+    def __init__(self) -> None:
+        self.hashes = self.size = self.loads = self.verifies = 0
+        self.model_count = self.model_size = self.total = self.payload = 0
+        self.detectors = self.rules = 0
+
+    def reserve(self, *, hashes: int = 0, size: int = 0, loads: int = 0, verifies: int = 0) -> None:
+        for value in (hashes, size, loads, verifies):
+            s.require(type(value) is int and value >= 0)
+        self.hashes += hashes
+        self.size += size
+        self.loads += loads
+        self.verifies += verifies
+        s.require(
+            self.hashes <= 100000
+            and self.size <= 134217728
+            and self.loads <= 8
+            and self.verifies <= 12
+        )
+
+    def domain(self, schema: str, data: bytes) -> str:
+        self.reserve(hashes=1, size=len(schema) + 1 + len(data))
+        return c.domain_digest(schema, data)
+
+    def raw(self, data: bytes) -> str:
+        self.reserve(hashes=1, size=len(data))
+        return c.raw_digest(data)
+
+    def key(self, data: bytes, digest: str, *, root: bool = False) -> rsa.RSAPublicKey:
+        m.raw(data, 4096)
+        self.reserve(hashes=1, size=len(data), loads=1)
+        return _key(data, digest, root=root)
+
+    def frame(self, data: bytes, schema: str) -> c.ParsedFrame:
+        m.raw(data, s.MAX_LIVE if schema == s.LIVE else s.MAX_AUTHORITY)
+        self.reserve(hashes=len(s.FRAME_ROLES[schema]), size=len(data))
+        return c.decode_frame(data, schema)
+
+    def policy(
+        self, frame: c.ParsedFrame, root: rsa.RSAPublicKey, trust: dict[str, Any]
+    ) -> dict[str, Any]:
+        self.reserve(verifies=1)
+        return _policy(frame, "current-policy", root, trust)
+
+    def checkpoint(
+        self,
+        frame: c.ParsedFrame,
+        root: rsa.RSAPublicKey,
+        trust: dict[str, Any],
+        policy: dict[str, Any],
+        when: datetime,
+    ) -> dict[str, Any]:
+        data = frame.object("current-policy")
+        self.reserve(hashes=1, size=len(s.POLICY) + 1 + len(data), verifies=1)
+        return _checkpoint(frame, "admission-checkpoint", root, trust, policy, data, when)
+
+    def admission(
+        self,
+        frame: c.ParsedFrame,
+        checkpoint: dict[str, Any],
+        policy: dict[str, Any],
+        expected: m.AdmissionExpectation,
+    ) -> None:
+        policy_raw, checkpoint_raw = (
+            frame.object("current-policy"),
+            frame.object("admission-checkpoint"),
+        )
+        self.reserve(
+            hashes=2,
+            size=len(s.POLICY) + len(policy_raw) + len(s.ADMISSION) + len(checkpoint_raw) + 2,
+        )
+        _admission_expected(checkpoint, checkpoint_raw, policy, policy_raw, expected)
+
+    def approval(
+        self, frame: c.ParsedFrame, expected: dict[str, Any], policy: dict[str, Any], when: datetime
+    ) -> dict[str, Any]:
+        policy_raw = frame.object("current-policy")
+        self.reserve(
+            hashes=4,
+            size=len(s.POLICY)
+            + 1
+            + len(policy_raw)
+            + len(frame.object("issuer-spki"))
+            + len(s.INVENTORY)
+            + 1
+            + len(frame.object("approval-evidence-inventory"))
+            + len(frame.object("operator-adoption")),
+            loads=1,
+            verifies=1,
+        )
+        return _approval(frame, expected, policy, policy_raw, when)[0]
+
+    def layout(self) -> None:
+        self.reserve(hashes=self.model_count, size=self.model_size)
+
+    def content(self) -> None:
+        self.reserve(
+            hashes=self.model_count + 3 + self.detectors + self.rules,
+            size=self.model_size + self.total + 2 * (s.MAX_CONTENT + 37),
+        )
+
+    def members(self) -> None:
+        self.reserve(
+            hashes=3 * self.model_count + 3 + 2 * self.detectors + 3 * self.rules,
+            size=3 * self.model_size
+            + self.total
+            + self.payload
+            + 2 * (s.MAX_CONTENT + 37)
+            + self.rules * (s.MAX_OBJECT + len(s.SEMANTIC_BINDING) + 1),
+        )
+
+
+_AdminRecord = TypeVar(
+    "_AdminRecord", m.InstalledTrust, m.BundleExpectation, m.AdmissionExpectation
+)
+
+
+def _admin_record(
+    value: _AdminRecord, kind: type[_AdminRecord], rules: dict[str, Any]
+) -> _AdminRecord:
+    """Read exact class slots, validate UUID primitives, then call the real codec.
+
+    Neither constructor revalidation nor a dataclass's frozen flag permits
+    formatting a poisoned UUID. No caller object survives this snapshot.
+    """
+    s.require(type(value) is kind)
+    document: dict[str, Any] = {}
+    try:
+        members = tuple(object.__getattribute__(value, name) for name in rules)
+        for (name, rule), member in zip(rules.items(), members, strict=True):
+            actual = rule[1] if type(rule) is tuple and rule[0] == "nullable" else rule
+            if member is not None and actual == "uuid":
+                s.require(type(member) is UUID)
+                integer = object.__getattribute__(member, "int")
+                s.require(type(integer) is int and 0 <= integer < 2**128)
+                member = str(UUID(int=integer))
+            s.shape(member, rule)
+            document[name] = member
+    except AttributeError as exc:
+        raise s.VerificationError() from exc
+    return c.decode_record(document, kind, rules)
+
+
+def _admin_trust(trust: m.InstalledTrust) -> dict[str, Any]:
+    snapshot = _admin_record(trust, m.InstalledTrust, s.SHAPES[s.INSTALLED_TRUST])
+    s.require(snapshot.scope == "customer", "unsupported-schema")
+    return m.record_dict(snapshot)
+
+
+def _admin_signed(value: tuple[bytes, bytes], schema: str) -> tuple[bytes, bytes]:
+    s.require(type(value) is tuple and len(value) == 2)
+    raw, signature = value
+    m.raw(raw, c.metadata_limit(schema))
+    s.require(type(signature) is bytes and len(signature) == 384, "signature-invalid")
+    return raw, signature
+
+
+def _admin_signed_document(
+    signed: tuple[bytes, bytes],
+    schema: str,
+    root: rsa.RSAPublicKey,
+    trust: dict[str, Any],
+    work: _AdminWork,
+) -> dict[str, Any]:
+    data, signature = signed
+    document = c.decode_document(data, schema)
+    _namespace(document, trust)
+    work.reserve(verifies=1)
+    _signature(root, schema, data, signature)
+    return document
+
+
+def _admin_bundle(bundle: m.AcceptedBundleBytes, work: _AdminWork) -> m.AcceptedBundleBytes:
+    s.require(type(bundle) is m.AcceptedBundleBytes)
+    try:
+        spec = object.__getattribute__(bundle, "spec_bytes")
+        detectors = object.__getattribute__(bundle, "detector_blobs")
+        rules = object.__getattribute__(bundle, "rule_blobs")
+    except AttributeError as exc:
+        raise s.VerificationError() from exc
+    m.raw(spec, s.MAX_CONTENT)
+    total = len(spec)
+    for values in (detectors, rules):
+        s.require(type(values) is tuple and 0 < len(values) <= s.MAX_VALUES)
+        for value in values:
+            m.raw(value, s.MAX_CONTENT)
+            total += len(value)
+            s.require(total <= s.MAX_CONTENT)
+    # Count discovery itself hashes model bytes; reserve before decoding even
+    # malformed input. Subsequent helpers pay every repeated model pass again.
+    work.reserve(hashes=20000, size=len(spec))
+    _manifest, models = c.decode_spec(spec)
+    work.model_count, work.model_size = len(models), sum(map(len, models))
+    work.total, work.payload = total, total - len(spec)
+    work.detectors, work.rules = len(detectors), len(rules)
+    work.layout()
+    return m.AcceptedBundleBytes(spec, detectors, rules)
+
+
+def verify_admin_policy(
+    policy: tuple[bytes, bytes],
+    *,
+    trust: m.InstalledTrust,
+    root_spki: bytes,
+    previous: tuple[bytes, bytes] | None,
+) -> None:
+    """Verify one root-signed adjacent policy transition, not installation."""
+    work = _AdminWork()
+    trusted = _admin_trust(trust)
+    signed = _admin_signed(policy, s.POLICY)
+    prior = None if previous is None else _admin_signed(previous, s.POLICY)
+    root = work.key(root_spki, trusted["root_spki_sha256"], root=True)
+    document = _admin_signed_document(signed, s.POLICY, root, trusted, work)
+    if prior is None:
+        s.require(document["revision"] == 1, "policy-stale")
+        for grant in document["grants"]:
+            _grant_admission_interval(grant, document)
+        return
+    old = _admin_signed_document(prior, s.POLICY, root, trusted, work)
+    s.require(document["revision"] == old["revision"] + 1, "policy-stale")
+    work.reserve(hashes=1, size=len(s.POLICY) + 1 + len(prior[0]))
+    _policy_evolution(old, prior[0], document, signed[0])
+
+
+def verify_admin_admission(
+    checkpoint: tuple[bytes, bytes],
+    *,
+    trust: m.InstalledTrust,
+    root_spki: bytes,
+    policy: tuple[bytes, bytes],
+    previous: tuple[bytes, bytes] | None,
+) -> None:
+    """Check signed admit/block structure and successor, never restore permission."""
+    work = _AdminWork()
+    trusted = _admin_trust(trust)
+    signed = _admin_signed(checkpoint, s.ADMISSION)
+    policy_signed = _admin_signed(policy, s.POLICY)
+    prior = None if previous is None else _admin_signed(previous, s.ADMISSION)
+    root = work.key(root_spki, trusted["root_spki_sha256"], root=True)
+    policy_document = _admin_signed_document(policy_signed, s.POLICY, root, trusted, work)
+    document = _admin_signed_document(signed, s.ADMISSION, root, trusted, work)
+    _same(document, trusted, ("deployment_id", "administrator_actor_id"), "checkpoint-denied")
+    s.require(
+        document["policy_revision"] == policy_document["revision"]
+        and document["policy_digest"] == work.domain(s.POLICY, policy_signed[0]),
+        "checkpoint-denied",
+    )
+    if prior is None:
+        s.require(document["generation"] == 1, "checkpoint-denied")
+        return
+    old = _admin_signed_document(prior, s.ADMISSION, root, trusted, work)
+    _same(old, trusted, ("deployment_id", "administrator_actor_id"), "checkpoint-denied")
+    s.require(
+        document["generation"] == old["generation"] + 1
+        and document["previous_checkpoint_digest"] == work.domain(s.ADMISSION, prior[0]),
+        "checkpoint-denied",
+    )
+
+
+def verify_admin_current(
+    live: bytes,
+    *,
+    trust: m.InstalledTrust,
+    root_spki: bytes,
+    expected: m.AdmissionExpectation,
+    reference_time: str,
+) -> m.VerifiedCurrentPolicy:
+    """Verify LIVE at the supplied instant, not its external provenance/currentness."""
+    work = _AdminWork()
+    trusted = _admin_trust(trust)
+    admission = _admin_record(expected, m.AdmissionExpectation, s.ADMISSION_EXPECTATION)
+    s.shape(reference_time, "instant")
+    now = _instant(reference_time)
+    frame = work.frame(live, s.LIVE)
+    _namespace(frame.manifest, trusted)
+    s.require(
+        {key: frame.manifest[key] for key in s.ADMISSION_EXPECTATION} == m.record_dict(admission),
+        "checkpoint-denied",
+    )
+    root = work.key(root_spki, trusted["root_spki_sha256"], root=True)
+    policy = work.policy(frame, root, trusted)
+    _policy_time(policy, now)
+    checkpoint = work.checkpoint(frame, root, trusted, policy, now)
+    work.admission(frame, checkpoint, policy, admission)
+    return m.VerifiedCurrentPolicy(
+        admission.policy_digest,
+        policy["revision"],
+        admission.checkpoint_digest,
+        checkpoint["generation"],
+        UUID(checkpoint["admission_epoch"]),
+        _format(min(s.utc(policy["expires_at"]), s.utc(checkpoint["expires_at"]))),
+    )
+
+
+def _admin_publication(
+    bundle: m.AcceptedBundleBytes,
+    publication_input: bytes,
+    trust: m.InstalledTrust,
+    expected_bundle: m.BundleExpectation,
+    when: datetime,
+    work: _AdminWork,
+) -> tuple[c.ParsedFrame, dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
+    trusted = _admin_trust(trust)
+    expected = m.record_dict(
+        _admin_record(expected_bundle, m.BundleExpectation, s.BUNDLE_EXPECTATION)
+    )
+    _namespace(trusted, expected)
+    snapshot = _admin_bundle(bundle, work)
+    _bundle_material(snapshot, expected, work)
+    frame = work.frame(publication_input, s.PUBLICATION_INPUT)
+    _namespace(frame.manifest, expected)
+    _same(frame.manifest, expected, ("bundle_id", "S_version", "accepted_content_digest"))
+    root = work.key(frame.object("trust-root-spki"), trusted["root_spki_sha256"], root=True)
+    policy = work.policy(frame, root, trusted)
+    approval = work.approval(frame, expected, policy, when)
+    checkpoint = work.checkpoint(frame, root, trusted, policy, when)
+    return frame, expected, policy, approval, checkpoint
+
+
+def verify_admin_publication(
+    bundle: m.AcceptedBundleBytes,
+    publication_input: bytes,
+    *,
+    trust: m.InstalledTrust,
+    expected_bundle: m.BundleExpectation,
+    admission: m.AdmissionExpectation,
+    reference_time: str,
+) -> m.VerificationChecks:
+    """Builtin/customer preflight only; no SQL acknowledgement or execution grant."""
+    work = _AdminWork()
+    admitted = _admin_record(admission, m.AdmissionExpectation, s.ADMISSION_EXPECTATION)
+    s.shape(reference_time, "instant")
+    frame, expected, policy, approval, checkpoint = _admin_publication(
+        bundle, publication_input, trust, expected_bundle, _instant(reference_time), work
+    )
+    work.admission(frame, checkpoint, policy, admitted)
+    result = m.VerificationChecks(
+        expected["accepted_content_digest"],
+        UUID(approval["event_id"]),
+        work.domain(s.APPROVAL, frame.object("approval-statement")),
+        None,
+        None,
+        None,
+        work.domain(s.POLICY, frame.object("current-policy")),
+        policy["revision"],
+        work.domain(s.ADMISSION, frame.object("admission-checkpoint")),
+        checkpoint["generation"],
+        UUID(checkpoint["admission_epoch"]),
+        reference_time,
+        None,
+    )
+    s.validate_checks(m.record_dict(result), "publication-preflight")
+    return result
+
+
+def verify_admin_publication_receipt(
+    bundle: m.AcceptedBundleBytes,
+    publication_input: bytes,
+    receipt: bytes,
+    *,
+    trust: m.InstalledTrust,
+    expected_bundle: m.BundleExpectation,
+    publisher_artifact_digest: str,
+) -> m.VerificationChecks:
+    """Historical material at original published_at; not a mutation/replay receipt.
+
+    No invocation-time check, current grant, fake SEALED or execution binding is
+    manufactured. A later caller must obtain live authority independently.
+    """
+    work = _AdminWork()
+    s.shape(publisher_artifact_digest, "digest")
+    record = c.decode_document(receipt, s.PUBLICATION)
+    frame, expected, policy, approval, checkpoint = _admin_publication(
+        bundle, publication_input, trust, expected_bundle, _instant(record["published_at"]), work
+    )
+    _namespace(record, approval)
+    _same(
+        record,
+        approval,
+        ("publication_key", "bundle_id", "accepted_content_digest", "evidence_inventory_digest"),
+    )
+    s.require(record["approval_event_id"] == approval["event_id"], "content-mismatch")
+    s.require(record["publisher_actor_id"] == approval["issuer_actor_id"], "grant-denied")
+    s.require(record["publisher_artifact_digest"] == publisher_artifact_digest, "content-mismatch")
+    statement_digest = work.domain(s.APPROVAL, frame.object("approval-statement"))
+    s.require(record["approval_statement_digest"] == statement_digest, "content-mismatch")
+    s.require(
+        record["approval_signature_sha256"] == work.raw(frame.object("approval-signature")),
+        "content-mismatch",
+    )
+    s.require(
+        record["policy_digest"] == work.domain(s.POLICY, frame.object("current-policy"))
+        and record["policy_revision"] == policy["revision"],
+        "policy-stale",
+    )
+    s.require(
+        record["checkpoint_digest"]
+        == work.domain(s.ADMISSION, frame.object("admission-checkpoint"))
+        and record["checkpoint_generation"] == checkpoint["generation"]
+        and record["admission_epoch"] == checkpoint["admission_epoch"],
+        "checkpoint-denied",
+    )
+    result = m.VerificationChecks(
+        expected["accepted_content_digest"],
+        UUID(approval["event_id"]),
+        statement_digest,
+        work.domain(s.PUBLICATION, receipt),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        record["published_at"],
+        None,
+    )
+    s.validate_checks(m.record_dict(result), "historical")
     return result
 
 
