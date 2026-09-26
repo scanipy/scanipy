@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 16 — 2026-09-26 02:14:58 UTC cutoff plus explicit 02:26 update; earlier observations preserved; full acceptance unresolved |
+| Revision | 17 — 2026-09-26 03:45 UTC cutoff plus explicit 03:48 update; accepted AL/G foundations, preserved history; full acceptance unresolved |
 | Status | Execution started; no full R01–R20 task or submitted claim is yet accepted as complete |
 | Initial review code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
@@ -46,11 +46,22 @@ All unchecked acceptance items below remain required unless explicitly
 classified optional. An adopted design, recovered historical report, or one
 successful Joern parse does not complete a task or verify a submitted claim.
 
-**Current work queue:** use Revision 16 in the
-[active handoff](PLAN-BHMEA-EXECUTION-2026-09-25.md#7-revision-16-execution-queue--021458-utc-september-26).
+**Current work queue:** use Revision 17 in the
+[active handoff](PLAN-BHMEA-EXECUTION-2026-09-25.md#8-revision-17-execution-queue--0345-utc-september-26).
 The dated progress paragraphs that follow retain historical evidence. Their
 older pending statuses do not override the latest queue or require redoing
 accepted merges; the full task-level acceptance TODOs begin in section 5.
+
+At03:45 UTC, accepted main `ecc34161` includes AL #428 and pure runtime packets
+#429, with actual hosted145 AL/89 occurrence passes and preserved AL catalogs.
+Separate accepted-artifact709 and2,536 checks are overlapping unit evidence,
+not new full/native runs. A1's38 native cases remain unrun after48 synthetic
+controls; an actual Docker build exited0 but its watchdog exited1 on iid mode,
+so reconciliation and smoke remain separately gated. A2 is dependency preparation,
+not installed authority. The latest evidence/queue does not change any original
+R/C/TODO, milestone, DAG, shared gate, release or stage acceptance state.
+The separate03:48 update records A2 dependency composition and976 unit passes
+only; A2 implementation, real custody and operational authority remain pending.
 
 The earlier 17:29 UTC checkpoint recorded foundations through main `6f1ebc8`: independent
 artifact metadata, typed report checking, corrected corpus and dependency

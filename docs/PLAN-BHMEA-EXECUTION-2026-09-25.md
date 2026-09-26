@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Updated | 2026-09-26 |
-| Snapshot | Revision 16; fixed 2026-09-26 02:14:58 UTC cutoff plus explicit 02:26 update; accepted main `c5c862e3`; earlier observations preserved |
+| Snapshot | Revision 17; 2026-09-26 03:45 UTC cutoff plus explicit 03:48 update; accepted main `ecc34161`; earlier snapshots and contrary results preserved |
 | Target | FULL_SUBMISSION; all C01–C18 claims and applicable R01–R20 acceptance items |
 | Tracking | [Umbrella issue #362](https://github.com/scanipy/scanipy/issues/362) |
 | Presentation | December 2 or 3, 2026; exact date unconfirmed |
@@ -128,7 +128,7 @@ source custody alone does not make an unsafe checkout trustworthy. See the
 
 ## 3. Work ownership and next actions
 
-**Current queue:** [Revision16, section7](#7-revision-16-execution-queue--021458-utc-september-26).
+**Current queue:** [Revision17, section8](#8-revision-17-execution-queue--0345-utc-september-26).
 The dated queues below are preserved historical observations, not instructions
 to repeat accepted work or silently transfer old test results to newer source.
 
@@ -782,3 +782,84 @@ Board399/362/400 read back In Progress at02:22:57; no status changed. Accepted
 main remains `c5c862e3`. G and all remaining operational/acceptance obligations
 are unchanged. Detailed report hashes and retained failures are in the
 [later evidence note](evidence/2026-09-25-foundation-merges/README.md#explicit-later-update--0226-utc).
+
+## 8. Revision 17 execution queue — 03:45 UTC, September 26
+
+This snapshot records outcomes available by **2026-09-26 03:45 UTC**; the draft's
+clock read was 03:46:01. Accepted main is
+`ecc341613731254f84145bd8058b8cee4529385d`, tree
+`bafba3fd014dbced7cf64664acfb0bbe8ed0db3a`. Pure administration #426 and
+Revision16 #427 are accepted history. AL #428 merged at03:21:28 and G packet
+codecs #429 at03:39:19, after their required hosted checks and final canonical
+APPROVE. The [new evidence record](evidence/2026-09-25-foundation-merges/README.md#revision-17--0345-utc-cutoff-september-26)
+retains original failed reviews, exact tested/accepted trees, actual AL145 and
+occurrence89 artifacts, catalog preservation and separate post-merge checks.
+Earlier queues remain dated history, not instructions to republish these merges.
+No R01–R20, C01–C18, milestone, DAG or G0–G3 acceptance state changes here.
+
+1. **Root / retained A1 build and reconciliation:** the exact `de5b602a`
+   context snapshot succeeded. First invocation68174 failed at the base-label
+   read-only preflight before any build. The reviewed formatter correction and
+   bounded read-only probe passed; second invocation17413's Docker build exited0
+   in24.212s, but the watchdog exited1 on iid mode0664 and retained
+   `BUILD-STATE-UNKNOWN`. No final image inspection/result or smoke success
+   exists. Preserve the actual image/context and failed-run evidence. Finish
+   review of the scoped umask/optional-Mounts correction and one-off exact-owned
+   reconciliation; these are preparation only at this cutoff. Root must grant
+   any reconciliation or later pinned ABI smoke separately. No automatic
+   rebuild, unknown-object adoption or rewriting the failed driver as success.
+2. **A1 real custody:** local native-test checkpoint
+   `fa2d209e465a1e099e2176d5acada82e5617ba32` passed normal hooks; its corrected
+   integration/doc bytes are `0a8f026a`/`414acc94`. Independent review and the
+   same48 synthetic controls pass; all38 native cases remain unrun. Prepare a
+   newly reviewed exact context for those cases, then separately schedule real
+   fixed-origin/UID/key/lock/reread/cleanup verification with bounded resources.
+   The ABI-only image is not that fixture, synthetic signatures are not valid
+   authority, and current library success cannot certify installed composition.
+3. **A2 tenant-local builtin path:** dependency integration into the separate
+   `RJLQcFmW` worktree is in progress, not implementation. After dependency
+   checks and explicit source allocation, implement and unit-test the reviewed
+   seven-path real initialize/policy/
+   admission/publication/retry/reconcile/CLI boundary using accepted AL and pure
+   verifier owners. Preserve mandatory prior policy read, original signed bytes,
+   currentness, exact-command replay, durable head/ack ordering and separate
+   database/filesystem ambiguity. Real custody, PostgreSQL and operator gates
+   precede enablement/acceptance, not safe source/unit implementation. Operator
+   identities, installed pins and restore authority require explicit choices;
+   no fixture selects them. Global adoption
+   and inferred-spec publication remain later extensions, not added prerequisites.
+4. **Runtime/source/physical integration:** accepted G owns414 packet and346
+   profile controls (760 total), not the review's accidental760+346 wording.
+   The accepted-tree2,536-pass unit selection is not another full/PG run or a
+   launch grant. Continue qualified non-event RES, event/spool/full-history
+   storage, capacity/work isolation, DB orphan/pre-reservation barriers and the
+   actual installed factory, kernel/bootstrap observations and bounded controller.
+   Connect real captured source and accepted rule/model producers; declared
+   packets, metadata and hashes remain structure-only until their owning checks.
+5. **Complete submitted workflow:** persist raw occurrences before independent
+   identity/provenance finalization, implement durable decisions/CAS and truthful
+   API/UI/Compose/retry behavior, and prove the Java/Python, Semgrep/CodeQL,
+   comparator/reproduction and complete422-case/844-side campaign. Finish all
+   original G0–G3, installation, measured budgets, recovery and two offline
+   rehearsals. Narrow foundation acceptance is not full submission fulfillment.
+
+Root still owns #399/#400/#362 coordination; no board transition is made by this
+draft. This owner-confirmed local Docker machine, December2/3 window with exact
+day open, app/DB preservation and separate release/image permission remain
+unchanged. No October lock, new operator installation or native execution grant
+is created by documentation. Subsequent outcomes require another dated update.
+
+### Explicit later update — 03:48 UTC
+
+A2 dependency-only preparation is now complete at clean
+`dc0c7f63dce9fbac0ba77a2d17250a8fb00d67b6`, tree
+`e357b2303478d6f5f3c97766d77ef4e7f861b1f0`, parentsfa2d209e/ecc34161,
+in `/tmp/scanipy-builtin-administration-a2-RJLQcFmW`. The24 incoming accepted
+paths and four A1 paths are preserved. Its distinct976-case unit selection
+passed with zero failures/errors/skips in31.591s; the exact XML hash is in the
+[later evidence note](evidence/2026-09-25-foundation-merges/README.md#explicit-later-update--0348-utc).
+This supersedes only the earlier in-progress dependency preparation: no A2
+source implementation is allocated at that observation and no38-case native
+fixture ran. Next is separately allocated A2 source/unit work; real custody,
+PostgreSQL and operator/current-authority gates still precede enablement and
+acceptance, without blocking safe implementation on the verified dependencies.
