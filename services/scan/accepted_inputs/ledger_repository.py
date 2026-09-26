@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
 from uuid import UUID
 
 from analysis.cpg_ingest.typed_observed import FrozenArray
@@ -328,6 +328,59 @@ def _driver_code(error: BaseException) -> str | None:
     if type(message) is str and message in _SQL_CODES:
         if (code == "42501") == (message == "scope-mismatch"):
             return message
+    return None
+
+
+def _historical_read_failure_kind(error: BaseException) -> Literal["missing", "transport"] | None:
+    """Classify private diagnostics, never origin, cleanup or read authority.
+
+    The consumer must separately prove actual R1/R3 execute/fetch origin and
+    unchanged exception identities/links AFTER rollback and all cleanup. A
+    missing classification is usable only through the exact owning mapped
+    ledger-mismatch; transport only through the same original exception.
+    """
+    try:
+        import psycopg2
+        from psycopg2 import errors, extensions
+    except ImportError:
+        return None
+    states = ("08000", "08001", "08003", "08004", "08006", "08007", "08P01")
+    transport_types = tuple(errors.lookup(state) for state in states)
+    concrete = type(error)
+    base = concrete is psycopg2.OperationalError or concrete is psycopg2.InterfaceError
+    if (
+        not base
+        and concrete is not errors.RaiseException
+        and not any(concrete is item for item in transport_types)
+    ):
+        return None
+    # Use the actual descriptors, not attributes/properties on an exception or
+    # a diagnostic lookalike. No formatted text, context parsing or graph walk.
+    code = psycopg2.Error.__dict__["pgcode"].__get__(error, concrete)
+    if base:
+        return "transport" if code is None else None
+    if type(code) is not str:
+        return None
+    if code in states:
+        return "transport" if concrete is errors.lookup(code) else None
+    if code != "P0001" or concrete is not errors.RaiseException:
+        return None
+    diagnostic = psycopg2.Error.__dict__["diag"].__get__(error, concrete)
+    if type(diagnostic) is not extensions.Diagnostics:
+        return None
+    primary = extensions.Diagnostics.__dict__["message_primary"].__get__(
+        diagnostic, extensions.Diagnostics
+    )
+    detail = extensions.Diagnostics.__dict__["message_detail"].__get__(
+        diagnostic, extensions.Diagnostics
+    )
+    if (
+        type(primary) is str
+        and primary == "ledger-mismatch"
+        and type(detail) is str
+        and detail == "accepted-historical-row-missing"
+    ):
+        return "missing"
     return None
 
 

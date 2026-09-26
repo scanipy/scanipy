@@ -545,6 +545,7 @@ jobs:
                   sys.executable, "-B", "-m", "pytest", "-c", "pyproject.toml",
                   "tests/integration/test_accepted_ledger_sql.py",
                   "tests/integration/test_accepted_ledger_security.py",
+                  "tests/integration/test_accepted_historical_reads.py",
                   "-m", "integration", "-x", "-q", "--tb=short",
                   "--junitxml=accepted-ledger-junit.xml",
               ], check=False)
@@ -557,7 +558,7 @@ jobs:
           raise SystemExit(result.returncode)
           PY
 
-      - name: Require exactly 145 successful executed AL cases
+      - name: Require exactly 183 successful executed AL cases
         if: always()
         shell: bash
         run: |
@@ -584,12 +585,13 @@ jobs:
               expected = {
                   "tests.integration.test_accepted_ledger_sql": 43,
                   "tests.integration.test_accepted_ledger_security": 102,
+                  "tests.integration.test_accepted_historical_reads": 38,
               }
-              if len(cases) != 145 or Counter(case.get("classname") for case in cases) != expected:
-                  raise AssertionError("AL requires exactly 43 SQL and 102 security cases")
+              if len(cases) != 183 or Counter(case.get("classname") for case in cases) != expected:
+                  raise AssertionError("AL requires exactly 43 SQL, 102 security and 38 historical cases")
               if any(not case.get("name") for case in cases):
                   raise AssertionError("AL report lacks an exact test identity")
-              if len({(case.get("classname"), case.get("name")) for case in cases}) != 145:
+              if len({(case.get("classname"), case.get("name")) for case in cases}) != 183:
                   raise AssertionError("AL report contains duplicate test identities")
               if any(case.find(tag) is not None for case in cases
                      for tag in ("skipped", "failure", "error")):
@@ -600,7 +602,7 @@ jobs:
           with Path("accepted-ledger-junit.xml").open("rb") as stream:
               raw = stream.read(4194305)
           validate_report(raw)
-          print("Verified 145 executed AL cases: 43 SQL + 102 security; no skips or errors")
+          print("Verified 183 executed AL cases: 43 SQL + 102 security + 38 historical; no skips or errors")
           PY
 
       - name: Retain AL test and bounded catalog evidence
