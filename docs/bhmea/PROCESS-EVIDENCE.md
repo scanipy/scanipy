@@ -687,8 +687,22 @@ bound store/controller state, never prepared-record assertions. The complete
 constructor/FD lifecycle/receipt and journal-state schemas need a separate
 review before this store's implementation is allocated.
 
-Register exclusive spool directory/file identities **before** transport launch;
-read only the registered stdout.bin/stderr.bin under held private FDs, with
+The complete proposed root/attempt handle, held-descriptor publication,
+receipt/state/replay, quota, registered-spool and parent-barrier protocol is
+in [RUNTIME-EVIDENCE-STORE.md](RUNTIME-EVIDENCE-STORE.md). It remains a separate
+design/implementation gate; PE's pure codec checkpoint does not certify any
+durable journal or DB/runtime authority. Its root/attempt lifetime distinction
+preserves this section's attempt-bound `RuntimeEvidenceStore` name.
+Scoped refusal receipts and fixed-ID read/retry, fresh prerequisite evidence
+inventories and an irreversible recovery-only boundary are part of that
+separate proposal; none is supplied by the pure process codec.
+Read-only evidence views certify a complete visible prefix only; actual
+durability receipts require the writer's publication/fsync/replay protocol.
+
+Register the exclusive private spool directory identity and fixed filenames
+**before** transport launch; do not precreate files that the actual transport
+creates with O_EXCL. Observe the actual file identities after creation, and
+read only registered stdout.bin/stderr.bin under held private FDs, with
 nofollow/nonblocking opens, exact type/owner/mode/nlink/size/identity checks and
 bounded read/rechecks. A stored diagnostic path is never reopened on restart.
 If spool readback fails, propagate an evidence error with its original cause;
