@@ -16,7 +16,9 @@ Revision 14 appends the observed **22:25 UTC** cutoff on accepted main
 historical, not directions to repeat already completed work.
 Owner: root engineering coordinator, umbrella #362.
 
-Current pointer: [Revision17](#revision-17--0345-utc-cutoff-september-26),
+Current pointer: [Revision18](#revision-18--050147-utc-cutoff-september-26),
+2026-09-26 05:01:47 UTC with explicit later updates through05:32:18, accepted `a871c00a`; no full feature acceptance.
+Historical pointer: [Revision17](#revision-17--0345-utc-cutoff-september-26),
 2026-09-26 03:45 UTC with explicit03:48 update, accepted `ecc34161`; no feature acceptance.
 Historical pointer: [Revision16](#revision-16--fixed-021458-utc-cutoff-september-26),
 fixed 2026-09-26 02:14:58 UTC with an explicit later02:26 note, on accepted `c5c862e3`. Revision15 and all older
@@ -1452,3 +1454,397 @@ It is dependency-unit evidence, not another full/native/PG run or new installed
 authority. It does not backdate completion into the03:45 snapshot or add to the
 overlapping48/709/2,536 totals. Reconciliation/scoped driver correction, pinned
 smoke, actual38-case custody, operator choices and the real A2 path remain gated.
+
+## Revision 18 — 05:01:47 UTC cutoff, September 26
+
+This new observation supersedes pending instructions whose outcomes changed;
+all prior snapshots, raw reports and contrary results remain preserved. It is
+not a new full-suite run or acceptance of any full R/C/G item. The user-confirmed
+local Docker stage machine, December2/3 presentation window, no October lock,
+preserved app/database and separate release/image authority remain unchanged.
+
+### Accepted Revision17 documentation
+
+[PR430](https://github.com/scanipy/scanipy/pull/430) merged at04:14:02 UTC into
+`a871c00a9b05299f11b2662dd9bdb3bf841f2afd`, tree
+`f071afd0502dc2716bc3ab80e94d7e77460cc294`. Exact head was
+`1c99804642fd3122b28645eadc34e67114b0de8f`; actual CI merge artifact
+`1c209d6a40ec5293469b5ee27a37528e30063eee` has the same tree as accepted main.
+[CI36216710618](https://github.com/scanipy/scanipy/actions/runs/36216710618)
+completed all seven jobs successfully. [Canonical36216710579](https://github.com/scanipy/scanipy/actions/runs/36216710579)
+completed SUCCESS with the actual verdict gate and final
+[APPROVE5843010619](https://github.com/scanipy/scanipy/pull/430#issuecomment-5843010619),
+read in full before normal merge. Ordinary commit/push hooks passed without
+bypass. Root accepted-tree document-checker run passed26 unique cases/0 errors,
+failures or skips in0.227s, `/tmp/scanipy-rev17-accepted-430.xml`, SHA256
+`bc7bff9e676da15e17eed239050ae5d1cf235a572a62c478c328a7709d02964f`.
+These26 are execution-state/document checks, not SQL-ledger/runtime tests.
+Root read actual enforced AL145/occurrence89 CI logs, but downloaded no new430
+XML/catalog artifacts; earlier428/429 artifacts retain their own attribution.
+The incorrect first positional checker invocation exited2 and was corrected;
+it is not test success. #362/#400 remained In Progress at04:17, #399 last
+observed In Progress at03:08. No umbrella or full component was closed.
+
+### Old-context reconciliation and ABI — distinct consumed operations
+
+Original build17413 remains EXIT1 despite Docker build0: its iidfile0664 was
+rejected. A reviewed one-off operation80992 subsequently exited0; root verified
+all13 original files unchanged, exact71-byte IID/inode/owner custody, permitted
+only that owned file's0664→0600 mode correction, and performed one bounded
+image inspection. The original failure was not rewritten or rerun. Reconciliation
+result SHA256 `bbf532589fd91b281afb01b14522984b9008aa045c1f6581e58ef2ac4afb3784`
+binds old image
+`sha256:eb40e58fc47a8666eb4aeaa755e6e9edd87138a72104f4a3c7503cd535b53eb9`.
+Full local record: `/tmp/scanipy-a1-watchdog-root-review-4HX6nzOx/ROOT-RECONCILIATION-REVIEW.md`.
+
+The separately pinned old-image ABI operation71322 exited0. All nine CLI calls
+exited0/completed with full EOF/no truncation; attach4012ms, total8317 stream
+bytes, no stderr. Root read and rehashed all streams/configuration. The exact
+owned CID `5db8368e0abb83419ab242002354025a78b96106247da8a8b72ffe10842cbbb8`
+was verified stopped/PID0/exit0/noOOM, waited, plainly removed and absent.
+Actual Python3.11.16,127555285 hashed file bytes,28 ELF entries and41 mapped
+files passed. This image contained the OLD15-case module; no pytest case or
+fixture, key generation, UID transition or PostgreSQL operation ran.
+Its full record is `/tmp/scanipy-a1-watchdog-root-review-4HX6nzOx/ROOT-ABI-SMOKE-GRANT.md`.
+
+### New38 immutable source, build and ABI
+
+Source checkpoint `fa2d209e465a1e099e2176d5acada82e5617ba32` remains immutable
+and distinct from moving A2. Native module SHA256
+`0a8f026affec37a23842d5aee502f7a6da365485fd16307a5436e1e14594f4b5` contains38
+collected cases; collection is not execution. The corrected snapshot driver
+has79 overlapping author/peer controlled passes after preserved cleanup-handoff
+reds; it does not rely on a changed old selector as proof of a fix.
+
+Actual snapshot86162 exited0/completed in7153ms, child PID/PGID282341. It copied
+5063 files/6497 entries/127591964 source bytes,384974902 charged hash bytes.
+Root read actual diagnostics, independently checked normalized manifest pins,
+all36 immutable repository copies and two assets; the recipe itself performed
+the full copied-destination hash check. Root did not claim a second full rehash.
+Manifest SHA256:
+`fc5fd2c03b8d3aa630781aea6a26f39a315c30100baee218d7efdce0a7312afa`.
+Snapshot process JSON SHA256:
+`c7baa7404f8a4b0d85f0a738475c5e7aa57f4ffea0a5885153770b3fbb7babe1`.
+The recipe child was `/usr/bin/python3`3.10.12; the declared driver/ABI runtime
+was3.11.16. They must not be reported as the same interpreter observation.
+
+The exact mechanical build helper had229 root configured controlled passes
+and independent scoped review before build. Actual operation58697 exited0;
+all five actual CLI outcomes exited0/completed with EOF/no truncation. Docker
+build took8008ms,PID/PGID288603. Sixteen retained files include the full warning:
+209 stderr bytes are the legacy-builder deprecation message, not a failed build.
+The pinned local bare64 base route used no downloads or RUN instructions.
+Final image inspection and regular0600/nlink1/71-byte native IID succeeded.
+
+| New-image artifact | Actual value |
+|---|---|
+| Image ID | `sha256:0617fc7c13d0147135dc81ba3e05b7107476d8f5e559943df39c49b7fa5114fb` |
+| Build result SHA256 | `e57a4131eae3ce61efa238ddd4c3c6c98dce36dd7912e61fd2a06436a09d803a` |
+| Native IID SHA256 | `cd34ddfbdc1c7809eccfeb64f5b38f2e129ecfa113deeada6224ddbac76ab18b` |
+| Post-build two-pin helper SHA256 | `219cd98c64e865132a97b35cb40256fe1f058ad885a6f53105cfa83eaa74d31c` |
+
+Separately granted ABI6114 exited0: nine actual CLI calls/28 retained files,
+8371 total stream bytes/no stderr, attach3947ms/PID290558. Root independently
+read all records/output, rehashed every stream and verified exact config/CID.
+Owned CID `be1f4791cf6f80fd74a18eaa94ad39ea0a357f5e34b5fde3c1ee6e4384554f19`
+exited0/noOOM and was plainly removed and observed absent; no kill was needed.
+Actual Python3.11.16, contextfc5fd2c0,127591964 hashed bytes,28 ELF entries and41
+mapped files passed. Attach stdout SHA256
+`ee66c35b02d7642e368dae30986e7e2df71e70d6f8609c4e384b32697a8ddf9c`.
+The fixed61-byte ABI result has SHA256
+`17c9024bbdc31f591e31fe219f6224b8058754407930c307b9ec6d6715022cde`, identical
+to the old ABI result text. New-context identity comes from the actual task
+path, invocation, image/CID and attach manifest, NOT that result hash alone.
+No38-case native test ran during ABI. Images and evidence are retained; only
+the scoped disposable ABI containers were removed. User services were unchanged.
+
+The full new-source/build/ABI records are the consumed root grants in
+`/tmp/scanipy-native38-snapshot-root-oZLyFMPD`; actual diagnostics remain in
+`/tmp/scanipy-a1-native38-NmPoGuji`. They are local retained evidence, not
+write-once/publication artifacts or installed operator authority.
+
+### First actual native attempt failed before creation
+
+The corrected native driver had256 unique author/peer controlled passes each,
+not512 or38 native passes. Peer XML SHA256
+`3e7091f6b6a44f9d7bb19db3c765ef87efe78e72a622ff2d50f20c5204a1ae98`,7.275s;
+root parsed all256 identities and preserved the original ancestor-handoff reds.
+Root and peer verified the execution copy changed only six resolved input pins,
+SHA256 `136cf4c0042e484725fdb54f15b17fe0f103d73d5912e1539a4232700ef992eb`.
+
+Actual operation80343 **exited1**. Its single name-recheck CLI exited0 in79ms,
+PID291906, empty/full-EOF streams. Create was rejected by the actual bounded
+process owner's `_argv` validator before invocation/process allocation: one
+10,340-byte bootstrap argument exceeded8,192 bytes. Thus create.json records
+`outcome:null`, not a real create process. No native CID/container, fixture,
+key/UID transition, PostgreSQL action or native testcase exists from this run.
+Original bootstrap SHA256
+`7cb899de4be9b38246f041691f25e21e722ea6436ce34a27bc74ed7b9c5d2688`.
+The four unchanged native-run files include create.json SHA256
+`9524e1ec4f37e2cad271513a3fb77d20160b99d73744f033e0858b79c983abb9`
+and name-recheck.json SHA256
+`3a4b737ed877358ac2a5c94064a4871fba862b5d7ea2e8a56f9243ab6c7301d5`.
+
+Controlled transport substitutes had missed composition with the real argument
+validator. Root allocated a separate fixed-fragment packaging correction and
+pure real-owner validation before any new CLI, preserving exact bootstrap,
+8,192-byte argument/256-argument/65,536-byte total and all time/output limits.
+An intermediate defensive wrapper then correctly failed the existing16,384-byte
+metadata precharge in26 controls (220 passed); no effect ran. The minimal trusted
+wrapper calculation fits12,277+4,096=16,373 bytes without lowering the reserved
+suffix or raising caps. At this cutoff, final source review/tests and a new
+fresh-name/evidence/CID grant remain pending. No auto-retry, old-file overwrite,
+image rebuild, native success or semantic-case deletion is justified.
+
+### A2 Checkpoint A — finite corrections, not installed publication
+
+Following dependency-only dc0c7f63/976 evidence, separately allocated source
+implements administration/custody, canonical packet storage and initialization,
+policy/admission operations with real-owner composition planned. Original424
+controlled passes preceded three demonstrated corrections: cursor close-handoff,
+SQL-phase UTC observation and moved-directory ctime handling. Their corrected
+author/peer472 passes are separate overlapping evidence, not full A2 acceptance.
+
+A further independent inherited `_Files.open` gap produced2 genuine failures
+and4 positive controls on7dc1d97b. The moving-tree correction places acknowledged
+acquisition inside the active cleanup guard, preserving transferred ownership,
+prepaid budgets and once-only uncertain close. It does not alter immutablefa2
+or its image. Original tests/reports and the two original semantic failures are
+preserved; corrected semantics pass separately, not by reclassifying an old
+literal-layout selector. Source SHA256
+`dd3df9ebaebb4303e21aa2e3992d0151080cec2416ce680ebd83cf93e0b81ccc`;
+admission SHA256 `83b2ae92f8a9af683c20a7c3ca4506c7616c896f854a2c79b768ee9991753275`.
+
+Author492 unique PASS/0,13.666s, XML SHA256
+`c9dab4ffd05ad7e940a06191b66e33d920375e958c29480d17ea8cbf50b6a8cb`.
+Independent492 unique PASS/0,10.461s, XML SHA256
+`5de62311b0a693e5e9f8aa5e433bb0e2d54df4c3a9bccf3941ebefab424f0fcf`.
+Root read the source deltas/new tests/contracts, checked all case identities,
+unchanged admission/other source ASTs and prior unit/document prefixes.
+Independent scoped approval is retained in
+`/tmp/scanipy-a1-open-handoff-peer-rnEHuy95/REVIEW.md`, SHA256
+`6cefd000aa2868066bef5e8186f88f9cad3aefa5be918c6af473c44dac0467dd`.
+These are fake OS/connection/key seams: not native custody, genuine signing,
+PostgreSQL integration, a complete publisher or installed credentials.
+
+At05:01:47, HEAD remained dc0c7f63 and the normal Checkpoint A commit was not
+complete. Hooks67611/50310 stopped on two uses of the SAME known-public fake
+credential literal; no real secret was found and prior applicable hooks passed.
+Root authorized only exact same-line false-positive annotations after reading
+the fixtures, with the205-entry baseline unchanged. Those comment-only prefix
+exceptions need explicit attribution; original frozen prefixes/reports remain.
+No successful retry, B implementation or later count is backdated here.
+
+### Remaining acceptance and authority
+
+Finish the real tenant-local publisher/CLI, maximum genuine bundle, exact
+replay/ambiguity and later native/PostgreSQL qualification. Add independently
+owned read-only public trust/checkpoint and restricted resolver-service custody;
+A2's five existing routes do not supply that service. Real R5/R6/pure verifier
+code alone cannot clear operational runtime-unsupported. Current physical
+storage/controller/DB barriers, source/rule producers, durable occurrences/
+decisions, complete provenance, API/UI, all422/844 campaign evidence and original
+shared gates remain required. Operator identities/pins/restore choices precede
+activation. Later global/inferred extensions do not replace or block this target.
+No task/claim/milestone/gate, release or stage status is promoted by this record.
+
+### Explicit later update — 05:04 UTC
+
+Root read back local Checkpoint A commit
+`a56c5f7f5c8a74531ad0d45f831efbaaf40630fd`, tree
+`0fd368376a1f89f06c98c917834ded721897dc53`, parentdc0c7f63,
+Git CommitDate05:02:08 UTC, exactly four paths/+4668/-18. Normal attempt58341
+passed all applicable hooks. Both67611/50310 failures remain; only public-fixture
+lines1751/2067 gained same-line allowlist comments, not the unflagged initializer
+at2060. Same-settings detector inventory found no findings. Scanner/baseline
+rules and205 entries stayed unchanged. A mistaken Settings API usage and an
+interpreter-path typo are retained as setup failures, not product failures.
+
+Production remains dd3df9eb/83b2ae92. Unit SHA256
+`b34d98c30554bfc0c999d580eee2cbb15c733a1e573ee9976bc1daf43d16a57e`;
+resolver document SHA256
+`d14f7e0879f4a141e620819790d118e3fbdf96f1d0fba62fab1de0baaebfa402`.
+Original test ASTs/A1 prefix and saved pre-annotation files remain exact; two
+comments are explicit exceptions to the later byte prefix. Seven affected
+fake-fixture checks passed/0 in2.17s, annotations-fixtures.xml SHA256
+`03ca1fe2df33a8f12d4d740d6720bc27d025b4f1ce9298109e77a3cf6b36fb03`.
+Prior492 evidence is not relabeled as a rerun of this annotation commit.
+Only the checked temporary lint-staged symlink was removed; its target remained.
+No push/PR/hosted gate, full suite, native/PG or installed-authority acceptance
+is established. B source/fake/static work is allocated next, not completed.
+
+### Explicit later update — 05:17 UTC
+
+The fixed argument-packaging source is
+`bccf9ce871a75aea215d9fa9fe483a270231a4fe9d899c5ec959e104ccacda6b`,
+tests `4183285f0611dad683f555a57a3b799ef297a7d381428027c5fedc0b0e52ec4e`.
+Root read the full377-line correction and all26 added cases; three existing
+definitions have explicit owner/fresh-CID adaptations, other52 ASTs unchanged.
+Original real-owner red and intermediate220 passes/26 metadata failures remain.
+Author272 unique passes/0 failures/errors/skips,7.850s, XML SHA256
+`319235a8387fd7f3c0fb3bb92cd1829416473f0630f4d78fc99db66fbfe88ee8`;
+independent272 unique passes/0,8.191s, XML SHA256
+`66a4645ed73251ed8cb94201301c2e84d8c0c278f1e18b8cbd3c1f1ecfb828b3`.
+These overlapping controlled tests are not native cases. The final trusted
+wrapper is58 bytes, joining fixed4096/4096/2148 ASCII fragments to the unchanged
+10,340-byte bootstrap. Actual owner argument validation now precedes any CLI.
+Actual metadata12,274+4,096=16,370 leaves14 bytes under the unchanged16,384 cap;
+the earlier16,373 estimate remains correctly attributed to its prior spelling.
+
+Only six runtime pins changed in the separately approved execution copy
+`/tmp/scanipy-a1-native38-NmPoGuji/native2_watchdog.py`, SHA256
+`2168ce11535a836353281587efad275411ad63302bb4ca58bbf4ee57ee8ebedf`.
+It binds the same immutablefa2/contextfc5f/image0617/build e57a/ABI17c9 records.
+No image/context/source rebuild or mutation occurred. The new one-run grant
+was consumed by actual operation43471 at05:09; it **exited1**. Name check exited0/
+completed in71ms,PID/PGID298767, empty full-EOF streams. Actual create exited125/
+completed in73ms,PID/PGID298777, stdout0, stderr81 bytes/fullEOF/no truncation:
+`docker: --pid: invalid PID mode`. Unlike80343, this is a real process outcome,
+not an owner pre-invocation rejection. It still precedes ContainerCreate;
+no CID/container/bootstrap/fixture key/UID transition/native testcase/PG ran.
+
+Root read both diagnostics/all streams and rehashed all six native2-run files:
+create.json `78098f30af6210ddd0cfb48148bfacfa40be4086ae6902221956177e6276b3a6`;
+create-stderr.bin `929b816ac3d2b40bab1d7b8549a52e4827e57d954fa73cec50961b5da1f0a2d9`;
+name-recheck.json `d1632b490333c7bcb1870091e62292ffa566abe8df4cd9f9355539663de669e7`.
+Other streams are empty. Original/native2 files and drivers remain unchanged;
+no nonexistent-container cleanup, automatic retry or38-pass claim is warranted.
+Full consumed record:
+`/tmp/scanipy-native38-snapshot-root-oZLyFMPD/ROOT-NATIVE38-SECOND-GRANT.md`.
+
+Root checked installed Docker29.1.3 help and pinned primary sources. The web
+reader returned404; bounded curl retrieved text as data, not executable code.
+[CLI PID parsing](https://raw.githubusercontent.com/docker/cli/v29.1.3/cli/command/container/opts.go)
+defaults to empty; [API PidMode](https://raw.githubusercontent.com/docker/cli/v29.1.3/vendor/github.com/moby/moby/api/types/container/hostconfig.go)
+accepts empty/host/valid container values and defines the empty value as private.
+The literal `private` is invalid for PID, unlike IPC.
+[Create ordering](https://raw.githubusercontent.com/docker/cli/v29.1.3/cli/command/container/create.go)
+returns125 on parse failure before ContainerCreate; a read-only daemon ping may
+precede parsing. Do not infer a created container from a completed CLI process.
+
+Allocated source-only next step: omit the PID option, require inspected PidMode
+exactly empty (reject host/container/nonempty), retain explicit IPC private and
+all existing caps/custody/report checks, and use fresh native3 identifiers.
+Preserve genuine failing representation controls and obtain independent review,
+root pin binding/resource check and a separate one-run grant before execution.
+No third attempt has run at this update; all38 native cases remain unexecuted.
+The image still predates moving A2 corrections. All full R/C/shared gates and
+operator/runtime/database/publication/rehearsal requirements remain open.
+
+### Explicit later update — 05:21 UTC
+
+PID source9313039669849f7888bb23a5402cc67a7cf61461a8fcf2c0481533cb4bbe78d8
+and testsda1349a8024953d9c862667e3a315902bfbdc3e47d376de9ab14296fa88b7119
+passed292 unique author controls/0 in8.031s (XML0eae6628), and292 independent
+controls/0 in9.103s, XML SHA256
+`1dfce67e32c52aab3206859a1c3760c07ffb92920301b96cb20b8ee5b4cb473e`.
+Counts overlap. Original two representation reds and271-pass/one stale-margin
+failure remain. The source reverses exactly to priorbccf after explicit PID/
+fresh-name substitutions; six old test definitions have declared adaptations.
+Full argv82/max4096/11836, metadata12256+4096=16352/32-byte margin and unchanged
+bootstrap10340/SHA7cb899de were checked against the real owner without execution.
+
+Separately reviewed six-pin native3 execution copy SHA256
+`43be177c41f145129eb0404911f87e22531f42da981e36f7e193b0e13d7736b5`
+consumed its grant in actual15490, **EXIT1** at `native-profile-cap_add`.
+Name check81ms/PID303884,create133ms/PID303893,created inspect86ms/PID303905 all
+exited0/completed/fullEOF/no truncation; all stderr empty. Actual create65-byte
+stdout and64-byte0600/nlink1 CID bind
+`f29fe11beffc0a9ec0f3c5a268829bb63015e130642d226a4bdfd69e01218858`.
+Inspection shows created/PID0/runningfalse/exit0/noOOM, correct image0617/contextfc5f
+and private-empty PID. It returned sorted CAP_CHOWN,CAP_DAC_OVERRIDE,CAP_FOWNER,
+CAP_SETGID,CAP_SETUID, while the driver expected unprefixed source order.
+The fail-closed check stopped **before start**. No bootstrap/key/UID/native case
+or PG ran;38 cases remain unexecuted. This attempt, unlike80343/43471, left an
+unstarted container, retained pending separate disposition. No removal/report
+or successful native result is claimed.
+
+Root read/rehashed all nine native3-run files and full12599-byte inspection:
+create.json `bc8c71c7edbe41225ace0a7efbfd9fcd2b9bbdd8084387459b5969136fe8c396`;
+created-inspect.json `e0616e102dc1ec09fc2a3f554be382bf39eeae6403a3fb75e4ff49861bdb25a8`;
+inspection stdout `32fd96686cdf61471f2745b9349779a9cd9a26fda73a4ec3223715c49e1ad664`;
+CID `a80d54227bf85f9524336af286e17234f402dbf38818af66daa062adaab8c672`.
+Full consumed record: `/tmp/scanipy-native38-snapshot-root-oZLyFMPD/ROOT-NATIVE38-THIRD-GRANT.md`.
+Only source-only exact-capability-expectation/fresh-native4 correction and
+remaining-profile review are allocated; requested caps/bootstrap0xcb/image/
+limits stay unchanged. A new review and grant precede any fourth attempt.
+No task/claim/shared-gate state or authority is promoted by these observations.
+
+### Explicit later update — 05:25 UTC
+
+Root separately granted disposition of the exact never-started native3 CID,
+not a restart/adoption or modification of the execution report rule. Fresh
+inspection matched the complete retained profile and additionally confirmed
+zero StartedAt/FinishedAt and RestartCount0. Then plain exact-CID removal and
+exact-ID absence completed; no force/volume/prune/start/kill/fixture action.
+All three actual bounded CLI outcomes exited0/completed/fullEOF/no truncation:
+inspect98ms/PID305544,remove99ms/PID305554,absence69ms/PID305565; stderr empty.
+Actual JSONL SHA256
+`b128878dd0c49ce114df5c986fdf366831cdac6b463e9c765a011b9980a5bb90`
+under `/tmp/scanipy-native3-disposition-GE1qRvRc`; fresh stdout12684B SHA256
+`f7f5fd548a7787cf46c20544cee3f081d5b553d90920df84481f0c6a5e11695b`.
+All nine original diagnostics/CID file/source/image hashes remain unchanged.
+No report or workload existed; native15490 remains failed with zero cases.
+
+Root also read pinned Docker29.1.3
+[client normalization](https://raw.githubusercontent.com/docker/cli/v29.1.3/vendor/github.com/moby/moby/client/container_create.go):
+the client normalizes, deduplicates and sorts capability names before submitting
+the create request. This explains the actual CAP_ list without adding privileges.
+Native4 correction/review remains pending; no image rebuild or acceptance follows.
+
+### Explicit later update — 05:32:18 UTC
+
+The exact capability correctionbfe284e4/tests2613e60b had308 unique author
+controlled passes/0,8.228s, XML
+`7632b4077320cd965def44fbfb346e4de96d845c24caf5894066cc4a2f59ad68`;
+independent308/0,6.841s, XML
+`9bba4081b6ae8beb142743195c4c976b6b7c8cdc83b879d8c526b671868ed9c5`.
+These overlap and are separate from actual native execution. Root/peer read
+the complete230-line correction, new16 controls and pinned client source,
+verified seven explicit prior-test adaptations, unchanged67 ASTs, bootstrap/
+requested caps/limits and exact reverse reconstruction. Original actual-row
+1FAIL/1PASS report08bdc5d8 remains. Exact six-pin execution copy SHA256
+`1d87bbd209398ce5d39c01bf70a97f8c96b6977d0166bc5aec8f6b641e0c64f0`
+binds the unchanged helper219/contextfc5f/image0617/build e57a/ABI17c9 records.
+
+Separately granted actual36564 **exited0**. Nine actual CLI calls exited0/
+completed/no stdin/fullEOF/no truncation: name74ms/PID307217,create128ms/307228,
+created inspect81ms/307239,attach94790ms/307249,closing inspect78ms/307993,
+wait73ms/308004,stopped inspect81ms/308014,remove91ms/308024,absence73ms/308034.
+Root checked all diagnostics and rehashed all18 streams,44,637 bytes total.
+Only attach stderr was nonempty:110 bytes of actual pytest progress/pass summary.
+No KILL occurred. Exact CID
+`3a612af81b2f2aaf26fe284f19fa3dfcc970dd91481b7c041a47ba945b30fb0c`
+was verified exited/PID0/exit0/noOOM, waited, plainly removed and absent.
+All created/closing/stopped profiles pass the exact pure predicate; image,
+task, context and full actual create command remain bound to the reviewed inputs.
+
+Actual `/tmp/scanipy-a1-native38-NmPoGuji/native4-run/a1-native-38.xml`,6261 bytes,
+0600/1000:1000/nlink1, SHA256
+`d83576414dea5664f526f766619c978ab64c7f2fd50e9094b76b4ff27b10d03c`:
+**38 unique PASS/0 failures/errors/skips,92.282s JUnit** (92.28 console).
+Root parsed exact equality to all38 frozen case identities, not just the count.
+Actual disposable RSA keys, dropped UID10001/10002, file modes/links, locks,
+rereads and finite interruption/cleanup cases ran on immutablefa2/test0a8f026a.
+No PostgreSQL operation or installed host authority ran.
+
+Attach stdout6600B SHA256
+`90d01ea5616b3d2fc69e227f92bb9b4a59bbed9953a421ef6adffbce4107d6aa`;
+attach stderr SHA256
+`39a77d726a6a31902562efe5ae77371e14c82184b09f7802739f82c9aaf01855`;
+attach.json `e78a9c7a1997987fd9eee03537d128b12eee914ad708fc725bfc787bbb936ea9`.
+Root verified exact magic/six-field header/context/test/pytest0, complete XML
+at offset339 and saved-file equality. report-link.json SHA256
+`c5550eda807f073cae6316e8f5d238b2f62294f45ad4b7c8af66ced2b24029c3`;
+result.json `703de53a2f48d519ff8afacf920afbb09ea319e8f9fa1237f10b56e13b05cbc5`
+records native38-custody-completed-owned-container-removed/complete_38=true.
+All30 run files, CID file and image remain. Full consumed record:
+`/tmp/scanipy-native38-snapshot-root-oZLyFMPD/ROOT-NATIVE38-FOURTH-GRANT.md`.
+
+This completes only that finite native checkpoint. Earlier80343/43471/15490
+failures and the separate never-started disposition remain unchanged. The image
+predates moving A2 guarded-open/administration/publisher/CLI corrections. Their
+actual SQL/native qualification, installed reader/authority, physical runtime/
+source integration, durable decisions/provenance/API/UI, full422/844 campaign,
+original R/C/shared gates and offline rehearsals remain required. No full task,
+claim, milestone or shared-gate state, release or stage readiness is promoted.

@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 17 — 2026-09-26 03:45 UTC cutoff plus explicit 03:48 update; accepted AL/G foundations, preserved history; full acceptance unresolved |
+| Revision | 18 — 2026-09-26 05:01:47 UTC cutoff plus dated updates through05:32:18; actual38-case native custody passed after three preserved failures; local A2 checkpoint, full acceptance unresolved |
 | Status | Execution started; no full R01–R20 task or submitted claim is yet accepted as complete |
 | Initial review code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
@@ -46,11 +46,65 @@ All unchecked acceptance items below remain required unless explicitly
 classified optional. An adopted design, recovered historical report, or one
 successful Joern parse does not complete a task or verify a submitted claim.
 
-**Current work queue:** use Revision 17 in the
-[active handoff](PLAN-BHMEA-EXECUTION-2026-09-25.md#8-revision-17-execution-queue--0345-utc-september-26).
+**Current work queue:** use Revision 18 in the
+[active handoff](PLAN-BHMEA-EXECUTION-2026-09-25.md#current-next-actions--053218-utc).
 The dated progress paragraphs that follow retain historical evidence. Their
 older pending statuses do not override the latest queue or require redoing
 accepted merges; the full task-level acceptance TODOs begin in section 5.
+
+At the new05:01:47 UTC cutoff, accepted main `a871c00a` includes Revision17
+documentation #430 after its required gates. Old-image reconciliation/ABI and
+a separate immutable38-case source snapshot, image build and ABI check have
+completed. **The38 native cases still have not run**: the actual native attempt
+failed before creating a container because its bootstrap exceeded the runner's
+per-argument limit. Fixed argument packaging is being reviewed with unchanged
+limits; prior failures must not be overwritten or treated as successes.
+
+A2 administration/packet/custody Checkpoint A and its finite corrections have
+492 author and492 independent fake-only passes (overlapping, not984). Normal
+commit is pending scoped public-fixture secret-scanner annotations; no real
+publisher/CLI/installed authority is accepted. Continue genuine publication,
+retry/reconcile and CLI, then the restricted installed reader and runtime
+integration. The native image predates moving A2 corrections. See the
+[new evidence and limitations](evidence/2026-09-25-foundation-merges/README.md#revision-18--050147-utc-cutoff-september-26).
+Every original task-level TODO, C/R status, acceptance criterion, milestone,
+DAG edge and shared gate below remains unchanged. No release or stage readiness
+is promoted by these checkpoints; later results need separately dated updates.
+
+The explicit05:04 update records local Checkpoint A commit `a56c5f7f` after all
+normal hooks and seven targeted fixture checks. This resolves only the pending
+commit; B source work, actual native/PG, hosted gates and installed authority
+remain incomplete. The original492 reports are not claimed rerun at the later
+comment-only annotation commit.
+
+The explicit05:17 update records the reviewed argument correction and a second
+actual failure: Docker rejected `--pid private` before container creation.
+The38 native cases remain unrun. Correct the private-PID representation and
+its exact inspection check, preserve both attempts, and obtain a separately
+reviewed fresh third attempt; do not raise limits, weaken isolation or rebuild
+the valid image. The later update in the active handoff supersedes its older
+pending native2 instruction, without backdating results or changing acceptance.
+
+At05:21 the third attempt created a container but failed its pre-start capability
+inspection. Docker normalized capability names/order; the strict expectation
+did not match. No bootstrap or native case ran. Preserve the unstarted container
+and diagnostics pending separate disposition; review the exact normalized
+comparison and fresh native4 identifiers before another separately granted run.
+The full scope and native success criteria are unchanged.
+
+At05:25 a separate fresh whole-profile/never-started check, plain removal and
+exact-ID absence verification completed for that third container. All original
+diagnostics, CID file and image remain. This cleanup is not native success;
+the current source correction/fresh-native4 review is still pending.
+
+The explicit05:32:18 update supersedes that pending instruction: fourth attempt
+36564 passed **38 unique native custody tests, zero failures/errors/skips**, on
+the frozen source image. Root verified the retained report and exact stopped/
+removed container. Three earlier failures and the separate unstarted-container
+cleanup remain preserved. This image predates moving A2 corrections; the result
+does not qualify its publisher/CLI, real PostgreSQL, installed authority,
+complete scan, any full R/C task or shared gate. Follow the current next-actions
+link above; do not repeat the consumed native attempt.
 
 At03:45 UTC, accepted main `ecc34161` includes AL #428 and pure runtime packets
 #429, with actual hosted145 AL/89 occurrence passes and preserved AL catalogs.
