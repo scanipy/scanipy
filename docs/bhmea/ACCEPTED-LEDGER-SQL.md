@@ -1,7 +1,8 @@
 # Accepted-ledger SQL boundary — owning implementation contract
 
-Date: 2026-09-26 PKT. Component: CMP-DET-02, with explicitly coordinated
-CMP-ORCH-03 / execution-store boundaries. Root-owned issue: #399.
+Date: 2026-09-26 PKT. Primary component: CMP-ORCH-03 — accepted-input
+persistence prerequisite, with explicitly coordinated CMP-CP-03 migration/RLS
+and CMP-CI-01 ordinary CI coverage. Root-owned issue: #399.
 
 Status: **root-approved implementation contract; implementation in progress**.
 The design basis, consolidation and exact narrow fixture route have scoped root
@@ -3538,3 +3539,49 @@ provenance; they are not dedicated live-C-diagnostic or hostile-driver-subclass
 regressions. No new tests or outside controls were run. The staged source remains
 the old `16be3470` snapshot pending root review/restaging; this scoped hook pass
 is not a successful normal commit, full suite, PostgreSQL or canonical gate.
+
+### AL primary-component attribution correction — 2026-09-26
+
+The original header's CMP-DET-02 attribution was incorrect. It is retained here
+as correction history, not reinterpreted as an earlier ORCH-03 label or a change
+to the historical detector-registry mandate. Root requested this narrow
+metadata correction after the PR #426 canonical scope finding. The prior
+3,540-line contract at candidate 7c992e1578cd2f7613ad85c93d9928c9902a5aed has SHA256
+896089f456a451ffe1fa5224ad9bbe097d0776885bdee791b5b5fd0d7e5ed4af.
+
+The primary owner is CMP-ORCH-03: this is the accepted-input persistence
+prerequisite for worker execution, not detector manifest discovery or a
+replacement registry. CLAUDE section 12 maps services/scan to orchestration;
+DOC-CMP-ORCH-03 sections 2, 3.1 and 5 describe detector/spec resolution and
+the version-pinned input fence. Accepted PR #418 used CMP-ORCH-03 for the
+same accepted_inputs owner, including verify.py; its final canonical
+[review](https://github.com/scanipy/scanipy/pull/418#issuecomment-5841154346)
+approved that bounded foundation with CLAR-BHMEA-01 OPEN and no issue closure.
+Its accepted merge is 3b0221df12d080b774df34ddafde930703de30d9.
+
+The coordinated scope remains explicit: CMP-CP-03 is the migration/RLS vehicle
+for this exact owning schema and cross-owner bridge/ACL boundary; CMP-CI-01
+coverage is the ordinary required AL integration job, not a new numbered gate.
+DOC-CMP-CP-03 sections 2 and 3.1 preserve application ownership of runtime
+writes; DOC-CMP-CI-01 section 3.2 distinguishes ordinary CI from Gates 1-4.
+The current AL contract, not a component-label inference, specifies the exact
+commands, five tables, seven mutations, six reads, installer and their limits.
+The complete comparison scope is the already coordinated 18 paths: the 16-path
+AL-03 allocation in section 2 plus its actual two-file AL-02 dependency. It
+remains one reviewed migration/bridge/facade/codec/fixture/CI unit; no source,
+SQL, schema, ACL, fixture, CI, signature or work-budget behavior changes here.
+
+DECISION-BHMEA-01 preserves compatible historical contracts and requires
+explicit current extensions and all applicable review/tests. This correction
+does not reassign CMP-DET-02, invent a component or historical TST-AC alias,
+resolve CLAR-BHMEA-01/02, or complete any ORCH-03, CP-03, CI-01, C/R milestone
+or board item. Refs #399 and #362 remain non-closing references. The ordinary
+AL job does not establish full historical Gate acceptance. Actual installed
+administration, independent current authority, DB-BAR, native runtime and
+Finding/SARIF/provenance integration remain outside this persistence slice.
+
+This proposal was prepared outside the repository while the frozen candidate's
+combined full run was active. No repository byte was changed during that run.
+Any root application afterward requires normal hooks and the applicable fresh
+checks and exact-head canonical approval; this note records no full-run result,
+remote acceptance, installation, launch permission or release.
