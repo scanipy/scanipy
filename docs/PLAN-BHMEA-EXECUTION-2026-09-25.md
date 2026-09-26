@@ -679,6 +679,13 @@ is progress, not end-to-end completion.
 
 Ask only when needed; do not repeatedly ask settled questions:
 
+- The owner has confirmed “Me, for both local-demo roles”: the same project
+  owner approves detector/rule bundles and authorizes database-restore recovery
+  for the local demo. Do not ask again who fills these roles. The dated
+  [role decision and remaining TODOs](DECISION-BHMEA-01-current-execution-authority-2026-09-25.md#local-demo-human-roles--owner-clarification-september-26)
+  distinguish human assignment from authenticated principals, persistent trust,
+  particular bundle/restore approvals and verified recovery. Historical queue
+  references to unresolved human roles are superseded only on that point.
 - Confirm the exact presentation date when scheduled. Machine identity is
   settled: do not ask for the same hardware choice again. Recheck resources,
   measure fresh/warm latency and peak use on this machine, then assign budgets

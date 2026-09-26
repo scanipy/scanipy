@@ -3,7 +3,41 @@
 **Workflow `name:`** `CI — Scanipy v3.2`
 **File:** `.github/workflows/ci.yml`
 
-## Current accepted-ledger coverage extension — 2026-09-26
+## Current execution-reader role coverage — 2026-09-26
+
+Root's scoped engineering allocation extends the ordinary
+`accepted-ledger-tests` quality job to four explicitly selected modules in one
+invocation. The exact required distribution is 43 original SQL cases, 102
+original security cases, 38 historical-read outcome cases and 63 execution-reader
+role qualification cases: 246 unique cases, zero skips, failures or errors.
+The actual embedded JUnit validator must enforce both the total and per-module
+distribution, unique nonempty identities and consistent suite counters. A
+145-case or 183-case report cannot satisfy this job. Controlled XML tests
+exercise this actual validator; they are not PostgreSQL execution evidence.
+
+The fourth module is `tests/integration/test_execution_authority_role.py`.
+Its [role qualification contract](../bhmea/EXECUTION-AUTHORITY-ROLE-QUALIFICATION.md)
+uses effective `SET LOCAL ROLE` with a privileged `session_user`; it does not
+qualify authenticated login, `RESET ROLE` confinement, A2 administration or
+native reader custody. Its explicit 0007/0008 transitions and owned sidecar
+are governed by that contract. Accepted0006/occurrence0005 defaults and the
+separate ten-plus-eleventh administration schedule remain unchanged.
+
+Only the fourth selection and exact count/distribution checks are added to
+the workflow. The original catalog query/helper behavior, dedicated service,
+routing, resource limits, deadline, fail-fast invocation, finally-based
+before/after catalog comparison, fresh evidence and always-retained artifacts
+remain unchanged, as do every other job. No helper or cleanup behavior is
+replaced by this coverage extension.
+
+This three-file checkpoint requires source/independent review and a separately
+granted actual 246-case PostgreSQL run with exact checkout/report/catalog
+readback. No run, hosted acceptance, installation, current authority, numbered
+gate or complete Black Hat readiness is established by this source change.
+The following 183-case section is retained as the preceding historical
+coverage checkpoint; this section supersedes only its current inventory.
+
+## Historical accepted-ledger coverage extension — 2026-09-26
 
 Under [DECISION-BHMEA-01](../DECISION-BHMEA-01-current-execution-authority-2026-09-25.md),
 the ordinary `accepted-ledger-tests` quality job explicitly selects three

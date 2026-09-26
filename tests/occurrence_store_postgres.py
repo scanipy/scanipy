@@ -33,6 +33,7 @@ ACCEPTED_RESERVED = tuple(
     "scanipy_accepted_" + role
     for role in ("owner", "policy_admin", "publisher", "resolver", "reader")
 )
+EXECUTION_READER = "scanipy_accepted_execution_reader"
 ADMINISTRATION_URL = (
     "postgresql://a2_fixture_admin@:5432/a2_fixture_bootstrap?host=/run/scanipy-a2-postgres"
 )
@@ -229,6 +230,12 @@ class PrivatePostgres:
         self.migration_evidence = []
         self._migration_calls = 0
         self._migration_failed = False
+        self._administration_setup_complete = False
+        self._reader_transition_pending = False
+        self._reader_migration_calls = 0
+        self._reader_probe_pending = False
+        self._reader_probe_attempted = False
+        self._reader_probe_database = None
         if administration:
             self.migration_cwd = _administration_path(migration_cwd)
             self.migration_site_packages = _administration_path(migration_site_packages)
@@ -429,7 +436,17 @@ class PrivatePostgres:
         from tools.worker.bounded_process import MemoryOutput, ProcessLimits, run_bounded_process
 
         self._administration_runtime()
-        if self._migration_failed or self._migration_calls >= 10:
+        if self._migration_failed or self._migration_calls >= 11:
+            raise AssertionError("administration migration is unavailable or exhausted")
+        if (target == "20260926_0007" and self._migration_calls < 10) or (
+            self._migration_calls == 10
+            and (
+                not self._administration_setup_complete
+                or action != "upgrade"
+                or target != "20260926_0007"
+                or expect_success is not True
+            )
+        ):
             raise AssertionError("administration migration is unavailable or exhausted")
         self._migration_calls += 1
         self._migration_failed = True
@@ -666,6 +683,8 @@ class PrivatePostgres:
             connection.close()
 
     def migrate(self, target=None, *, expect_success=True, action="upgrade"):
+        if self._reader_transition_pending or self._reader_probe_pending:
+            raise AssertionError("reader fixture transition is unresolved")
         if self.administration and (type(action) is not str or type(expect_success) is not bool):
             raise ValueError("invalid administration migration primitives")
         if action not in ("upgrade", "downgrade"):
@@ -674,6 +693,8 @@ class PrivatePostgres:
         permitted = ("20260925_0003", "20260925_0004", "20260925_0005") + (
             ("20260926_0006", "20260926_0007") if self.profile == "accepted" else ()
         )
+        if self.profile == "accepted" and not self.administration:
+            permitted += ("20260926_0008",)
         if type(target) is not str or target not in permitted:
             raise ValueError("unsupported dedicated migration target")
         target_url = self.url.set(drivername="postgresql+psycopg2", database=self.database)
@@ -683,6 +704,10 @@ class PrivatePostgres:
                 raise AssertionError("migration driver target differs from owned child")
         if self.administration:
             return self._migrate_administration(target_url, action, target, expect_success)
+        if target == "20260926_0008" or (target == "20260926_0007" and action == "downgrade"):
+            return self._migrate_execution_reader(target_url, action, target, expect_success)
+        if EXECUTION_READER in self.owned_roles:
+            raise AssertionError("owned reader requires its exact guarded downgrade")
         result = subprocess.run(
             [sys.executable, "-m", "alembic", action, target],
             cwd=ROOT,
@@ -700,6 +725,214 @@ class PrivatePostgres:
         if expect_success and result.returncode:
             raise AssertionError(result.stdout + result.stderr)
         return result
+
+    def _reader_state(self):
+        """Bounded observations of this child and one role; no ownership adoption."""
+        with self.admin() as connection, _administration_cursor(connection) as cursor:
+            identity = _administration_rows(
+                cursor,
+                "SELECT oid,datdba FROM pg_database WHERE datname=%s LIMIT 2",
+                (self.database,),
+                maximum=1,
+                columns=2,
+            )
+            if identity != [self.database_identity] or self.database_identity is None:
+                raise AssertionError("reader child database identity changed")
+            revision = _administration_rows(
+                cursor,
+                "SELECT version_num::text FROM public.alembic_version LIMIT 2",
+                maximum=1,
+                columns=1,
+            )
+            role = _administration_rows(
+                cursor,
+                "SELECT rolname::text,oid,rolsuper,rolinherit,rolcreaterole,rolcreatedb,"
+                "rolcanlogin,rolreplication,rolbypassrls,rolconnlimit,"
+                "rolpassword IS NULL,rolvaliduntil IS NULL FROM pg_authid "
+                "WHERE rolname::text=%s LIMIT 2",
+                (EXECUTION_READER,),
+                maximum=1,
+                columns=12,
+            )
+            if len(revision) != 1 or revision[0][0] not in ("20260926_0007", "20260926_0008"):
+                raise AssertionError("reader predecessor revision differs")
+            if role and (
+                role[0][0] != EXECUTION_READER
+                or type(role[0][1]) is not int
+                or role[0][1] <= 0
+                or any(type(value) is not bool for value in role[0][2:9] + role[0][10:])
+                or type(role[0][9]) is not int
+                or role[0][2:9] != (False,) * 7
+                or role[0][9:] != (-1, True, True)
+            ):
+                raise AssertionError("reader role metadata differs")
+            observed = revision[0][0], role[0] if role else None
+        return observed  # Connection and cursor close before ownership may change.
+
+    def _migrate_execution_reader(self, target_url, action, target, expect_success):
+        if self.profile != "accepted" or self.administration or type(expect_success) is not bool:
+            raise ValueError("reader migration requires explicit non-administration accepted mode")
+        if (action, target) not in (
+            ("upgrade", "20260926_0008"),
+            ("downgrade", "20260926_0007"),
+        ) or self._reader_migration_calls >= 5:
+            raise AssertionError("reader migration is unavailable or exhausted")
+        if action == "downgrade" and expect_success and self._reader_probe_database is not None:
+            raise AssertionError("remove the owned reader probe before successful inverse")
+        before = self._reader_state()
+        forward = action == "upgrade"
+        known = self.owned_roles.get(EXECUTION_READER)
+        if (forward and (before != ("20260926_0007", None) or known is not None)) or (
+            not forward
+            and (
+                before[0] != "20260926_0008"
+                or before[1] is None
+                or known is None
+                or before[1][1] != known
+            )
+        ):
+            raise AssertionError("reader transition has no exact prior ownership")
+        self._reader_transition_pending = True
+        self._reader_migration_calls += 1
+        try:
+            result = subprocess.run(
+                [sys.executable, "-m", "alembic", action, target],
+                cwd=ROOT,
+                env={
+                    **os.environ,
+                    "SCANIPY_DATABASE_URL": target_url.render_as_string(
+                        hide_password=False
+                    ).replace("%", "%%"),
+                },
+                text=True,
+                capture_output=True,
+                timeout=60,
+                check=False,
+            )
+        except BaseException as error:
+            self.migration_evidence.append(error)
+            raise
+        self.migration_evidence.append(result)
+        if type(result.returncode) is not int or (result.returncode == 0) is not expect_success:
+            raise AssertionError("reader migration outcome differs")
+        after = self._reader_state()
+        if not expect_success:
+            if after != before:
+                raise AssertionError("refused reader migration changed identity")
+        elif forward:
+            if after[0] != "20260926_0008" or after[1] is None:
+                raise AssertionError("reader creation readback differs")
+            self.owned_roles[EXECUTION_READER] = after[1][1]
+        else:
+            if after != ("20260926_0007", None):
+                raise AssertionError("reader removal readback differs")
+            del self.owned_roles[EXECUTION_READER]
+        self._reader_transition_pending = False
+        return result
+
+    def _create_reader_probe_database(self):
+        if self.profile != "accepted" or self.administration:
+            raise ValueError("reader probe requires non-administration accepted mode")
+        if self._reader_probe_attempted or self._reader_transition_pending:
+            raise AssertionError("reader probe is unavailable")
+        observed = self._reader_state()
+        if (
+            observed[0] != "20260926_0008"
+            or observed[1] is None
+            or observed[1][1] != self.owned_roles.get(EXECUTION_READER)
+        ):
+            raise AssertionError("reader probe requires exact owned role")
+        self._reader_probe_attempted = True
+        suffix = uuid4().hex
+        if (
+            type(suffix) is not str
+            or len(suffix) != 32
+            or any(c not in "0123456789abcdef" for c in suffix)
+        ):
+            raise AssertionError("invalid reader probe UUID")
+        name = "scanipy_reader_probe_" + suffix
+        with self.admin(bootstrap=True) as connection, _administration_cursor(connection) as cursor:
+            connection.autocommit = True
+            limits = _administration_rows(
+                cursor,
+                "SELECT current_setting('max_identifier_length')::integer",
+                maximum=1,
+                columns=1,
+            )
+            if len(limits) != 1 or type(limits[0][0]) is not int or len(name) > limits[0][0]:
+                raise AssertionError("reader probe name exceeds server identifier limit")
+            prior = _administration_rows(
+                cursor,
+                "SELECT datname::text,oid,datdba FROM pg_database WHERE datname::text=%s LIMIT 2",
+                (name,),
+                maximum=1,
+                columns=3,
+            )
+            if prior:
+                raise AssertionError("reader probe database already exists")
+            self._reader_probe_pending = True
+            cursor.execute(
+                sql.SQL("CREATE DATABASE {} TEMPLATE template0 ENCODING 'UTF8'").format(
+                    sql.Identifier(name)
+                )
+            )
+            rows = _administration_rows(
+                cursor,
+                "SELECT datname::text,oid,datdba FROM pg_database WHERE datname::text=%s LIMIT 2",
+                (name,),
+                maximum=1,
+                columns=3,
+            )
+            if (
+                len(rows) != 1
+                or rows[0][0] != name
+                or type(rows[0][1]) is not int
+                or rows[0][1] <= 0
+                or rows[0][2] != self.database_identity[1]
+            ):
+                raise AssertionError("reader probe creation identity differs")
+            identity = rows[0]
+        self._reader_probe_database = identity
+        self._reader_probe_pending = False
+        return name
+
+    def _drop_reader_probe_database(self):
+        if self._reader_probe_pending or self._reader_transition_pending:
+            raise AssertionError("reader fixture transition is unresolved")
+        if self._reader_probe_database is None:
+            return
+        observed = self._reader_state()
+        if (
+            observed[0] != "20260926_0008"
+            or observed[1] is None
+            or observed[1][1] != self.owned_roles.get(EXECUTION_READER)
+        ):
+            raise AssertionError("reader probe cleanup requires exact owned role")
+        identity = self._reader_probe_database
+        with self.admin(bootstrap=True) as connection, _administration_cursor(connection) as cursor:
+            connection.autocommit = True
+            rows = _administration_rows(
+                cursor,
+                "SELECT datname::text,oid,datdba FROM pg_database WHERE datname::text=%s LIMIT 2",
+                (identity[0],),
+                maximum=1,
+                columns=3,
+            )
+            if rows != [identity]:
+                raise AssertionError("reader probe database ownership/OID changed")
+            self._reader_probe_pending = True
+            cursor.execute(sql.SQL("DROP DATABASE {}").format(sql.Identifier(identity[0])))
+            rows = _administration_rows(
+                cursor,
+                "SELECT datname::text,oid,datdba FROM pg_database WHERE datname::text=%s LIMIT 2",
+                (identity[0],),
+                maximum=1,
+                columns=3,
+            )
+            if rows:
+                raise AssertionError("reader probe removal readback differs")
+        self._reader_probe_database = None
+        self._reader_probe_pending = False
 
     def setup(self):
         if self.administration:
@@ -815,6 +1048,10 @@ class PrivatePostgres:
         if self.profile == "accepted":
             self._setup_accepted()
         self._create_logins()
+        if self.administration:
+            if self._migration_calls != 10 or self._migration_failed:
+                raise AssertionError("administration setup migration schedule is incomplete")
+            self._administration_setup_complete = True
 
     def _setup_accepted(self):
         """Only this empty fixture-owned child; failed migration grants no ownership."""
@@ -1081,6 +1318,8 @@ class PrivatePostgres:
         return org, codebase
 
     def dispose(self):
+        if self._reader_transition_pending or self._reader_probe_pending:
+            raise AssertionError("reader fixture transition is unresolved; refusing cleanup")
         if self.database_identity is None:
             return
         with self.admin(bootstrap=True) as connection:
@@ -1097,6 +1336,7 @@ class PrivatePostgres:
                 )
                 if dict(cursor.fetchall()) != self.owned_roles:
                     raise AssertionError("test role OIDs changed; refusing cleanup")
+                self._drop_reader_probe_database()
                 # No FORCE: a leaked live connection fails visibly, not terminated.
                 cursor.execute(sql.SQL("DROP DATABASE {}").format(sql.Identifier(self.database)))
                 for role in self.owned_roles:

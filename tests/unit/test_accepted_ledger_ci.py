@@ -15,6 +15,7 @@ EXPECTED = {
     "tests.integration.test_accepted_ledger_sql": 43,
     "tests.integration.test_accepted_ledger_security": 102,
     "tests.integration.test_accepted_historical_reads": 38,
+    "tests.integration.test_execution_authority_role": 63,
 }
 
 
@@ -61,7 +62,7 @@ def report(counts=None):
     return root, suite
 
 
-def test_explicit_selection_preserves_old_modules_and_adds_historical_module():
+def test_explicit_selection_preserves_old_modules_and_adds_reader_role_module():
     selected = [
         step
         for step in steps()
@@ -89,7 +90,7 @@ def test_explicit_selection_preserves_old_modules_and_adds_historical_module():
     )
 
 
-def test_actual_validator_accepts_exact_183_controlled_cases():
+def test_actual_validator_accepts_exact_246_controlled_cases():
     root, _suite = report()
     validator()(ET.tostring(root))
 
@@ -133,7 +134,7 @@ def test_identity_and_suite_accounting_cannot_hide_missing_cases(mutation):
     elif mutation == "empty":
         suite[0].set("name", "")
     elif mutation == "count":
-        suite.set("tests", "184")
+        suite.set("tests", "247")
     elif mutation == "outside":
         root.append(ET.Element("testcase", classname="outside", name="hidden"))
     else:
@@ -146,3 +147,48 @@ def test_identity_and_suite_accounting_cannot_hide_missing_cases(mutation):
 def test_report_type_size_and_root_are_checked(value):
     with pytest.raises(AssertionError):
         validator()(value)
+
+
+def test_original_183_without_reader_role_cases_cannot_satisfy_expanded_job():
+    root, _suite = report(dict(list(EXPECTED.items())[:3]))
+    with pytest.raises(AssertionError, match="exactly"):
+        validator()(ET.tostring(root))
+
+
+@pytest.mark.parametrize("module", tuple(EXPECTED)[:-1])
+def test_reader_role_count_cannot_be_replaced_by_other_passing_cases(module):
+    changed = dict(EXPECTED)
+    changed[module] += 1
+    changed["tests.integration.test_execution_authority_role"] -= 1
+    root, _suite = report(changed)
+    with pytest.raises(AssertionError, match="exactly"):
+        validator()(ET.tostring(root))
+
+
+@pytest.mark.parametrize("mutation", ("missing", "unexpected", "duplicate", "empty"))
+def test_reader_role_report_identities_are_required(mutation):
+    root, suite = report()
+    if mutation == "missing":
+        suite.remove(suite[-1])
+        suite.set("tests", str(len(suite)))
+    elif mutation == "unexpected":
+        suite[-1].set("classname", "tests.integration.unallocated_reader")
+    elif mutation == "duplicate":
+        suite[-1].set("name", suite[-2].get("name"))
+    else:
+        suite[-1].set("name", "")
+    with pytest.raises(AssertionError):
+        validator()(ET.tostring(root))
+
+
+@pytest.mark.parametrize("tag", ("skipped", "failure", "error"))
+def test_reader_role_cases_must_execute_without_skips_or_errors(tag):
+    root, suite = report()
+    ET.SubElement(suite[-1], tag)
+    with pytest.raises(AssertionError, match="no skips"):
+        validator()(ET.tostring(root))
+
+
+def test_actual_validator_also_accepts_the_single_testsuite_root():
+    _root, suite = report()
+    validator()(ET.tostring(suite))

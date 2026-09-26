@@ -46,6 +46,15 @@ All unchecked acceptance items below remain required unless explicitly
 classified optional. An adopted design, recovered historical report, or one
 successful Joern parse does not complete a task or verify a submitted claim.
 
+**Owner clarification, September 26:** the project owner answered “Me, for
+both local-demo roles.” The same person approves detector/rule bundles and
+authorizes recovery after a database restore for the local demo. Do not ask
+again who fills these roles or assume two-person approval. This settles the
+human role assignment only; it does not install trust, approve a particular
+bundle or restore operation, or prove recovery readiness. Follow the remaining
+[operator binding and recovery TODOs](DECISION-BHMEA-01-current-execution-authority-2026-09-25.md#local-demo-human-roles--owner-clarification-september-26).
+This later clarification does not rewrite the historical evidence cutoffs below.
+
 **Current work queue:** use Revision 19 in the
 [active handoff](PLAN-BHMEA-EXECUTION-2026-09-25.md#current-next-actions--0812-utc).
 The dated progress paragraphs that follow retain historical evidence. Their
