@@ -1,0 +1,78 @@
+{
+  "fixture_format": "scanipy-test-provenance-compatibility/1",
+  "baseline_commit": "c7eb7b3e4cad8f66d2098213998b7931474295a5",
+  "captured_on": "2026-09-26",
+  "capture_python": "3.11.16",
+  "classification": "synthetic signed full-log binding; no source or operator authority",
+  "public_key": {
+    "key_id": "fixture-public-key/provenance-full-log",
+    "key_version": "capture-2026-09-26",
+    "der_hex": "30820122300d06092a864886f70d01010105000382010f003082010a0282010100c85794637678617f945b382cf9069db5a78111f2e0b408dcede6c10121443fdd3e295e8d0d35525ca20c99dd139dda9a3ff08feebaf38e0e82d4cb42c48e0d83edbe5d8aa58902ddae4da3feacfad30c225348c6dadf5e1f023ca8252a06ba70d74e90f2c20c4ef334d70053a00a1d1598e04605e23b35e328dfa6ad301bd22bc97fa088ad22fb3d714665d911020ba3daad40675e9ac5ed98dd3cc102ed62eee823e3d6b98f00eb0b8a43d671e6111acd7c1e015f6baad255a1d0113a203570a3b1ab9e9217c325b9c2838ce8fb2ae721007b39e92aae7658bb6488c20752fbf5f5bb3c3272227f7a676241fe9cfcbe2ba9bb4efcefc7add1a4d9b2186be63f0203010001",
+    "sha256": "1ff3dde7b8c1e11c412b2e4202295468bf0575f783b7c84aaa0325b67528ac84"
+  },
+  "records": [
+    {
+      "name": "v2_full_log",
+      "input": {
+        "id": "00000000-0000-0000-0000-000000002711",
+        "parent_record_id": null,
+        "record_type": "chain",
+        "scan_id": "00000000-0000-0000-0000-000000000001",
+        "finding_id": "00000000-0000-0000-0000-000000002713",
+        "org_id": "00000000-0000-0000-0000-000000002714",
+        "codebase_id": "00000000-0000-0000-0000-000000000003",
+        "commit_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "scm_provider": "github",
+        "snapshot_id": "00000000-0000-0000-0000-000000000002",
+        "snapshot_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "precondition_status": "closed-world",
+        "S_version": "1.4.0",
+        "env_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "cpg_order_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "cpg_order_hash_annotation": "canonical iff fingerprint_class = strong",
+        "fingerprint_class": null,
+        "witness_blob_uri": "s3://witness/abc.json",
+        "slice_fingerprint": "0101010101010101010101010101010101010101010101010101010101010101",
+        "rule_id": "R1",
+        "spec_id": "S1",
+        "detector_id": "det-injection",
+        "detector_engine": "ifds",
+        "sarif_hash": "d6fce0db36b454b60fbae752c176ec1ccb7bdfb53db644b188f88edd870c9ff5",
+        "origin": "deterministic-core",
+        "determinism_partition": "deterministic-core",
+        "repartition_reason": null,
+        "repartition_oracle_id": null,
+        "claim_label": "CONDITIONAL_THEOREM",
+        "record_schema_version": 2,
+        "artifact_identity": {
+          "schema_version": 2,
+          "cpg_order": {
+            "status": "completed",
+            "digest": "0000000000000000000000000000000000000000000000000000000000000000",
+            "fingerprint_class": "strong",
+            "namespace": "scanipy-canonical-graph/2",
+            "annotation": "canonical iff fingerprint_class = strong"
+          },
+          "slice": {
+            "status": "completed",
+            "digest": "0101010101010101010101010101010101010101010101010101010101010101",
+            "fingerprint_class": "strong",
+            "namespace": "scanipy-slice-normal-form/2",
+            "annotation": "canonical iff fingerprint_class = strong"
+          }
+        }
+      },
+      "canonical_utf8": "{\"S_version\":\"1.4.0\",\"artifact_identity\":{\"cpg_order\":{\"annotation\":\"canonical iff fingerprint_class = strong\",\"digest\":\"0000000000000000000000000000000000000000000000000000000000000000\",\"fingerprint_class\":\"strong\",\"namespace\":\"scanipy-canonical-graph/2\",\"status\":\"completed\"},\"schema_version\":2,\"slice\":{\"annotation\":\"canonical iff fingerprint_class = strong\",\"digest\":\"0101010101010101010101010101010101010101010101010101010101010101\",\"fingerprint_class\":\"strong\",\"namespace\":\"scanipy-slice-normal-form/2\",\"status\":\"completed\"}},\"claim_label\":\"CONDITIONAL_THEOREM\",\"codebase_id\":\"00000000-0000-0000-0000-000000000003\",\"commit_sha\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"cpg_order_hash\":\"0000000000000000000000000000000000000000000000000000000000000000\",\"cpg_order_hash_annotation\":\"canonical iff fingerprint_class = strong\",\"detector_engine\":\"ifds\",\"detector_id\":\"det-injection\",\"determinism_partition\":\"deterministic-core\",\"env_digest\":\"sha256:7777777777777777777777777777777777777777777777777777777777777777\",\"finding_id\":\"00000000-0000-0000-0000-000000002713\",\"fingerprint_class\":null,\"id\":\"00000000-0000-0000-0000-000000002711\",\"org_id\":\"00000000-0000-0000-0000-000000002714\",\"origin\":\"deterministic-core\",\"parent_record_id\":null,\"precondition_status\":\"closed-world\",\"record_schema_version\":2,\"record_type\":\"chain\",\"repartition_oracle_id\":null,\"repartition_reason\":null,\"rule_id\":\"R1\",\"sarif_hash\":\"d6fce0db36b454b60fbae752c176ec1ccb7bdfb53db644b188f88edd870c9ff5\",\"scan_id\":\"00000000-0000-0000-0000-000000000001\",\"scm_provider\":\"github\",\"slice_fingerprint\":\"0101010101010101010101010101010101010101010101010101010101010101\",\"snapshot_digest\":\"sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"snapshot_id\":\"00000000-0000-0000-0000-000000000002\",\"spec_id\":\"S1\",\"witness_blob_uri\":\"s3://witness/abc.json\"}",
+      "canonical_sha256": "5387ca5170f6ea6aa325765dc6441b81d26cdc336a1bcfc33c5e3280ce8b9922",
+      "signature_hex": "8fb5efdb28e7b981f73c3936ed2dafea84cafcd4f079609447ce52034f00950771b6a5bd997a063c989d38d6557838aa5e37b6757340f95eae5a050b52dd8b24f0f20f8195447cc59e4d2d32f46e5b9e38023dae458b8156c76679d5474edd4504a332a82d9f4aa9f55b43c8d7b019d4f7091f2f14759c30b788ce4766b7342108cdc6f949c1c1ce9322322cefbc640b6ad8ba282417c5a72a6482371942d6b1a59d4a5262f0b3cb660a6a416a444edbca4124ced6b42ed5b97adb326e1f88203e975cc70b9bb1af3729e04b3a6eb5f6d1c34aa8a90817dc9b83c02b64bff5e95ab0ab60e0d81dd72597be2c0b3f72e61ab5d82e6049b5f4b5b140c432fe7b80",
+      "signature_alg": "RSASSA_PSS_SHA_256",
+      "kms_key_arn": "fixture-public-key/provenance-full-log",
+      "kms_key_version": "capture-2026-09-26",
+      "export_utf8": "{\"id\":\"00000000-0000-0000-0000-000000002711\",\"parent_record_id\":null,\"record_type\":\"chain\",\"commit_sha\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"scm_provider\":\"github\",\"snapshot_digest\":\"sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"precondition_status\":\"closed-world\",\"S_version\":\"1.4.0\",\"env_digest\":\"sha256:7777777777777777777777777777777777777777777777777777777777777777\",\"cpg_order_hash\":\"0000000000000000000000000000000000000000000000000000000000000000\",\"witness_blob_uri\":\"s3://witness/abc.json\",\"slice_fingerprint\":\"0101010101010101010101010101010101010101010101010101010101010101\",\"rule_id\":\"R1\",\"spec_id\":\"S1\",\"detector_id\":\"det-injection\",\"detector_engine\":\"ifds\",\"sarif_hash\":\"d6fce0db36b454b60fbae752c176ec1ccb7bdfb53db644b188f88edd870c9ff5\",\"origin\":\"deterministic-core\",\"determinism_partition\":\"deterministic-core\",\"claim_label\":\"CONDITIONAL_THEOREM\",\"kms_key_arn\":\"fixture-public-key/provenance-full-log\",\"kms_key_version\":\"capture-2026-09-26\",\"signature\":\"8fb5efdb28e7b981f73c3936ed2dafea84cafcd4f079609447ce52034f00950771b6a5bd997a063c989d38d6557838aa5e37b6757340f95eae5a050b52dd8b24f0f20f8195447cc59e4d2d32f46e5b9e38023dae458b8156c76679d5474edd4504a332a82d9f4aa9f55b43c8d7b019d4f7091f2f14759c30b788ce4766b7342108cdc6f949c1c1ce9322322cefbc640b6ad8ba282417c5a72a6482371942d6b1a59d4a5262f0b3cb660a6a416a444edbca4124ced6b42ed5b97adb326e1f88203e975cc70b9bb1af3729e04b3a6eb5f6d1c34aa8a90817dc9b83c02b64bff5e95ab0ab60e0d81dd72597be2c0b3f72e61ab5d82e6049b5f4b5b140c432fe7b80\",\"signature_alg\":\"RSASSA_PSS_SHA_256\",\"repartition_history\":[],\"record_schema_version\":2,\"artifact_identity\":{\"schema_version\":2,\"cpg_order\":{\"status\":\"completed\",\"digest\":\"0000000000000000000000000000000000000000000000000000000000000000\",\"fingerprint_class\":\"strong\",\"namespace\":\"scanipy-canonical-graph/2\",\"annotation\":\"canonical iff fingerprint_class = strong\"},\"slice\":{\"status\":\"completed\",\"digest\":\"0101010101010101010101010101010101010101010101010101010101010101\",\"fingerprint_class\":\"strong\",\"namespace\":\"scanipy-slice-normal-form/2\",\"annotation\":\"canonical iff fingerprint_class = strong\"}}}"
+    }
+  ],
+  "sarif_reference": {
+    "fixture": "corpus.json",
+    "sha256": "d6fce0db36b454b60fbae752c176ec1ccb7bdfb53db644b188f88edd870c9ff5"
+  }
+}

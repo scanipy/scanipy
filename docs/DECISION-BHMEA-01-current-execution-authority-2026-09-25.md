@@ -94,3 +94,50 @@ empirical claims. Those require their own real evidence.
 No full R-task, submission claim or shared G0/G1/G2/G3 gate is marked complete
 by this decision. The original supporting material and the complete TODOs
 remain the acceptance target.
+
+## Tenant-local authority and later publication extensions
+
+Root's engineering clarification during Revision 15 preparation on September
+25 preserves the complete submitted scope; it is not separate human approval
+or a change to the original submission/backlog. The
+[submission's deployment section](blackhat-mea-supporting-material.md#6-the-deployment)
+expressly promises self-hosted **single-tenant** Postgres. The
+[claim ledger](REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md#3-completion-modes-and-claim-ledger)
+retains that C12 promise, C11's actual signed provenance, C13's real findings/UI
+and C14's Semgrep/CodeQL paths. Full R09/R10/R12 and the other existing TODOs
+require actual accepted inputs and producers; they do not require cross-scope
+global-publication adoption or statistical/LLM spec inference as prerequisites.
+
+In particular, R10 requires a genuinely accepted spec with `LLM_TRIAGE=off`;
+R11 measures empirical **oracle reproduction**, not inferred-rule precision.
+R07's durable decisions do not permit LLM detection writes. These existing
+requirements remain in the unchanged
+[complete task inventory](REVIEW-BHMEA-EXECUTION-ACTION-ITEMS-2026-09-23.md#5-prioritized-task-inventory),
+not replaced by an extension's acceptance tests.
+
+The required runnable path remains genuine **tenant-local accepted builtin
+content and publication**, exact immutable bytes and versions, current authority,
+full provenance and independent verification, and the real scan/lifecycle/UI
+workflow. All declared Java/Python semantics, CodeQL/Semgrep, real measurements,
+no-execution, release and stage obligations remain. Fixture keys, caller-supplied
+hashes, local codecs or synthetic signatures do not satisfy those requirements.
+
+Cross-scope global-publication-to-tenant adoption and statistical/LLM
+inferred-spec publication are **later extensions, not Black Hat acceptance
+gates or blockers of the tenant-local target**. Derived resolver roadmap rows
+that grouped those extensions with required signed/UI work do not expand the
+submission. Existing global publication structure and historical records remain
+intact. The current customer-only execution, scope, signature and admission
+guards must not be removed to make a global fixture pass; a real cross-scope
+extension needs its own coordinated owning-schema/authority design and tests.
+The known global `SqlLedger.create()` tenant-org fixture defect remains recorded
+as extension-path work; changing that fixture alone cannot enable the currently
+unsupported owning protocol.
+
+Likewise, a known inferred proposal cannot be relabeled builtin to avoid its
+separate statistical acceptance rules. Preserve existing Gate 4, INV-3, CI tests,
+signing meanings and all related guards unchanged. This clarification allocates
+no source changes or runtime/operator installation and does not resolve those
+extensions' designs. Every original R01–R20 checklist, C01–C18 state, milestone
+and DAG edge remains unchanged. Current work queues should prioritize the full
+tenant-local target without inserting either extension as an invented gate.

@@ -14,7 +14,7 @@ import yaml
 
 pytestmark = pytest.mark.unit
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE_DIRS = ["analysis", "detectors", "integrations", "services", "workers"]
+SOURCE_DIRS = ["analysis", "detectors", "integrations", "services", "workers", "tools"]
 
 
 def _stub(directory, name, body):
@@ -75,6 +75,63 @@ def _source_tree(tmp_path, directories=SOURCE_DIRS):
         path = tmp_path / name
         path.mkdir()
         (path / "example.py").write_text("pass\n")
+
+
+def _run_ci_mypy(tmp_path, environment):
+    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
+    steps = [
+        step for step in workflow["jobs"]["lint"]["steps"] if step.get("name") == "Mypy strict"
+    ]
+    assert len(steps) == 1
+    result = subprocess.run(
+        ["/bin/sh", "-ec", steps[0]["run"]],
+        cwd=tmp_path,
+        env=environment,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    log = Path(environment["HOOK_TEST_LOG"])
+    commands = [line.split("\t") for line in log.read_text().splitlines()] if log.exists() else []
+    return result, commands
+
+
+@pytest.mark.parametrize("present", [[], ["tools"], SOURCE_DIRS])
+def test_actual_ci_mypy_checks_every_populated_directory_once(tmp_path, present):
+    environment = _environment(tmp_path)
+    _source_tree(tmp_path, present)
+    if "detectors" not in present:
+        (tmp_path / "detectors").mkdir()
+    result, commands = _run_ci_mypy(tmp_path, environment)
+    assert result.returncode == 0
+    assert commands == ([["mypy", "--config-file", "pyproject.toml", *present]] if present else [])
+
+
+@pytest.mark.parametrize("runner", [_run_ci_mypy, "pre-push"])
+def test_tools_only_type_failure_is_not_an_empty_scaffold(tmp_path, runner):
+    environment = _environment(tmp_path)
+    _source_tree(tmp_path, ["tools"])
+    environment["MOCK_MYPY_PARTIAL_STATUS"] = "19"
+    result, commands = (
+        _run_hook(runner, tmp_path, environment)
+        if isinstance(runner, str)
+        else runner(tmp_path, environment)
+    )
+    assert result.returncode == 19
+    assert commands[-1] == ["mypy", "--config-file", "pyproject.toml", "tools"]
+    assert sum(command[0] == "mypy" for command in commands) == 1
+    assert not any(command[0] == "pytest" for command in commands)
+
+
+def test_actual_ci_mypy_discovery_failure_is_fatal(tmp_path):
+    environment = _environment(tmp_path)
+    _source_tree(tmp_path, ["tools"])
+    path = Path(environment["PATH"]) / "find"
+    path.unlink()
+    _stub(path.parent, "find", "exit 15")
+    result, commands = _run_ci_mypy(tmp_path, environment)
+    assert result.returncode == 15
+    assert commands == [["find", "tools", "-name", "*.py", "-print", "-quit"]]
 
 
 @pytest.mark.parametrize("status", [1, 23, 127])

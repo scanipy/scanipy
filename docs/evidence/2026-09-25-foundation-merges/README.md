@@ -8,6 +8,12 @@ Revision 12 appends the 2026-09-25 **19:00 UTC** cutoff below, based on accepted
 Revision 11 main `d4ad0c0b692cef4539d5333c60066cdcedecfb4e`, with a separately
 identified post-cutoff update. Earlier pending statements remain historical
 observations, not instructions to repeat finished work.
+Revision 13 below records the observed **20:51 UTC** cutoff on accepted main
+`075f92fe9d6aa1afb0a16494769e9cc96ba0df16`. Its current instructions supersede
+older pending statuses without rewriting any earlier observation.
+Revision 14 appends the observed **22:25 UTC** cutoff on accepted main
+`4911f6568a85206651adbf40428529eb090c389f`; earlier pending statuses stay
+historical, not directions to repeat already completed work.
 Owner: root engineering coordinator, umbrella #362.
 
 Every merged row below had the required tests and canonical `claude-review`
@@ -42,6 +48,8 @@ R17 obligations. No full R-task, C01–C18 claim, or shared gate is accepted her
 | [#380](https://github.com/scanipy/scanipy/pull/380), evidence-backed R05 campaign producer | `9be0579cd745fff4c4115c1f241a93926113a9be` | `3e2773e2a1f6578c2a712a1b85b5a45d172503eb` | [CI](https://github.com/scanipy/scanipy/actions/runs/36161586241), [successful APPROVE](https://github.com/scanipy/scanipy/actions/runs/36162235882), [final verdict](https://github.com/scanipy/scanipy/pull/380#issuecomment-5835971061) |
 | [#406](https://github.com/scanipy/scanipy/pull/406), bounded local source-custody prep | `b005eaa5e7081a3920a97b01be0281430f5ef74f` | `6f1ebc8720cac8f2bbba20a061c0cba7ca8ff792` | [CI](https://github.com/scanipy/scanipy/actions/runs/36164994819), [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36164994869), [successful APPROVE](https://github.com/scanipy/scanipy/actions/runs/36165792723), [final verdict](https://github.com/scanipy/scanipy/pull/406#issuecomment-5836441907) |
 | [#407](https://github.com/scanipy/scanipy/pull/407), lossless typed observed transport | `83b9ec6cc96e2d1283be87d12ea85de50ddef50b` | `1b29100ad9c96ebab9a4ac1a439fc2a5b19ac2ee` | [CI](https://github.com/scanipy/scanipy/actions/runs/36167975265), [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36167975015), [successful APPROVE](https://github.com/scanipy/scanipy/actions/runs/36167975158), [final verdict](https://github.com/scanipy/scanipy/pull/407#issuecomment-5836718691) |
+| [#413](https://github.com/scanipy/scanipy/pull/413), pure CodeQL observations | `4be0c28c648baefce9c2070aaf0db09b7c8dec6a` | `5118c93a0e4dac4815faf56febe1e14eb98edfb3` | [CI](https://github.com/scanipy/scanipy/actions/runs/36181665721), [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36181665520), [successful APPROVE](https://github.com/scanipy/scanipy/actions/runs/36182993701), [final verdict](https://github.com/scanipy/scanipy/pull/413#issuecomment-5838721370) |
+| [#411](https://github.com/scanipy/scanipy/pull/411), bounded occurrence persistence | `1c2f3b7472b459a09700866ec0822a735dd66349` | `075f92fe9d6aa1afb0a16494769e9cc96ba0df16` | [CI](https://github.com/scanipy/scanipy/actions/runs/36185087471), [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36185087522), [successful APPROVE](https://github.com/scanipy/scanipy/actions/runs/36186007470), [final verdict](https://github.com/scanipy/scanipy/pull/411#issuecomment-5839122349) |
 
 ### Explicit later update — 17:45 UTC
 
@@ -172,8 +180,8 @@ followed at 14:29:55 UTC. Root verified the squash tree equals the tested head.
 future output-boundary validation and optional type-only assertion hygiene are
 tracked in the handoff; they are not represented as implemented by this merge.
 Continue remaining candidates serially with their own exact-head gates.
-Local core/typed-CPG/occurrence-store work is indexed in the current handoff,
-not counted as merged evidence. Source custody is now merged separately in
+At that historical checkpoint, local core/typed-CPG/occurrence-store work was
+indexed separately, not counted as merged evidence. Source custody merged in
 #406. The later #404 parser merge is recorded
 separately below. No local test count fills a shared-gate PASS.
 
@@ -255,6 +263,8 @@ profile guarantee and were not rerun or retroactively certified. R16 is not comp
 
 Task-local XML paths below identify diagnostic records, not a committed immutable
 acceptance archive. Final evidence retention and combined-artifact gates remain required.
+The earlier statuses here are superseded only where the later dated updates
+explicitly record completion or a new implementation checkpoint.
 
 - Local-only checkpoint details are in the current handoff. #378's final
   dedicated PostgreSQL suite passed 89 checks with zero skips; #393 and
@@ -577,3 +587,475 @@ or different trees are not summed into coverage.
    No shared G0/G1/G2/G3 or full R/C status changes in this snapshot. No release,
    image publication, user-service/database change, native engine run or operator identity/
    installation choice is authorized or claimed here.
+
+## Revision 13 — observed 20:51 UTC, September 25
+
+Accepted main is `075f92fe9d6aa1afb0a16494769e9cc96ba0df16`, tree
+`7bce9471a3d858d39871e20631eaa5655b02b202`. The current cutoff was confirmed
+by an actual 20:51:15 UTC clock observation. Root's mistaken future 20:54
+timestamp for the WORK02 approval was corrected to the actual 20:49 observation;
+it is not used as an observed event. Earlier 17:29/17:45/19:00/19:05 evidence
+retains its original head, scope and time. No R/C/gate/DAG status is promoted.
+
+### New accepted component records
+
+- **#413 merged at 20:08:11 UTC.** Its merge and reviewed `4be0c28` share tree
+  `047536eda124eaae6d64e5237ff399da3c090bfb`. All seven CI/Gate 3 checks
+  succeeded before final canonical action `36182993701` SUCCESS/APPROVE.
+  The [initial review 36181665499](https://github.com/scanipy/scanipy/actions/runs/36181665499)
+  raised pending-CI and Unicode concerns; it remains retained, not relabeled.
+  Three actual NFD/NFC controls passed in
+  `/tmp/scanipy-413-unicode-assertion-confirmation.xml`. The accepted parser
+  preserves supplied raw results and explicit unknowns. No real CodeQL output
+  acquisition/import/native invocation, query-pack/source authority, coverage,
+  reproduction, incumbent comparison or full R13/G2 acceptance follows.
+- **#411 merged at 20:33:41 UTC.** Reviewed `1c2f3b7` and merge `075f92fe`
+  share the entire `7bce9471` tree. All eight remote test checks succeeded,
+  including **89 actual isolated PostgreSQL cases with zero skips**; final
+  action `36186007470` succeeded with APPROVE and the actual gate reported
+  APPROVE/PASS. The initial failed review/CLAR history above remains retained.
+  Earlier `3992e5c4363264cde23d8d3e78b8cddb77828de0` full verification was
+  **2,621 passed /51 skipped**, 392.62s, on its own tree. The current focused
+  **548** comprises 95 occurrence, 427 CodeQL and 26 ledger checks, not 548
+  PostgreSQL cases. Persistence is implemented; current authority, live
+  producers, final Finding/R09 bridge, durable decisions and API/UI are not.
+  CLAR-BHMEA-02 and larger #378/#362 remain open.
+
+### Local integrations — not additional accepted components
+
+| Scope / artifact | Observed result | Remaining boundary |
+|---|---|---|
+| Packet `a9e80119f4b49bd1b3ae60a202a5d5615918f5c1` / controller `ccaf7e5ef8527b5903f48c2cc76d038dc1716617` | Identical tree `7976bbd438a6436fb019fca171579c31f2a58858`; `/tmp/scanipy-runtime-packet-ancestor-main-full.xml` reports **5,662 passed /51 skipped**, zero failures/errors, 483.365s. Its actual `tests.integration.test_occurrence_store` class has **89 executed cases, zero skips**. | Current-head remote gates, installed authority/kernel/runtime controls and actual controller/workflow remain required. Total XML cases 5,713 includes skips and is not the pass count. |
+| Pure packet commit `639a6c96c881aa5ab950fc11fd921766dc113a5f` | Scoped source review/normal commit; **760 new +16 independent =776** checks on each Python 3.11.16/3.12.14. Reports `/tmp/scanipy-packet-root-review-py311.xml` (6.723s) and `/tmp/scanipy-packet-root-review-py312.xml` (9.353s). Later combined focused selection **1,946** passed. | Supplied-data lease/hash/owner checks do not manufacture current permission or runtime observations. Cross-version and overlapping counts are not added into coverage. |
+| Metadata ancestor correction `5c57897bcb5b9635be05c5ab4994b345d0621c2b` | Independent **117** (1.623s), `/tmp/scanipy-profile-ancestor-canonical-peer.xml`; combined **664** (5.744s), `/tmp/scanipy-profile-ancestor-after.xml`. Full nine-field file/direct-parent checks remain; ancestor-only equality uses device/inode/full-mode/UID/GID. | The correction is not a swallowed change or retry. Hostile same-UID/root/mount protection and installed runtime custody are not established. |
+| Inventory `d59c4275eee4c9537501143345aa4f94d53bbb8e` / rule `2f1b3f7b7562a035d95e2c4ada9bbed57453c794` | Current focused **647 /714**, respectively. Local/no PR at this cutoff; root's inventory normal push is running. Earlier full **2,536/51 /2,603/51** remain attributed to the older heads. | Complete normal/current-head remote gates before merge; no new full result is silently assigned to the refreshed trees. |
+| AL-02 / AL-03 | AL-02 remains locally committed and independently reviewed. AL-03 `be3c00ddefa1921d7f3f9aebd909f8380ff5bf4c` has **56** draft shapes/facade controls; no AL-03 PostgreSQL acceptance. | At **20:49 UTC**, root/peer approved WORK02 SHA `85174198d5937e3755412d6cad53b60db9c9af5bcf6c8edb6a137d8c10b478fb` after replay `14A` and census `N-seen+1` corrections. Incorporate its logical raw/image/history/canonical accounting before affected helper code. Operator/current authority and actual owner bridges remain absent; these are not RSS/full-workload capacity guarantees. |
+| RES non-event byte-custody core | Frozen source SHA `2fd1297a3b664689f2219693ac0ee8524cf419119977b83bf42037e0d18340f0`, tests `3a5093955dc8bab301cc652def4f10ff32f4a44399d810cf40b6a9869dbee16c`, contract `3dcb1d3d53d0077a09c7232522e5e182ccaf8fea06215de3b30e1e98b6d911f7`; **110 passed** each on 3.11.16/3.12.14, 12.934s/12.391s, `/tmp/scanipy-res-core-frozen-110-311.xml` and `/tmp/scanipy-res-core-frozen-110-312.xml`. | Independent review pending; private test-directory publication is not a qualified installation or operational constructor. Staged role plans and permanent intent mappings do not complete event/spool/full-history reader, physical capacity, six-role authority or DB orphan/pre-reservation barriers. |
+
+The full-run XML was checked twice: root's first Python executable path was
+missing, then corrected; an initial class-name filter matched zero, then the
+actual class name matched 89. These are tooling/filter errors, not failed
+product tests or evidence that the PostgreSQL cases were omitted. The final
+counts above come from the actual suite/testcase attributes.
+
+### Contrary evidence remains part of the record
+
+- The original controller full at `6b763929` reported **3,772 passed /51
+  skipped /one failure**, 345.76s, in
+  `/tmp/scanipy-runtime-controller-git-main-full.xml`. It did not capture
+  which held object changed; that cause remains unknown. Separately,
+  `/tmp/scanipy-runtime-profile-stamp-controlled.xml` passed the unchanged
+  short-read control and failed a controlled unmeasured sibling-directory
+  change after measurement. This **one-pass/one-failure** demonstrates the
+  ancestor overreach, not the retrospective cause of the full-run failure.
+  Later corrected green results do not erase either record.
+- RES cold-recovery draft source `0c595a37` produced **77 pass/one fail** in
+  `/tmp/scanipy-res-core-recovery-first.xml`; an already verified two-link
+  prerequisite pair could not be rebound. The exact recovery correction's
+  unchanged controls pass in `/tmp/scanipy-res-core-pair-recovery-green.xml`.
+  Python 3.12 draft `b531111d` produced **one failure** in
+  `/tmp/scanipy-res-core-path-312-first.xml` on legitimate private path
+  fragments; bounded primitive-fragment reconstruction corrected it, with
+  the four-mode controls in `/tmp/scanipy-res-core-path-312-green.xml`.
+  These genuine failures are separate from a test-only ExceptionGroup
+  assertion correction and an executable-path setup failure before pytest.
+- All earlier canonical, Unicode/path, journal chronology/spool/release,
+  projection/UUID, inventory and budget contrary evidence remains retained.
+  No failed review action is treated as approval; successful pure checks do
+  not prove an actual native producer, signature/currentness or physical capacity.
+
+### Dependency-ordered next actions
+
+1. Root finishes exact-head foundation publication and combined runtime gates;
+   specialists preserve accepted parser/store/source bytes during integration.
+2. Incorporate approved AL logical accounting before SQL helpers. Use the
+   actual RUNNING new-run state and atomic denial; do not invent pending runs,
+   empty child results, fake authority IDs or retroactive lower-level adoption.
+3. Finish RES independent review, then the separate qualified storage, full
+   reader/event/spool, current-owner and DB barrier work. Permanent intent/role
+   plans address the allocated non-event design gap; the deferred delegated
+   full-reader hash-work boundary remains, not a widened allowance.
+4. Bind actual source/accepted rules/native observations to retained detections
+   before identity, final provenance/decisions/API/UI and real oracle rates.
+   Preserve full Java/Python, all 422 cases/844 uncached sides and every claim.
+5. Only after actual runtime readiness and explicit bounded-run approval,
+   perform native probes/campaigns and G0/G1/G2, then separate G3 gates. The
+   confirmed machine's 20:32 sample was about **8.3 GiB available RAM, full
+   swap, 96 GiB free shared disk**—not reserved capacity. No installation,
+   release/image publication, native campaign or user-app/DB mutation occurred.
+
+### Explicit later update — 20:54 UTC
+
+- Inventory `d59c427` completed normal push: Ruff, 249 formatted files,
+  mypy 99 and configured unit selection passed. [PR #414](https://github.com/scanipy/scanipy/pull/414)
+  is open against accepted `075f92fe`. [CI 36188497922](https://github.com/scanipy/scanipy/actions/runs/36188497922)
+  and [canonical 36188497794](https://github.com/scanipy/scanipy/actions/runs/36188497794)
+  are running; green lint is not completed CI/review. Rule `2f1b3f7` normal
+  push is running after Ruff/format 250/mypy 100 passed; no result is inferred
+  for its remaining unit stage or remote gates.
+- Root independently reproduced a genuine RES double-begin thread race at
+  frozen source `2fd1297a`: **one failure /zero skips**, 0.280s,
+  `/tmp/scanipy-res-root-concurrency-configured-before.xml`. Root's narrow
+  three-file lifetime correction has an interim **111 passed** (13.705s;
+  original 110 plus the unchanged external race control) and a separate five
+  new lifetime controls passing (0.642s). A redundant closed-state check
+  initially failed mypy; the unsynchronized early check was removed and final
+  static checks passed. Final independent/fault review, full and publication
+  gates remain pending. Earlier 110-pass reports are not reassigned to the
+  corrected source, nor do they erase this later real defect.
+
+## Revision 14 — observed 22:25 UTC, September 25
+
+The clock read at 22:25:56 UTC and remote records confirm accepted main
+`4911f6568a85206651adbf40428529eb090c389f`, tree
+`1b81b0fd1e4d52165695e957d90f7818aafe08cd`. All four PRs below merged only
+after normal push, required CI, canonical SUCCESS/final APPROVE and truthful
+completed checklist. Narrow scope only; no umbrella issue is auto-closed.
+
+| PR | Reviewed head → merge | Observed gates |
+|---|---|---|
+| [#414 inventory](https://github.com/scanipy/scanipy/pull/414) | `d59c4275eee4c9537501143345aa4f94d53bbb8e` → `c7eb7b3e4cad8f66d2098213998b7931474295a5`, 21:14:06 UTC | [CI](https://github.com/scanipy/scanipy/actions/runs/36188497922) six successes, 89 actual PG cases; [final canonical](https://github.com/scanipy/scanipy/actions/runs/36189446059) SUCCESS/[APPROVE](https://github.com/scanipy/scanipy/pull/414#issuecomment-5839597708). Initial [procedural failed review](https://github.com/scanipy/scanipy/actions/runs/36188497794) retained. |
+| [#415 Revision 13](https://github.com/scanipy/scanipy/pull/415) | `e4085927026dd452e1c4f7cd6b1fffb670238dc3` → `fd35a61d49855af235535916b734593387d52ee8`, 21:32:28 UTC | [CI](https://github.com/scanipy/scanipy/actions/runs/36191054813) six successes, 89 actual PG cases; [final canonical](https://github.com/scanipy/scanipy/actions/runs/36191780566) SUCCESS/[APPROVE](https://github.com/scanipy/scanipy/pull/415#issuecomment-5839898409). Initial [pending-CI failed review](https://github.com/scanipy/scanipy/actions/runs/36191054786) retained. |
+| [#416 rule codec](https://github.com/scanipy/scanipy/pull/416) | `27ffcc843ec94af2f72c1514453d3d9ffbf5ca8e` → `2dcec908faa4fc160fed27a1d2ebbc02e2d4a4c2`, 21:56:20 UTC | [CI](https://github.com/scanipy/scanipy/actions/runs/36192191972) six and [Gate 3](https://github.com/scanipy/scanipy/actions/runs/36192193211) two successes, 89 actual PG cases; [final canonical](https://github.com/scanipy/scanipy/actions/runs/36193652089) SUCCESS/[APPROVE](https://github.com/scanipy/scanipy/pull/416#issuecomment-5840152964). Initial [pending-CI/security-signoff review](https://github.com/scanipy/scanipy/actions/runs/36192191974) retained. |
+| [#417 metadata loader](https://github.com/scanipy/scanipy/pull/417) | `de685797af77aa9a5303fb5bdeea1f372d428513` → `4911f6568a85206651adbf40428529eb090c389f`, 22:16:42 UTC | [CI](https://github.com/scanipy/scanipy/actions/runs/36195155422) six successes, 89 actual PG cases without skips; first [canonical](https://github.com/scanipy/scanipy/actions/runs/36195155430) SUCCESS/[APPROVE](https://github.com/scanipy/scanipy/pull/417#issuecomment-5840329710). Actual gate printed APPROVE/PASS at 22:11:48 UTC. |
+
+No Gate 3 run is inferred where changed paths did not trigger it. Rule #416
+also had independent explicit Security Analyst APPROVED on its exact eight-path
+scope: 228 passed /one existing DET-03 skip, not full component acceptance.
+Its actual merge-tree affected selection passed 813 with zero skips;
+`/tmp/scanipy-rule-416-merge-focused.xml`, SHA256
+`8ce2c8dfdf767ac7aa5dfcdf5955b71304cedccf4e2185647b64855e7c344d05`,
+6.315s. This is affected-selection evidence, not another full run.
+
+Loader #417's actual fetched merge `bab501ff78a27d9a6eae389f0486faf9cd44453f`
+has the same complete tree as reviewed head and final main. Root ran **1,090
+affected cases, zero skips/failures/errors**, 9.594s, on that merge tree:
+`/tmp/scanipy-loader-417-merge-focus.xml`, SHA256
+`7a01920dade58b62ca5ade3d809147bb57c23667cc70e52f34aa196f664b9861`.
+Earlier C617 full 3,424/51 stays at that earlier head, not the refreshed tree.
+Its nonblocking review descriptions were corrected in the PR body: ancestor
+identity/security retains five fields, not four, and exact PosixPath is required;
+subclasses are rejected. No behavior change or contrary failure was erased.
+
+### Local candidates — diagnostic evidence, not accepted implementation
+
+| Candidate and exact scope | Current evidence | Pending gate / boundary |
+|---|---|---|
+| B resolver `b07174522a35a5ab9bb18add7379d92171a79f35`, tree `f5ddf9de824ca65ee8de51d0ef8dcc45c3f4e71e`; 13 reviewed additions, baseline 167 unchanged | 804 affected /0 skips, 53.025s, `/tmp/scanipy-resolver-b-c-main-focused.xml`, SHA256 `4cbc9536d44519d50f1b2f1f1e4b1ec73e4b4538ba1cb9461d1478e96dc46f14` | Actual normal push running; no PR at cutoff. No operational verifier/provider/authority. |
+| B pre-C `c365e12977d7348d9cd19fc9a3c81bf4bb1fc76f` | Full **3,549 passed /51 optional skips**, zero failures/errors, 440.047s; `/tmp/scanipy-resolver-b-main-full.xml`, SHA256 `7b7766ab4f8b0fbe57f252fb8dcb1219895326cee7ee270665ec2a84afc406c8`; all 89 actual occurrence PG cases pass | Full belongs only to pre-C head; not relabeled after the accepted-C merge. |
+| D renderer `6bf0651f1c07181762d6d941750a1e2cba049a9c`, tree `597444821204a2232db2964f88617d3da65379f3`; four paths | 856 affected /0 skips, 4.257s; `/tmp/scanipy-runtime-renderer-d-accepted-c-focus.xml`, SHA256 `91d6174af730eba4e00b8e7889f87492dc3f376877e1c9f6143e66bae6a1f3c2` | Fresh full, normal push and remote gates pending. Intended argv is not Docker/kernel observation. |
+| E process evidence `257336c972ae095f0a7d1c11bab2b45a11696e1c`, tree `0d8d04279aadc9e3decf9e90c9fe2033e238b7e5`; four paths atop earlier D | Normal hooks and 479 owned /0 skips, 5.136s; `/tmp/scanipy-process-evidence-e-prep-focus.xml`, SHA256 `03a12c927cf0db78bd9d2bf77ef761163f2da0a8cf8106f6b378a785d8771297` | Accepted-parent refresh, full/push/remote, physical spool/journal/controller pending. F packaging begins from this exact E, not an enabled runtime. |
+| Provenance `de17aa064e72feb960ecdb95fb564d308999e638`, tree `a6cedbe4a132139fc58792233ff1bd2cd5f141fc`; six paths, baseline 167+38 reviewed public entries | 702 affected /0 skips, 10.815s; `/tmp/scanipy-provenance-c-main-702-corrected.xml`, SHA256 `b081a66c5b8fcccf7c37a8cd4e02342175e84adc752b36b633d67ce92d1bb5b2` | Normal push/remote gates and actual producer integration pending. Synthetic records are not live signed scan provenance. |
+| Provenance pre-C `1a349f22fe78f0370d3c7c97304b54800bd8a813` | Full **3,391 passed /51 optional skips**, zero failures/errors, 391.621s; `/tmp/scanipy-provenance-compat-rule-main-full.xml`, SHA256 `f1112b0381a72321be8bbd96af96d913c1ba8a63d02156df808d55774df24167`; all 89 actual occurrence PG cases pass | Later C refresh has the separate 702 affected checks, not another full. |
+| RES combined `3194baa1e4a3002854f754c212006bc132adac20`, tree `41f5b633aab5976fad2594ef336cf683859b2256` | Full **4,720 passed /51 optional skips**, zero failures/errors, 563.717s; `/tmp/scanipy-res-ancestor-main-full-configured.xml`, SHA256 `2de82d22e4def5521177a9afe9d99120a1590e54e7ed32eadd5981e2725f8b13`; 89 actual occurrence PG cases pass | Narrow dependency publication, qualified installation/capacity, event/spool/full-reader, DB barriers and current authority still absent. |
+
+The first provenance C-focused command named a nonexistent test filename and
+exited 4 before tests. Its empty report remains `/tmp/scanipy-provenance-c-main-702.xml`,
+SHA256 `270e1ce10fbec720f4a1fdd3725802175297bbaa55171ed08294953e210e9fc6`;
+the corrected command selected actual `test_runtime_artifacts.py`. No product,
+test or gate was changed for the green run. The earlier baseline commit's 38
+public-value detections, root/peer exact review and baseline-only correction
+remain in the new compatibility contract; no private fixture keys are retained.
+
+### Accepted-ledger SQL: corrections, not real PostgreSQL acceptance
+
+AL-03 is still an uncommitted 16-path allocation atop `be3c00d`. Root read the
+complete SQL validation/mutation/read boundary and both actual integration
+modules plus the 534-line separately opted-in fixture. Independent Security
+Analyst approved the exact migration/table/ACL/history/fixed-bridge resources;
+facade review and actual isolated PostgreSQL runs remain pending at this cutoff.
+The approved five-resource review does not certify the entire SQL implementation.
+
+Two actual source omissions were preserved as **five failing source-order
+controls**, `/tmp/scanipy-al03-root-generated-clock-source-red.xml`: generated
+denial JSON construction preceded its required K reservation, and positive
+paths lacked required monotonic time comparisons. Corrected implementation
+prepays two K(65536,64) plus K(4096,16), preserves lower reservations and all
+limits, then validates generated bytes/tokens. Seal/initial/renewal/read/recheck
+reject backwards observed time rather than manufacturing denial or restamping.
+Stored-only wrappers distinguish malformed stored bytes from the unchanged
+private work-limit marker, preserving unexpected SQL/driver failures.
+
+The resulting unit/source selection passed **147**, zero skips; actual report
+`/tmp/scanipy-al03-stored-generated-clock-unit.xml`, SHA256
+`8dc689d200a45d0ce9a64c2042e379c68b43f28245bf0061b7ff2ee0763b2ae0`,
+3.335s. Operations SHA256
+`9308d2347cdf61b6e348aed3e5acb801e626980a9e78b1be6883a9a5e812d205`,
+reads `c7cead1435acf3f2c35c7a24979f10bcf964809b890c17fdac2ed2ff09340e18`,
+validation `3f61298ad1b142a4aae39e71b4dbbdcb0ba4a30bae431c63ff9e0e19fe5927d0`.
+No PostgreSQL run, executor/RSS guarantee, live provider, cryptographic admission,
+installed operator/restore identity or actual native permission is inferred.
+
+Stored occurrence parsing remains bounded canonical/schema-name validation,
+not a copied full semantic codec. Original lower helpers validate NEW inputs;
+later reads depend on immutable ordinary history and the precise locked material
+comparisons. The bridge does not expose a complete raw seal digest, so unused
+seal fields are not claimed independently hash-rebound. Coherent privileged
+corruption of both ownership domains is outside this guarantee.
+
+### Immediate TODOs and unchanged acceptance
+
+1. Finish B push/PR gates and D full; then E/F/G and provenance narrow dependency
+   gates with checks on their actual final combined artifacts.
+2. Complete AL facade review and first bounded separate-cluster SQL run; retain
+   real failures and verify migration/roles/transactions/concurrency/limits.
+3. Supply real source, model, authority, runtime and final provenance producers;
+   wire persistence/decisions/API/UI. Finish operational store/controller and
+   bounded native integration before the complete all-case campaign.
+4. Execute G0/G1/G2 and independent offline stage rehearsal on this machine;
+   collect immutable release evidence and seek separate publication authority.
+
+The owner confirmed this machine, acceptance/RSVP and December 2 or 3; no
+October lock or reduced scope. A fresh host observation around this cutoff
+showed about 8,405 MiB available RAM, full 2 GiB swap and 93 GiB shared free
+disk. That is not reserved capacity. The existing app/DB are healthy and were
+not changed. No release, image publication, target execution or native campaign
+occurred. Root's board reads retain #399/#378/#362 In Progress. All C/R/G states
+and the entire original submitted scope remain unchanged.
+
+### Explicit later update — observed 22:30 UTC
+
+- B's actual normal push passed all four phases: Ruff, 267 formatted files,
+  mypy 106 sources and the configured unit/invariant selector. Git exited 0;
+  root independently read remote `b07174522a35a5ab9bb18add7379d92171a79f35`.
+  [PR #418](https://github.com/scanipy/scanipy/pull/418) is open at that head;
+  CI/canonical are pending, not approval. No new hook test count is invented.
+- AL final scoped unit controls passed 185 on Python 3.11.16 and 3.12.14:
+  149 AL +36 unchanged occurrence cases, zero skips/failures/errors. Reports
+  `/tmp/scanipy-al03-unit-final-311.xml` (3.401s) and
+  `/tmp/scanipy-al03-unit-final-312.xml` (7.835s), SHA256 respectively
+  `69c50c84b170ccce9c143861a92447a30aa98b1c8b14c566ec9f3348681a6842`
+  and `3f89f1164f5c45c3f92eb42b11ed447248cace644156f911912ac7b3253b7a08`.
+  The 97 security +41 SQL cases
+  were collected only, not run. All 15 changed path hashes remain frozen.
+- Root created only task container `scanipy-al03-review-20260926`, ID
+  `cd533fce165bbf316d67dd29a875c2a8461626cda2e5b79d691898103d0c052f`, from cached
+  image `75f5a96988cdf694a215073c3e9c001b706b371e2f94df3967f2efdec2787f6b`
+  (`linux/amd64`). It has network none, no ports, 1,536 MiB memory and equal
+  memory+swap limit, 2 CPUs, 256 PIDs, 128 MiB shared memory, 1 GiB data tmpfs
+  and only `/tmp/scanipy-al03-pg-jNKSa0zZ/socket` mounted. The outer directory
+  remains owner-only mode 0700. `pg_isready` succeeded. Test-only trust auth
+  is confined to this private socket/network-none cluster, not production.
+- No AL PostgreSQL tests ran at this observation. Independent facade review
+  and the separately granted three-case migration/publication/initial-run smoke
+  precede expanded SQL checks. Root retains exact container ownership; the
+  reviewed harness may remove only its own OID-matched child DB/roles, with no
+  FORCE/CASCADE/session termination. User app/DB and occurrence cluster remain
+  untouched. D full remains queued; no C/R/G acceptance state changes.
+
+## Revision 15 — observed 23:31 UTC, September 25
+
+The clock read at 23:31:21 UTC. Accepted main is
+`0e1b2b9abe97c2be6c02023a9e3e72b4790106aa`, tree
+`437a5dc2984c7337b2c703c327ea5ecf0319a3a2`. Earlier checkpoints above remain
+byte-for-byte historical evidence. The records below distinguish accepted
+repository changes from local diagnostics and incomplete operational work;
+no C/R/milestone/DAG or shared-gate status changes. Local `/tmp` reports are
+retained diagnostic records, not a public immutable acceptance archive.
+
+### Newly accepted exact-head records
+
+Times in the next table are local Git **merge-commit timestamps (CommitDate)**,
+not GitHub's `mergedAt` API field. Root's retained actual API observation for
+#421 is **23:25:39 UTC**, distinct from its commit timestamp 23:25:38 below.
+
+| PR | Reviewed head → accepted merge; CommitDate UTC | Required checks and review |
+|---|---|---|
+| [#419 Revision 14](https://github.com/scanipy/scanipy/pull/419) | `2cfcadde6a305bba4bf604ca20d44bb09a66330b` → `ca73c7dd08ff659926e920537d204bce6e91051c`, 22:59:16 UTC | [CI 36198274236](https://github.com/scanipy/scanipy/actions/runs/36198274236), all six jobs successful; [final canonical 36198773649](https://github.com/scanipy/scanipy/actions/runs/36198773649) SUCCESS/[APPROVE](https://github.com/scanipy/scanipy/pull/419#issuecomment-5840754580), actual gate 22:57:02 UTC. The [first checklist-only REQUEST-CHANGES](https://github.com/scanipy/scanipy/actions/runs/36198274179) and [comment](https://github.com/scanipy/scanipy/pull/419#issuecomment-5840697804) remain retained. |
+| [#420 pure renderer](https://github.com/scanipy/scanipy/pull/420) | `6bf0651f1c07181762d6d941750a1e2cba049a9c` → `1b36e74c91df9b6c6eaf32a149abcf9b0429ab0f`, 23:08:27 UTC | [CI 36199215892](https://github.com/scanipy/scanipy/actions/runs/36199215892), all six jobs successful; first [canonical 36199215851](https://github.com/scanipy/scanipy/actions/runs/36199215851) SUCCESS/[APPROVE](https://github.com/scanipy/scanipy/pull/420#issuecomment-5840812904), actual gate 23:04:05 UTC. |
+| [#421 provenance compatibility](https://github.com/scanipy/scanipy/pull/421) | `de17aa064e72feb960ecdb95fb564d308999e638` → `0e1b2b9abe97c2be6c02023a9e3e72b4790106aa`, 23:25:38 UTC | [CI 36199933631](https://github.com/scanipy/scanipy/actions/runs/36199933631), all six jobs successful; final [canonical 36200550221](https://github.com/scanipy/scanipy/actions/runs/36200550221) SUCCESS/[APPROVE](https://github.com/scanipy/scanipy/pull/421#issuecomment-5840975647). The [first checklist-only failed review](https://github.com/scanipy/scanipy/actions/runs/36199933644) and [comment](https://github.com/scanipy/scanipy/pull/421#issuecomment-5840892973) remain retained. |
+
+Each CI actually executed all 89 occurrence PostgreSQL cases without skips;
+none executed the new AL suite. Root verified actual merge artifacts and
+unchanged owned bytes, not merely prospective PR heads:
+
+- #419 artifact `813f4fa665d2f51bc75bd4406ccecf4f15039472` has the same
+  complete `47c4218b` tree as its reviewed head. Its 26 ledger checks passed;
+  `/tmp/scanipy-revision14-419-merge-ledger.xml`, SHA256
+  `e955793f41accb0df6b1292b3d7198128fc528cc36bc8a6eecb6d4cd697fb2da`.
+  A missing positional CLI argument was an argparse invocation error, followed
+  by the successful correctly configured structural check, not a product fix.
+- #420 artifact `e888a4068a80e7b03148ebd0f439b2243b433b0b`, tree
+  `63f28300aa444898f4ec9900408bcca8ea5f897b`, passed **856 /0 skips/errors/
+  failures**, 7.680s; `/tmp/scanipy-renderer-420-merge-focused.xml`, SHA256
+  `cd00a99bb5b86e0da96e34323e960f9b5efc497c9fdb3a0b69103a76989074a6`.
+  This is the actual merge-focus XML hash; the supplied PR-body transcription
+  omitted its initial `c`. Report bytes/counts are unchanged, not a test fix.
+  The earlier exact `6bf0651` full passed **3,878 /51 optional skips**, zero
+  failures/errors, 413.400s, including 89 actual PG cases;
+  `/tmp/scanipy-runtime-renderer-d-main-full.xml`, SHA256
+  `79ef69d50c2dcd013986d2e96b9e19f4a7ec1302eb9c0c17712cfdc792b4e458`.
+  The merged-artifact focus does not reassign that full run to a different tree.
+- #421 artifact `30a1256deb8d2e27c0093c5cb9be57318029875b` and accepted main
+  share tree `437a5dc2`. **990 /0 skips/errors/failures** passed, 12.123s;
+  `/tmp/scanipy-provenance-421-merge-focused.xml`, SHA256
+  `efd61dce16a4894e1f5058ead44f60c9b41a025a240a896ca9dc9e5edea35b82`.
+  All eight incoming Revision14/renderer paths and all six provenance paths
+  remained exact, including the 205-entry baseline (167 accepted plus 38
+  reviewed public values). Its pre-C full 3,391/51 remains attributed above.
+
+The renderer produces intended `FrozenInvocation` data, not Docker/kernel
+observations. Ten synthetic historical signatures preserve old bytes; they
+are not live finding provenance, installed keys or a completed emitter/export.
+Normal gates and narrow merges do not close #378/#399/#400/#362 or full claims.
+
+### B, E and F local checkpoints
+
+B [#418](https://github.com/scanipy/scanipy/pull/418) preserves two actual hosted
+integration failures. Original [CI 36197035978](https://github.com/scanipy/scanipy/actions/runs/36197035978)
+failed all 38 process cases at shared fixture setup, before a verifier launched;
+the file/cap cause was not retained. Diagnostics-only `43e035ec` then failed
+[CI 36199235817](https://github.com/scanipy/scanipy/actions/runs/36199235817)
+the same way. At 23:06:58 UTC that second run identified
+`config-3.11-x86_64-linux-gnu/libpython3.11.a`, **48,157,564 bytes**, exceeding
+the unchanged **32 MiB per-file** copy cap; cumulative bytes 71,582,024 and
+313 files did not exceed their caps. This is evidence for the second run's
+cause, not retrospective knowledge of the first. Gate 3 passed on both heads;
+the original [canonical APPROVE](https://github.com/scanipy/scanipy/pull/418#issuecomment-5840575210)
+did not override failed CI or approve a later correction.
+
+Reviewed `a69afcb8` uses exact validated interpreter metadata to omit only that
+regular static development archive from the private diagnostic distribution.
+Neighbor files and all other caps remain; no production/contract/baseline bytes
+or original 38 process cases change. The controlled red
+`/tmp/scanipy-418-static-archive-local-red.xml` has one failure, SHA256
+`81542812fbe750f5d94a7be357c85ab5d805f9c06e468e8e58a840e259b715e9`.
+Author and peer independently passed the same **63** controls, not 126 unique
+cases: `/tmp/scanipy-418-static-archive-final.xml` (0.570s, SHA256
+`4e4d329dda9161d6b718f3807b3e675675a36109c80f31eaf6538299e2e9aee5`)
+and `/tmp/scanipy-418-static-archive-peer-final.xml` (0.578s, SHA256
+`a07d2994a796dd3e29d0acac876f41f5390ef4ce49af81f66677b10b88fb09c7`).
+No complete installed-runtime inventory or operational permission is inferred.
+
+After accepted-D integration, B `3e1cfc5661c18593202f14e5649cef3a5a3f8015`,
+tree `e7b5e294c335fdbf85302f038bb5c815a8347040`, passed **1,155**, zero skips/
+errors/failures, 56.348s, including all **38 actual controlled process cases**;
+`/tmp/scanipy-resolver-b-archive-main-focused.xml`, SHA256
+`f57278c8f601ff485485913908a05f3c4dc720a07a0d397afcb55c5b144c1594`.
+Its normal push was IN PROGRESS at 23:31. Corrected hosted CI/canonical review
+remained required; the public operational runner still refuses unconditionally.
+
+E `306a7d76fcf4c5398138ed42c4989e93ecf715db`, tree
+`2a89f7945b7347b6cdf5649bce2e1a4943d07744`, passed a fresh configured full:
+**4,357 passed /51 existing optional skips /zero failures/errors**, 423.449s,
+including all **89 actual occurrence PG** cases, with only that separate fixture
+enabled. `/tmp/scanipy-process-evidence-e-main-full.xml`, SHA256
+`2bd35d4b0e8b8e1d4d57fb0662d4e4490f08e2f49ff2722ab7f108152dd64509`.
+All four E files and baseline stayed frozen. No publication at the cutoff;
+this is not a physical evidence store or observed controller/authority.
+
+F `49fa9ecebc8bb188663f66a507e7424139f54467`, tree
+`2813be3e25c98753b7c9a94c65ce4e1ecc88f8da`, passed **1,644 focused** cases,
+zero skips/errors/failures, 30.316s; not a full run. Report
+`/tmp/scanipy-runtime-journal-f-accepted-main-focused.xml`, SHA256
+`c2ee40edabf259a6f9a1b2f8098057a82b28ebdce30baac07bb71c0297fdd1ed`.
+The root preparation note is
+`/tmp/scanipy-runtime-journal-provenance-8CwSSMSb/F-PREPARATION.md`.
+E remains an unaccepted publication dependency. Pure structural replay does
+not return durable/visible/current-authority receipts; no F full/push/PR or
+physical store/controller acceptance is claimed at this cutoff.
+
+### AL three-case smoke history and custody
+
+All reports below are retained independently. A zero-skip run is not proof
+that the unselected 144-case suite passed; `-x` stopped the failing invocations.
+
+| Report | Actual result | Exact boundary / SHA256 |
+|---|---|---|
+| `/tmp/scanipy-al03-pg-first-smoke.xml` | One setup error, zero executed bodies/failures/skips; 15.207s | Alembic/SQLAlchemy parsed literal JSON colon tokens as binds. `7433aa88c59d06af80226695a9b3ad0947a6f53c13f09f4edfe1b99a32420315` |
+| `/tmp/scanipy-al03-pg-literal-smoke.xml` | One passed body, one later setup error and one teardown error; zero assertion failures/skips; 22.852s | Immutable-row `FOR UPDATE` lacked UPDATE privilege; cleanup separately refused the truncated role-name ownership map. Two testcase elements/two error elements, not two failed bodies. `bf12972e6ac27cbb270d685bc14ec069130bcbbc97f35de9d21c7cfda1a0db2d` |
+| `/tmp/scanipy-al03-pg-lock-login-smoke.xml` | Two passed /one failed /zero errors/skips; 36.918s | AL fixture combined revised accepted-content hashes with legacy raw content; actual `CaptureSeal` correctly rejected before the seal SQL call. `0ba5a43bbbe4845ef0f00449cd6386401c79fb4c13df57148671abaeeca5fe4b` |
+| `/tmp/scanipy-al03-pg-seal-fixture-smoke.xml` | **Three passed /zero failures/errors/skips; 41.498s** | Migration/roundtrip, historical publication/request binding, initial actual RUNNING run and immutable same-command replay. `abbdd429133a99c255e3916b352a95a8345003e3ea3b3c3d4f698ec6e3910bdd` |
+
+The corrections preserve contrary evidence and authority boundaries: literal
+submission escaping leaves all SQL resource/old-owner bytes intact; removing
+exactly 11 immutable-record locks retains the held namespace/execution locks
+without granting UPDATE; accepted fixture logins use full UUIDs, pre-CREATE
+server-bound checks and exact name/OID-before-GRANT, with ownership staged
+through commit/close. The sealing fixture atomically replaces coupled fields
+on a valid tenant template; production, SQL and all 12 shared helper callers
+are unchanged. Earlier facade input/stored-error reds remain in the AL contract.
+
+Scoped root/peer reviews approved these corrections. Independent sealing-fixture
+**11 /0** passed in 2.641s at
+`/tmp/scanipy-al03-seal-fixture-peer-final.xml`, SHA256
+`b062e9a05915c04cdf4ba28f154ee50dfe81c7d1f7d6080b2fe66ea6af9cb73f`.
+Author **324 offline /0** passed in 7.074s (229 AL +36 occurrence repository
++59 occurrence-envelope cases); `/tmp/scanipy-al03-seal-fixture-final.xml`,
+SHA256 `d8bafebf7f00db2f6cfd78a6ce4c433fbf627d68c2b1cc0769e14b560171e4a5`.
+Overlapping totals are not additive or actual PG assertions.
+
+Root retained the failed cluster's catalog and zero-other-client observations
+at `/tmp/scanipy-al03-reviewed-pg-6ERTSe5j/FAILED-CLUSTER-CHECKPOINT.md`, then
+stopped/removed only exact old container `cd533fce165bbf316d67dd29a875c2a8461626cda2e5b79d691898103d0c052f`
+at **23:00 UTC**. Its disposable tmpfs data/roles are gone; reports remain.
+The old generated policy-admin name was **65 ASCII bytes**, not 64, against
+server bound 63. The lost suffix was not reconstructed and no truncated role
+or unknown OID was adopted. No application volume/resource was changed.
+
+Replacement `scanipy-al03-reviewed-20260926`, exact ID
+`4dbc2fc3e9f15ce2421963ada8792c9b363426b09a0e17782c7b8865d6d2f651`, uses
+only `/tmp/scanipy-al03-reviewed-pg-6ERTSe5j/socket`, cached PostgreSQL image,
+network none/no ports, 1,536 MiB memory/equal memory+swap, two CPUs, 256 PIDs,
+128 MiB shm and 1 GiB data tmpfs, with owner-only outer directory. The successful
+smoke's fixture teardown passed. A bounded read-only PG16.15 check found only
+bootstrap/default databases, only `al03_admin` among task-role prefixes and
+zero other client backends; its diagnostic connection closed. These observations
+do not authorize further use without root's explicit grant.
+
+AL remains uncommitted atop `be3c00d`, with source/integration/unit/contract
+frozen (integration `11c71428`, unit `5fa9fd5e`, governing doc `66086d91`).
+At 23:31, **144 cases were collection-ready, not suite-executed**. Full SQL,
+restricted-role/concurrency/budget gates, real current providers/crypto/restore
+administration and operational runtime acceptance remain open.
+
+### Explicit later update — 23:36 UTC
+
+Root subsequently observed B's actual normal push complete: all four own
+pre-push phases passed and the remote head is exactly `3e1cfc56`. Corrected
+[CI 36201470157](https://github.com/scanipy/scanipy/actions/runs/36201470157)
+and [Gate 3 36201470146](https://github.com/scanipy/scanipy/actions/runs/36201470146)
+are running; no hosted success or fresh canonical approval is inferred.
+The actual merge artifact `0041f578e3f752971db5b9eb49116bc52b960576`, tree
+`8d148e8bd22535221365ee8b7772cf69ab44a52c`, has exact parents accepted `0e1b2b9a`
+and B `3e1cfc56`; all six provenance incoming paths and 14 B paths remain
+exact, preserving the 205-entry merged baseline. Its **1,251 pure cases**
+passed, zero skips/errors/failures, 27.709s;
+`/tmp/scanipy-resolver-418-archive-merge-unit.xml`, SHA256
+`1925723d4ad979864d7473f475d879400f134f4fd684aa59077664fe84db5eab`.
+This did not rerun the 38 process cases and is not another full suite.
+
+After that push released the broad slot, root started the frozen **AL144**
+selection at **23:33:51 UTC** on the isolated replacement cluster. It was
+RUNNING at this later observation, with no final result. It does not backfill
+the three-case-only 23:31 checkpoint or permit source edits during the run.
+
+Root's subsequent source-backed
+[scope clarification](../../DECISION-BHMEA-01-current-execution-authority-2026-09-25.md#tenant-local-authority-and-later-publication-extensions)
+keeps tenant-local accepted builtin publication/current authority, complete
+signed provenance, real Java/Python/CodeQL/Semgrep, measurements, lifecycle and
+UI required. Cross-scope global adoption and statistical/LLM inferred-spec
+publication are later extensions, not new Black Hat gates. Existing Gate 4,
+INV-3, signed nullable global scope and all rejection/acceptance guards remain;
+known inferred proposals cannot be relabeled builtin. The fixture's global
+tenant-org issue and the deeper unsupported cross-scope owner protocol remain
+recorded, without blocking the distinct required tenant-local path. No original
+task/TODO/state is removed or new human authority claimed.
+
+### Explicit later update — 23:38 UTC
+
+The granted AL144 `-x` invocation stopped after **16 passed /one failed /zero
+skips/errors**, 17 executed cases, 203.856s. Report
+`/tmp/scanipy-al03-pg-expanded-144.xml`, SHA256
+`fc09b759bc390c9f2f7b34feedf9028158d5b6ee209ac9bfa9189f15e926b862`.
+Successful teardown and root's bounded catalog check found four default/
+bootstrap databases, only `al03_admin` among task-role prefixes and zero other
+clients. This is not 144 successful cases or a completed AL acceptance run.
+
+The failing assertion directly compared a psycopg2 format-`c` bytea view to
+expected format-`B`. A separate controlled SELECT confirmed equal bytes can
+compare as unequal views; it did not establish the failed transaction's prior
+row bytes. Root assigned a narrow test-only before/after exact-byte snapshot
+correction, offline regression and AL contract note, with SQL/production
+unchanged. No retry, changed expectation, publication or success is inferred.
+Keep the earlier three-smoke pass and all three preceding failures distinct.

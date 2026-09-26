@@ -28,6 +28,31 @@ ROOT = Path(__file__).resolve().parents[2]
 _DIAGNOSTIC_RUNTIME = None
 
 
+def _copy_limit_details(phase, relative, size, files, total, exceeded):
+    # Diagnostics only: no filesystem reads, absolute roots or file contents.
+    # Slice before escaping; 256 non-BMP characters need at most 2,562 ASCII bytes.
+    known_phase = (
+        phase
+        if type(phase) is str
+        and phase in ("file", "tree", "executable", "stdlib", "dependency", "application")
+        else "unknown"
+    )
+    path = relative[:256] if type(relative) is str else "<unavailable>"
+    truncated = type(relative) is str and len(relative) > 256
+
+    def number(value):
+        # Real stat/copy counters fit this range; malformed test-only values must
+        # not replace the original rejection with an unbounded integer conversion.
+        return str(value) if type(value) is int and 0 <= value < 2**64 else "unavailable"
+
+    flags = tuple("true" if value else "false" for value in exceeded)
+    return (
+        f"phase={known_phase} relative={path!a} relative_truncated={str(truncated).lower()} "
+        f"file_bytes={number(size)} files={number(files)} cumulative_bytes={number(total)} "
+        f"exceeded_files={flags[0]} exceeded_file_bytes={flags[1]} exceeded_total_bytes={flags[2]}"
+    )
+
+
 @dataclass
 class _CopyBudget:
     """Test-only copy budget, not installed-artifact measurement or authority."""
@@ -60,7 +85,7 @@ class _CopyBudget:
             raise ValueError("diagnostic-copy-nonregular")
         return observed
 
-    def reserve(self, observed):
+    def reserve(self, observed, *, phase="file", relative="<unavailable>"):
         self.files += 1
         self.total_bytes += observed.st_size
         if (
@@ -68,7 +93,19 @@ class _CopyBudget:
             or observed.st_size > self.max_file_bytes
             or self.total_bytes > self.max_total_bytes
         ):
-            raise ValueError("diagnostic-copy-limit")
+            detail = _copy_limit_details(
+                phase,
+                relative,
+                observed.st_size,
+                self.files,
+                self.total_bytes,
+                (
+                    self.files > self.max_files,
+                    observed.st_size > self.max_file_bytes,
+                    self.total_bytes > self.max_total_bytes,
+                ),
+            )
+            raise ValueError("diagnostic-copy-limit " + detail)
 
 
 def _stat_identity(observed):
@@ -132,16 +169,55 @@ def _copy_regular(source, destination, observed, budget, *, executable=False):
     budget.check()
 
 
-def _private_copy_tree(source, destination, budget, *, stdlib_root=False):
+def _stdlib_static_archive(source, budget):
+    # Interpreter-owned metadata selects one development archive, not a generic
+    # config-directory or *.a exclusion. Selection is lexical: never resolve links.
+    directory = sysconfig.get_config_var("LIBPL")
+    library = sysconfig.get_config_var("LIBRARY")
+    for value in (directory, library):
+        if type(value) is not str or not value or len(value) > budget.max_path_bytes:
+            return None
+        try:
+            if len(value.encode("utf-8")) > budget.max_path_bytes:
+                return None
+        except UnicodeEncodeError:
+            return None
+        if any(ord(char) < 32 or ord(char) == 127 for char in value) or "\\" in value:
+            return None
+    parent = Path(directory)
+    if not parent.is_absolute() or str(parent) != directory or ".." in parent.parts:
+        return None
+    if library != Path(library).name or not library.endswith(".a") or library == ".a":
+        return None
+    try:
+        relative = parent.relative_to(source) / library
+    except ValueError:
+        return None
+    if len(str(relative).encode("utf-8")) > budget.max_path_bytes:
+        return None
+    return relative
+
+
+def _private_copy_tree(source, destination, budget, *, stdlib_root=False, copy_phase="tree"):
     # Only fixed trusted fixture roots. Reject source symlinks; omit caches to
     # create a fresh diagnostic distribution, not a complete installed inventory.
     records = []
     _copy_source_ancestors(source, budget)
+    static_archive = _stdlib_static_archive(source, budget) if stdlib_root else None
 
     def preflight(path, relative, depth):
         observed = budget.observe(path, depth)
+        if relative == static_archive:
+            if not stat.S_ISREG(observed.st_mode):
+                raise ValueError("diagnostic-copy-nonregular")
+            # Observed entry/depth/path/time remain charged; no bytes are copied.
+            return
         if stat.S_ISREG(observed.st_mode):
-            budget.reserve(observed)
+            budget.reserve(
+                observed,
+                phase="stdlib" if stdlib_root else copy_phase,
+                relative=str(relative),
+            )
         records.append((relative, observed))
         if stat.S_ISDIR(observed.st_mode):
             with os.scandir(path) as children:
@@ -173,12 +249,12 @@ def _private_copy_tree(source, destination, budget, *, stdlib_root=False):
     budget.check()
 
 
-def _private_copy_file(source, destination, budget, *, executable=False):
+def _private_copy_file(source, destination, budget, *, executable=False, copy_phase="file"):
     _copy_source_ancestors(source, budget)
     observed = budget.observe(source, 0)
     if not stat.S_ISREG(observed.st_mode):
         raise ValueError("diagnostic-copy-nonregular")
-    budget.reserve(observed)
+    budget.reserve(observed, phase="executable" if executable else copy_phase, relative=source.name)
     _copy_regular(source, destination, observed, budget, executable=executable)
 
 
@@ -203,7 +279,7 @@ def private_diagnostic_runtime(tmp_path_factory):
     dependencies.mkdir(mode=0o700)
     installed = Path(sysconfig.get_path("purelib"))
     for name in ("cryptography", "cffi", "pycparser", "yaml"):
-        _private_copy_tree(installed / name, dependencies / name, budget)
+        _private_copy_tree(installed / name, dependencies / name, budget, copy_phase="dependency")
     extensions = []
     for suffix in EXTENSION_SUFFIXES:
         candidate = installed / ("_cffi_backend" + suffix)
@@ -213,11 +289,13 @@ def private_diagnostic_runtime(tmp_path_factory):
             continue
         extensions.append(candidate)
     assert len(extensions) == 1
-    _private_copy_file(extensions[0], dependencies / extensions[0].name, budget)
+    _private_copy_file(
+        extensions[0], dependencies / extensions[0].name, budget, copy_phase="dependency"
+    )
     application = root / "application"
     application.mkdir(mode=0o700)
     for name in ("analysis", "services", "tools"):
-        _private_copy_tree(ROOT / name, application / name, budget)
+        _private_copy_tree(ROOT / name, application / name, budget, copy_phase="application")
     budget.check()
     _DIAGNOSTIC_RUNTIME = (
         PosixPath(executable),
