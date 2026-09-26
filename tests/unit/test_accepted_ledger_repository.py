@@ -3315,3 +3315,453 @@ def test_final_ticket_setup_final_consistency_check_cannot_arm(monkeypatch, corr
     with pytest.raises(AssertionError):
         cluster.migrate("20260926_0007")
     assert len(state.calls) == 10
+
+
+def reader_qualification_fixture(monkeypatch):
+    """Closed catalog/process doubles, never an actual role/database/subprocess."""
+    from tests import occurrence_store_postgres as pg
+
+    cluster = pg.PrivatePostgres("postgresql://controlled@localhost/bootstrap", profile="accepted")
+    cluster.database_identity = (10, 11)
+    state = SimpleNamespace(
+        revision="20260926_0007",
+        role=None,
+        oid=20,
+        database=(10, 11),
+        rows=[],
+        calls=[],
+        events=[],
+        sidecar=None,
+        process_error=None,
+        code=0,
+        fault=None,
+        after_process=False,
+        cursor_closes=0,
+        connection_closes=0,
+    )
+
+    def role(oid):
+        return (pg.EXECUTION_READER, oid, *(False,) * 7, -1, True, True)
+
+    def execute(query, parameters=()):
+        rendered = query if type(query) is str else repr(query)
+        state.events.append(
+            ("sql", rendered, cluster._reader_transition_pending, cluster._reader_probe_pending)
+        )
+        if rendered.startswith("SELECT oid,datdba"):
+            state.rows = [state.database]
+        elif rendered.startswith("SELECT version_num"):
+            state.rows = [(state.revision,)]
+        elif "FROM pg_authid" in rendered:
+            state.rows = [] if state.role is None else [state.role]
+            if state.fault == "role_after" and state.after_process:
+                state.rows = [role(0)]
+        elif "max_identifier_length" in rendered:
+            state.rows = [(63,)]
+        elif rendered.startswith("SELECT datname"):
+            state.rows = [] if state.sidecar is None else [state.sidecar]
+            if state.fault == "sidecar_read" and state.sidecar is not None:
+                state.rows = [("wrong", 40, 11)]
+        elif "CREATE DATABASE" in rendered:
+            assert cluster._reader_probe_pending and cluster._reader_probe_database is None
+            if state.fault == "create":
+                raise OSError("controlled CREATE failure")
+            name = "scanipy_reader_probe_" + UUID(int=80).hex
+            state.sidecar = (name, 40, 11)
+        elif "DROP DATABASE" in rendered:
+            assert cluster._reader_probe_pending
+            if state.fault == "drop":
+                raise OSError("controlled DROP failure")
+            state.sidecar = None
+        else:
+            pytest.fail("unrecognized fixed reader query: " + rendered)
+
+    def cursor_close():
+        state.cursor_closes += 1
+        state.events.append(("cursor-close", dict(cluster.owned_roles)))
+        if state.fault == "cursor_after" and state.after_process:
+            raise OSError("controlled cursor close")
+
+    def connection_close():
+        state.connection_closes += 1
+        state.events.append(("connection-close", dict(cluster.owned_roles)))
+        if state.fault == "connection_after" and state.after_process:
+            raise OSError("controlled connection close")
+        if state.fault == "sidecar_close" and state.sidecar is not None:
+            raise OSError("controlled sidecar close")
+
+    def connect(**_):
+        return SimpleNamespace(
+            cursor=lambda: SimpleNamespace(
+                execute=execute, fetchmany=lambda _: state.rows, close=cursor_close
+            ),
+            close=connection_close,
+        )
+
+    def run(argv, **kwargs):
+        assert cluster._reader_transition_pending
+        state.calls.append((argv, kwargs))
+        if state.process_error is not None:
+            raise state.process_error
+        if state.code == 0:
+            if argv[-1] == "20260926_0008":
+                state.oid += 1
+                state.role, state.revision = role(state.oid), "20260926_0008"
+            else:
+                state.role, state.revision = None, "20260926_0007"
+        state.after_process = True
+        return SimpleNamespace(returncode=state.code, stdout="", stderr="controlled refusal")
+
+    monkeypatch.setattr(pg, "psycopg2", SimpleNamespace(connect=connect))
+    monkeypatch.setattr(pg.subprocess, "run", run)
+    monkeypatch.setattr(pg, "uuid4", lambda: UUID(int=80))
+    return pg, cluster, state, role
+
+
+def test_reader_qualification_promotes_and_removes_only_after_close(monkeypatch):
+    pg, cluster, state, _ = reader_qualification_fixture(monkeypatch)
+    cluster.migrate("20260926_0008")
+    oid = cluster.owned_roles[pg.EXECUTION_READER]
+    assert all(
+        pg.EXECUTION_READER not in entry[1] for entry in state.events if entry[0].endswith("close")
+    )
+    assert state.connection_closes == state.cursor_closes == 2
+    assert not cluster._reader_transition_pending and cluster._reader_migration_calls == 1
+    state.events.clear()
+    cluster.migrate("20260926_0007", action="downgrade")
+    assert pg.EXECUTION_READER not in cluster.owned_roles
+    assert all(
+        entry[1][pg.EXECUTION_READER] == oid for entry in state.events if entry[0].endswith("close")
+    )
+    assert cluster.migration_target == "20260926_0006"
+    assert pg.EXECUTION_READER not in cluster.reserved
+    assert [call[0][-2:] for call in state.calls] == [
+        ["upgrade", "20260926_0008"],
+        ["downgrade", "20260926_0007"],
+    ]
+    for _, kwargs in state.calls:
+        assert kwargs["timeout"] == 60 and kwargs["capture_output"] and not kwargs["check"]
+
+
+@pytest.mark.parametrize(
+    "error", (OSError("controlled"), KeyboardInterrupt("controlled"), SystemExit(7))
+)
+def test_reader_qualification_unknown_process_outcome_blocks_cleanup_and_retry(monkeypatch, error):
+    _pg, cluster, state, _ = reader_qualification_fixture(monkeypatch)
+    state.process_error = error
+    with pytest.raises(type(error)) as captured:
+        cluster.migrate("20260926_0008")
+    assert captured.value is error and cluster._reader_transition_pending
+    assert not cluster.owned_roles
+    for action in (lambda: cluster.migrate("20260926_0008"), cluster.dispose):
+        with pytest.raises(AssertionError, match="unresolved"):
+            action()
+    assert len(state.calls) == 1
+
+
+@pytest.mark.parametrize("fault", ("role_after", "cursor_after", "connection_after"))
+@pytest.mark.parametrize("forward", (True, False))
+def test_reader_qualification_post_effect_failure_never_changes_owned_map(
+    monkeypatch, fault, forward
+):
+    pg, cluster, state, role = reader_qualification_fixture(monkeypatch)
+    if not forward:
+        state.revision, state.role = "20260926_0008", role(20)
+        cluster.owned_roles[pg.EXECUTION_READER] = 20
+    state.fault = fault
+    # The missing-role readback is invalid for upgrade; use revision corruption for inverse.
+    if not forward and fault == "role_after":
+        original = pg.subprocess.run
+
+        def changed(*args, **kwargs):
+            result = original(*args, **kwargs)
+            state.role = role(21)
+            return result
+
+        monkeypatch.setattr(pg.subprocess, "run", changed)
+    before = dict(cluster.owned_roles)
+    with pytest.raises((OSError, AssertionError)):
+        cluster.migrate(
+            "20260926_0008" if forward else "20260926_0007",
+            action="upgrade" if forward else "downgrade",
+        )
+    assert cluster.owned_roles == before and cluster._reader_transition_pending
+    with pytest.raises(AssertionError, match="unresolved"):
+        cluster.dispose()
+
+
+@pytest.mark.parametrize(
+    "code,expected", ((1, True), (0, False), (None, True), (False, True), ("0", True))
+)
+def test_reader_qualification_unexpected_outcome_stays_pending(monkeypatch, code, expected):
+    _pg, cluster, state, _ = reader_qualification_fixture(monkeypatch)
+    state.code = code
+    with pytest.raises(AssertionError, match="outcome"):
+        cluster.migrate("20260926_0008", expect_success=expected)
+    assert cluster._reader_transition_pending and not cluster.owned_roles
+
+
+def test_reader_qualification_expected_refusal_preserves_known_role(monkeypatch):
+    pg, cluster, state, role = reader_qualification_fixture(monkeypatch)
+    state.revision, state.role, state.code = "20260926_0008", role(20), 1
+    cluster.owned_roles[pg.EXECUTION_READER] = 20
+    assert (
+        cluster.migrate("20260926_0007", action="downgrade", expect_success=False).returncode == 1
+    )
+    assert cluster.owned_roles == {pg.EXECUTION_READER: 20}
+    assert not cluster._reader_transition_pending and cluster._reader_migration_calls == 1
+
+
+def test_reader_qualification_five_transition_ceiling_never_refunds(monkeypatch):
+    _pg, cluster, state, _ = reader_qualification_fixture(monkeypatch)
+    for index in range(5):
+        cluster.migrate(
+            "20260926_0008" if index % 2 == 0 else "20260926_0007",
+            action="upgrade" if index % 2 == 0 else "downgrade",
+        )
+    with pytest.raises(AssertionError, match="exhausted"):
+        cluster.migrate("20260926_0007", action="downgrade")
+    assert len(state.calls) == cluster._reader_migration_calls == 5
+
+
+@pytest.mark.parametrize(
+    "fault", ("unowned", "wrong_oid", "collision", "wrong_revision", "wrong_database")
+)
+def test_reader_qualification_preflight_has_no_native_effect(monkeypatch, fault):
+    pg, cluster, state, role = reader_qualification_fixture(monkeypatch)
+    if fault in ("unowned", "wrong_oid"):
+        state.role, state.revision = role(20), "20260926_0008"
+        if fault == "wrong_oid":
+            cluster.owned_roles[pg.EXECUTION_READER] = 21
+        target, action = "20260926_0007", "downgrade"
+    else:
+        target, action = "20260926_0008", "upgrade"
+        if fault == "collision":
+            state.role = role(20)
+        elif fault == "wrong_revision":
+            state.revision = "20260926_0006"
+        else:
+            state.database = (12, 11)
+    with pytest.raises(AssertionError):
+        cluster.migrate(target, action=action)
+    assert not state.calls and not cluster._reader_transition_pending
+
+
+@pytest.mark.parametrize(
+    "index,value", ((1, True), (1, 0), (2, 0), (3, True), (9, True), (10, 1), (11, False))
+)
+def test_reader_qualification_exact_catalog_primitives(monkeypatch, index, value):
+    _pg, cluster, state, role = reader_qualification_fixture(monkeypatch)
+    corrupted = list(role(20))
+    corrupted[index] = value
+    state.role, state.revision = tuple(corrupted), "20260926_0008"
+    with pytest.raises(AssertionError, match="metadata"):
+        cluster._reader_state()
+    assert not state.calls
+
+
+@pytest.mark.parametrize("mode", ("occurrence", "administration"))
+def test_reader_qualification_new_target_never_enters_other_lane(monkeypatch, mode):
+    from tests import occurrence_store_postgres as pg
+
+    if mode == "administration":
+        _pg, cluster, _ = administration_fixture(monkeypatch)
+    else:
+        cluster = pg.PrivatePostgres("postgresql://controlled@localhost/bootstrap")
+    monkeypatch.setattr(pg.subprocess, "run", lambda *_a, **_k: pytest.fail("unexpected process"))
+    with pytest.raises(ValueError, match="target"):
+        cluster.migrate("20260926_0008")
+    assert cluster._migration_calls == 0 and not cluster._administration_setup_complete
+
+
+def owned_reader_probe(monkeypatch):
+    pg, cluster, state, _ = reader_qualification_fixture(monkeypatch)
+    cluster.migrate("20260926_0008")
+    return pg, cluster, state
+
+
+def test_reader_qualification_sidecar_exact_single_create_and_drop(monkeypatch):
+    _pg, cluster, state = owned_reader_probe(monkeypatch)
+    name = cluster._create_reader_probe_database()
+    assert name == "scanipy_reader_probe_" + UUID(int=80).hex
+    assert cluster._reader_probe_database == (name, 40, 11)
+    assert not cluster._reader_probe_pending
+    with pytest.raises(AssertionError, match="unavailable"):
+        cluster._create_reader_probe_database()
+    cluster._drop_reader_probe_database()
+    assert cluster._reader_probe_database is None and not cluster._reader_probe_pending
+    with pytest.raises(AssertionError, match="unavailable"):
+        cluster._create_reader_probe_database()
+    statements = [entry[1] for entry in state.events if entry[0] == "sql"]
+    assert sum("CREATE DATABASE" in text for text in statements) == 1
+    assert sum("DROP DATABASE" in text for text in statements) == 1
+    assert all("CASCADE" not in text and "FORCE" not in text for text in statements)
+
+
+@pytest.mark.parametrize("fault", ("create", "sidecar_read", "sidecar_close"))
+def test_reader_qualification_sidecar_unknown_creation_blocks_cleanup(monkeypatch, fault):
+    _pg, cluster, state = owned_reader_probe(monkeypatch)
+    state.fault = fault
+    with pytest.raises((OSError, AssertionError)):
+        cluster._create_reader_probe_database()
+    assert cluster._reader_probe_database is None and cluster._reader_probe_pending
+    with pytest.raises(AssertionError, match="unresolved"):
+        cluster.dispose()
+
+
+@pytest.mark.parametrize("field,value", ((0, "wrong"), (1, 41), (2, 12)))
+def test_reader_qualification_wrong_sidecar_identity_never_drops(monkeypatch, field, value):
+    _pg, cluster, state = owned_reader_probe(monkeypatch)
+    cluster._create_reader_probe_database()
+    before = cluster._reader_probe_database
+    row = list(state.sidecar)
+    row[field] = value
+    state.sidecar = tuple(row)
+    with pytest.raises(AssertionError, match="ownership/OID"):
+        cluster._drop_reader_probe_database()
+    assert cluster._reader_probe_database == before
+    assert not any("DROP DATABASE" in event[1] for event in state.events if event[0] == "sql")
+
+
+def test_reader_qualification_uncertain_drop_retains_owned_identity(monkeypatch):
+    _pg, cluster, state = owned_reader_probe(monkeypatch)
+    cluster._create_reader_probe_database()
+    before = cluster._reader_probe_database
+    state.fault = "drop"
+    with pytest.raises(OSError):
+        cluster._drop_reader_probe_database()
+    assert cluster._reader_probe_database == before and cluster._reader_probe_pending
+    with pytest.raises(AssertionError, match="unresolved"):
+        cluster._drop_reader_probe_database()
+
+
+def test_reader_qualification_owned_role_blocks_unguarded_lower_migration(monkeypatch):
+    _pg, cluster, state = owned_reader_probe(monkeypatch)
+    with pytest.raises(AssertionError, match="exact guarded"):
+        cluster.migrate("20260926_0006", action="downgrade")
+    assert len(state.calls) == 1
+
+
+@pytest.mark.parametrize("failed", (False, True))
+def test_reader_qualification_retains_exact_result_or_primary(monkeypatch, failed):
+    _pg, cluster, state, _ = reader_qualification_fixture(monkeypatch)
+    if failed:
+        original = OSError("controlled result absence")
+        state.process_error = original
+        with pytest.raises(OSError):
+            cluster.migrate("20260926_0008")
+    else:
+        original = cluster.migrate("20260926_0008")
+    assert cluster.migration_evidence == [original]
+    assert cluster.migration_evidence[0] is original
+
+
+def test_reader_qualification_refusal_cannot_hide_changed_role(monkeypatch):
+    pg, cluster, state, role = reader_qualification_fixture(monkeypatch)
+    state.revision, state.role, state.code = "20260926_0008", role(20), 1
+    cluster.owned_roles[pg.EXECUTION_READER] = 20
+    original = pg.subprocess.run
+
+    def changed(*args, **kwargs):
+        result = original(*args, **kwargs)
+        state.role = role(21)
+        return result
+
+    monkeypatch.setattr(pg.subprocess, "run", changed)
+    with pytest.raises(AssertionError, match="changed identity"):
+        cluster.migrate("20260926_0007", action="downgrade", expect_success=False)
+    assert cluster._reader_transition_pending and cluster.owned_roles[pg.EXECUTION_READER] == 20
+
+
+@pytest.mark.parametrize("suffix", ("", "a" * 31, "g" * 32, "é" * 32, None))
+def test_reader_qualification_probe_rejects_invalid_uuid_without_create(monkeypatch, suffix):
+    pg, cluster, state = owned_reader_probe(monkeypatch)
+    monkeypatch.setattr(pg, "uuid4", lambda: SimpleNamespace(hex=suffix))
+    with pytest.raises(AssertionError, match="UUID"):
+        cluster._create_reader_probe_database()
+    assert cluster._reader_probe_attempted and not cluster._reader_probe_pending
+    assert not any("CREATE DATABASE" in entry[1] for entry in state.events if entry[0] == "sql")
+
+
+def test_reader_qualification_probe_server_identifier_limit_precedes_create(monkeypatch):
+    pg, cluster, state = owned_reader_probe(monkeypatch)
+    original = pg._administration_rows
+
+    def rows(cursor, query, *args, **kwargs):
+        result = original(cursor, query, *args, **kwargs)
+        return [(51,)] if "max_identifier_length" in query else result
+
+    monkeypatch.setattr(pg, "_administration_rows", rows)
+    with pytest.raises(AssertionError, match="identifier limit"):
+        cluster._create_reader_probe_database()
+    assert not cluster._reader_probe_pending
+    assert not any("CREATE DATABASE" in entry[1] for entry in state.events if entry[0] == "sql")
+
+
+def test_reader_qualification_successful_inverse_requires_probe_removed(monkeypatch):
+    _pg, cluster, state = owned_reader_probe(monkeypatch)
+    cluster._create_reader_probe_database()
+    with pytest.raises(AssertionError, match="remove the owned"):
+        cluster.migrate("20260926_0007", action="downgrade")
+    assert len(state.calls) == 1 and not cluster._reader_transition_pending
+
+
+def test_reader_qualification_probe_drop_close_failure_keeps_pending_identity(monkeypatch):
+    pg, cluster, state = owned_reader_probe(monkeypatch)
+    cluster._create_reader_probe_database()
+    identity = cluster._reader_probe_database
+    original = pg.psycopg2.connect
+
+    def connect(**kwargs):
+        connection = original(**kwargs)
+        close = connection.close
+
+        def broken_close():
+            close()
+            if state.sidecar is None:
+                raise OSError("controlled post-DROP close failure")
+
+        connection.close = broken_close
+        return connection
+
+    monkeypatch.setattr(pg.psycopg2, "connect", connect)
+    with pytest.raises(OSError, match="post-DROP"):
+        cluster._drop_reader_probe_database()
+    assert state.sidecar is None and cluster._reader_probe_database == identity
+    assert cluster._reader_probe_pending
+    with pytest.raises(AssertionError, match="unresolved"):
+        cluster.dispose()
+
+
+@pytest.mark.parametrize("wrong", ("main", "roles"))
+def test_reader_qualification_dispose_checks_original_identity_before_sidecar(monkeypatch, wrong):
+    _pg, cluster, _state = owned_reader_probe(monkeypatch)
+    calls = []
+
+    class Cursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return None
+
+        def execute(self, query, parameters=()):
+            calls.append(query)
+
+        def fetchone(self):
+            return (12, 11) if wrong == "main" else cluster.database_identity
+
+        def fetchall(self):
+            return []
+
+    @contextmanager
+    def admin(**_):
+        yield SimpleNamespace(cursor=Cursor)
+
+    monkeypatch.setattr(cluster, "admin", admin)
+    monkeypatch.setattr(
+        cluster, "_drop_reader_probe_database", lambda: pytest.fail("early sidecar drop")
+    )
+    with pytest.raises(AssertionError, match="OID"):
+        cluster.dispose()
+    assert not any("DROP" in query for query in calls)
