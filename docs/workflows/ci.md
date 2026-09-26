@@ -3,6 +3,33 @@
 **Workflow `name:`** `CI — Scanipy v3.2`
 **File:** `.github/workflows/ci.yml`
 
+## Current accepted-ledger coverage extension — 2026-09-26
+
+Under [DECISION-BHMEA-01](../DECISION-BHMEA-01-current-execution-authority-2026-09-25.md),
+the ordinary `accepted-ledger-tests` quality job explicitly selects three
+integration modules in one invocation: 43 original SQL cases, 102 original
+security cases and 38 historical-read outcome cases. All 183 unique cases must
+execute successfully with zero skips, failures or errors. The actual embedded
+JUnit validator enforces both total and per-module counts; controlled validator
+tests do not establish that any PostgreSQL case executed.
+
+The new module explicitly upgrades its fixture-owned child through migration
+0007 and restores 0006. It depends on the reviewed historical-read owner change
+and the explicit 0007 harness allowlist; existing fixture defaults remain 0006
+(accepted) and 0005 (occurrence). No automatic `head`, new administration mode,
+application database, operator credential or native A2 test is selected here.
+
+The dedicated PostgreSQL service, clean routing environment, required flag,
+bounded catalog snapshots/equality before and after fixture teardown, fail-fast
+test behavior and always-retained report/catalog artifacts remain unchanged.
+Actual execution, exact checkout binding and accepted-artifact checks are still
+required; a general application integration pass with conditional skips cannot
+substitute. This is not a fifth numbered gate or Black Hat readiness acceptance.
+
+The descriptions below retain historical scaffold observations. In particular,
+their references to empty test directories and informational integration do not
+override the current real-test/review merge requirements or this job contract.
+
 ---
 
 ## Purpose
