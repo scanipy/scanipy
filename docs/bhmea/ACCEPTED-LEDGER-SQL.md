@@ -3585,3 +3585,570 @@ combined full run was active. No repository byte was changed during that run.
 Any root application afterward requires normal hooks and the applicable fresh
 checks and exact-head canonical approval; this note records no full-run result,
 remote acceptance, installation, launch permission or release.
+
+## Administration fixture composition — final explicit0007 ticket
+
+Root approved this engineering test-source allocation on2026-09-26 under
+DECISION-BHMEA-01. It owns only tests/occurrence_store_postgres.py,
+tests/unit/test_accepted_ledger_repository.py and this append-only contract,
+on composed f192547effd2325f7d61ddeb3faf61a3c918ab5c. No operator identity,
+PostgreSQL process/migration, native fixture, CI/publication or activation is
+authorized by the source allocation. Existing owner0007 and all CI bytes stay.
+
+This section makes the previously outside-only administration contract
+self-contained BEFORE the composition source is changed. Read its two complete
+retained records below with this precedence: current section, final-ticket
+allocation, then A2-HARNESS-01. Their original proposal/pending/source-stage
+labels and historical two-file allocations remain provenance, not the current
+three-path allocation or a claim that any real lane ran. The sole new behavior
+is one final explicit0007 upgrade after successful ten-call setup, not a new
+default, retry, roundtrip, credential, migration framework or0008 reader role.
+
+Section3's historical default-false fixture contract remains unchanged.
+In particular its prohibition on an accepted_owner runtime login continues
+for those default fixtures and production. Only the separately opted-in,
+root-qualified disposable administration test lane has the already approved
+owner SET login described below; it cannot select/install an operator identity.
+
+The private completion marker is initialized false and armed only after all
+existing setup checks and login commit/close/map publication finish with ten
+spent calls and no sticky migration failure. It conveys no database authority.
+Early0007 and unarmed eleventh calls refuse; the extra call is exactly explicit
+upgrade0007 with expected success. Its spent slot is never refunded. No twelfth
+attempt is allowed, even after success. Default migrate() remains0006 always.
+Existing setup contains the same ten migration calls and never invokes0007.
+
+Each unchanged actual-owner call remains60,000ms including5,000ms cleanup,
+zero stdin and1MiB combined output. Eleven calls give at most660,000ms summed
+transport wall allowances and11MiB retained raw outcomes; this is NOT a fixture
+outer timeout, server-memory bound, hard kernel termination or native grant.
+The existing single decoded compatibility view retains its separate5MiB bound.
+
+Controlled/static checks must preserve all old tests and demonstrate actual
+setup sequencing with substituted DB/transport boundaries; seeded-state units
+must be labelled. Real peer/SCRAM,0007/owner-PG38 and corrected A2 custody/
+authentication/publication/read/error/cleanup acceptance remain separate,
+dependency-ordered work. Neither this amendment nor fake units complete them.
+
+### Retained approved A2-HARNESS-01
+### A2-HARNESS-01 — five-route disposable PostgreSQL fixture
+
+Status: PROPOSAL FOR ROOT REVIEW, 2026-09-26. No code, SQL, role, key, image,
+container, connection, test execution or installation is authorized by this note.
+This is test infrastructure for genuine tenant-local A2 delivery, not an operator
+identity decision, a new acceptance gate, or permission to weaken B/AL guards.
+
+#### 1. Exact scope, evidence and dependency order
+
+First implementation, only after root allocates it, owns exactly:
+
+- `tests/occurrence_store_postgres.py`: additive explicit administration mode,
+  five-route login setup and bounded migration adapter.
+- `tests/unit/test_accepted_ledger_repository.py`: append fake-driver/transport
+  controls; preserve all old test bodies and default-fixture expectations.
+
+Do not edit production, AL SQL/migrations, shared transport, old A1 integration,
+CI, baseline or dependency files. A later separately allocated pair is NEW
+`tests/integration/test_accepted_builtin_administration.py` plus append-only
+resolver documentation. The later module uses a new reviewed A2 context and
+actual B bytes; it does not retrofit the immutable A1 38-case module/image.
+
+Read baseline is `/tmp/scanipy-builtin-administration-a2-RJLQcFmW`, A checkpoint
+`a56c5f7f5c8a74531ad0d45f831efbaaf40630fd`. Exact unchanged dependencies:
+
+| File | SHA256 |
+|---|---|
+| harness | f3e1e1b207c32dc2cb680a9916dfcaa3a38d1c9b83b36db1682d0400593aeed2 |
+| harness/AL unit module | 21d2e2dc2aae7a32a81509ab9b6138faf3fe79701932aee80b4fce94ec54fdec |
+| `tools/worker/bounded_process.py` | 6a4ec17d2f4a3b04f94ff24a7e213a2be45ac1781fdd885c115756f7fc1f1d34 |
+| old A1 integration | 0a8f026affec37a23842d5aee502f7a6da365485fd16307a5436e1e14594f4b5 |
+
+B's six-path freeze is indexed at
+`/tmp/scanipy-a2-b-checkpoint-UP1AoJcJ/CHECKPOINT-B-FREEZE.md`, SHA
+`474c85bc2f0bfd7ca4bddf8f34796394f4745bb7ed69adba86fabfd0f5e1b72c`.
+Its 647 author/independent passing units are not real SQL evidence. Subsequent
+independent R1/R3 classification controls found six genuine failures: B remains
+blocked/frozen pending root's separate owning-protocol correction. The later
+integration must bind the corrected reviewed B checkpoint, not call this freeze
+accepted. Any future absence/read-role migration is a separate AL allocation;
+this proposal neither guesses its version nor adds it to the target allowlist.
+
+Source anchors: harness constructor 38–98, migration 108–138, unchanged setup
+140–309, login batch 401–476, dispose 515–535; unit profile/migration controls
+904–1020 and login/OID/commit/close controls 1524–1717. Governing resolver
+§17.1–17.4 fixes actual custody and the fifteen-field PG16 factory query.
+`admission._connection_factory` uses those installed five routes; the harness
+does not replace that function with a fake successful connection.
+
+#### 2. Proposed opt-in interface; existing defaults remain exact
+
+Extend the existing constructor with keyword-only `administration: bool=False`,
+`migration_cwd: Path | None=None`, `migration_site_packages: Path | None=None`.
+Reject non-exact bool, true with occurrence profile, or extra migration paths
+with false before URL parsing, imports of optional transport code, or DB work.
+Existing call sites and both existing pytest fixtures keep their old defaults,
+same six/ten login schedules and 0005/0006 targets. Do not auto-select this mode
+from an existing accepted-ledger/occurrence/application URL or an ambient flag.
+
+True mode requires both explicit paths, Linux/root real/effective/saved UID/GID,
+isolated/no-site/no-bytecode parent, and the separately reviewed native context.
+Its URL is exactly the disposable peer-bootstrap route:
+`postgresql://a2_fixture_admin@:5432/a2_fixture_bootstrap?host=/run/scanipy-a2-postgres`.
+Reject password, aliases, TCP, extra query options, unexpected port/user/database
+or ambient application/accepted/occurrence/AWS/libpq selectors before connecting.
+This is an additional narrow true-mode check, not a default parser relaxation.
+
+The paths are exact concrete PosixPath, normalized absolute, <=4096 UTF-8 bytes,
+no parent/dot/NUL components; no custom path callback. cwd is a fresh empty
+root-owned 0700 task directory, not repository ROOT. Site-packages is the single
+explicit root-owned read-only dependency root admitted by the future image
+recipe; it is NOT discovered from host sys.path, site or a virtualenv activation.
+ROOT and the absolute running interpreter must match that independently pinned
+context. The fixture checks its runtime facts; it does not certify an image by
+accepting a caller boolean/hash. Exact path/image identities await context review.
+
+The later new module alone owns its opt-in/required selectors and calls this
+constructor after its real root/mount/capability preflight. Suggested closed
+selector `SCANIPY_A2_DISPOSABLE_ADMINISTRATION=explicit-root-granted-v1` plus
+`SCANIPY_A2_ADMINISTRATION_TEST_URL`; names need root approval. Missing ordinary
+opt-in skips BEFORE fixture setup; an explicitly required missing/mismatched
+route fails. Existing 145 AL cases must never silently enter this new lane.
+
+#### 3. Five distinct credentials, thirteen total fixture logins
+
+Keep all ten existing accepted-profile logins for the historical tests. In true
+mode reuse the existing policy-admin and publisher credentials, add exactly
+three; expose a fixed non-secret route-to-roles-key mapping:
+
+| Config route | `roles` key | Fixed group | LOGIN INHERIT | Grant INHERIT / SET / ADMIN |
+|---|---|---|---|---|
+| owner | accepted_owner | scanipy_accepted_owner | false | false / true / false |
+| policy_admin | accepted_policy_admin | scanipy_accepted_policy_admin | true | true / true / false |
+| publisher | accepted_publisher | scanipy_accepted_publisher | true | true / true / false |
+| admin_reader | accepted_admin_reader | scanipy_accepted_reader | true | true / true / false |
+| publisher_reader | accepted_publisher_reader | scanipy_accepted_reader | true | true / true / false |
+
+The ordinary SET=true value preserves PG16's existing default; it is not a new
+owner membership or production requirement. All five logins have canlogin=true
+and super/create-role/create-database/replication/bypass-RLS=false. Exactly the
+selected one of the four accepted MEMBER predicates is true. Owner must have
+effective SET and NOT USAGE; ordinary routes require effective USAGE. Check
+the actual per-grant options too; rolINHERIT alone proves neither condition.
+
+For the three new names use `altest_a2_owner_`, `altest_a2_admin_reader_`, and
+`altest_a2_pub_reader_` plus the COMPLETE generated 32-lowercase-hex UUID. Do not
+use the longer dictionary key as the publisher-reader name: it can exceed 63.
+Keep existing login names verbatim. Read server max_identifier_length BEFORE
+CREATE, require every exact ASCII name fits it, never truncate/adopt aliases.
+Each generated 32-hex disposable password stays private; none is operator input.
+
+In the same existing login transaction, true mode first uses fixed
+<!-- pragma: allowlist nextline secret -->
+`SET LOCAL password_encryption='scram-sha-256'`; create all thirteen credentials.
+Only the five selected CREATE statements add explicit INHERIT/NOINHERIT.
+The other eight login and grant statements retain their original form.
+Selected grants use exactly THREE fixed statements per membership:
+`GRANT <fixed group> TO <exact owned login> WITH ADMIN FALSE`, then WITH INHERIT
+TRUE/FALSE, then WITH SET TRUE. Group names are closed constants, login names
+are psycopg2 Identifier objects, and password is a bound parameter. PG16's
+documented syntax has one option per statement; do not invent a comma variant.
+
+Retain exact rolname::text/OID readback BEFORE each GRANT. Before commit add one
+fixed five-name catalog read, LIMIT 6, at most 16 KiB returned primitive data:
+name/OID, seven login flags, SCRAM-verifier-present boolean (never verifier text),
+direct granted group name/OID/grantor OID, three grant options, four MEMBER
+booleans, and selected group's SET/USAGE booleans: exactly 22 columns, five rows.
+Join pg_auth_members by the five exact login OIDs; extra/missing grants/rows,
+wrong primitive types, or changed OID/name fail. No all-cluster secret enumeration.
+The expected login batch has 52 explicit executes: max-name + password setting,
+26 create/readback, 23 grants (8+15), one catalog proof; BEGIN/commit are separate.
+
+All new rows/passwords/route mapping remain local staging until the entire batch
+commit AND admin context close succeed. Then publish into existing owned_roles
+and roles, and the fixed route mapping together. Failure/ambiguous commit/close
+must not adopt discovered rows or publish credentials; retain original errors.
+Keep one-close cleanup and original cause/context; do not retry uncertain close.
+The eleven accepted/execution NOLOGIN group roles and all installed ACLs remain
+unchanged. Maximum fixture-owned cohort is 28 roles (13 logins, 11 reserved,
+three legacy only if created here, one hostile) plus one child DB; an existing
+legacy role is never adopted. The exact disposed cohort still comes from OIDs,
+not this upper bound, UUID resemblance or name prefix.
+
+#### 4. Real authentication is a separate prerequisite, not a mocked flag
+
+Use a NEW explicitly granted PG16 cluster, not an HBA rewrite on any existing
+AL/occurrence/app cluster. Bootstrap superuser/login `a2_fixture_admin` and DB
+`a2_fixture_bootstrap` are disposable SETUP principals, never supplied to A2's
+installed config. Proposed HBA contents (no include directives or broad trust):
+
+```text
+local all a2_fixture_admin peer map=a2_root_setup
+local all all scram-sha-256
+host all all 0.0.0.0/0 reject
+host all all ::0/0 reject
+```
+
+Only ident row: `a2_root_setup root a2_fixture_admin`. Server listen_addresses
+is empty. The actual kernel UID→server OS-name mapping must be root; userns
+remapping or a missing mapping refuses, never substitutes trust/password auth.
+Application UIDs 10001/10002 cannot obtain bootstrap rights by knowing its name.
+The separately prepared cluster must start with these reviewed immutable files;
+bounded pg_hba_file_rules/pg_ident_file_mappings readback (<=5/2 rows, 16 KiB
+combined) checks current file syntax, NOT what the server last loaded. Pair
+that with unchanged startup-file custody and actual connection controls below.
+
+Before true-mode setup mutates any DB, verify the explicit bootstrap session,
+PG16 version, empty listen_addresses, SCRAM setting, exact bounded HBA/ident
+rows and no parse errors. These extra reads exist only in the new mode; fixed
+bootstrap connections use connect_timeout=2 and startup statement_timeout=15000,
+lock_timeout=2000. They are fixture bounds, not changes to B's SQL budget.
+
+Future real controls for EACH of five app logins: correct password authenticates;
+one wrong password fails authentication (28P01, not a fabricated exception), no
+password fails; then the genuine B factory sees its fifteen columns and fixed
+SET/USAGE rule. Root-only bootstrap peer succeeds; either app UID requesting
+bootstrap fails despite any supplied password. Zero SQL rows after a refused
+factory path. No password, password verifier, DSN, pg_authid row or raw error
+is printed in JUnit or public diagnostics. Authentication tests are not a proof
+of every possible cluster privilege; fresh closed setup supplies that premise.
+
+#### 5. Bounded migration adapter, retaining the ten existing checks
+
+`migrate` retains target/action/SQLAlchemy child-route validation. False mode
+keeps its existing subprocess behavior for compatibility; true mode delegates
+to a small private `_migrate_administration` using ONLY the actual
+`tools.worker.bounded_process.run_bounded_process`, not a copied/custom runner.
+No transport change, Popen wrapper, communicate(), unbounded capture or retry.
+
+Fixed argv is absolute current interpreter, `-I -S -B -c`, one fixed <=8192-byte
+trusted bootstrap, then ROOT, admitted site-packages, action, target as separate
+bounded arguments. Bootstrap validates closed action/target again; retains its
+isolated stdlib paths and adds ONLY those two admitted import roots, never site,
+.pth/sitecustomize, plugin autoload or inherited PYTHONPATH. Use actual Alembic
+Config(ROOT/alembic.ini), explicit absolute ROOT/db/migrations script_location
+and ROOT prepend_sys_path, then a fixed upgrade/downgrade dispatch. Cwd remains
+private 0700; no chdir/chmod of repository or rewritten migration/config files.
+
+Exact child environment: LANG/LC_ALL=C.UTF-8, PGPASSFILE=/dev/null,
+PGCONNECT_TIMEOUT=2, fixed PGOPTIONS='-c statement_timeout=15000 -c lock_timeout=2000',
+and SCANIPY_DATABASE_URL from the already validated owned child URL, with the
+existing Alembic percent escaping. That URL has no password in this peer lane.
+These two fixed libpq limits/passfile setting are deliberate child-only literals,
+not inheritance of forbidden ambient selectors. No HOME/PATH search is needed.
+
+Proposed lower limits, requiring root approval: stdin=0, stdout=1 MiB,
+stderr=1 MiB, combined=1 MiB, wall=60000 ms including cleanup reserve=5000 ms;
+memory mode. Reserve one of TEN call tickets before each invocation, no refund.
+Actual unchanged accepted setup performs ten calls: upgrade0003, upgrade0004,
+expected-refusal0005, upgrade0005, downgrade0003, upgrade0005,
+expected-refusal0006, upgrade0006, downgrade0005, upgrade0006. This is <=600 s
+transport wall and <=10 MiB retained raw output across setup, NOT total fixture
+wall, PostgreSQL executor memory, or hard kernel termination proof.
+
+Keep actual ProcessOutcome/partial exception outcome privately in a <=10-entry
+fixture evidence list before deciding result. Require exited, completed cleanup,
+known returncode, both exact MemoryOutputs with actual EOF/untruncated/equal
+observed-retained lengths, and all zero input sent. Only then create the same
+private CompletedProcess-compatible returncode/stdout/stderr view for existing
+assertions; UTF-8 replacement is display-only, raw bytes remain. Decode at most
+1 MiB combined; raw plus worst-case UTF-8 string storage is bounded separately
+by <=5 MiB per returned view. Retained raw outcomes <=10 MiB; do not retain all
+decoded views. No raw output concatenation into new-mode AssertionError.
+The two expected-refusal calls in the new bootstrap require returncode=1 and
+their known reserved-role diagnostic; timeout/truncation/cleanup-incomplete is NOT
+that expected failure. Any failed transport/unknown exit stops setup without
+further migration or role adoption. KI/SystemExit and prior/cleanup errors remain
+primary/private. The future new module owns a failure-preserving final disposal
+guard; do not rewrite the two historical fixtures' existing finally blocks.
+
+#### 6. Cleanup, isolation and what must be tested before any real lane
+
+Keep existing child DB identity/OID, exact role OID census, failed-migration
+non-adoption, roundtrip/legacy-history/ACL checks and dispose semantics. No FORCE,
+CASCADE, terminate_backend, role-name adoption, retry, or blanket cleanup scan.
+Stage new login maps through commit+close just like the established controls.
+If an ambiguity leaves an unrecorded role, report/refuse; only the separately
+authorized exclusive-cluster owner may resolve/dispose that cluster. Root's
+bounded baseline catalog observation before/after the campaign must still match.
+
+Unit append must cover: default 6/10 SQL/target/fixture behavior; exact-bool and
+accepted/root/path gates before I/O; 13 identities and five distinct routes;
+short names/full UUID/63-bound and server-bound errors; SCRAM setting ordering;
+PG16 three-grant ordering and independent SET/USAGE/INHERIT/ADMIN negatives;
+22-column/5-row/16-KiB proof caps; create/readback/grant/proof/commit/close faults
+without map promotion; wrong OID/missing/duplicate/extra membership; no password
+repr/logging; migration fixed argv/env/absolute Config paths; exact caps/tickets;
+expected nonzero vs every incomplete owner outcome; KI/SystemExit/prior/cleanup
+identity; no launch after failed owner cleanup; and exact prior cleanup controls.
+Use fake actual-owner seams only in this two-file phase, no process/PG/key setup.
+
+Later native module composes real fixed /etc custody, five password files owned
+by the proper disposable UID, actual RSA producer, actual AL and all six CLI
+verbs. It must cover initialize/policy/admit/publish, R3-before-head, R1 exact
+receipt, replays/no-resign, cold ack zero SQL, historical observations vs status4,
+commit-before-ack recovery, concurrent roles, stale/blocked/expired state and
+genuine maximum bundle/material within unchanged P/V/C/F limits. Frozen B
+classification fixes and their exact owning SQL migration, if any, precede it.
+Do not fake R3/receipt/authentication or weaken production guards to make it pass.
+
+UID10001/admin, UID10002/publisher and supplementary GID10003 are explicitly
+disposable test assignments only. Root bootstrap is UID0; migrated app operations
+drop all effective/permitted/ambient caps, inherit no private FDs, and retain
+no-new-privileges and actual euid/egid checks. Future launch reuses the shared
+bounded owner and a separately reviewed fixed bootstrap; no new native runner.
+New context must include exact corrected B/AL, migrations/config/resources and
+trusted runtime/driver/libpq imports; old A1 context cannot establish this closure.
+
+Proposed external envelope retains the separately reviewed PG16 4-GiB memory=
+swap, 3-GiB data tmpfs, 2 CPUs, 256 PIDs, 128-MiB shm, no TCP/network egress;
+test container retains A1's 2-GiB memory=swap/2 CPUs/128 PIDs/read-only root and
+bounded tmpfs, adding ONLY the exact private socket mount. Combined capacity,
+actual server UID/socket permissions, image/import closure, complete test-count
+and wall/watchdog/report-retention profile require a fresh root-reviewed recipe
+before launch. Do not assume the old no-PG/native38 watchdog covers this lane or
+claim tmpfs fsync is power-loss durability. No provisioning is part of phase one.
+
+#### 7. Decisions requested and primary references
+
+Approve/revise only the opt-in interface, five-route table/short names, fixed
+peer/SCRAM prerequisite, ten-call migration limits/adapter and two-file scope.
+Then implementation/unit review can proceed independently of later provision.
+After corrected B/AL acceptance, allocate the separate integration/context and
+actual isolated authentication campaign with resource/cleanup approval. Reader
+role/absence migrations remain dependency-ordered separate owners, no overlap.
+
+PG16 facts were checked read-only in REL_16_STABLE primary documentation (web
+tool failed before content; bounded raw GitHub reads succeeded):
+[GRANT syntax/options](https://www.postgresql.org/docs/16/sql-grant.html),
+[peer mapping](https://www.postgresql.org/docs/16/auth-peer.html),
+[SCRAM and password_encryption](https://www.postgresql.org/docs/16/auth-password.html),
+[HBA view is current-file, not loaded-state evidence](https://www.postgresql.org/docs/16/view-pg-hba-file-rules.html),
+[same qualification for ident view](https://www.postgresql.org/docs/16/view-pg-ident-file-mappings.html).
+These support semantics, not an assertion that any proposed test role or server
+exists. No tests or database connections were made while preparing this note.
+
+#### 8. Root source/fake allocation after review
+
+Root read the original 294 lines and approved implementation in exactly the two
+test-infrastructure paths listed in §1, in a NEW worktree from accepted a871,
+not the frozen B tree. The administration bool/path/prerequisite interface,
+five routes/thirteen logins, 52 explicit login-batch executes and staged OIDs,
+fixed peer/SCRAM policy, and actual shared-owner ten-call migration profile are
+approved SOURCE requirements. Each call has 60000 ms including 5000 ms cleanup
+and 1 MiB combined output. This is NOT a 600-second overall native grant.
+
+Root additionally approved the accepted-profile migrate allowlist literal
+`20260926_0007` for the pending absence migration. Do not select it by default,
+add it to setup's ten-call schedule, or accept `head`. The 0007 resource/client
+classifier and separate new tests remain the schema author's allocation.
+Occurrence defaults/targets and accepted 0006 defaults remain unchanged.
+
+The proposed selectors are approved future contract names, not permission to
+launch. The PG/client resource envelope in §6 is NOT approved: its proposed
+4 GiB PG limit differs from an earlier 1.5 GiB proposal and needs fresh machine
+measurement and a reviewed recipe. No provision, keys, DB, UID/native effects,
+full/broad suite, hooks, commit, push or image action is allocated. Only source,
+bounded fake unit controls and scoped static checks are allowed before root and
+peer review. Preserve the preceding 294 lines and all actual failed evidence.
+
+#### 9. Pending composition-only 0007 ticket extension
+
+Root confirmed that successful existing accepted-0006 setup consumes all ten
+reserved migration calls. This source/fake checkpoint retains that ceiling:
+an eleventh call refuses before invoking the transport, including literal 0007.
+The additive allowlist is not a claim that this administration setup is ready
+for the combined corrected-B/0007 lane. Standalone 0007 qualification remains
+the separate existing accepted fixture and the schema owner's new test module.
+
+For the later COMBINED A2 lane, root selected exactly one additional reserved
+upgrade to `20260926_0007` after successful ten-call 0006 setup: eleven maximum,
+at most 660 seconds of summed transport walls and 11 MiB summed raw outputs.
+That is neither an overall/native budget nor a launch grant. The eleventh slot
+must allow only that literal upgrade, without meter reset/refund, additional
+roundtrip or implicit `head`. It is a pending composition-only source extension,
+to be separately allocated and reviewed after both current freezes; it is NOT
+implemented in this ten-ticket checkpoint.
+
+### Retained approved final-ticket allocation
+
+### A2 harness — final explicit0007 ticket allocation proposal
+
+2026-09-26. Source-only proposal for root review; no repository edit, process,
+migration, PostgreSQL, native/UID/key, commit, push or installation grant.
+The reader-role0008 checkpoint remains independently frozen and is not a dependency.
+
+#### 1. Exact base and existing behavior
+
+Harness commit04f043bdca2b0ef8b05cf168f9f0ecd3e989431d,
+tree451e92e6dd5093b00c6ab78a90b9352f893c84ae, was read in the clean worktree
+/tmp/scanipy-a2-harness-source-EsE10GrQ. Frozen relevant bytes:
+
+- tests/occurrence_store_postgres.py:493fef9133d9ebea9e50bef8cbd622c04390582299cfa1350736974ca3399190
+- tests/unit/test_accepted_ledger_repository.py:e55c53f6dd6024c42623e518a901e4aab83293513a9e494891946e0cf882bbda
+
+The approved full administration contract is currently outside the repository:
+A2-HARNESS-ALLOCATION-01.md in /tmp/scanipy-a2-harness-allocation-SjP4B4Al,
+SHA c53612fc9a81ac10d3d7b20e45fd96056b21a24b0de8f7550aa10340bf132832.
+Its sections5/8 fix ten calls; section9 explicitly reserves this later extension.
+Current code accepts literal0007 in migrate and its fixed bootstrap but true-mode
+_migrate_administration rejects once _migration_calls reaches10 (lines428–501).
+Thus target allowlisting is not combined A2 readiness.
+
+setup/_setup_accepted presently issue these ten migrations, in order:
+
+1. upgrade20260925_0003
+2. upgrade20260925_0004
+3. expected-refusal upgrade20260925_0005
+4. upgrade20260925_0005
+5. downgrade20260925_0003
+6. upgrade20260925_0005
+7. expected-refusal upgrade20260926_0006
+8. upgrade20260926_0006
+9. downgrade20260925_0005
+10. upgrade20260926_0006
+
+Existing reserved-role refusal/identity cleanup, legacy and execution history/
+ACL comparisons, round-trip checks and thirteen-login commit/close precede
+successful setup return. No0007 call is added inside this sequence or setup.
+
+#### 2. Proposed exact source allocation and eligibility
+
+Allocate only these changes after root review, composing reviewed0007 owner
+85dea239 with the harness through ordinary dependency integration:
+
+1. tests/occurrence_store_postgres.py: three small true-mode changes.
+2. tests/unit/test_accepted_ledger_repository.py: append controlled regressions.
+3. docs/bhmea/ACCEPTED-LEDGER-SQL.md: append the self-contained fixture amendment
+   described below; preserve all historical text.
+
+PrivatePostgres.__init__: initialize one private setup-complete boolean false.
+It is bookkeeping, not an authority/ownership receipt and not caller input.
+setup: after the unchanged _create_logins returns (including its actual commit,
+connection close and map publication), true mode requires count exactly10 and
+no sticky migration failure, then marks setup complete. No counter reset/refund.
+No marker on any earlier assertion, migration, catalog/login/commit/close failure.
+False mode has no additional runtime checks or changed behavior.
+
+_migrate_administration: retain runtime qualification and every current owner
+predicate. Before reserving a call or entering transport:
+- sticky failure or count>=11: refuse;
+- target0007 at count<10: refuse, even though the fixed generic allowlist includes it;
+- count==10: require setup-complete, action exactlyupgrade, target exactly
+  20260926_0007, expect_success is True; every other call refuses.
+- counts0–9 otherwise preserve the current adapter's behavior.
+
+The current default remains literal0006 and must never change to0007, including
+after successful upgrade. Consequently the extra slot cannot be reached by
+migrate() or target=None; it requires migrate("20260926_0007") explicitly.
+Keep exact primitive validation in migrate before caller comparisons/work.
+No new public flag, arbitrary migration list, callback or reusable ticket API.
+No bootstrap/argv/environment/ProcessLimits change is needed:0007 is already
+explicitly admitted. The existing owner remains the only transport.
+
+The marker proves completion of the harness's own unchanged ten-call setup,
+not continuous database state under another administrator. The fixture retains
+exclusive disposable-child ownership; reviewed0007/Alembic owns actual schema
+transition checks. The later integration must verify the resulting revision/
+read behavior; a source marker or completed CLI result does not replace that.
+
+After accepting slot11, increment the existing counter and set sticky failure
+BEFORE transport exactly as now. Retain its actual outcome/partial outcome.
+Only full EOF, untruncated bounded output, zero stdin, completed cleanup and
+exact exit0 may clear failure and return the existing private result view.
+Count11 forbids every subsequent attempt even after success. No new role/OID
+adoption, retry, repair, downgrade/roundtrip, head or default-target change.
+
+#### 3. Accounting and preservation
+
+Eleven reservations maximum; each unchanged ProcessLimits is
+(0,1048576,1048576,1048576,60000,5000).
+Therefore summed transport walls<=660000ms, including eleven existing5s cleanup
+reserves; retained raw outputs<=11534336 bytes (11MiB), evidence<=11 outcomes.
+These are summed allowances, NOT an outer660-second timeout, server CPU/RSS
+bound, complete fixture wall deadline or kernel termination proof.
+The single decoded compatibility view stays<=5MiB; do not accumulate all views.
+Invalid pre-transport requests spend no new ticket; spent calls are never refunded.
+
+Default-false occurrence/accepted fixtures keep their original6/10 logins,
+0005/0006 defaults, existing subprocess behavior and explicit0007 behavior.
+True mode retains exact bool/paths/root/cwd/dependency qualification, peer/SCRAM
+bootstrap, thirteen names/five routes,52 login executes, all OID/commit/close
+staging, fixed child route, error privacy and final exact owned disposal.
+No extra query/credential/role/grant, cleanup helper, shared transport edit,
+CI selector,0008 role, production reader or operational authority is included.
+
+#### 4. Required controlled checks, then separate genuine qualification
+
+Keep every old test body, including the ten-default-calls/eleventh-default
+refusal and ten-literal-setup census tests, unchanged. Append cases proving:
+- unarmed count10 rejects0007; ten arbitrary successful calls do not arm it;
+- setup completion arms only after ten migrations, existing checks and login
+  commit/close; fail/interruption at those boundaries cannot arm it;
+- exact successful setup followed by explicit upgrade0007 has11 calls/outcomes;
+- early0007, count10 default/None/0006/downgrade/expect_failure/head/base and
+  every twelfth call refuse before transport, without resetting spent work;
+- incomplete/timeout/output/unknown-exit/cleanup/transport KI/SystemExit on
+  slot11 retains exact original evidence, remains failed and cannot retry;
+- argv/env/cwd/real-owner limits on slot11 remain exact, with no ambient fallback;
+- default-false paths and all existing OID/grant/cleanup source ASTs unchanged.
+
+Fake setup controls must run the real setup sequencing with substituted DB/
+transport boundaries, or explicitly identify any manually seeded state unit.
+A seeded boolean alone is not evidence that real setup arms correctly.
+Run only these bounded units/statics under a later grant. No cases ran for
+this proposal. Later genuine A2 tests must separately compose corrected B,
+actual owner0007, this harness, approved context/peer-SCRAM/credentials and
+bounded native/PG/report/cleanup plan. Existing owner PG38 remains mandatory.
+
+#### 5. Repository contract amendment required before implementation
+
+The self-contained harness owner is ACCEPTED-LEDGER-SQL.md section3 (path15),
+not a new generic framework. Append an explicitly scoped administration-mode
+subsection retaining default-false section3 behavior. Incorporate the complete
+approved true-mode interface/runtime/path/peer-SCRAM/five-route/13-login/52-query/
+ten-setup/owner-output/error/disposal contract from A2-HARNESS-01, followed by
+this one-slot eligibility/accounting amendment. Its older prohibition on an
+accepted_owner runtime login stays true for default fixtures/production; the
+new distinct root-granted disposable administration lane has the already
+approved test-only owner SET login, never an installed operator identity.
+Do not leave /tmp as the sole specification or rewrite the old default contract.
+
+The consumer resolver's section17.16 already names the pending harness+0007
+composition prerequisite; no B source or resolver rewrite is needed for this
+ticket-only allocation. A later combined-checkpoint append can record when its
+source/runtime conditions actually pass. Preserve all prior failures and the
+ten-ticket checkpoint as historical, not retroactively eleven-ticket evidence.
+
+### Final-ticket source/controlled checkpoint — 2026-09-26
+
+The approved three-path source change is now prepared in an isolated worktree
+fromf192547e for root/peer review. Only constructor marker initialization,
+_migrate_administration eligibility and setup's final marker assignment differ
+in the harness. All other existing helper/method ASTs, bootstrap bytes and
+ProcessLimits calls remain exact. The old2909-line unit prefix and3587-line
+document prefix are byte-exact; no owner/SQL/migration/CI/default fixture edits.
+
+The appended62 cases include real setup/_setup_accepted/migrate/login method
+sequencing with fixed DB/transport doubles, final eligibility, every setup
+migration failure, login proof/cursor-close/commit/close failures, partial owner
+outcomes and refusal of retries/default/downgrade/twelfth calls. Private counter
+fault injection is labelled; it does not assert real database state or migration
+behavior. No PostgreSQL, child migration process, real root/UID/key/native or
+container operation was run, and no operator activation is established.
+
+Actual declared Python3.11 checks, closed environment/explicit task PYTHONPATH,
+configured pyproject and disabled plugin autoload/ambient pytest options:
+
+- Initial50 new controls passed,0 failures/errors/skips,2.357s JUnit at
+  /tmp/scanipy-a2-final-ticket-evidence-lZLpAZi7/ticket-first.xml,
+  SHA a498d5f9d2a9f8c6f605417303872d4f69ba8ed926abd08c0d110a76b084ef51.
+- Final affected486 unique controls passed,0 failures/errors/skips,7.347s JUnit
+  (7.34s console), consisting of388 old ledger/harness +62 new +36 unchanged
+  occurrence units. Report /tmp/scanipy-a2-final-ticket-evidence-lZLpAZi7/ticket-combined.xml,
+  SHA 0fb0e215a8e69c809bf67cae29e1068e9838f3f1f5752180d53edd6aa9c91f5f.
+  These reports overlap; their totals are not additive coverage.
+
+Ruff check/format passed. An intermediate diff-check reported one newly appended
+blank line at EOF; it was corrected in this evidence append, not a product/test
+failure or changed historical paragraph. Source/security review and separately
+granted genuine0007/A2/peer-authentication/custody/cleanup qualification remain.
