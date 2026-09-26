@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 15 — 2026-09-25 23:31 UTC snapshot plus explicit 23:36/23:38 updates and scope clarification; earlier cutoffs preserved; full acceptance unresolved |
+| Revision | 16 — 2026-09-26 02:14:58 UTC cutoff plus explicit 02:26 update; earlier observations preserved; full acceptance unresolved |
 | Status | Execution started; no full R01–R20 task or submitted claim is yet accepted as complete |
 | Initial review code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
@@ -46,8 +46,8 @@ All unchecked acceptance items below remain required unless explicitly
 classified optional. An adopted design, recovered historical report, or one
 successful Joern parse does not complete a task or verify a submitted claim.
 
-**Current work queue:** use Revision 15 in the
-[active handoff](PLAN-BHMEA-EXECUTION-2026-09-25.md#revision-15-execution-queue--observed-at-2331-utc).
+**Current work queue:** use Revision 16 in the
+[active handoff](PLAN-BHMEA-EXECUTION-2026-09-25.md#7-revision-16-execution-queue--021458-utc-september-26).
 The dated progress paragraphs that follow retain historical evidence. Their
 older pending statuses do not override the latest queue or require redoing
 accepted merges; the full task-level acceptance TODOs begin in section 5.
@@ -315,6 +315,59 @@ under `-x` after 16 passes and one failed assertion, zero errors/skips,
 is under narrow test-only correction. The separate equal-bytes/unequal-views
 diagnostic does not prove the failed row's original bytes; no SQL guard is
 relaxed and neither 144-case nor whole-migration success is claimed.
+
+**Revision 16 — fixed cutoff 2026-09-26 02:14:58 UTC:** accepted main
+`c5c862e3035ac974af82be7f2b69680cf3ea4c70`, tree
+`ea4d36f4e344a250d0ed1df7b9e8fc519c08deff`, includes resolver B #418,
+Revision15 #423, the typecheck repair #424, process-evidence E #422 and pure
+journal F #425. These accepted foundation merges supersede their older pending
+instructions, not historical failures or any acceptance checklist below.
+The [Revision16 evidence](evidence/2026-09-25-foundation-merges/README.md#revision-16--fixed-021458-utc-cutoff-september-26)
+records exact supplied merge/check identities and distinct local reports.
+
+F's recorded full run passed **5,049 /51 existing skips**, 472.775s; its separate
+accepted-artifact selection passed **853 /0 skips**, 26.146s. Neither pure
+process evidence nor journal structure/replay establishes durable physical
+storage, a running controller, current permission or output custody. Initial
+E/F failed reviews remain recorded even though later required gates passed.
+
+At the cutoff, pure administration-verification PR #426 at `ed4dd545` has a
+corrected full **5,213 passed /51 skips /0 errors**, 500.495s, including 89 real
+occurrence PostgreSQL cases. Its CI is running and canonical review pending;
+normal push succeeded only after a first all-hooks-green transport failure.
+Its Gate3 action succeeded with five selected passes, but the actual canary
+suite was skipped because the corpus was absent: no full canary acceptance.
+
+AL-03 `7c992e15` has **1,570 unit passes**; its fresh full invocation started at
+02:11:52 and remains **RUNNING, no result** at this cutoff. Historical real-PG
+145-case success predates the descriptor correction and is not reassigned to
+current source. G `eba073bc` has **1,853 distinct pure unit passes**, with full,
+push and hosted gates pending. A1's original 230 mock passes did not expose
+root-key metadata, final public-leaf reread or scandir-handoff defects. The
+first two fixes have 285 overlapping diagnostic passes; the third has a
+retained one-failure red and is under correction at the cutoff. No real keys,
+UID fixture, installed authority, SQL or complete A1 approval follows.
+
+Next actions are the exact #426 gates/merge, AL full and catalog readback plus
+publication gates, A1 correction review before separately approved real-custody
+staging, G full/publication, and genuine A2 ledger/provider/CLI integration.
+Qualified physical RES/journal/event/spool storage, current owners, DB barriers,
+bounded native CPG/source producers and complete findings/provenance/UI remain
+required. All 20 R tasks, 18 claims, 85 milestone/gate states and edges remain
+unchanged. This machine/local Docker remains the target, not a ready deployment;
+no October deadline, release authority or reduced scope is introduced. Results
+after 02:14:58 require a separate update and are not backdated here.
+
+**Explicit later update, 02:26 UTC:** #426's six CI jobs have passed, but its
+first canonical review refused the incorrect component label and then-pending
+CI. Only PR metadata was corrected to the same CMP-ORCH-03 owner as accepted
+#418; fresh canonical APPROVE/merge remain TODO. A1's third correction now has
+299 author and independent diagnostic passes; original failures are retained.
+Real kernel/UID/key custody is still unverified and needs the separately
+reviewed disposable fixture. AL full is still running without a final result;
+do not edit that tree or promote old PG evidence. The
+[later queue](PLAN-BHMEA-EXECUTION-2026-09-25.md#explicit-later-update--0226-utc)
+supersedes only these earlier pending actions, not any acceptance checklist.
 
 ## 1. Objective and document boundaries
 
