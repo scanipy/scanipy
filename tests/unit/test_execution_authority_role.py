@@ -346,9 +346,9 @@ def test_bounded_snapshots_exclude_only_new_grantee_not_old_acl_entries(remember
     sql = m._objects(remember=remember)
     assert sql.count("WHERE a.grantee IS DISTINCT FROM role_oid") == 7
     assert sql.count("coalesce(cardinality(f.proacl),0)>64") == 6
-    assert "coalesce(cardinality(n.nspacl),0)>64" in sql
+    assert "coalesce(cardinality(v_n.nspacl),0)>64" in sql
     assert sql.count("WHERE a.grantee=0") == 7
-    assert "to_jsonb(f)-'proacl'" in sql and "to_jsonb(n)-'nspacl'" in sql
+    assert "to_jsonb(f)-'proacl'" in sql and "to_jsonb(v_n)-'nspacl'" in sql
     assert "ORDER BY oid" in sql and "'kind','schema'" in sql
     assert "a.grantor,a.grantee,a.privilege_type,a.is_grantable" in sql
     assert 'ORDER BY a.grantor,a.grantee,a.privilege_type COLLATE "C",a.is_grantable' in sql
@@ -424,3 +424,20 @@ def test_existing_runtime_stays_unsupported_and_no_new_provider_is_imported():
     verifier = (ROOT / "services/scan/accepted_inputs/verify.py").read_text()
     assert '"runtime-unsupported"' in verifier
     assert ROLE not in verifier
+
+
+@pytest.mark.parametrize("forward", (True, False))
+def test_outer_row_variables_do_not_shadow_catalog_relation_aliases(forward):
+    # The embedded predecessor bodies are quoted comparison data, not part of
+    # the outer DO statement's variable scope. This is a source invariant, not
+    # a PostgreSQL parser or proof of successful migration execution.
+    sql = migration()._migration_sql(forward=forward)
+    outer, bodies = re.subn(r"(\$ear_body_[0-5]\$).*?\1", "''", sql, flags=re.DOTALL)
+    assert bodies == 12  # Six targets, both before and after the fixed DDL.
+    variables = set(re.findall(r"\b([a-z_][a-z0-9_]*)\s+pg_catalog\.[a-z_]+%ROWTYPE\b", outer))
+    aliases = set(
+        re.findall(r"\b(?:FROM|JOIN)\s+pg_catalog\.[a-z_]+\s+([a-z_][a-z0-9_]*)\b", outer)
+    )
+    assert len(variables) == 2
+    assert {"p", "r", "n", "c"} <= aliases
+    assert variables.isdisjoint(aliases), variables & aliases

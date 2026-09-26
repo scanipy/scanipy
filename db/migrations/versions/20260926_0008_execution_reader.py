@@ -337,17 +337,17 @@ def _objects(*, remember: bool) -> str:
     destination = "before_objects" if remember else "after_objects"
     functions = "".join(_function_guard(i, remember=remember) for i in range(len(TARGETS)))
     schemas = f"""
-      FOR n IN SELECT * FROM pg_catalog.pg_namespace
+      FOR v_n IN SELECT * FROM pg_catalog.pg_namespace
         WHERE oid IN (accepted_schema_oid,execution_schema_oid) ORDER BY oid
       LOOP
-        IF coalesce(cardinality(n.nspacl),0)>64 THEN
+        IF coalesce(cardinality(v_n.nspacl),0)>64 THEN
           RAISE EXCEPTION 'execution reader schema ACL overflow'; END IF;
         IF EXISTS(SELECT 1 FROM pg_catalog.aclexplode(
-          coalesce(n.nspacl,pg_catalog.acldefault('n',n.nspowner))) a WHERE a.grantee=0) THEN
+          coalesce(v_n.nspacl,pg_catalog.acldefault('n',v_n.nspowner))) a WHERE a.grantee=0) THEN
           RAISE EXCEPTION 'execution reader schema PUBLIC privilege'; END IF;
         {destination}:={destination}||jsonb_build_array(jsonb_build_object(
-          'kind','schema','properties',to_jsonb(n)-'nspacl',
-          'acl',{_acl("n.nspacl", "n", "n.nspowner")}));
+          'kind','schema','properties',to_jsonb(v_n)-'nspacl',
+          'acl',{_acl("v_n.nspacl", "n", "v_n.nspowner")}));
       END LOOP;
       IF jsonb_array_length({destination})<>8 THEN
         RAISE EXCEPTION 'execution reader object inventory changed'; END IF;
@@ -499,7 +499,7 @@ def _migration_sql(*, forward: bool) -> str:
           {_objects(remember=False)}
         """  # noqa: S608 -- frozen migration statements only
     return f"""DO $execution_reader_migration$
-      DECLARE f pg_catalog.pg_proc%ROWTYPE; n pg_catalog.pg_namespace%ROWTYPE; reader record;
+      DECLARE f pg_catalog.pg_proc%ROWTYPE; v_n pg_catalog.pg_namespace%ROWTYPE; reader record;
         database_oid pg_catalog.oid; accepted_schema_oid pg_catalog.oid;
         execution_schema_oid pg_catalog.oid; role_oid pg_catalog.oid;
         target_oids pg_catalog.oid[]:='{{}}';

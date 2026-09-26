@@ -171,3 +171,141 @@ alongside four new fixed helpers. Original administration setup/transport/login
 methods, all bootstrap constants, three old integration modules, migrations,
 reader contract and baseline are unchanged. Source and collection review, a
 separately bounded real-PG run plan and actual qualification remain pending.
+
+## 6. Coordinated qualification composition and owner boundaries
+
+2026-09-26 clarification under
+[DECISION-BHMEA-01](../DECISION-BHMEA-01-current-execution-authority-2026-09-25.md).
+Section1 defines the **four-path role-qualification owner's allocation**, not
+the entire later composed qualification PR. Its prohibition on editing the
+reader contract, migrations and workflow applies to that owner. Root separately
+allocated and reviewed the role owner, final-ticket fixture owner and CI owner.
+No author was authorized to overwrite another owner's frozen work.
+
+The actual source commits and their complete per-commit path inventories are:
+
+| Slice | Reviewed source commit | Allocated paths |
+| --- | --- | --- |
+| Guarded reader role | `5c39512311e4fbd926d71bd002d3daf29d9d9bf5` | `db/migrations/versions/20260926_0008_execution_reader.py`; `tests/unit/test_execution_authority_role.py`; `docs/bhmea/EXECUTION-AUTHORITY-READER.md` |
+| Final administration ticket | `ca51a9bd73de294fee308f8a940c910404390a29` | `tests/occurrence_store_postgres.py`; `tests/unit/test_accepted_ledger_repository.py`; `docs/bhmea/ACCEPTED-LEDGER-SQL.md` |
+| Role-only qualification | `0bee28339bebffe55840b4131a8add52962e8ca6` | `tests/integration/test_execution_authority_role.py`; `tests/occurrence_store_postgres.py`; `tests/unit/test_accepted_ledger_repository.py`; this document |
+| Required CI246 selection | `275b0750aeaf016685b50be9493cddd04f394d06` | `.github/workflows/ci.yml`; `tests/unit/test_accepted_ledger_ci.py`; `docs/workflows/ci.md` |
+
+The role and final-ticket dependencies were ordinarily merged as
+`67c41eb02eb977383dd5fa68987d240372a0c4c9`, parents5c395123+ca51a9bd,
+tree `9de6def3e1d333ae8e920aefbcb2d51da20e8c7e`, before the four-path
+qualification commit. That owner then made only its reviewed role-specific
+harness/unit additions, preserving the final-ticket behavior. The two shared
+fixture files account for the overlap: 3+3+4+3 allocated path entries form
+**11 distinct composed paths**, not an expanded four-path author allocation.
+
+After the CI commit, ordinary merge
+`ee1f4e3d56f6ee60e4d7a7ecbd14b9da2df53f6a`, parents275b0750+4041cc3d,
+tree `04392b268ecd3f4fca13369dc17bb795a21a5f9a`, incorporated the separately
+reviewed historical-read scope clarification. That historical document is
+already present in accepted main `b5bff4292892d024a21380eb01b02b528f3e2baa`;
+it is not a twelfth role-qualification change against that accepted base.
+The composed reader-contract bytes are the role5c395123 version; later private
+custody/factory modules and genuine A2 production/71-case fixture additions are
+separate allocations, not part of this composition.
+
+This clarification changes no owner permission, SQL/Python/workflow behavior,
+test oracle, budget, default or prior evidence. Occurrence0005/accepted0006
+defaults, the opt-in administration ten-plus-explicit-eleventh ticket, and this
+non-administration lane remain distinct. Its complete planned246 selection is
+43 SQL+102 security+38 historical+63 role, with21 healthy migration calls
+(10 setup+4 historical+7 role). Section3's rolled-back owning DO guards are
+not additional migration-process calls. Existing cleanup/refusal rules remain.
+
+The role cases deliberately use effective SET LOCAL ROLE under privileged
+session_user; they do not prove restricted login, RESET ROLE confinement,
+SCRAM/root-peer authentication, installed custody, a working reader/composer
+or runtime authority. No new login, operator identity or service is authorized.
+Source/collection checkpoints above remain dated history. This ownership note
+does not report a PostgreSQL result or turn controlled/collected cases into
+executed passes. Any later run, cleanup, exact-head CI/canonical, merge and
+accepted-artifact result must be recorded separately from its actual evidence.
+All original task/claim/shared-gate and release/stage limitations remain.
+
+## 7. Namespace-record ambiguity correction — source allocation
+
+2026-09-26. Root allocated only migration0008, its existing role-unit module,
+and this append in a new isolated tree based on `ee1f4e3d`. The original
+role/CI tree and this document's first228 lines remain unchanged. This extends
+the earlier composed owner allocation only for the correction described here;
+it authorizes no migration, fixture disposal, database retry or activation.
+
+The actual single standalone246 campaign started07:51:47 UTC and exited1 at
+08:07:38. Its JUnit records183 passing old bodies (43 SQL+102 security+38
+historical), followed by setup and teardown errors on the first role case:
+184 testcase elements,2 errors,0 failures/skips,948.764 seconds. No new role
+body executed. The wrapper preserved pytest failure and a subsequent failed
+after-catalog baseline check. This is not246 success or successful cleanup.
+
+Root's retained server record at08:07:36.810, PID6680, identifies ambiguous
+`n.nspacl` in the inline DO block at line475. The outer block declares
+`n pg_catalog.pg_namespace%ROWTYPE`; its object-snapshot loop uses that record.
+The later role guard independently aliases `pg_catalog.pg_namespace` as `n`.
+Both meanings are visible in the role guard's ACL expression. PostgreSQL16's
+[variable-substitution rules](https://www.postgresql.org/docs/16/plpgsql-implementation.html#PLPGSQL-VAR-SUBST)
+explain the default ambiguity refusal and the local-variable rename remedy.
+Offline SQLAlchemy/Alembic serialization controls do not parse that PL/pgSQL
+expression; their prior passes are not evidence that this SQL executed.
+
+The correction is exactly eight source identifier substitutions: the outer
+namespace-record declaration and its seven references in `_objects` become
+`v_n`. Keep the ACL kind string/argument `'n'`, `_role_guard` and its SQL aliases,
+all six TARGETS, function bodies/signatures, guards, counts, privileges and
+DDL unchanged. Do not set `plpgsql.variable_conflict`, qualify away a guard,
+rewrite an old owner body or change any migration/harness default.
+
+Preserve the original530-line migration and426-line unit module outside the
+tree. Add a controlled two-direction regression which excludes embedded
+frozen body literals, derives the outer row-variable names and catalog table
+aliases, and refuses their intersection. It must fail on both original
+generated statements, then pass after the rename. This source invariant is
+not a PostgreSQL compiler or runtime test. Keep all87 existing controls;
+only their two namespace-record-specific assertion lines may change by the
+same reversible identifier substitution. Prove exact inverse-renamed SQL in
+both directions and unchanged other helper/TARGETS ASTs, DDL and predicates.
+
+Original actual evidence remains in the root's local
+`/tmp/scanipy-role-pg-wrapper-ETRyLPDw/RESULT-FAILED.md` record and its adjacent
+`role-pg-junit.xml`, `catalog-before.json` and `catalog-after.json`. These are
+retained local evidence, not a public immutable archive. The report SHA256 is
+`64b872b894fffc94ef4e2f6f9d9a9cca019ddd3ca8dad27583b5b7f69632dba5`.
+The after-catalog contains the retained child OID34310 and fixture roles;
+the new reader role is absent and other_clients is empty. That does not
+authorize adoption or cleanup. Any new actual campaign or disposition needs
+separate exact-target review and root approval. Source-only corrected results
+will be appended after they are observed; all real role/factory/current-
+authority, native/operator/restore and full shared-gate claims remain open.
+
+### 7.1. Observed controlled correction checkpoint
+
+The new two-direction source regression failed on the preserved original
+migration with2 failures,0 errors/skips,1.099 seconds; both reported the actual
+outer-record/catalog-alias intersection `{'n'}`. Its corrected-source run
+passes alongside all87 previous cases. Final configured Python3.11.16 result:
+89 unique passes,0 failures/errors/skips,1.905 seconds JUnit. Report SHA256:
+`dabbd150e9a326712d0ae0e9c88ab5146a740e75b347ab304739918d54eef9a1`.
+The earlier corrected89 run overlaps this selection and is not extra coverage.
+Its only later test change was formatting of the new regression; its AST and
+the original red regression's AST are identical.
+
+Read-only preservation checks prove exactly eight source token substitutions,
+exact inverse-renamed original source/AST, and byte-identical `_role_guard`,
+`_privileges`, six TARGETS and each function guard. Each rendered direction has
+15 uses of the renamed variable; inverse rename restores the full original SQL.
+Corrected generated sizes are67,934/72,649 UTF-8 bytes, still below131,072.
+The two permitted old assertion lines reverse exactly to the426-line original
+unit prefix; all22 original definition ASTs are exact after that reversal.
+This document's228-line pre-correction prefix is exact.
+
+Ruff check/format, strict mypy on the single migration and diff-check pass.
+The first format check requested only a line-wrap change in the new regression;
+it was corrected without changing an old test AST or migration behavior.
+Same-settings detect-secrets1.5 API inspection found no findings in the three
+allocated paths; no annotation, baseline or scanner-setting change was needed.
+No hook, commit, migration, database connection, fixture cleanup or native
+operation ran for this correction. Real PG qualification is still pending.
