@@ -179,3 +179,32 @@ Before persistent local-demo enablement, the executing LLM must:
 All original R01–R20 TODOs, C01–C18 statuses, shared gates and historical cutoffs
 are preserved. Safe source/test implementation can continue while these
 operational prerequisites remain unresolved.
+
+## VM RAM and restart — owner clarification, September 26
+
+The owner said: “Since it a virtual machine. once you complet the source work,
+i'll add-up the RAM and restart the machine to take effect.” The owner plans
+to increase VM RAM and reboot **after source work is complete**; no restart is
+requested now. The added RAM amount is unspecified and capacity is not ready
+merely because an increase is planned. Continue safe source work; do not ask
+again to free workloads or stop the existing user app/DB.
+
+Remaining handoff and post-reboot TODOs:
+
+- [ ] Complete and review the remaining source work before handing back for
+  the owner's planned restart. This clarification does not claim source
+  completion or that the machine is ready to reboot.
+- [ ] Retain and verify a durable source/evidence/resumption checkpoint before
+  that handoff. A partial private checkpoint exists, not a verified complete
+  backup; do not assume temporary artifacts or volatile fixture state survive.
+- [ ] After the owner's reboot, freshly verify boot/namespace and exact runtime
+  identities, measure at least **8 GiB available RAM and 20 GiB free disk** for
+  the A2 native lane, and reassess pressure and its reviewed whole-run budget.
+  These existing minima are not waived by added total RAM or a completed reboot.
+- [ ] Defer the actual clock qualification probe and native A2 admission until
+  that post-reboot review; rebind to fresh identities and obtain the separate
+  run grant. Pre-reboot namespace/clock observations cannot qualify the new boot.
+
+The already confirmed local-demo human roles remain with the same project
+owner; no principal, key, persistent trust or particular recovery approval is
+inferred. All R/C/TODO states, gates and historical report cutoffs are unchanged.
