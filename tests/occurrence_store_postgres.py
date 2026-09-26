@@ -1,6 +1,6 @@
 """Dedicated-cluster harness; never discovers or changes the legacy test DSN.
 
-Only SCANIPY_OCCURRENCE_TEST_URL opts in. Every migration targets a newly
+Only the profile's separately explicit test URL opts in. Every migration targets a newly
 created child database. Cleanup checks captured database/role OIDs and owner;
 it never terminates sessions, uses CASCADE, or drops an unowned resource.
 """
@@ -12,6 +12,7 @@ import subprocess
 import sys
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
+from typing import Literal
 from uuid import UUID, uuid4
 
 import psycopg2
@@ -27,10 +28,19 @@ RESERVED = tuple(
     "scanipy_exec_" + role
     for role in ("owner", "request", "detector", "identity", "cleanup", "read")
 )
+ACCEPTED_RESERVED = tuple(
+    "scanipy_accepted_" + role
+    for role in ("owner", "policy_admin", "publisher", "resolver", "reader")
+)
 
 
 class PrivatePostgres:
-    def __init__(self, url: str):
+    def __init__(self, url: str, *, profile: Literal["occurrence", "accepted"] = "occurrence"):
+        if type(profile) is not str or profile not in ("occurrence", "accepted"):
+            raise ValueError("unknown dedicated database profile")
+        self.profile = profile
+        self.reserved = RESERVED + (ACCEPTED_RESERVED if profile == "accepted" else ())
+        self.migration_target = "20260926_0006" if profile == "accepted" else "20260925_0005"
         parsed = make_url(url)
         if parsed.drivername not in ("postgresql", "postgresql+psycopg2"):
             raise ValueError("dedicated tests require PostgreSQL")
@@ -81,7 +91,7 @@ class PrivatePostgres:
             database=parsed.database,
             query={"host": host} if host.startswith("/") else {},
         )
-        self.database = "scanipy_occurrence_" + uuid4().hex
+        self.database = "scanipy_" + profile + "_" + uuid4().hex
         self.child = {**self.base, "dbname": self.database}
         self.roles: dict[str, tuple[str, str]] = {}
         self.owned_roles: dict[str, int] = {}
@@ -95,9 +105,15 @@ class PrivatePostgres:
         finally:
             connection.close()
 
-    def migrate(self, target="head", *, expect_success=True, action="upgrade"):
+    def migrate(self, target=None, *, expect_success=True, action="upgrade"):
         if action not in ("upgrade", "downgrade"):
             raise ValueError("unsupported migration test action")
+        target = self.migration_target if target is None else target
+        permitted = ("20260925_0003", "20260925_0004", "20260925_0005") + (
+            ("20260926_0006",) if self.profile == "accepted" else ()
+        )
+        if type(target) is not str or target not in permitted:
+            raise ValueError("unsupported dedicated migration target")
         target_url = self.url.set(drivername="postgresql+psycopg2", database=self.database)
         _, resolved = PGDialect_psycopg2().create_connect_args(target_url)
         for field in ("host", "port", "dbname", "user"):
@@ -126,7 +142,7 @@ class PrivatePostgres:
             connection.autocommit = True
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT rolname FROM pg_roles WHERE rolname=ANY(%s)", (list(RESERVED),)
+                    "SELECT rolname FROM pg_roles WHERE rolname=ANY(%s)", (list(self.reserved),)
                 )
                 if cursor.fetchall():
                     raise AssertionError("reserved roles already exist: refusing dedicated fixture")
@@ -204,7 +220,7 @@ class PrivatePostgres:
             reserved_oid = cursor.fetchone()[0]
             connection.commit()
         self.owned_roles["scanipy_exec_owner"] = reserved_oid
-        failure = self.migrate(expect_success=False)
+        failure = self.migrate("20260925_0005", expect_success=False)
         assert failure.returncode and "reserved execution role already exists" in failure.stderr
         with self.admin() as connection, connection.cursor() as cursor:
             cursor.execute("SELECT oid FROM pg_roles WHERE rolname='scanipy_exec_owner'")
@@ -212,7 +228,7 @@ class PrivatePostgres:
             cursor.execute("DROP ROLE scanipy_exec_owner")
             connection.commit()
         del self.owned_roles["scanipy_exec_owner"]
-        self.migrate()
+        self.migrate("20260925_0005")
         self._record_successful_migration_roles()
         # Empty round-trip is ONLY this uniquely created child, never bootstrap
         # or a discovered baseline. No execution history has been inserted.
@@ -225,12 +241,101 @@ class PrivatePostgres:
         ) == [(0,)]
         for name in RESERVED:
             del self.owned_roles[name]
-        self.migrate()
+        self.migrate("20260925_0005")
         self._record_successful_migration_roles()
         assert self._legacy_acl() == self.legacy_acl
         assert self._legacy_history() == original_history
         self.round_trip_verified = True
+        if self.profile == "accepted":
+            self._setup_accepted()
         self._create_logins()
+
+    def _setup_accepted(self):
+        """Only this empty fixture-owned child; failed migration grants no ownership."""
+        before_definitions = self._execution_definitions()
+        before_acl = self._execution_acl()
+        execution_oids = {name: self.owned_roles[name] for name in RESERVED}
+        with self.admin() as connection, connection.cursor() as cursor:
+            cursor.execute("CREATE ROLE scanipy_accepted_owner NOLOGIN")
+            cursor.execute("SELECT oid FROM pg_roles WHERE rolname='scanipy_accepted_owner'")
+            reserved_oid = cursor.fetchone()[0]
+            connection.commit()
+        self.owned_roles["scanipy_accepted_owner"] = reserved_oid
+        failure = self.migrate("20260926_0006", expect_success=False)
+        assert failure.returncode and "reserved accepted role already exists" in failure.stderr
+        with self.admin() as connection, connection.cursor() as cursor:
+            cursor.execute("SELECT oid FROM pg_roles WHERE rolname='scanipy_accepted_owner'")
+            assert cursor.fetchone() == (reserved_oid,)
+            cursor.execute("DROP ROLE scanipy_accepted_owner")
+            connection.commit()
+        del self.owned_roles["scanipy_accepted_owner"]
+        self.migrate("20260926_0006")
+        self._record_successful_migration_roles(accepted=True)
+        assert self._execution_definitions() == before_definitions
+        self.migrate("20260925_0005", action="downgrade")
+        assert self.rows(
+            "SELECT count(*) FROM pg_namespace WHERE nspname='scanipy_accepted_inputs'"
+        ) == [(0,)]
+        assert self.rows(
+            "SELECT count(*) FROM pg_roles WHERE rolname=ANY(%s)", (list(ACCEPTED_RESERVED),)
+        ) == [(0,)]
+        for name in ACCEPTED_RESERVED:
+            del self.owned_roles[name]
+        assert self._execution_definitions() == before_definitions
+        assert self._execution_acl() == before_acl
+        assert (
+            dict(
+                self.rows(
+                    "SELECT rolname,oid FROM pg_roles WHERE rolname=ANY(%s)", (list(RESERVED),)
+                )
+            )
+            == execution_oids
+        )
+        self.migrate("20260926_0006")
+        self._record_successful_migration_roles(accepted=True)
+        assert self._execution_definitions() == before_definitions
+        self.execution_definitions = before_definitions
+        self.execution_acl = before_acl
+        self.accepted_round_trip_verified = True
+
+    def _execution_definitions(self):
+        # New bridges/keys are excluded explicitly; every old function's exact
+        # body/owner/config and old table owner/RLS/columns remain compared.
+        return (
+            self.rows(
+                "SELECT p.oid,p.proowner,p.proconfig,pg_get_functiondef(p.oid) "
+                "FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace "
+                "WHERE n.nspname='scanipy_execution' AND p.proname NOT IN "
+                "('lock_accepted_capture_context_v1','lock_accepted_detector_context_v1') "
+                "ORDER BY p.oid"
+            ),
+            self.rows(
+                "SELECT c.oid,c.relowner,c.relrowsecurity,c.relforcerowsecurity,"
+                "a.attnum,a.attname,a.atttypid,a.attnotnull FROM pg_class c "
+                "JOIN pg_namespace n ON n.oid=c.relnamespace "
+                "JOIN pg_attribute a ON a.attrelid=c.oid "
+                "WHERE n.nspname='scanipy_execution' AND c.relkind='r' AND a.attnum>0 "
+                "ORDER BY c.oid,a.attnum"
+            ),
+        )
+
+    def _execution_acl(self):
+        return (
+            self.rows("SELECT nspacl::text FROM pg_namespace WHERE nspname='scanipy_execution'"),
+            self.rows(
+                "SELECT p.oid,p.proacl::text FROM pg_proc p "
+                "JOIN pg_namespace n ON n.oid=p.pronamespace "
+                "WHERE n.nspname='scanipy_execution' AND p.proname NOT IN "
+                "('lock_accepted_capture_context_v1','lock_accepted_detector_context_v1') "
+                "ORDER BY p.oid"
+            ),
+            self.rows(
+                "SELECT c.oid,c.relacl::text,a.attnum,a.attacl::text FROM pg_class c "
+                "JOIN pg_namespace n ON n.oid=c.relnamespace "
+                "JOIN pg_attribute a ON a.attrelid=c.oid "
+                "WHERE n.nspname='scanipy_execution' AND c.relkind='r' ORDER BY c.oid,a.attnum"
+            ),
+        )
 
     def _legacy_acl(self):
         return (
@@ -282,30 +387,54 @@ class PrivatePostgres:
             (self.legacy_finding,),
         )
 
-    def _record_successful_migration_roles(self):
+    def _record_successful_migration_roles(self, *, accepted=False):
         # The successful atomic migration itself created/refused each reserved
         # name. Never call this after a failed or ambiguous migration result.
+        names = ACCEPTED_RESERVED if accepted else RESERVED
         with self.admin(bootstrap=True) as connection, connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT rolname,oid FROM pg_roles WHERE rolname=ANY(%s)", (list(RESERVED),)
-            )
+            cursor.execute("SELECT rolname,oid FROM pg_roles WHERE rolname=ANY(%s)", (list(names),))
             created = dict(cursor.fetchall())
-            if set(created) != set(RESERVED):
+            if set(created) != set(names):
                 raise AssertionError("successful migration role inventory changed")
             self.owned_roles.update(created)
 
     def _create_logins(self):
+        created_roles = {}
+        created_logins = {}
         with self.admin() as connection:
             with connection.cursor() as cursor:
-                for suffix in (
+                cursor.execute("SELECT current_setting('max_identifier_length')::integer")
+                limit_row = cursor.fetchone()
+                if (
+                    type(limit_row) is not tuple
+                    or len(limit_row) != 1
+                    or type(limit_row[0]) is not int
+                    or limit_row[0] <= 0
+                ):
+                    raise AssertionError("invalid server identifier limit")
+                identifier_limit = limit_row[0]
+                suffixes = (
                     "request",
                     "detector",
                     "identity",
                     "cleanup",
                     "read",
                     "legacy_triage",
-                ):
-                    name = "occurrence_" + suffix + "_" + uuid4().hex
+                ) + (
+                    (
+                        "accepted_policy_admin",
+                        "accepted_publisher",
+                        "accepted_resolver",
+                        "accepted_reader",
+                    )
+                    if self.profile == "accepted"
+                    else ()
+                )
+                for suffix in suffixes:
+                    prefix = "altest_" if suffix.startswith("accepted_") else "occurrence_"
+                    name = prefix + suffix + "_" + uuid4().hex
+                    if not name.isascii() or not 0 < len(name) <= identifier_limit:
+                        raise AssertionError("test login exceeds server identifier limit")
                     # Generated per-test credential, never a committed secret.
                     password = uuid4().hex  # pragma: allowlist secret
                     cursor.execute(
@@ -315,18 +444,36 @@ class PrivatePostgres:
                         ).format(sql.Identifier(name)),
                         (password,),
                     )
-                    member = (
-                        "scanipy_triage" if suffix == "legacy_triage" else "scanipy_exec_" + suffix
+                    cursor.execute(
+                        "SELECT rolname::text,oid FROM pg_roles WHERE rolname::text=%s", (name,)
                     )
+                    identity = cursor.fetchone()
+                    if (
+                        type(identity) is not tuple
+                        or len(identity) != 2
+                        or type(identity[0]) is not str
+                        or identity[0] != name
+                        or type(identity[1]) is not int
+                        or identity[1] <= 0
+                    ):
+                        raise AssertionError(
+                            "created login identity differs from exact requested name"
+                        )
+                    member = "scanipy_exec_" + suffix
+                    if suffix == "legacy_triage":
+                        member = "scanipy_triage"
+                    elif suffix.startswith("accepted_"):
+                        member = "scanipy_" + suffix
                     cursor.execute(
                         sql.SQL("GRANT {} TO {}").format(
                             sql.Identifier(member), sql.Identifier(name)
                         )
                     )
-                    cursor.execute("SELECT oid FROM pg_roles WHERE rolname=%s", (name,))
-                    self.owned_roles[name] = cursor.fetchone()[0]
-                    self.roles[suffix] = name, password
+                    created_roles[name] = identity[1]
+                    created_logins[suffix] = name, password
             connection.commit()
+        self.owned_roles.update(created_roles)
+        self.roles.update(created_logins)
 
     @contextmanager
     def connection(self, role):
@@ -396,6 +543,21 @@ def occurrence_pg():
             pytest.fail("required occurrence store database URL is missing")
         pytest.skip("explicit dedicated SCANIPY_OCCURRENCE_TEST_URL not provided")
     cluster = PrivatePostgres(url)
+    try:
+        cluster.setup()
+        yield cluster
+    finally:
+        cluster.dispose()
+
+
+@pytest.fixture(scope="session")
+def accepted_ledger_pg():
+    url = os.environ.get("SCANIPY_ACCEPTED_LEDGER_TEST_URL")
+    if not url:
+        if os.environ.get("SCANIPY_ACCEPTED_LEDGER_TEST_REQUIRED") == "1":
+            pytest.fail("required accepted ledger database URL is missing")
+        pytest.skip("explicit dedicated SCANIPY_ACCEPTED_LEDGER_TEST_URL not provided")
+    cluster = PrivatePostgres(url, profile="accepted")
     try:
         cluster.setup()
         yield cluster

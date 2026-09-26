@@ -1,0 +1,1100 @@
+{
+  "commands": {
+    "authorize-detector": {
+      "admission": {
+        "admission_epoch": "uuid",
+        "checkpoint_digest": "digest",
+        "checkpoint_generation": "positive",
+        "policy_digest": "digest",
+        "policy_revision": "positive"
+      },
+      "fence": {
+        "fencing_token": "positive",
+        "work_attempt_id": "uuid",
+        "work_item_id": "uuid",
+        "work_revision": "count"
+      },
+      "resolver_artifact_digest": "digest"
+    },
+    "create-bound-request": {
+      "admission": {
+        "admission_epoch": "uuid",
+        "checkpoint_digest": "digest",
+        "checkpoint_generation": "positive",
+        "policy_digest": "digest",
+        "policy_revision": "positive"
+      },
+      "approval_event_id": "uuid",
+      "bundle": {
+        "S_version": "version",
+        "accepted_content_digest": "digest",
+        "bundle_id": "uuid",
+        "org_id": {
+          "$nullable": "uuid"
+        },
+        "registry_id": "uuid",
+        "scope": {
+          "$enum": [
+            "global",
+            "customer"
+          ]
+        }
+      },
+      "verifier_artifact_digest": "digest"
+    },
+    "install-policy": {
+      "predecessor_policy_digest": {
+        "$nullable": "digest"
+      }
+    },
+    "publish-builtin": {
+      "admission": {
+        "admission_epoch": "uuid",
+        "checkpoint_digest": "digest",
+        "checkpoint_generation": "positive",
+        "policy_digest": "digest",
+        "policy_revision": "positive"
+      },
+      "bundle": {
+        "S_version": "version",
+        "accepted_content_digest": "digest",
+        "bundle_id": "uuid",
+        "org_id": {
+          "$nullable": "uuid"
+        },
+        "registry_id": "uuid",
+        "scope": {
+          "$enum": [
+            "global",
+            "customer"
+          ]
+        }
+      },
+      "publisher_artifact_digest": "digest"
+    },
+    "record-admission": {
+      "predecessor_checkpoint_digest": {
+        "$nullable": "digest"
+      }
+    },
+    "renew-detector": {
+      "admission": {
+        "admission_epoch": "uuid",
+        "checkpoint_digest": "digest",
+        "checkpoint_generation": "positive",
+        "policy_digest": "digest",
+        "policy_revision": "positive"
+      },
+      "detector_run_id": "uuid",
+      "fence": {
+        "fencing_token": "positive",
+        "work_attempt_id": "uuid",
+        "work_item_id": "uuid",
+        "work_revision": "count"
+      },
+      "previous_authorization_id": "uuid",
+      "resolver_artifact_digest": "digest"
+    },
+    "seal-bound-capture": {
+      "admission": {
+        "admission_epoch": "uuid",
+        "checkpoint_digest": "digest",
+        "checkpoint_generation": "positive",
+        "policy_digest": "digest",
+        "policy_revision": "positive"
+      },
+      "fence": {
+        "fencing_token": "positive",
+        "work_attempt_id": "uuid",
+        "work_item_id": "uuid",
+        "work_revision": "count"
+      },
+      "resolver_artifact_digest": "digest"
+    }
+  },
+  "documents": {
+    "scanipy-accepted-approval/1": {
+      "S_version": "version",
+      "accepted_content_digest": "digest",
+      "approval_kind": {
+        "$enum": [
+          "builtin-operator"
+        ]
+      },
+      "bundle_id": "uuid",
+      "event_id": "uuid",
+      "evidence_inventory_digest": "digest",
+      "grant_id": "uuid",
+      "issued_at": "second",
+      "issuer_actor_id": "uuid",
+      "key_id": "token",
+      "key_version": "positive",
+      "org_id": {
+        "$nullable": "uuid"
+      },
+      "proposal_id": {
+        "$enum": [
+          null
+        ]
+      },
+      "publication_key": "uuid",
+      "registry_id": "uuid",
+      "schema": {
+        "$enum": [
+          "scanipy-accepted-approval/1"
+        ]
+      },
+      "scope": {
+        "$enum": [
+          "global",
+          "customer"
+        ]
+      },
+      "signature_profile": {
+        "$enum": [
+          "scanipy-registry-rsa-pss-sha256/1"
+        ]
+      },
+      "spki_sha256": "digest",
+      "trust_policy_digest": "digest"
+    },
+    "scanipy-accepted-detector/1": {
+      "class_id": {
+        "$enum": [
+          "injection",
+          "path-traversal",
+          "ssrf",
+          "deserialization",
+          "xss",
+          "crypto-misuse",
+          "authn-authz",
+          "secrets",
+          "dep-cve",
+          "memory-safety"
+        ]
+      },
+      "cwes": {
+        "$array": "cwe",
+        "$max": 64,
+        "$min": 1
+      },
+      "engine": {
+        "$enum": [
+          "ifds"
+        ]
+      },
+      "frameworks": {
+        "$array": "id",
+        "$max": 32,
+        "$min": 0
+      },
+      "id": "id",
+      "languages": {
+        "$array": {
+          "$enum": [
+            "python",
+            "java"
+          ]
+        },
+        "$max": 2,
+        "$min": 1
+      },
+      "profiles": {
+        "$array": {
+          "language": {
+            "$enum": [
+              "python",
+              "java"
+            ]
+          },
+          "projection_profile": {
+            "$enum": [
+              "scanipy-java-python-scalar-flow/1"
+            ]
+          },
+          "source_syntax_schema": {
+            "$enum": [
+              "scanipy-source-syntax/1"
+            ]
+          }
+        },
+        "$max": 2,
+        "$min": 1
+      },
+      "rule_ids": {
+        "$array": "id",
+        "$max": 20000,
+        "$min": 1
+      },
+      "schema": {
+        "$enum": [
+          "scanipy-accepted-detector/1"
+        ]
+      },
+      "severity_default": {
+        "$enum": [
+          "low",
+          "medium",
+          "high",
+          "critical"
+        ]
+      },
+      "version": "version"
+    },
+    "scanipy-accepted-evidence-inventory/1": {
+      "approval_kind": {
+        "$enum": [
+          "builtin-operator"
+        ]
+      },
+      "objects": {
+        "$array": {
+          "length": "count",
+          "raw_sha256": "digest",
+          "role": "token",
+          "schema": {
+            "$nullable": "id"
+          }
+        },
+        "$max": 1,
+        "$min": 1
+      },
+      "schema": {
+        "$enum": [
+          "scanipy-accepted-evidence-inventory/1"
+        ]
+      }
+    },
+    "scanipy-accepted-publication/1": {
+      "accepted_content_digest": "digest",
+      "admission_epoch": "uuid",
+      "approval_event_id": "uuid",
+      "approval_signature_sha256": "digest",
+      "approval_statement_digest": "digest",
+      "bundle_id": "uuid",
+      "checkpoint_digest": "digest",
+      "checkpoint_generation": "positive",
+      "evidence_inventory_digest": "digest",
+      "org_id": {
+        "$nullable": "uuid"
+      },
+      "policy_digest": "digest",
+      "policy_revision": "positive",
+      "publication_key": "uuid",
+      "published_at": "instant",
+      "publisher_actor_id": "uuid",
+      "publisher_artifact_digest": "digest",
+      "registry_id": "uuid",
+      "schema": {
+        "$enum": [
+          "scanipy-accepted-publication/1"
+        ]
+      },
+      "scope": {
+        "$enum": [
+          "global",
+          "customer"
+        ]
+      }
+    },
+    "scanipy-accepted-s-manifest/1": {
+      "S_version": "version",
+      "bundle_id": "uuid",
+      "detectors": {
+        "$array": {
+          "class_id": {
+            "$enum": [
+              "injection",
+              "path-traversal",
+              "ssrf",
+              "deserialization",
+              "xss",
+              "crypto-misuse",
+              "authn-authz",
+              "secrets",
+              "dep-cve",
+              "memory-safety"
+            ]
+          },
+          "detector_id": "id",
+          "detector_schema": {
+            "$enum": [
+              "scanipy-accepted-detector/1"
+            ]
+          },
+          "detector_sha256": "digest",
+          "detector_version": "version",
+          "engine": {
+            "$enum": [
+              "ifds"
+            ]
+          },
+          "language_profiles": {
+            "$array": {
+              "language": {
+                "$enum": [
+                  "python",
+                  "java"
+                ]
+              },
+              "projection_profile": {
+                "$enum": [
+                  "scanipy-java-python-scalar-flow/1"
+                ]
+              },
+              "source_syntax_schema": {
+                "$enum": [
+                  "scanipy-source-syntax/1"
+                ]
+              }
+            },
+            "$max": 2,
+            "$min": 1
+          },
+          "rules": {
+            "$array": {
+              "artifact_id": "id",
+              "model_artifact_id": "id",
+              "model_raw_sha256": "digest",
+              "projection_profile": {
+                "$enum": [
+                  "scanipy-java-python-scalar-flow/1"
+                ]
+              },
+              "raw_sha256": "digest",
+              "rule_id": "id",
+              "schema": {
+                "$enum": [
+                  "scanipy-bound-rule-set/1"
+                ]
+              },
+              "semantic_descriptor_digest": "digest",
+              "semantics": {
+                "$enum": [
+                  "scanipy-scalar-ifds/1"
+                ]
+              },
+              "version": "version"
+            },
+            "$max": 20000,
+            "$min": 1
+          }
+        },
+        "$max": 20000,
+        "$min": 1
+      },
+      "models": {
+        "$array": {
+          "artifact_id": "id",
+          "raw_sha256": "digest",
+          "schema": {
+            "$enum": [
+              "scanipy-operation-models/1"
+            ]
+          },
+          "version": "version"
+        },
+        "$max": 20000,
+        "$min": 1
+      },
+      "org_id": {
+        "$nullable": "uuid"
+      },
+      "registry_id": "uuid",
+      "schema": {
+        "$enum": [
+          "scanipy-accepted-s-manifest/1"
+        ]
+      },
+      "scope": {
+        "$enum": [
+          "global",
+          "customer"
+        ]
+      }
+    },
+    "scanipy-accepted-trust-policy/1": {
+      "event_id": "uuid",
+      "expires_at": "second",
+      "grants": {
+        "$array": {
+          "capability": {
+            "$enum": [
+              "publish-builtin"
+            ]
+          },
+          "grant_id": "uuid",
+          "issuer_actor_id": "uuid",
+          "key_id": "token",
+          "key_version": "positive",
+          "not_after": "second",
+          "not_before": "second",
+          "org_id": {
+            "$nullable": "uuid"
+          },
+          "scope": {
+            "$enum": [
+              "global",
+              "customer"
+            ]
+          },
+          "signature_profile": {
+            "$enum": [
+              "scanipy-registry-rsa-pss-sha256/1"
+            ]
+          },
+          "spki_sha256": "digest",
+          "status": {
+            "$enum": [
+              "active",
+              "retired",
+              "revoked"
+            ]
+          },
+          "status_changed_at": {
+            "$nullable": "second"
+          }
+        },
+        "$max": 64,
+        "$min": 0
+      },
+      "org_id": {
+        "$nullable": "uuid"
+      },
+      "previous_policy_digest": {
+        "$nullable": "digest"
+      },
+      "registry_id": "uuid",
+      "revision": "positive",
+      "schema": {
+        "$enum": [
+          "scanipy-accepted-trust-policy/1"
+        ]
+      },
+      "scope": {
+        "$enum": [
+          "global",
+          "customer"
+        ]
+      },
+      "valid_from": "second"
+    },
+    "scanipy-capture-seal-authorization/1": {
+      "accepted_content_digest": "digest",
+      "admission_epoch": "uuid",
+      "admission_event_id": "uuid",
+      "approval_event_id": "uuid",
+      "attempt_policy_digest": "digest",
+      "authorized_at": "instant",
+      "bundle_id": "uuid",
+      "capture_id": "uuid",
+      "capture_lease_expires_at": "instant",
+      "capture_lease_id": "uuid",
+      "checkpoint_digest": "digest",
+      "checkpoint_generation": "positive",
+      "codebase_id": "uuid",
+      "event_id": "uuid",
+      "fencing_token": "positive",
+      "lease_expires_at": "instant",
+      "operation_key": "uuid",
+      "org_id": {
+        "$nullable": "uuid"
+      },
+      "policy_digest": "digest",
+      "policy_event_id": "uuid",
+      "policy_revision": "positive",
+      "registry_id": "uuid",
+      "request_binding_digest": "digest",
+      "request_id": "uuid",
+      "requested_policy_digest": "digest",
+      "resolver_artifact_digest": "digest",
+      "schema": {
+        "$enum": [
+          "scanipy-capture-seal-authorization/1"
+        ]
+      },
+      "scope": {
+        "$enum": [
+          "global",
+          "customer"
+        ]
+      },
+      "seal_id": "uuid",
+      "work_attempt_id": "uuid",
+      "work_item_id": "uuid",
+      "work_kind": {
+        "$enum": [
+          "capture_detection",
+          "identity"
+        ]
+      },
+      "work_revision": "count"
+    },
+    "scanipy-execution-authorization/1": {
+      "accepted_content_digest": "digest",
+      "action": {
+        "$enum": [
+          "initial",
+          "renew"
+        ]
+      },
+      "admission_epoch": "uuid",
+      "admission_event_id": "uuid",
+      "approval_event_id": "uuid",
+      "attempt_policy_digest": "digest",
+      "authorized_at": "instant",
+      "bundle_id": "uuid",
+      "capture_id": "uuid",
+      "capture_lease_expires_at": "instant",
+      "capture_lease_id": "uuid",
+      "checkpoint_digest": "digest",
+      "checkpoint_generation": "positive",
+      "codebase_id": "uuid",
+      "detector_run_id": {
+        "$nullable": "uuid"
+      },
+      "event_id": "uuid",
+      "fencing_token": "positive",
+      "lease_expires_at": "instant",
+      "occurrence_id": {
+        "$nullable": "uuid"
+      },
+      "operation_key": "uuid",
+      "org_id": {
+        "$nullable": "uuid"
+      },
+      "policy_digest": "digest",
+      "policy_event_id": "uuid",
+      "policy_revision": "positive",
+      "previous_authorization_id": {
+        "$nullable": "uuid"
+      },
+      "purpose": {
+        "$enum": [
+          "detector-run",
+          "identity-attempt"
+        ]
+      },
+      "registry_id": "uuid",
+      "request_binding_digest": "digest",
+      "request_id": "uuid",
+      "requested_policy_digest": "digest",
+      "resolver_artifact_digest": "digest",
+      "run_input_digest": {
+        "$nullable": "digest"
+      },
+      "schema": {
+        "$enum": [
+          "scanipy-execution-authorization/1"
+        ]
+      },
+      "scope": {
+        "$enum": [
+          "global",
+          "customer"
+        ]
+      },
+      "seal_id": "uuid",
+      "work_attempt_id": "uuid",
+      "work_item_id": "uuid",
+      "work_kind": {
+        "$enum": [
+          "capture_detection",
+          "identity"
+        ]
+      },
+      "work_revision": "count"
+    },
+    "scanipy-execution-denial/1": {
+      "accepted_content_digest": "digest",
+      "admission_epoch": "uuid",
+      "admission_event_id": "uuid",
+      "approval_event_id": "uuid",
+      "attempt_policy_digest": "digest",
+      "bundle_id": "uuid",
+      "capture_id": "uuid",
+      "capture_lease_expires_at": "instant",
+      "capture_lease_id": "uuid",
+      "checkpoint_digest": "digest",
+      "checkpoint_generation": "positive",
+      "codebase_id": "uuid",
+      "detector_run_id": {
+        "$nullable": "uuid"
+      },
+      "event_id": "uuid",
+      "fencing_token": "positive",
+      "lease_expires_at": "instant",
+      "observed_at": "instant",
+      "occurrence_id": {
+        "$nullable": "uuid"
+      },
+      "operation_key": "uuid",
+      "org_id": {
+        "$nullable": "uuid"
+      },
+      "policy_digest": "digest",
+      "policy_event_id": "uuid",
+      "policy_revision": "positive",
+      "previous_authorization_id": {
+        "$nullable": "uuid"
+      },
+      "purpose": {
+        "$enum": [
+          "detector-run",
+          "identity-attempt"
+        ]
+      },
+      "reason": {
+        "$enum": [
+          "grant-revoked",
+          "grant-expired",
+          "policy-expired",
+          "unsupported-authority",
+          "missing-runtime-pin",
+          "scope-conflict"
+        ]
+      },
+      "registry_id": "uuid",
+      "request_binding_digest": "digest",
+      "request_id": "uuid",
+      "requested_policy_digest": "digest",
+      "resolver_artifact_digest": "digest",
+      "run_input_digest": {
+        "$nullable": "digest"
+      },
+      "schema": {
+        "$enum": [
+          "scanipy-execution-denial/1"
+        ]
+      },
+      "scope": {
+        "$enum": [
+          "global",
+          "customer"
+        ]
+      },
+      "seal_id": "uuid",
+      "work_attempt_id": "uuid",
+      "work_item_id": "uuid",
+      "work_kind": {
+        "$enum": [
+          "capture_detection",
+          "identity"
+        ]
+      },
+      "work_revision": "count"
+    },
+    "scanipy-operator-adoption/1": {
+      "accepted_content_digest": "digest",
+      "action": {
+        "$enum": [
+          "adopt-builtin"
+        ]
+      },
+      "actor_id": "uuid",
+      "bundle_id": "uuid",
+      "decided_at": "second",
+      "decision_id": "uuid",
+      "org_id": {
+        "$nullable": "uuid"
+      },
+      "proposal_id": {
+        "$enum": [
+          null
+        ]
+      },
+      "reason": "reason",
+      "registry_id": "uuid",
+      "schema": {
+        "$enum": [
+          "scanipy-operator-adoption/1"
+        ]
+      },
+      "scope": {
+        "$enum": [
+          "global",
+          "customer"
+        ]
+      }
+    },
+    "scanipy-publication-input/1": {
+      "S_version": "version",
+      "accepted_content_digest": "digest",
+      "bundle_id": "uuid",
+      "objects": {
+        "$array": {
+          "length": "count",
+          "raw_sha256": "digest",
+          "role": "token",
+          "schema": {
+            "$nullable": "id"
+          }
+        },
+        "$max": 10,
+        "$min": 10
+      },
+      "org_id": {
+        "$nullable": "uuid"
+      },
+      "registry_id": "uuid",
+      "schema": {
+        "$enum": [
+          "scanipy-publication-input/1"
+        ]
+      },
+      "scope": {
+        "$enum": [
+          "global",
+          "customer"
+        ]
+      }
+    },
+    "scanipy-registry-admission/1": {
+      "action": {
+        "$enum": [
+          "admit",
+          "block"
+        ]
+      },
+      "administrator_actor_id": "uuid",
+      "admission_epoch": "uuid",
+      "deployment_id": "uuid",
+      "event_id": "uuid",
+      "expires_at": "second",
+      "generation": "positive",
+      "issued_at": "second",
+      "org_id": {
+        "$nullable": "uuid"
+      },
+      "policy_digest": "digest",
+      "policy_revision": "positive",
+      "previous_checkpoint_digest": {
+        "$nullable": "digest"
+      },
+      "reason": "reason",
+      "registry_id": "uuid",
+      "schema": {
+        "$enum": [
+          "scanipy-registry-admission/1"
+        ]
+      },
+      "scope": {
+        "$enum": [
+          "global",
+          "customer"
+        ]
+      }
+    },
+    "scanipy-registry-current-authority/1": {
+      "admission_epoch": "uuid",
+      "checkpoint_digest": "digest",
+      "checkpoint_generation": "positive",
+      "objects": {
+        "$array": {
+          "length": "count",
+          "raw_sha256": "digest",
+          "role": "token",
+          "schema": {
+            "$nullable": "id"
+          }
+        },
+        "$max": 4,
+        "$min": 4
+      },
+      "org_id": {
+        "$nullable": "uuid"
+      },
+      "policy_digest": "digest",
+      "policy_revision": "positive",
+      "registry_id": "uuid",
+      "schema": {
+        "$enum": [
+          "scanipy-registry-current-authority/1"
+        ]
+      },
+      "scope": {
+        "$enum": [
+          "global",
+          "customer"
+        ]
+      }
+    },
+    "scanipy-registry-installed-trust/1": {
+      "administrator_actor_id": "uuid",
+      "deployment_id": "uuid",
+      "org_id": {
+        "$nullable": "uuid"
+      },
+      "registry_id": "uuid",
+      "root_spki_sha256": "digest",
+      "schema": {
+        "$enum": [
+          "scanipy-registry-installed-trust/1"
+        ]
+      },
+      "scope": {
+        "$enum": [
+          "global",
+          "customer"
+        ]
+      }
+    },
+    "scanipy-rule-semantics-binding/1": {
+      "model_raw_sha256": "digest",
+      "projection_profile": {
+        "$enum": [
+          "scanipy-java-python-scalar-flow/1"
+        ]
+      },
+      "rule_raw_sha256": "digest",
+      "schema": {
+        "$enum": [
+          "scanipy-rule-semantics-binding/1"
+        ]
+      },
+      "semantics": {
+        "$enum": [
+          "scanipy-scalar-ifds/1"
+        ]
+      }
+    },
+    "scanipy-sealed-acceptance/1": {
+      "accepted_content_digest": "digest",
+      "admission_epoch": "uuid",
+      "approval_event_id": "uuid",
+      "bundle_id": "uuid",
+      "checkpoint_digest": "digest",
+      "checkpoint_generation": "positive",
+      "codebase_id": "uuid",
+      "current_policy_digest": "digest",
+      "current_policy_revision": "positive",
+      "objects": {
+        "$array": {
+          "length": "count",
+          "raw_sha256": "digest",
+          "role": "token",
+          "schema": {
+            "$nullable": "id"
+          }
+        },
+        "$max": 15,
+        "$min": 15
+      },
+      "org_id": "uuid",
+      "publication_policy_digest": "digest",
+      "registry_id": "uuid",
+      "request_id": "uuid",
+      "resolved_at": "instant",
+      "schema": {
+        "$enum": [
+          "scanipy-sealed-acceptance/1"
+        ]
+      },
+      "verifier_artifact_digest": "digest"
+    }
+  },
+  "format": "scanipy-accepted-sql-shapes/1",
+  "frames": {
+    "scanipy-publication-input/1": [
+      [
+        "approval-statement",
+        "scanipy-accepted-approval/1"
+      ],
+      [
+        "approval-signature",
+        null
+      ],
+      [
+        "issuer-spki",
+        null
+      ],
+      [
+        "current-policy",
+        "scanipy-accepted-trust-policy/1"
+      ],
+      [
+        "current-policy-signature",
+        null
+      ],
+      [
+        "trust-root-spki",
+        null
+      ],
+      [
+        "approval-evidence-inventory",
+        "scanipy-accepted-evidence-inventory/1"
+      ],
+      [
+        "operator-adoption",
+        "scanipy-operator-adoption/1"
+      ],
+      [
+        "admission-checkpoint",
+        "scanipy-registry-admission/1"
+      ],
+      [
+        "admission-checkpoint-signature",
+        null
+      ]
+    ],
+    "scanipy-registry-current-authority/1": [
+      [
+        "current-policy",
+        "scanipy-accepted-trust-policy/1"
+      ],
+      [
+        "current-policy-signature",
+        null
+      ],
+      [
+        "admission-checkpoint",
+        "scanipy-registry-admission/1"
+      ],
+      [
+        "admission-checkpoint-signature",
+        null
+      ]
+    ],
+    "scanipy-sealed-acceptance/1": [
+      [
+        "approval-statement",
+        "scanipy-accepted-approval/1"
+      ],
+      [
+        "approval-signature",
+        null
+      ],
+      [
+        "issuer-spki",
+        null
+      ],
+      [
+        "publication-receipt",
+        "scanipy-accepted-publication/1"
+      ],
+      [
+        "publication-policy",
+        "scanipy-accepted-trust-policy/1"
+      ],
+      [
+        "publication-policy-signature",
+        null
+      ],
+      [
+        "publication-checkpoint",
+        "scanipy-registry-admission/1"
+      ],
+      [
+        "publication-checkpoint-signature",
+        null
+      ],
+      [
+        "current-policy",
+        "scanipy-accepted-trust-policy/1"
+      ],
+      [
+        "current-policy-signature",
+        null
+      ],
+      [
+        "trust-root-spki",
+        null
+      ],
+      [
+        "approval-evidence-inventory",
+        "scanipy-accepted-evidence-inventory/1"
+      ],
+      [
+        "operator-adoption",
+        "scanipy-operator-adoption/1"
+      ],
+      [
+        "admission-checkpoint",
+        "scanipy-registry-admission/1"
+      ],
+      [
+        "admission-checkpoint-signature",
+        null
+      ]
+    ]
+  },
+  "records": {
+    "ADMISSION_EXPECTATION": {
+      "admission_epoch": "uuid",
+      "checkpoint_digest": "digest",
+      "checkpoint_generation": "positive",
+      "policy_digest": "digest",
+      "policy_revision": "positive"
+    },
+    "BUNDLE_EXPECTATION": {
+      "S_version": "version",
+      "accepted_content_digest": "digest",
+      "bundle_id": "uuid",
+      "org_id": {
+        "$nullable": "uuid"
+      },
+      "registry_id": "uuid",
+      "scope": {
+        "$enum": [
+          "global",
+          "customer"
+        ]
+      }
+    },
+    "EXECUTION_BINDING": {
+      "attempt_policy_digest": "digest",
+      "authorization_digest": "digest",
+      "authorization_event_id": "uuid",
+      "capture_id": "uuid",
+      "capture_lease_expires_at": "instant",
+      "capture_lease_id": "uuid",
+      "codebase_id": "uuid",
+      "detector_run_id": "uuid",
+      "fencing_token": "positive",
+      "lease_expires_at": "instant",
+      "org_id": "uuid",
+      "request_id": "uuid",
+      "requested_policy_digest": "digest",
+      "run_input_digest": "digest",
+      "seal_id": "uuid",
+      "work_attempt_id": "uuid",
+      "work_item_id": "uuid",
+      "work_revision": "count"
+    },
+    "LEDGER_EXPECTATION": {
+      "admission_event_id": {
+        "$nullable": "uuid"
+      },
+      "binding": {
+        "$nullable": {
+          "attempt_policy_digest": "digest",
+          "authorization_digest": "digest",
+          "authorization_event_id": "uuid",
+          "capture_id": "uuid",
+          "capture_lease_expires_at": "instant",
+          "capture_lease_id": "uuid",
+          "codebase_id": "uuid",
+          "detector_run_id": "uuid",
+          "fencing_token": "positive",
+          "lease_expires_at": "instant",
+          "org_id": "uuid",
+          "request_id": "uuid",
+          "requested_policy_digest": "digest",
+          "run_input_digest": "digest",
+          "seal_id": "uuid",
+          "work_attempt_id": "uuid",
+          "work_item_id": "uuid",
+          "work_revision": "count"
+        }
+      },
+      "execution_authorization_digest": {
+        "$nullable": "digest"
+      },
+      "policy_event_id": {
+        "$nullable": "uuid"
+      },
+      "publication_receipt_digest": "digest",
+      "request_binding_digest": "digest"
+    }
+  }
+}
