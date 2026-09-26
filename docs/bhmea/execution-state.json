@@ -41,6 +41,7 @@
     "reduced_scope": false
   },
   "notes": [
+    "Owner clarification on 2026-09-26: 'Me, for both local-demo roles' assigns the same project owner to detector/rule-bundle approval and database-restore recovery authorization for the local demo. Do not ask again who or assume two-person approval. This is human role assignment only, not authenticated principal binding, persistent key/trust installation, approval of a particular bundle/restore action, independent freshness/current-authority proof or recovery qualification. DECISION-BHMEA-01's dated role section lists the remaining technical TODOs. All existing authorization booleans, presentation facts, task/claim/milestone/gate states, next actions and historical evidence cutoffs remain unchanged.",
     "All task checklists in the referenced review remain required except explicitly optional actions.",
     "The DAG expresses milestone acceptance prerequisites; explicitly assigned hermetic build-ahead may proceed with unmet verification dependencies, without claiming them satisfied.",
     "Evidence targets are planned locations; only evidence_paths records retained actual evidence.",
@@ -2084,7 +2085,7 @@
   ],
   "pending_owner_input": [
     "Exact presentation date when scheduled.",
-    "Actual accepting operator, persistent trust-root/publisher scope and independent admission/restore administrator/checkpoint policy before operational accepted-input publication; test keys and design approval are not that authority.",
+    "Both local-demo human roles are settled: the project owner. Before persistent enablement, resolve actual authenticated principal binding, persistent key fingerprints/custody and publisher scope, independent admission/checkpoint/renewal/trusted-clock policy and specific bundle/restore approvals as needed. Test keys, role assignment and design approval are not installed authority or recovery qualification; do not ask again who fills these roles.",
     "Separate release/image publication and video/external-material authorization when ready."
   ]
 }

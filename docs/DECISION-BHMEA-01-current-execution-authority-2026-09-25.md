@@ -141,3 +141,41 @@ no source changes or runtime/operator installation and does not resolve those
 extensions' designs. Every original R01–R20 checklist, C01–C18 state, milestone
 and DAG edge remains unchanged. Current work queues should prioritize the full
 tenant-local target without inserting either extension as an invented gate.
+
+## Local-demo human roles — owner clarification, September 26
+
+The project owner answered **“Me, for both local-demo roles”** when asked who
+should approve detector/rule bundles and authorize recovery after a database
+restore. The same project owner fills both human roles for the **local demo**.
+Do not ask again who fills these roles. No two-person separation is assumed;
+independent freshness/checkpoint verification still requires its own technical
+evidence and is not satisfied merely by assigning two role names to one person.
+
+This is human role assignment, not authentication of an operating-system or
+application principal, selection of key fingerprints, persistent trust setup,
+approval of a particular bundle or restore execution, or proof of current
+authority/recovery. It does not authorize release/image publication, external
+messages, spending, modification of the existing user database, or reduced scope.
+Older statements that the responsible human is unknown are superseded on this
+point only. Their remaining technical and safety prerequisites still apply.
+
+Before persistent local-demo enablement, the executing LLM must:
+
+- [ ] Bind the confirmed owner to the actual authenticated local principal and
+  record the separate bundle-approval and restore-recovery scopes. Do not infer
+  that identity from the current shell account or invent a name or identifier.
+- [ ] Record and verify the chosen persistent public-key fingerprints, publisher
+  scope, private-key custody and rotation/revocation procedure. Test-only keys
+  remain test-only; this answer is not a key-generation/installation approval.
+- [ ] Resolve and implement the independent admission/checkpoint, renewal and
+  trusted-clock policy, including restored/old-parent exclusion. Preserve
+  fail-closed checks until the real providers and stored state are verified.
+- [ ] Require the owner's explicit approval for the actual bundle or recovery
+  action when needed; role eligibility alone is not an approval event.
+- [ ] Exercise restore/recovery on an isolated local-demo fixture, verify fresh
+  authority and exclusion of stale grants, and retain the actual evidence before
+  promoting recovery or stage readiness. Keep the existing user app/DB intact.
+
+All original R01–R20 TODOs, C01–C18 statuses, shared gates and historical cutoffs
+are preserved. Safe source/test implementation can continue while these
+operational prerequisites remain unresolved.
