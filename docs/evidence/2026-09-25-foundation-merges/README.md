@@ -1848,3 +1848,288 @@ actual SQL/native qualification, installed reader/authority, physical runtime/
 source integration, durable decisions/provenance/API/UI, full422/844 campaign,
 original R/C/shared gates and offline rehearsals remain required. No full task,
 claim, milestone or shared-gate state, release or stage readiness is promoted.
+
+## Revision 19 — 07:42:08 UTC cutoff, September 26
+
+Accepted main remains `617126d0e16d7a743b5481ea417bfa9685177e1e`, tree
+`e79a5879f3000ebe57be50a5bd51745545b6bbfb`, after Revision18 documentation
+#431. Its accepted-artifact26 structural checks passed with no failures/skips;
+this is not SQL/runtime acceptance. #399/#362 were actually In Progress at
+07:39 UTC. All original task/claim/milestone/DAG/shared-gate states remain.
+
+### Historical distinction: real qualification, final review pending
+
+[PR #432](https://github.com/scanipy/scanipy/pull/432) distinguishes genuine
+scoped historical absence from wrong digest/malformed material/server errors.
+Its owner changes preserve successful bytes and old facade definitions. The
+shared fixture and CI have separately allocated paths; the administration
+fixture is controlled preparation, not native authentication evidence.
+
+Original combined `f192547effd2325f7d61ddeb3faf61a3c918ab5c`, tree
+`44cd2598fe6fe73d49c3c7c35aabb9a71a623538`, passed539 distinct focused controls
+in11.887s, no failures/errors/skips. A single separately reviewed local PG run
+then passed183 distinct cases (43 SQL/102 security/38 historical),1106.131s,
+XML SHA256 `6bb1cc7a9320504afb97c14a4cc3d1a0890248242746f5ec67c9ba06bebd0a44`.
+Both catalogs were identical at
+`94dd8b9019afd5518e7c296e5b2b624d4341915ec852910a007f0c2fd046e2b4`,
+with original database/role/OID/owner inventory and no other clients.
+Record: `/tmp/scanipy-historical-pg-wrapper-j1pE663a/RESULT.md`.
+
+First normal push43903 passed configured hooks but failed SSH transport141;
+retry2448 passed every hook again and published f192. Their actual full suites
+each had6590 passes/11 unchanged pre-existing skips, no failures/errors,
+6601 unique selected IDs. JUnit times397.861/402.372s and report hashes
+`ba89ce923d25a02f1378ce495e1399101c58ee52972420ae4e73e1bbe2f179d2` /
+`2be7ce46bc26af633ea3c78413a4c47ad206c1bb755da467b0d2a54b11798c58`.
+No bypass, force, changed threshold or successful skipped-test claim was used.
+The eleven unimplemented/unspecified acceptance skips remain unmet work.
+
+First [canonical run](https://github.com/scanipy/scanipy/actions/runs/36226048150)
+ended REQUEST-CHANGES; root read its complete
+[comment](https://github.com/scanipy/scanipy/pull/432#issuecomment-5844169018).
+The technical change was sound, but governing fixture ownership was ambiguous
+and CI/checklist evidence was pending. A38-line documentation-only clarification
+preserves the original214-line prefix and explicit five/two/three-path allocations.
+Normal commit/hooks produced `4041cc3d4deb5d69fcd5bc21492b216011ffc51d`, tree
+`34f93546da407f3c0ca6a12c2fd9fe094d273cb4`. Every SQL/Python/test/workflow
+byte is unchanged from f192. Doc SHA256
+`ad7209b7c97e5a80dafd0f27df1396b0e7f42e636cda3f408ea1a851a89349f0`.
+Normal corrective push75290 passed Ruff,290-file format, Mypy125 and the full
+6590-pass/11-skip selection again,384.375s, report SHA256
+`e8036b038fe0b886ad72d737948b519584b96d5ff1c2671325c5ef6ed2539e74`.
+
+New4041 [CI](https://github.com/scanipy/scanipy/actions/runs/36226869970)
+succeeded in all seven jobs, and [Gate3](https://github.com/scanipy/scanipy/actions/runs/36226869959)
+succeeded in both jobs. All seven actual checkout logs bind to
+`c58e729b5330394de57db0d21baca0dac6645e66`; actual API parents are617+4041,
+tree34f93546 equals the candidate. Downloaded artifact10900189654 contains183
+unique passes/0 failures/errors/skips,43/102/38,384.853s,33164-byte XML SHA256
+`5a35927f7dbdce075f4b91eb658e29f190c2188c157efdda3c60a2bf33e78734`.
+Both1203-byte catalogs equal94dd8b90 above, with no other clients. Root read
+both JSONs and complete XML and passed the raw XML through the actual4041
+workflow validator. New retention: `/tmp/scanipy-pr432-corrected-ci-NjEqgfm6`.
+The earlier f192 hosted183 result remains separately attributed, not transferred.
+
+Normal draft/ready re-trigger started [second canonical review](https://github.com/scanipy/scanipy/actions/runs/36227455747)
+at07:39:44, exact head4041. At cutoff it is running, with
+[progress comment](https://github.com/scanipy/scanipy/pull/432#issuecomment-5844328768).
+No new APPROVE, merge or post-merge acceptance is inferred. Phase-ordered PR
+gates preserve the required future verdict and post-merge checks rather than
+falsely checking them before they occur. Skipped Node scaffold steps are not
+frontend acceptance. Local diagnostic paths are not a public immutable archive.
+
+### Restricted reader role and CI246: source only
+
+Guarded0008 role `5c39512311e4fbd926d71bd002d3daf29d9d9bf5` creates only the
+NOLOGIN reader's exact six function permissions and schema USAGE.87 author
+and87 independent controlled passes overlap; no real role SQL had run.
+Separate final-ticket harness `ca51a9bd73de294fee308f8a940c910404390a29`
+permits only its explicit eleventh0007 administration migration after successful
+ten-ticket setup; it is not exercised by the default-false role lane.
+
+Four-path role qualification committed as `0bee28339bebffe55840b4131a8add52962e8ca6`
+after root/peer full-source review and normal hooks.393 author passes4.637s
+and393 independent passes4.933s are controlled evidence, not786 cases or PG.
+Peer XML SHA256
+`aa227d217f8f018b926d724ca9435d6f6296119fb2b363c0ed35f7969b3cb9e0`.
+The63 new integration cases are collected only. They use privileged session_user
+with effective SET LOCAL ROLE; they do not establish restricted authenticated
+login, RESET ROLE confinement or A2 SCRAM behavior.
+
+CI246 committed as `275b0750aeaf016685b50be9493cddd04f394d06`; ordinary
+documentation composition is `ee1f4e3d56f6ee60e4d7a7ecbd14b9da2df53f6a`, tree
+`04392b268ecd3f4fca13369dc17bb795a21a5f9a`. Normal hooks passed, hashes
+unchanged.30 author and30 independent validator controls pass; peer1.872s XML
+`ab1930ecc4df536d50434bbef7b1ac2a69cf7e7f3ef5a53f6373f48192d79009`.
+Original catalogs/profile/cleanup/other jobs stay unchanged. The new requirement
+is246 actual distinct successes in43/102/38/63 distribution, not a total alone.
+
+Prepared `/tmp/scanipy-role-pg-wrapper-ETRyLPDw/run_role_pg.py` SHA256
+`b8cc3973c78f6b85098b4bb200eb9f1e9d93bab05cb0ae66eea2cf9699484679`
+has root's full wrapper/checker/index review and static62-pin/AST/collection
+checks. All effect paths are absent: no run yet and no execution grant at cutoff.
+Its one monitored pytest/two catalog snapshots and21 healthy migration calls
+are not a hard suite deadline/client cgroup/bounded-output native runner.
+Fresh identity/capacity and a separate grant precede actual execution; preserve
+unknown cleanup and partial reports instead of retrying or repairing them.
+
+### Custody corrected; private factory and composer still required
+
+Root and peer found that caught direct work refusals could leave the lifetime
+usable and that two list reservations followed allocation. Original root3 and
+peer3-fail/1-pass controls remain. The correction makes refusal terminal before
+clock/recipe/hash work, retains exact exceptions/cleanup, and moves the existing
+14/6-slot reservations before construction without changing counters/formulas.
+Original1188-unit/1180-doc prefixes and all unrelated source ASTs remain exact.
+
+Normal commit `0e9354cdd8ed08ea006a8fcbc5070025fa3ae96b`, tree
+`02bbbe3037fc4e3ad0ace61770accb6ef6788b48`, contains only custody source,
+its unit module and reader-doc append. All applicable hooks passed. Author270
+unique passes on3.11/3.12 took8.049/6.931s; peer270 passed8.455s. Root parsed
+the actual reports. Peer SHA256
+`b5178eda4e4e716850ace080988c7cef2778fb0b8af2cc2a4e9c7ab928a0a673`.
+The270 selections overlap. Original49-fail/1-pass and17-fail correction
+checkpoints also remain; no native custody, SQL or identity installation ran.
+
+The next allocated three-path private factory must preserve the fixed catalog,
+same work ledger, closed read dispatch and once-only raw-resource cleanup. It
+is not the public reader or R4/R1/R2/R3/R5/R6 composer. Genuine signature/current
+permission, original context recheck, installed credentials and runtime/controller
+integration remain required before any execution authority is available.
+
+### A2 genuine fixture: confirmed handoff defect, no native result
+
+Corrected consumer source `8de2f1b12cbf70f7ea9118a9f1949ee2c338d292` is
+locally committed after independent source review and normal hooks; earlier
+semantic failures stay retained. The genuine-fixture source snapshot at base
+`a5d365901cc01d9c64fac1a4ce06ac2af6c30c9b` changes only two new test modules
+and the resolver append. Full1708/873/264-line root/peer reviews and original
+3766-line resolver prefix checks completed. Author117 fake passes3.241s and
+peer117 fake passes3.077s overlap; the latter XML is
+`2fd46234083c9e7a092a5feccab634593142952bc94ef3031659a6511878a001`.
+Collection contains71 native cases, zero executed cases. The manually reviewed
+finite graph has244 child attempts/448 child connection attempts/331 parent
+calls, excluding the separately accounted eleven migration children and harness.
+
+Two fixture adapters acquire raw connection/cursor objects before constructing
+their wrappers without a guarded close owner. Peer constructor-interruption
+controls yield4 failures/2 normal passes,1.244s, XML
+`9bac8f01ff83849c2e35fedd00efc4e0a8705a4609817d16d2a9b834fc814dd7`.
+Root reran the unchanged six controls:4 failures/2 passes,1.219s, XML
+`76dd48c0e7e42260b564802d4d5238f4e4ef0b657e613a5ec78c14eadbfb23fb`.
+No real PG/cursor/FD/key/UID/native process was used in those controls.
+The frozen source is HOLD and a narrow two-adapter correction is in progress;
+no production owner, old117 oracle/native71 body, harness or budget change is
+allocated. Preserve original reports and require fresh root/peer review.
+
+The larger native/PG recipe is only a draft. It needs corrected immutable pins,
+reviewed source/import/image closure, loaded SCRAM/peer evidence, a finite outer
+watchdog/report/cleanup owner and adequate resources. Use fail-fast and stop
+after uncertain cleanup; active counters do not prove no child remains. Existing
+native38 passes predate A2, and tmpfs restarts are not power-loss durability.
+
+### Machine and unchanged acceptance boundary
+
+Root bounded inspection07:41:09 confirmed original userapp c49ed08e andDB
+b1897ef7 running/healthy/noOOM, and retained isolated AL containercc1a084c
+running/noOOM with its original image, networknone,4 GiB memory=swap,2CPU,
+256PID, socket bind and3 GiB data tmpfs. No user app, DB, VM, mount or socket
+permission was changed. Host available RAM6654 MiB, swap2047 MiB full, shared
+free disk90111988 KiB. These are observations, not reserved/stage-qualified capacity.
+The proposed fresh4 GiB A2 PG plus2 GiB client lacks comfortable headroom here;
+no pair is provisioned or granted. Keep heavy runs serialized and recheck.
+
+Original submission,205-entry secrets baseline and the four original untracked
+user files remain unchanged. Required source/physical runtime/DB barriers,
+actual Java/Python/CPG/witness, durable decisions, provenance, Semgrep/CodeQL,
+truthful UI/Compose,422 cases/844 sides, G0–G3, installation/recovery and two
+offline rehearsals remain. All original R/C/TODO/milestone/DAG/shared-gate
+states stay unchanged. No release/image/video/external-message authority is
+inferred from repository workflow permission or these component results.
+
+### Explicit later update — 07:52 UTC: merge, corrected fixture and active role run
+
+The second [canonical run](https://github.com/scanipy/scanipy/actions/runs/36227455747)
+completed SUCCESS at07:43:40 with explicit APPROVE. Root read the complete9772-
+character [final comment](https://github.com/scanipy/scanipy/pull/432#issuecomment-5844328768)
+at07:46, including the resolved scope finding, actual new-head CI and phase-
+ordered checklist. The original REQUEST-CHANGES is retained. Actual10 checkruns
+were SUCCESS before the normal exact-head merge; no future gate was pre-checked.
+
+[PR #432](https://github.com/scanipy/scanipy/pull/432) merged at07:47:40 as
+`b5bff4292892d024a21380eb01b02b528f3e2baa`, parents617126d0+4041cc3d,
+tree`34f93546da407f3c0ca6a12c2fd9fe094d273cb4`. Root fetched and inspected
+the actual merge, checked out that accepted artifact without losing user files,
+and executed539 distinct affected units:97 historical/388 repository/36
+occurrence/18 CI,0 failures/errors/skips,12.452s JUnit. The4283597-byte XML
+SHA256 is `c8de45410838a89d90e452f3f79bfe79a8ec3499d459ad558bb9225ed0931ecd`.
+Record: `/tmp/scanipy-historical-qualified-ShBLoI/POST-MERGE.md`. Original
+submission/baseline and four untracked files remain exact; actual #399/#362
+were OPEN/In Progress at07:51. No additional local PostgreSQL183 run occurred.
+
+The narrow A2 fixture correction guards raw acquire/wrapper/return, closes
+once on pre-handoff failure, preserves original primary/prior/cleanup chains,
+and transfers sole ownership on success. The original873 unit and4030 resolver
+prefixes and all71 native bodies remain.58 additional fixture cases plus the
+original117 and unchanged six external controls yield181 distinct passes.
+Author181 took3.760s, XML
+`7580cafcaebb7313f73d758a0d412435271b275cdbbec28cdb2b22af476db952`;
+independent181 took3.563s, XML
+`232e29d99b29b1fd2fa6839575b94b26b5b0dc255352723641bf47c504499aef`.
+Root read the full correction, independent APPROVE and actual reports; counts
+overlap, not362 cases. Normal local commit
+`4d14a3703cb03b366f5c719ea9d8be5036b17746`, tree
+`5273db56b5a687985489d2ca44c3f4a54432d81c`, parenta5d36590, changes only
+the allocated three paths. All applicable hooks passed; no-files Mypy and other
+hook skips are not fresh typing/full-suite coverage. Final native/unit/resolver
+hashes respectivelyc9ee2046/834376bb/aca3a69f are retained in
+`/tmp/scanipy-a2-adapter-correction-MrNBhyKA/LOCAL-COMMIT-CHECKPOINT.md`.
+Original failure reports remain. This resolves the fixture source HOLD only;
+native71, actual authentication, runtime image and finite runner are still unrun.
+
+Fresh07:51 read-only checks reconfirmed sourceee1f4e3d/tree04392b26 and all62
+wrapper source pins, original AST/catalog/QUERY, exact246 collection and three
+absent effect paths. Retained ALcc1a084c is running/noOOM with the same profile;
+userapp/DB are healthy and unchanged. MemAvailable6671MiB, swap2047MiB full,
+shared free90053880KiB. An initial diagnostic template failed on missing optional
+inspection keys; corrected read-only inspection passed. No service mutation.
+
+Root separately granted one monitored existing-server246 run of exact wrapper
+b8cc3973, started session15380 at07:51:47. At this update it is running; no
+passing report, after-catalog or cleanup verdict exists yet. No other heavy
+campaign is concurrent. There is no claimed client cgroup/whole-suite hard
+deadline or bounded stdout. The proposed fresh4GiB+2GiB native pair remains
+ungranted; at least8GiB available RAM and20GiB shared free disk are conservative
+admission minima, followed by fresh pressure/campaign review, not guarantees.
+No user workload is stopped or reconfigured. Actual reader login/custody,
+current authority, complete scan, all original TODOs and stage readiness remain.
+
+### Explicit later update — 08:12 UTC: role SQL failure, preserved fixture
+
+The single standalone246 campaign15380 exited1, observed08:07:38 UTC. Actual
+34398-byte XML SHA256
+`64b872b894fffc94ef4e2f6f9d9a9cca019ddd3ca8dad27583b5b7f69632dba5`
+has184 unique testcase elements,948.764s:43 SQL+102 security+38 historical
+passes and one role testcase with two errors (setup and teardown),0 failures/
+skips. No role body executed; the other62 role cases were not reached. Root
+parsed actual elements and errors. There is no246-success or clean183-campaign
+claim; these passes belong to an overall failed campaign with unresolved cleanup.
+
+The first role setup failed in migration0008; the pending-state guard refused
+automatic cleanup. The wrapper retained original pytest SystemExit1 through
+its finally path, where after-catalog baseline validation also failed. Before
+catalog1203B is the exact94dd8b90 original; after3488B SHA256
+`bd7e7105df8ee25b95e5bd0c0f605f051426c0fc44dd707b1464d70b14d3163b`
+retains child`scanipy_accepted_ddf03332767a4ec2beee51c1f351d5da`,OID34310/
+owner10 and fixture roles. The new reader role is absent; other_clients is
+empty. Neither absence nor this inventory grants cleanup/adoption authority.
+Originalee1f4e3d/tree04392b26 and source bytes remain frozen and unchanged.
+Record: `/tmp/scanipy-role-pg-wrapper-ETRyLPDw/RESULT-FAILED.md`.
+
+Bounded read-only server-log inspection shows the relevant08:07:36.810/PID6680
+error: `n.nspacl` is ambiguous between a PL/pgSQL variable and table column,
+inline DO block line475. Root and an independent source reviewer confirmed
+0008 declares a namespace record `n` and also uses table alias `n` in its role
+guard. Nearby expected historical falsifier errors remain separate. The actual
+failure is not a reason to relax guards or change variable_conflict settings.
+
+A fresh source-only correction worktree is allocated for eight private-record
+identifier substitutions to `v_n`, controlled red/green regressions and exact
+inverse/body/predicate/ACL preservation. Original failed source and fixture are
+untouched; no correction or second run is already accepted. The separately
+reviewed owner-composition clarification is appended only in that fresh tree,
+preserving the original173-line qualification document; it changes no SQL.
+No database diagnostic statement, cleanup/repair, retry or new native grant
+has occurred at this update. At08:10 user app/DB are still healthy/noOOM and
+the retained AL server is running/noOOM. RAM6395MiB available, swap2047MiB full.
+
+Separately frozen private-factory source has207 controls passing on3.11 and
+3.12,5.737/6.445s, XML
+`07d7fa54a6940cc81f69dd40295938beeb1a01a21d9c9303718cfc2fae3edff8` /
+`fba107a40607abf7e86d24e1ca30bc950c660f499fe603adb925f97563299fc3`.
+Combined207+263 unchanged custody controls give470 passes,12.829s, XML
+`9961ee76dd08c62765cb658a1c7434f5349393c1dff3dfa231d3fe931e7b3b6d`.
+Root read the source and actual reports; independent review is pending. Original
+lock/oracle errors and a genuine red late-slot-reservation regression remain
+retained. No public composer, actual PG role, signature/current authority or
+full task/claim/gate/stage acceptance follows from these controlled results.
