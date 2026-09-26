@@ -1,0 +1,95 @@
+{
+  "schema": "scanipy-operation-models/1",
+  "target_platform_profiles": ["scanipy-target-cpython311-posix/1", "scanipy-target-java21-jdbc/1"],
+  "models": [
+    {
+      "model_id": "java.jdbc-execute-query/1",
+      "language": "java",
+      "kind": "external-call",
+      "target_platform_profile": "scanipy-target-java21-jdbc/1",
+      "operation": "external-api",
+      "symbol": {"owner": "java.sql.Statement", "member": "executeQuery"},
+      "signature": {"receiver": "java.sql.Statement", "parameters": ["java.lang.String"], "result": "java.sql.ResultSet"},
+      "preconditions": [
+        {"id": "java-declared-statement-receiver/1", "evidence_kind": "checked"},
+        {"id": "java-string-argument/1", "evidence_kind": "checked"},
+        {"id": "java21-jdbc-contract/1", "evidence_kind": "assumed"},
+        {"id": "terminal-selected-entry-call/1", "evidence_kind": "checked"}
+      ],
+      "normal": {"result": "defined", "effects": ["external-io", "unknown-external-effect"]},
+      "exceptional": {"result": "absent", "continuation": "exit-unknown-exception", "effects": ["unknown-external-effect"]},
+      "transfer_authorization": {
+        "sink_inputs": [{"position": {"kind": "argument", "index": 0}, "class_id": "injection", "context_id": "sql-query-text"}],
+        "propagation": [],
+        "sanitization": []
+      }
+    },
+    {
+      "model_id": "java.string-concat/1",
+      "language": "java",
+      "kind": "builtin-operator",
+      "target_platform_profile": "scanipy-target-java21-jdbc/1",
+      "operation": "string-concat",
+      "symbol": null,
+      "signature": {"receiver": null, "parameters": ["java.lang.String", "java.lang.String"], "result": "java.lang.String"},
+      "preconditions": [
+        {"id": "java-standard-string-semantics/1", "evidence_kind": "assumed"},
+        {"id": "java-string-operands/1", "evidence_kind": "checked"}
+      ],
+      "normal": {"result": "defined", "effects": ["allocation"]},
+      "exceptional": {"result": "absent", "continuation": "exit-unknown-exception", "effects": ["resource-failure"]},
+      "transfer_authorization": {
+        "sink_inputs": [],
+        "propagation": [
+          {"from": {"kind": "argument", "index": 0}, "to": {"kind": "result", "index": 0}},
+          {"from": {"kind": "argument", "index": 1}, "to": {"kind": "result", "index": 0}}
+        ],
+        "sanitization": []
+      }
+    },
+    {
+      "model_id": "python.os-system/1",
+      "language": "python",
+      "kind": "external-call",
+      "target_platform_profile": "scanipy-target-cpython311-posix/1",
+      "operation": "external-api",
+      "symbol": {"owner": "os", "member": "system"},
+      "signature": {"receiver": null, "parameters": ["python.exact-str"], "result": "python.int"},
+      "preconditions": [
+        {"id": "python-direct-os-import/1", "evidence_kind": "checked"},
+        {"id": "python-exact-str-argument/1", "evidence_kind": "checked"},
+        {"id": "python-no-external-binding-mutation/1", "evidence_kind": "assumed"},
+        {"id": "python-no-local-binding-mutation/1", "evidence_kind": "checked"},
+        {"id": "python-standard-os-implementation/1", "evidence_kind": "assumed"},
+        {"id": "terminal-selected-entry-call/1", "evidence_kind": "checked"}
+      ],
+      "normal": {"result": "defined", "effects": ["external-io", "external-process"]},
+      "exceptional": {"result": "absent", "continuation": "exit-unknown-exception", "effects": ["unknown-external-effect"]},
+      "transfer_authorization": {
+        "sink_inputs": [{"position": {"kind": "argument", "index": 0}, "class_id": "injection", "context_id": "posix-shell-command"}],
+        "propagation": [],
+        "sanitization": []
+      }
+    },
+    {
+      "model_id": "python.string-concat/1",
+      "language": "python",
+      "kind": "builtin-operator",
+      "target_platform_profile": "scanipy-target-cpython311-posix/1",
+      "operation": "string-concat",
+      "symbol": null,
+      "signature": {"receiver": null, "parameters": ["python.exact-str", "python.exact-str"], "result": "python.exact-str"},
+      "preconditions": [{"id": "python-exact-str-operands/1", "evidence_kind": "checked"}],
+      "normal": {"result": "defined", "effects": ["allocation"]},
+      "exceptional": {"result": "absent", "continuation": "exit-unknown-exception", "effects": ["resource-failure"]},
+      "transfer_authorization": {
+        "sink_inputs": [],
+        "propagation": [
+          {"from": {"kind": "argument", "index": 0}, "to": {"kind": "result", "index": 0}},
+          {"from": {"kind": "argument", "index": 1}, "to": {"kind": "result", "index": 0}}
+        ],
+        "sanitization": []
+      }
+    }
+  ]
+}

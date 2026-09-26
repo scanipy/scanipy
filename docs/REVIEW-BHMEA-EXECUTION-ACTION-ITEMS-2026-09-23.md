@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-09-23 |
 | Audience | An LLM revising or implementing the Black Hat MEA execution plan |
-| Revision | 13 — 2026-09-25 20:51 UTC observed snapshot plus explicit 20:54 update; full acceptance unresolved |
+| Revision | 19 — 2026-09-26 07:42:08 UTC cutoff plus dated updates through08:12; historical correction merged; A2 fixture corrected locally; real role migration failed and fixture retained, full acceptance unresolved |
 | Status | Execution started; no full R01–R20 task or submitted claim is yet accepted as complete |
 | Initial review code revision | `940d440cb99e23131d28ee5bbb1655ea29d46a58` |
 
@@ -45,6 +45,147 @@ an independent authority to reinstate its deadlines or reduced-demo fallback.
 All unchecked acceptance items below remain required unless explicitly
 classified optional. An adopted design, recovered historical report, or one
 successful Joern parse does not complete a task or verify a submitted claim.
+
+**Current work queue:** use Revision 19 in the
+[active handoff](PLAN-BHMEA-EXECUTION-2026-09-25.md#current-next-actions--0812-utc).
+The dated progress paragraphs that follow retain historical evidence. Their
+older pending statuses do not override the latest queue or require redoing
+accepted merges; the full task-level acceptance TODOs begin in section 5.
+
+At the 07:42:08 UTC cutoff, accepted main remains `617126d0` (Revision18 #431).
+Historical-read PR #432 has passed all seven new-head hosted CI jobs and Gate3
+at `4041cc3d`, including **183 distinct PostgreSQL passes, no failures/errors/
+skips**, with unchanged before/after catalogs. The first canonical review's
+ownership ambiguity was corrected in documentation. Its replacement canonical
+review is running; the PR is **not merged or approved** at this cutoff.
+
+The restricted-reader role/migration and 246-case CI source are locally committed
+and independently reviewed, but **the 63 new role SQL cases have not run**.
+Their prepared standalone run requires a separate execution grant and actual
+report/catalog readback. Effective SET LOCAL ROLE tests will not prove login
+authentication. Corrected custody source is also locally committed: 270 distinct
+controlled cases pass after preserved terminal-work/preallocation failures;
+that is not native custody, a public reader or current execution authority.
+
+The frozen A2 fixture has 117 passing fake controls and 71 collected native
+cases, **zero executed native cases**. Independent review and root reproduction
+found four failures in two raw connection/cursor-to-wrapper handoffs; a narrow
+fixture-only correction is in progress. Preserve the original failure reports,
+then require independent re-review before any implementation commit or run.
+The earlier 38-case native image predates A2 and cannot qualify it.
+
+See the [Revision19 evidence and action boundary](evidence/2026-09-25-foundation-merges/README.md#revision-19--074208-utc-cutoff-september-26).
+The private restricted connection factory is newly allocated source work; full
+material assembly, original-context R5/R6 checks, actual installed credentials,
+runtime storage/controller, real scan/provenance/decision/API/UI integration and
+the full corpus/offline rehearsals remain required. About 6.5 GiB RAM was available
+and swap was full in the latest sample; do not infer dedicated capacity or launch
+the additional A2 container pair without fresh headroom and a reviewed run plan.
+Every original R01–R20 TODO, C01–C18 status, milestone, DAG edge and shared gate
+below remains unchanged. No technical, release or stage completion is claimed.
+
+**Explicit later update, 07:52 UTC:** PR #432 received an exact-head canonical
+SUCCESS/APPROVE; the complete final comment was read before its normal merge
+at07:47:40. Accepted main is now `b5bff429`, tree `34f93546`, identical to the
+reviewed candidate. All539 affected post-merge unit checks pass, with zero
+failures/errors/skips; #399/#362 remain OPEN/In Progress. Do not repeat the
+historical merge/review or its completed183-case qualification.
+
+The A2 fixture handoff correction passed181 distinct controlled cases in both
+author and independent runs, including the unchanged original six regressions.
+Normal local commit `4d14a370`, tree `5273db56`, preserves the original source
+history/native71 expectations. Its earlier HOLD is resolved for this source
+slice only: **native71 execution, PostgreSQL authentication and image/runner
+qualification remain pending**. The 246-case restricted-role run started once
+at07:51:47 against the existing isolated AL server; it is still running, with
+no passing result or cleanup verdict claimed. This update supersedes only those
+cutoff pending actions, not the original task-level TODOs or acceptance gates.
+The ledger's current R01/R17 `next_action` navigation is refreshed accordingly;
+their acceptance statuses and every historical note remain unchanged.
+
+**Explicit later update, 08:12 UTC:** the standalone246 campaign stopped with
+exit1. Its actual report contains183 passing original SQL/security/historical
+cases and one role testcase with both setup and teardown errors; **none of the
+63 role-test bodies ran**. Migration0008 has a confirmed PL/pgSQL variable/table-
+alias collision (`n.nspacl`). The fixture correctly refused automatic cleanup
+after the unresolved transition. Its child database/roles remain retained;
+before/after catalogs differ. This is not successful246 qualification or clean
+historical qualification merely because its first183 cases passed.
+
+Preserve that failed source/report/catalog state. A separate, minimal private-
+variable rename is allocated with red/green controls and exact predicate/body/
+ACL preservation; it has not run against PostgreSQL. No same-run retry, catalog
+repair or weakening of ambiguity/ownership checks is allowed. The original user
+app/DB remain healthy. The private reader factory is separately frozen with207
+controlled passes on each of Python3.11/3.12; independent review is pending,
+and no real reader, composer, signature/current-authority or native acceptance
+is implied. These facts supersede the07:52 running status only; all original
+full-scope acceptance TODOs and statuses remain unchanged.
+
+At the new05:01:47 UTC cutoff, accepted main `a871c00a` includes Revision17
+documentation #430 after its required gates. Old-image reconciliation/ABI and
+a separate immutable38-case source snapshot, image build and ABI check have
+completed. **The38 native cases still have not run**: the actual native attempt
+failed before creating a container because its bootstrap exceeded the runner's
+per-argument limit. Fixed argument packaging is being reviewed with unchanged
+limits; prior failures must not be overwritten or treated as successes.
+
+A2 administration/packet/custody Checkpoint A and its finite corrections have
+492 author and492 independent fake-only passes (overlapping, not984). Normal
+commit is pending scoped public-fixture secret-scanner annotations; no real
+publisher/CLI/installed authority is accepted. Continue genuine publication,
+retry/reconcile and CLI, then the restricted installed reader and runtime
+integration. The native image predates moving A2 corrections. See the
+[new evidence and limitations](evidence/2026-09-25-foundation-merges/README.md#revision-18--050147-utc-cutoff-september-26).
+Every original task-level TODO, C/R status, acceptance criterion, milestone,
+DAG edge and shared gate below remains unchanged. No release or stage readiness
+is promoted by these checkpoints; later results need separately dated updates.
+
+The explicit05:04 update records local Checkpoint A commit `a56c5f7f` after all
+normal hooks and seven targeted fixture checks. This resolves only the pending
+commit; B source work, actual native/PG, hosted gates and installed authority
+remain incomplete. The original492 reports are not claimed rerun at the later
+comment-only annotation commit.
+
+The explicit05:17 update records the reviewed argument correction and a second
+actual failure: Docker rejected `--pid private` before container creation.
+The38 native cases remain unrun. Correct the private-PID representation and
+its exact inspection check, preserve both attempts, and obtain a separately
+reviewed fresh third attempt; do not raise limits, weaken isolation or rebuild
+the valid image. The later update in the active handoff supersedes its older
+pending native2 instruction, without backdating results or changing acceptance.
+
+At05:21 the third attempt created a container but failed its pre-start capability
+inspection. Docker normalized capability names/order; the strict expectation
+did not match. No bootstrap or native case ran. Preserve the unstarted container
+and diagnostics pending separate disposition; review the exact normalized
+comparison and fresh native4 identifiers before another separately granted run.
+The full scope and native success criteria are unchanged.
+
+At05:25 a separate fresh whole-profile/never-started check, plain removal and
+exact-ID absence verification completed for that third container. All original
+diagnostics, CID file and image remain. This cleanup is not native success;
+the current source correction/fresh-native4 review is still pending.
+
+The explicit05:32:18 update supersedes that pending instruction: fourth attempt
+36564 passed **38 unique native custody tests, zero failures/errors/skips**, on
+the frozen source image. Root verified the retained report and exact stopped/
+removed container. Three earlier failures and the separate unstarted-container
+cleanup remain preserved. This image predates moving A2 corrections; the result
+does not qualify its publisher/CLI, real PostgreSQL, installed authority,
+complete scan, any full R/C task or shared gate. Follow the current next-actions
+link above; do not repeat the consumed native attempt.
+
+At03:45 UTC, accepted main `ecc34161` includes AL #428 and pure runtime packets
+#429, with actual hosted145 AL/89 occurrence passes and preserved AL catalogs.
+Separate accepted-artifact709 and2,536 checks are overlapping unit evidence,
+not new full/native runs. A1's38 native cases remain unrun after48 synthetic
+controls; an actual Docker build exited0 but its watchdog exited1 on iid mode,
+so reconciliation and smoke remain separately gated. A2 is dependency preparation,
+not installed authority. The latest evidence/queue does not change any original
+R/C/TODO, milestone, DAG, shared gate, release or stage acceptance state.
+The separate03:48 update records A2 dependency composition and976 unit passes
+only; A2 implementation, real custody and operational authority remain pending.
 
 The earlier 17:29 UTC checkpoint recorded foundations through main `6f1ebc8`: independent
 artifact metadata, typed report checking, corrected corpus and dependency
@@ -225,6 +366,143 @@ on the frozen `2fd1297a` source (one failed control); its narrow lifetime
 correction has interim 111 passing checks plus five additional focused controls.
 Final review/fault coverage and gates remain pending. The earlier 110-pass
 results keep their original source attribution and do not erase this failure.
+
+**Revision 14 — observed 22:25 UTC on September 25:** accepted main is
+`4911f6568a85206651adbf40428529eb090c389f`, tree
+`1b81b0fd1e4d52165695e957d90f7818aafe08cd`. This supersedes corresponding
+pending instructions above, not their historical observations or any TODO below.
+Inventory #414, Revision 13 documentation #415, rule codec #416 and runtime
+metadata loader #417 have merged after the required CI and successful canonical
+APPROVE. No full R-task, submitted claim or shared G0–G3 gate is thereby complete.
+Exact links, contrary reviews and local report hashes are in the
+[Revision 14 evidence index](evidence/2026-09-25-foundation-merges/README.md#revision-14--observed-2225-utc-september-25).
+
+| Current slice | Verified progress at this cutoff | Required next action |
+|---|---|---|
+| Inventory / rule / metadata loader | Accepted #414 / #416 / #417; loader's actual merge tree has 1,090 affected passes and 89 real PostgreSQL cases in CI. | Preserve these bytes; implement actual installed trust, current authority, controller and native integration. Metadata consistency is not execution permission. |
+| Resolver B | Local `b0717452`: 804 affected passes; pre-C `c365e129` full 3,549 passed /51 optional skips, including 89 actual PostgreSQL cases. Normal push is running, no PR yet. | Complete actual normal push, exact-head CI/canonical and merged-artifact checks. Public verifier remains `runtime-unsupported`; the private diagnostic runner must not become an operational fallback. |
+| Docker renderer D / process evidence E | D `6bf0651`: 856 affected passes; E `257336c`: 479 owned passes, normal commit hooks passed. | D still needs fresh full/push/remote gates. E needs accepted-parent refresh and its own full/push/remote gates. Pure intended commands and evidence records are not actual Docker enforcement. |
+| Provenance compatibility | Pre-C `1a349f22` full 3,391 passed /51 optional skips; current `de17aa06` affected 702 passed. Ten frozen synthetic signed records preserve old bytes. | Complete normal push/current-head remote gates; then implement the actual producer map, durable finalization, persistent keys and complete export/restart verification. |
+| Accepted-ledger SQL AL-03 | Draft implementation has 147 unit/source controls; five migration/table/ACL/history/bridge resources have scoped independent security approval. Generated-denial precharge and backward-time omissions were found and corrected. | Finish independent facade review and run real isolated PostgreSQL/migration/role/concurrency tests. No AL PostgreSQL test has run at this cutoff; unit greens are not SQL execution evidence. |
+| Runtime evidence store / journal | RES `3194baa1` full 4,720 passed /51 optional skips, including 89 actual occurrence PostgreSQL cases, on its recorded combined tree. F journal packaging is beginning. | Preserve the original race failure and exact corrected source; finish narrow dependency publication, qualified storage/capacity, event/spool/full-reader, DB barriers and current-owner/controller integration. |
+
+AL-03's corrected stored-content error handling preserves work-limit errors;
+generated-denial construction is prepaid under unchanged limits. Positive
+authorization/current reads reject backward time observations. Those are reviewed
+code changes, not measured database/runtime guarantees. Planned/runtime pins,
+ordinary immutable history and installed authority remain distinct obligations.
+Full Java/Python, all 422 cases/844 uncached sides, real oracle reproduction,
+durable decisions and API/UI/rehearsal work remain required without a scope cut.
+This machine remains the confirmed Docker target, not an accepted stage build.
+
+**Later update — observed 22:30 UTC:** B passed normal push and is now
+[PR #418](https://github.com/scanipy/scanipy/pull/418) at exact `b0717452`;
+remote CI/canonical remain pending. AL's final 185 unit controls on each Python
+version include 149 AL +36 unchanged occurrence cases. Its 138 PostgreSQL cases
+are collection-only; the new isolated bounded test cluster has not yet run them.
+Facade review and the separately granted smoke/expanded SQL checks remain next.
+No full acceptance state or submitted scope changed.
+
+**Revision 15 — observed 23:31 UTC on September 25:** accepted main
+`0e1b2b9a` includes Revision 14 #419, pure renderer #420 and historical
+provenance compatibility #421. Required exact-head gates preceded those
+merges; the first #421 checklist-only failed review remains retained. Renderer
+merged-artifact checks passed 856; provenance merged-artifact checks passed
+990. These affected selections do not replace their separately attributed
+full suites or establish actual Docker enforcement/live signed findings.
+
+B's corrected `3e1cfc56` has 1,155 local passes, including all 38 diagnostic
+process cases, and its actual normal push was in progress at the cutoff.
+Both earlier hosted failures remain: the second observed a 48,157,564-byte
+static development archive at the unchanged 32 MiB per-file fixture cap.
+The 63-case reviewed correction changes only diagnostic distribution copying,
+not production authority or runtime bounds. E's fresh full is 4,357/51 with
+89 actual occurrence PG cases; no publication yet. F has 1,644 focused checks,
+not a full run. Exact artifacts and report hashes are in the
+[new evidence section](evidence/2026-09-25-foundation-merges/README.md#revision-15--observed-2331-utc-september-25).
+
+AL's original migration-submission setup error, later immutable-read privilege
+and role-cleanup errors, and fixture-composition failure remain separate red
+records. Following reviewed narrow fixes, the same three-node smoke passed
+all three cases, zero skips/errors/failures, with successful bounded cleanup
+confirmation. The 144-case selection is only collection-ready at this cutoff;
+324 offline controls and scoped review do not establish whole SQL, provider or
+runtime acceptance. Root retired only the original failed disposable cluster
+after retaining catalog evidence; the replacement is separately identified.
+
+**Subsequent engineering scope clarification:** the
+[current decision](DECISION-BHMEA-01-current-execution-authority-2026-09-25.md#tenant-local-authority-and-later-publication-extensions)
+preserves the submitted single-tenant target and every C/R/TODO below. Required
+tenant-local accepted builtin publication, current authority, signed provenance
+and real API/UI must not be conflated with later global-to-tenant adoption or
+statistical/LLM inferred-spec publication. Those extensions are not additional
+Black Hat gates; known inferred proposals cannot be relabeled builtin. No guard,
+Gate 4/INV-3 control, original acceptance item, milestone dependency or scope is
+removed. This is root's source-backed engineering clarification, not a new
+human approval, implemented extension or full acceptance decision.
+
+**Explicit later observations:** at 23:36, B's actual normal push had passed
+all four phases and its remote head was verified; corrected hosted gates were
+running. Its actual merge artifact passed 1,251 pure checks, not the process
+suite or a full run. AL144 had started at 23:33:51. At 23:38 it had stopped
+under `-x` after 16 passes and one failed assertion, zero errors/skips,
+203.856s; teardown/catalog checks were clean. A driver-view format comparison
+is under narrow test-only correction. The separate equal-bytes/unequal-views
+diagnostic does not prove the failed row's original bytes; no SQL guard is
+relaxed and neither 144-case nor whole-migration success is claimed.
+
+**Revision 16 — fixed cutoff 2026-09-26 02:14:58 UTC:** accepted main
+`c5c862e3035ac974af82be7f2b69680cf3ea4c70`, tree
+`ea4d36f4e344a250d0ed1df7b9e8fc519c08deff`, includes resolver B #418,
+Revision15 #423, the typecheck repair #424, process-evidence E #422 and pure
+journal F #425. These accepted foundation merges supersede their older pending
+instructions, not historical failures or any acceptance checklist below.
+The [Revision16 evidence](evidence/2026-09-25-foundation-merges/README.md#revision-16--fixed-021458-utc-cutoff-september-26)
+records exact supplied merge/check identities and distinct local reports.
+
+F's recorded full run passed **5,049 /51 existing skips**, 472.775s; its separate
+accepted-artifact selection passed **853 /0 skips**, 26.146s. Neither pure
+process evidence nor journal structure/replay establishes durable physical
+storage, a running controller, current permission or output custody. Initial
+E/F failed reviews remain recorded even though later required gates passed.
+
+At the cutoff, pure administration-verification PR #426 at `ed4dd545` has a
+corrected full **5,213 passed /51 skips /0 errors**, 500.495s, including 89 real
+occurrence PostgreSQL cases. Its CI is running and canonical review pending;
+normal push succeeded only after a first all-hooks-green transport failure.
+Its Gate3 action succeeded with five selected passes, but the actual canary
+suite was skipped because the corpus was absent: no full canary acceptance.
+
+AL-03 `7c992e15` has **1,570 unit passes**; its fresh full invocation started at
+02:11:52 and remains **RUNNING, no result** at this cutoff. Historical real-PG
+145-case success predates the descriptor correction and is not reassigned to
+current source. G `eba073bc` has **1,853 distinct pure unit passes**, with full,
+push and hosted gates pending. A1's original 230 mock passes did not expose
+root-key metadata, final public-leaf reread or scandir-handoff defects. The
+first two fixes have 285 overlapping diagnostic passes; the third has a
+retained one-failure red and is under correction at the cutoff. No real keys,
+UID fixture, installed authority, SQL or complete A1 approval follows.
+
+Next actions are the exact #426 gates/merge, AL full and catalog readback plus
+publication gates, A1 correction review before separately approved real-custody
+staging, G full/publication, and genuine A2 ledger/provider/CLI integration.
+Qualified physical RES/journal/event/spool storage, current owners, DB barriers,
+bounded native CPG/source producers and complete findings/provenance/UI remain
+required. All 20 R tasks, 18 claims, 85 milestone/gate states and edges remain
+unchanged. This machine/local Docker remains the target, not a ready deployment;
+no October deadline, release authority or reduced scope is introduced. Results
+after 02:14:58 require a separate update and are not backdated here.
+
+**Explicit later update, 02:26 UTC:** #426's six CI jobs have passed, but its
+first canonical review refused the incorrect component label and then-pending
+CI. Only PR metadata was corrected to the same CMP-ORCH-03 owner as accepted
+#418; fresh canonical APPROVE/merge remain TODO. A1's third correction now has
+299 author and independent diagnostic passes; original failures are retained.
+Real kernel/UID/key custody is still unverified and needs the separately
+reviewed disposable fixture. AL full is still running without a final result;
+do not edit that tree or promote old PG evidence. The
+[later queue](PLAN-BHMEA-EXECUTION-2026-09-25.md#explicit-later-update--0226-utc)
+supersedes only these earlier pending actions, not any acceptance checklist.
 
 ## 1. Objective and document boundaries
 

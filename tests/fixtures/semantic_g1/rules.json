@@ -1,0 +1,39 @@
+{
+  "schema": "scanipy-bound-rule-set/1",
+  "semantics": "scanipy-scalar-ifds/1",
+  "spec_id": "semantic-g1-injection",
+  "class_id": "injection",
+  "engine": "ifds",
+  "languages": ["python", "java"],
+  "projection_profile": "scanipy-java-python-scalar-flow/1",
+  "model_artifact_digest": "1462f1b3573bb3ec8abfc8b7795388560c3892e09530723a9a12ef160782f83a",
+  "clauses": [
+    {
+      "primitive": "source",
+      "selector": {
+        "kind": "entry_parameter", "language": "python", "source_file": "shell_flow.py",
+        "declaration": ["run"], "formal_index": 0, "parameter_types": null
+      }
+    },
+    {
+      "primitive": "sink",
+      "selector": {"kind": "model", "language": "python", "model_id": "python.os-system/1"},
+      "position": {"kind": "argument", "index": 0},
+      "context_id": "posix-shell-command"
+    },
+    {
+      "primitive": "source",
+      "selector": {
+        "kind": "entry_parameter", "language": "java", "source_file": "SqlFlow.java",
+        "declaration": ["g1", "SqlFlow", "run"], "formal_index": 0,
+        "parameter_types": ["java.lang.String", "java.sql.Statement"]
+      }
+    },
+    {
+      "primitive": "sink",
+      "selector": {"kind": "model", "language": "java", "model_id": "java.jdbc-execute-query/1"},
+      "position": {"kind": "argument", "index": 0},
+      "context_id": "sql-query-text"
+    }
+  ]
+}
