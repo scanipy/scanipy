@@ -55,6 +55,14 @@ bundle or restore operation, or prove recovery readiness. Follow the remaining
 [operator binding and recovery TODOs](DECISION-BHMEA-01-current-execution-authority-2026-09-25.md#local-demo-human-roles--owner-clarification-september-26).
 This later clarification does not rewrite the historical evidence cutoffs below.
 
+**Later VM/RAM clarification, September 26:** the owner plans added RAM and a
+reboot after source work is complete; no restart is requested now and the RAM
+amount is not specified. Continue safe source work, preserve the user app/DB,
+and do not reask to free workloads. The [decision's remaining handoff TODOs](DECISION-BHMEA-01-current-execution-authority-2026-09-25.md#vm-ram-and-restart--owner-clarification-september-26)
+require a verified durable checkpoint, then fresh post-reboot identity,
+available-memory/disk admission and actual clock qualification. No RAM gate,
+R/C/TODO state, historical cutoff or source/reboot readiness is waived or promoted.
+
 **Current work queue:** use Revision 19 in the
 [active handoff](PLAN-BHMEA-EXECUTION-2026-09-25.md#current-next-actions--0812-utc).
 The dated progress paragraphs that follow retain historical evidence. Their
